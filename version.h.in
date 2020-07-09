@@ -1,0 +1,9 @@
+#pragma once
+
+#cmakedefine PRODUCT_NAME "${PRODUCT_NAME}"
+#cmakedefine BIN_NAME "${BIN_NAME}"
+
+#cmakedefine GIT_FOUND
+#cmakedefine GIT_BRANCH "${GIT_BRANCH}"
+#cmakedefine GIT_REVISION "${GIT_REVISION}"
+#cmakedefine GIT_TAG "${GIT_TAG}"
