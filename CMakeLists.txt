@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 set(product_name "Plip")
 set(gui_name "plip-sdl")
-set(lib_name "libplip")
+set(lib_name "plip")
 
 project(${gui_name})
 set(CMAKE_CXX_STANDARD 14)
@@ -52,7 +52,7 @@ target_include_directories(${gui_name}
 )
 
 target_link_libraries(${gui_name}
-        libplip
+        plip
         ${SDL2_INCLUDE_DIRS}
 )
 
