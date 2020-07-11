@@ -54,6 +54,7 @@ THE SOFTWARE.
 
 namespace cxxopts
 {
+  const char *hidden_group = "--HIDDEN--";
   static constexpr struct {
     uint8_t major, minor, patch;
   } version = {
@@ -2042,7 +2043,10 @@ Options::generate_all_groups_help(String& result) const
 
   for (auto& group : m_help)
   {
-    all_groups.push_back(group.first);
+    // Very hacky, but more convenient than the alternative.
+    auto group_name = group.first;
+    if(group_name == hidden_group) continue;
+    all_groups.push_back(group_name);
   }
 
   generate_group_help(result, all_groups);

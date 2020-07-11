@@ -16,7 +16,7 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
         options.positional_help("CORE FILENAME")
                 .show_positional_help();
 
-        options.add_options("Hidden")
+        options.add_options(cxxopts::hidden_group)
                 ("c,core", "the core that should be used", cxxopts::value<std::string>())
                 ("f,filename", "the path to the ROM", cxxopts::value<std::string>())
                 ("positional", "", cxxopts::value<std::vector<std::string>>())
@@ -37,10 +37,7 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
         if(result.count("help")) {
             // Icky hack. As far as I can tell there's no other way of hiding
             // unwanted/positional arguments using cxxopts.
-            std::cout << options.help({
-                "",
-                "Video"
-            }) << std::endl;
+            std::cout << options.help() << std::endl;
             exit(0);
         }
 
