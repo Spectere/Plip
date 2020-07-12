@@ -7,6 +7,7 @@
 
 #include "cxxopts.hpp"
 
+#include "SdlWindow.h"
 #include "version.h"
 
 cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
@@ -78,10 +79,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    std::cout << "scale: " << opts["scale"].as<int>()
-              << "\ncore: " << opts["core"].as<std::string>()
-              << "\nfile: " << opts["filename"].as<std::string>()
-              << std::endl;
+    auto wnd = new PlipSdl::SdlWindow(opts["scale"].as<int>(), windowTitle);
 
     return 0;
 }

@@ -24,7 +24,7 @@ add_custom_target(
 )
 
 add_library(${lib_name}
-        libplip/Hello.cpp
+        libplip/Plip.cpp
 )
 
 add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)
@@ -44,6 +44,7 @@ add_custom_target(
 
 add_executable(${gui_name}
         plip-sdl/main.cpp
+        plip-sdl/SdlWindow.cpp
 )
 
 target_include_directories(${gui_name}
@@ -53,7 +54,7 @@ target_include_directories(${gui_name}
 
 target_link_libraries(${gui_name}
         plip
-        ${SDL2_INCLUDE_DIRS}
+        ${SDL2_LIBRARIES}
 )
 
 add_dependencies(${gui_name} GENERATE_CLI_VERSION_HEADER)
