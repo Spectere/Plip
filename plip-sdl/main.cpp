@@ -36,8 +36,6 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
         auto result = options.parse(argc, argv);
 
         if(result.count("help")) {
-            // Icky hack. As far as I can tell there's no other way of hiding
-            // unwanted/positional arguments using cxxopts.
             std::cout << options.help() << std::endl;
             exit(0);
         }
