@@ -5,6 +5,11 @@
 
 #pragma once
 
-class Plip {
+#include <string>
 
-};
+namespace Plip {
+    class Plip {
+    public:
+        static std::string GetVersion();
+    };
+}

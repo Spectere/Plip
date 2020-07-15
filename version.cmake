@@ -31,4 +31,4 @@ else()
     message(STATUS "Git package not found. Unable to fetch version information.")
 endif()
 
-configure_file(${cmake_root}/version.h.in ${src_root}/version.h)
+configure_file(${cmake_root}/version.h.in ${src_root}/${VERSION_FILE})

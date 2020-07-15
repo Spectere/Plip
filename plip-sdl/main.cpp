@@ -6,9 +6,9 @@
 #include <iostream>
 
 #include "cxxopts.hpp"
+#include "Plip.h"
 
 #include "SdlWindow.h"
-#include "version.h"
 
 cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
     try {
@@ -54,17 +54,13 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-    #ifndef GIT_FOUND
-        const char *windowTitle = PRODUCT_NAME;
-    #else
-        #ifndef GIT_TAG
-            const char *windowTitle = PRODUCT_NAME " (" GIT_BRANCH "@" GIT_REVISION ")";
-        #else
-            const char *windowTitle = PRODUCT_NAME " " GIT_TAG;
-        #endif // GIT_TAG
-    #endif // GIT_FOUND
-
     auto opts = parseCmdLine(argc, argv);
+    auto version = Plip::Plip::GetVersion();
+
+    if(opts.count("version")) {
+        std::cout << version << std::endl;
+        return 0;
+    }
 
     if(!opts.count("core") || !opts.count("filename")) {
         std::cerr << "The name of the core and the filename must be specified!\n\n"
@@ -72,12 +68,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if(opts.count("version")) {
-        std::cout << windowTitle << std::endl;
-        return 0;
-    }
-
-    auto wnd = new PlipSdl::SdlWindow(opts["scale"].as<int>(), windowTitle);
+    auto wnd = new PlipSdl::SdlWindow(opts["scale"].as<int>(), version);
 
     return 0;
 }

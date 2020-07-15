@@ -19,7 +19,9 @@ add_custom_target(
         COMMAND ${CMAKE_COMMAND}
         -Dcmake_root="${CMAKE_CURRENT_SOURCE_DIR}"
         -Dsrc_root="${CMAKE_CURRENT_SOURCE_DIR}/libplip"
+        -DPRODUCT_NAME="${product_name}"
         -DBIN_NAME="${lib_name}"
+        -DVERSION_FILE="PlipVersion.h"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/version.cmake"
 )
 
@@ -32,16 +34,6 @@ add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)
 ########
 # plip #
 ########
-add_custom_target(
-        GENERATE_CLI_VERSION_HEADER
-        COMMAND ${CMAKE_COMMAND}
-        -Dcmake_root="${CMAKE_CURRENT_SOURCE_DIR}"
-        -Dsrc_root="${CMAKE_CURRENT_SOURCE_DIR}/plip-sdl"
-        -DPRODUCT_NAME="${product_name}"
-        -DBIN_NAME="${gui_name}"
-        -P "${CMAKE_CURRENT_SOURCE_DIR}/version.cmake"
-)
-
 add_executable(${gui_name}
         plip-sdl/main.cpp
         plip-sdl/SdlWindow.cpp
@@ -56,5 +48,3 @@ target_link_libraries(${gui_name}
         plip
         ${SDL2_LIBRARIES}
 )
-
-add_dependencies(${gui_name} GENERATE_CLI_VERSION_HEADER)
