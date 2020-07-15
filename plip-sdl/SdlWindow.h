@@ -29,6 +29,7 @@ namespace PlipSdl {
 
         int m_width = m_init_width;
         int m_height = m_init_height;
+        int m_scale;
 
         SDL_Window *m_window = nullptr;
         SDL_Renderer *m_renderer = nullptr;
@@ -36,6 +37,5 @@ namespace PlipSdl {
 
         Plip::PlipVideoFormat m_format = Plip::PlipVideoFormat::Unknown;
 
-        int m_scale;
     };
 }
