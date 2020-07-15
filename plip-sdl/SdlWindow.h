@@ -15,7 +15,12 @@ namespace PlipSdl {
         explicit SdlWindow(int scale = 1, const std::string &title = "");
         ~SdlWindow();
 
+        bool BeginDraw() override;
+        void Clear() override;
+        void Draw(void *data) override;
+        bool EndDraw() override;
         Plip::PlipVideoFormat GetFormat() override;
+        void Render() override;
         void Resize(int width, int height) override;
         void SetScale(int scale);
         void SetTitle(std::string title) override;
@@ -24,18 +29,20 @@ namespace PlipSdl {
         void CreateTexture();
         bool SelectFormat(uint32_t format);
 
-        const int m_init_width = 64;
-        const int m_init_height = 64;
+        const int m_initWidth = 64;
+        const int m_initHeight = 64;
 
-        int m_width = m_init_width;
-        int m_height = m_init_height;
+        int m_width = m_initWidth;
+        int m_height = m_initHeight;
         int m_scale;
+
+        void *m_texData = nullptr;
+        int m_pitch = -1;
 
         SDL_Window *m_window = nullptr;
         SDL_Renderer *m_renderer = nullptr;
         SDL_Texture *m_texture = nullptr;
 
         Plip::PlipVideoFormat m_format = Plip::PlipVideoFormat::Unknown;
-
     };
 }

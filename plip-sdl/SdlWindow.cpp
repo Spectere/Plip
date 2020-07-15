@@ -64,6 +64,14 @@ namespace PlipSdl {
         if(m_window != nullptr) SDL_DestroyWindow(m_window);
     }
 
+    bool SdlWindow::BeginDraw() {
+        return SDL_LockTexture(m_texture, nullptr, &m_texData, &m_pitch) == 0;
+    }
+
+    void SdlWindow::Clear() {
+        SDL_RenderClear(m_renderer);
+    }
+
     void SdlWindow::CreateTexture() {
         if(m_texture != nullptr) SDL_DestroyTexture(m_texture);
 
@@ -87,6 +95,8 @@ namespace PlipSdl {
             case Plip::PlipVideoFormat::BGRA8888:
                 pixelFormat = SDL_PIXELFORMAT_BGRA8888;
                 break;
+            default:
+                throw Plip::PlipVideoException("Unsupported pixel format.");
         }
 
         m_texture = nullptr;
@@ -101,8 +111,22 @@ namespace PlipSdl {
         }
     }
 
+    void SdlWindow::Draw(void *data) {
+        memcpy(m_texData, data, m_pitch * m_height);
+    }
+
+    bool SdlWindow::EndDraw() {
+        SDL_UnlockTexture(m_texture);
+        return true;
+    }
+
     Plip::PlipVideoFormat SdlWindow::GetFormat() {
         return m_format;
+    }
+
+    void SdlWindow::Render() {
+        SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
+        SDL_RenderPresent(m_renderer);
     }
 
     void SdlWindow::Resize(int width, int height) {
