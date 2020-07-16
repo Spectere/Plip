@@ -27,6 +27,8 @@ add_custom_target(
 
 add_library(${lib_name}
         libplip/Plip.cpp
+        libplip/PlipInput.cpp
+        libplip/PlipInputDefinition.cpp
 )
 
 add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)

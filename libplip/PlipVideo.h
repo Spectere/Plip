@@ -31,6 +31,5 @@ namespace Plip {
 
     protected:
         PlipVideo() = default;
-        ~PlipVideo() = default;
     };
 }

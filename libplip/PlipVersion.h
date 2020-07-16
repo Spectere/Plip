@@ -5,5 +5,5 @@
 
 #define GIT_FOUND
 #define GIT_BRANCH "master"
-#define GIT_REVISION "a6b8d9f"
+#define GIT_REVISION "e43f14f"
 /* #undef GIT_TAG */
