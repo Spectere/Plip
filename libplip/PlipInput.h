@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <string>
 
 #include "PlipInputDefinition.h"
@@ -13,14 +13,16 @@
 namespace Plip {
     class PlipInput {
     public:
-        void AddInput(int id, const PlipInputDefinition &input);
-        void AddInput(std::map<int, PlipInputDefinition> inputList);
-        void ClearInput();
+        virtual void AddInput(int id, const PlipInputDefinition &input, const PlipInputData &initialData) final;
+        virtual void AddInput(std::unordered_map<int, PlipInputDefinition> inputList) final;
+        virtual void ClearInput() final;
+        virtual PlipInputData GetInput(int id) final;
+        virtual void UpdateInput(int id, PlipInputData data) final;
 
     protected:
         PlipInput() = default;
 
     private:
-        std::map<int, PlipInputDefinition> m_coreInput;
+        std::unordered_map<int, PlipInputDefinition> m_coreInput;
     };
 }

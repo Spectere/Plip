@@ -16,17 +16,18 @@ namespace Plip {
         Digital
     };
 
-    class PlipInputDefinition {
+    class PlipInputDefinition final {
     public:
         PlipInputDefinition(PlipInputType type, const std::string &description);
 
+        PlipInputData GetData() const;
         std::string GetDescription() const;
         PlipInputType GetType() const;
-
-        PlipInputData data;
+        void SetData(PlipInputData data);
 
     private:
-        PlipInputType m_type;
+        PlipInputData m_data;
         std::string m_description;
+        PlipInputType m_type;
     };
 }

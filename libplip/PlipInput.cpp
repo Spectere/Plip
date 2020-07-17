@@ -6,15 +6,25 @@
 #include "PlipInput.h"
 
 namespace Plip {
-    void PlipInput::AddInput(int id, const PlipInputDefinition& input) {
+    void PlipInput::AddInput(int id, const PlipInputDefinition &input, const PlipInputData &initialData) {
         m_coreInput.insert(std::pair<int, PlipInputDefinition>(id, input));
+        UpdateInput(id, initialData);
     }
 
-    void PlipInput::AddInput(std::map<int, PlipInputDefinition> inputList) {
+    void PlipInput::AddInput(std::unordered_map<int, PlipInputDefinition> inputList) {
         m_coreInput.insert(inputList.begin(), inputList.end());
     }
 
     void PlipInput::ClearInput() {
         m_coreInput.clear();
+    }
+
+    PlipInputData PlipInput::GetInput(int id) {
+        return m_coreInput.find(id)->second.GetData();
+    }
+
+    void PlipInput::UpdateInput(int id, PlipInputData data) {
+        if(m_coreInput.find(id) == m_coreInput.end()) return;
+        m_coreInput.find(id)->second.SetData(data);
     }
 }

@@ -8,6 +8,7 @@
 #include "cxxopts.hpp"
 #include "Plip.h"
 
+#include "SdlEvent.h"
 #include "SdlWindow.h"
 
 cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
@@ -69,6 +70,7 @@ int main(int argc, char **argv) {
     }
 
     auto wnd = new PlipSdl::SdlWindow(opts["scale"].as<int>(), version);
+    auto event = new PlipSdl::SdlEvent();
 
     return 0;
 }

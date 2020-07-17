@@ -38,6 +38,7 @@ add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)
 ########
 add_executable(${gui_name}
         plip-sdl/main.cpp
+        plip-sdl/SdlEvent.cpp
         plip-sdl/SdlWindow.cpp
 )
 
