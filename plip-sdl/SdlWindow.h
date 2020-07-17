@@ -22,8 +22,9 @@ namespace PlipSdl {
         Plip::PlipVideoFormat GetFormat() override;
         void Render() override;
         void Resize(int width, int height) override;
-        void SetScale(int scale);
         void SetTitle(std::string title) override;
+
+        void SetScale(int scale);
 
     private:
         void CreateTexture();
