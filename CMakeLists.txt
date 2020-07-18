@@ -8,6 +8,12 @@ set(CMAKE_CXX_STANDARD 14)
 
 find_package(SDL2 REQUIRED)
 
+if(UNIX)
+    add_compile_definitions(UNIX)
+elseif(WIN32)
+    add_compile_definitions(WIN32)
+endif()
+
 ###########
 # libplip #
 ###########
@@ -41,6 +47,16 @@ add_executable(${gui_name}
         plip-sdl/SdlEvent.cpp
         plip-sdl/SdlWindow.cpp
 )
+
+if(UNIX)
+    target_sources(${gui_name} PRIVATE
+        plip-sdl/TimerPosix.cpp
+    )
+else()
+    target_sources(${gui_name} PRIVATE
+        plip-sdl/TimerSdl.cpp
+    )
+endif()
 
 target_include_directories(${gui_name}
         PRIVATE ${CMAKE_SOURCE_DIR}/libplip

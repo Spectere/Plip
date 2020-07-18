@@ -11,7 +11,13 @@
 #include "SdlEvent.h"
 #include "SdlWindow.h"
 
-void gameLoop(Plip::Plip *plip) {
+#ifdef UNIX
+#include "TimerPosix.h"
+#else
+#include "TimerSdl.h"
+#endif
+
+void gameLoop(Plip::Plip *plip, PlipSdl::Timer *timer) {
 }
 
 cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
@@ -76,7 +82,13 @@ int main(int argc, char **argv) {
     auto event = new PlipSdl::SdlEvent();
     auto plip = new Plip::Plip(event, wnd);
 
-    gameLoop(plip);
+#ifdef UNIX
+    auto timer = new PlipSdl::TimerPosix();
+#else
+    auto timer = new PlipSdl::TimerSdl();
+#endif
+
+    gameLoop(plip, timer);
 
     return 0;
 }
