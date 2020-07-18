@@ -7,6 +7,15 @@
 #include "PlipVersion.h"
 
 namespace Plip {
+    Plip::Plip(PlipInput *input, PlipVideo *video) {
+        m_input = input;
+        m_video = video;
+    }
+
+    PlipInput* Plip::GetInput() {
+        return m_input;
+    }
+
     std::string Plip::GetVersion() {
         #ifndef GIT_FOUND
             return PRODUCT_NAME;
@@ -17,5 +26,9 @@ namespace Plip {
                 return PRODUCT_NAME " " GIT_TAG;
             #endif // GIT_TAG
         #endif // GIT_FOUND
+    }
+
+    PlipVideo* Plip::GetVideo() {
+        return m_video;
     }
 }

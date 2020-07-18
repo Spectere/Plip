@@ -8,7 +8,7 @@
 #include "PlipInput.h"
 
 namespace PlipSdl {
-    class SdlEvent : protected Plip::PlipInput {
+    class SdlEvent : public Plip::PlipInput {
     public:
         SdlEvent() = default;
     };

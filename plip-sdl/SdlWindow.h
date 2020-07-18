@@ -10,7 +10,7 @@
 #include "PlipVideo.h"
 
 namespace PlipSdl {
-    class SdlWindow : Plip::PlipVideo {
+    class SdlWindow : public Plip::PlipVideo {
     public:
         explicit SdlWindow(int scale = 1, const std::string &title = "");
         ~SdlWindow();

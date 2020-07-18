@@ -11,6 +11,9 @@
 #include "SdlEvent.h"
 #include "SdlWindow.h"
 
+void gameLoop(Plip::Plip *plip) {
+}
+
 cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
     try {
         cxxopts::Options options(argv[0]);
@@ -71,6 +74,9 @@ int main(int argc, char **argv) {
 
     auto wnd = new PlipSdl::SdlWindow(opts["scale"].as<int>(), version);
     auto event = new PlipSdl::SdlEvent();
+    auto plip = new Plip::Plip(event, wnd);
+
+    gameLoop(plip);
 
     return 0;
 }
