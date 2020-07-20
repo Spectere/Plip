@@ -4,7 +4,7 @@ set(gui_name "plip-sdl")
 set(lib_name "plip")
 
 project(${gui_name})
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(SDL2 REQUIRED)
 
@@ -35,6 +35,7 @@ add_library(${lib_name}
         libplip/Plip.cpp
         libplip/PlipInput.cpp
         libplip/PlipInputDefinition.cpp
+        libplip/PlipMemoryMap.cpp
 )
 
 add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)
