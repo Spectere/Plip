@@ -37,6 +37,7 @@ add_library(${lib_name}
         libplip/PlipInputDefinition.cpp
         libplip/PlipMemoryMap.cpp
         libplip/PlipMemoryRam.cpp
+        libplip/PlipMemoryRom.cpp
 )
 
 add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)

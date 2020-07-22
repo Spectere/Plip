@@ -34,7 +34,20 @@ namespace Plip {
     }
 
     void PlipMemoryMap::AssignBlockDirect(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length) {
-        // TODO: Search for the appropriate spot and insert an entry.
+        auto it = m_range.begin();
+        auto end = m_range.end();
+
+        while(it != end) {
+            if(it->startAddress > address) break;
+            it++;
+        }
+
+        m_range.insert(it, {
+            .startAddress = address,
+            .memory = memory,
+            .offset = offset,
+            .length = length
+        });
     }
 
     std::tuple<PlipMemory*, uint32_t> PlipMemoryMap::FindAddress(uint32_t address) {
@@ -119,8 +132,36 @@ namespace Plip {
                 case PartiallyInRange:
                     // Remove the portion of the block that overlaps.
                     foundBlock = true;
+                    auto blockEnd = it->startAddress + it->length - 1;
 
-                    // TODO: Implement me.
+                    if(address <= it->startAddress) {
+                        // Unassign range overlaps the beginning of the memory
+                        // block. Move the starting address and offset forward,
+                        // and bump the length back.
+                        auto adjust = endAddress - it->startAddress + 1;
+                        it->startAddress += adjust;
+                        it->offset += adjust;
+                        it->length -= adjust;
+                    } else if(address > it->startAddress && endAddress >= blockEnd) {
+                        // Unassign range overlaps the end of the memory block.
+                        // Pull the block length back.
+                        it->length -= endAddress - address + 1;
+                    } else {
+                        // Unassign range falls in the middle of this memory
+                        // block. Truncate the block, then push in a new block
+                        // with an adjusted offset/length.
+                        it->length = address - it->startAddress;
+
+                        auto newStart = endAddress + 1;
+                        auto newLength = blockEnd - endAddress;
+                        auto offset = endAddress - it->startAddress + 1;
+                        AssignBlockDirect(it->memory, newStart, offset, newLength);
+
+                        // There's no way there are any block beyond this, so
+                        // break here.
+                        it = end;
+                        break;
+                    }
 
                     it++;
                     continue;
