@@ -20,6 +20,7 @@ namespace Plip {
 
     class PlipMemoryMap {
     public:
+        void AddBlock(PlipMemory *memory, uint32_t offset);
         void AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length);
         uint8_t GetByte(uint32_t address);
         uint32_t GetLength();

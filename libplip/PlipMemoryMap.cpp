@@ -8,6 +8,10 @@
 #include "PlipMemoryMap.h"
 
 namespace Plip {
+    void PlipMemoryMap::AddBlock(PlipMemory *memory, uint32_t offset) {
+        AddBlock(memory, offset, memory->GetLength());
+    }
+
     void PlipMemoryMap::AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length) {
         uint32_t start = 0;
 
@@ -25,11 +29,12 @@ namespace Plip {
     }
 
     std::tuple<PlipMemory*, uint32_t> PlipMemoryMap::FindAddress(uint32_t address) {
+        printf("Finding memory address: 0x%.8X\n", address);
         for(auto const &memory : m_range) {
-            if(address < memory.startAddress || address > memory.startAddress + memory.length)
+            if(address < memory.startAddress || address > memory.startAddress + memory.length - 1)
                 continue;
 
-            return { memory.memory, address - memory.startAddress };
+            return { memory.memory, address - memory.startAddress + memory.offset };
         }
 
         return { nullptr, 0 };
