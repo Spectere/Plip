@@ -63,6 +63,8 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
     }
 }
 
+#include "PlipMemoryMap.h"
+#include "PlipMemoryRam.h"
 int main(int argc, char **argv) {
     auto opts = parseCmdLine(argc, argv);
     auto version = Plip::Plip::GetVersion();
@@ -78,6 +80,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    /*
     auto wnd = new PlipSdl::SdlWindow(opts["scale"].as<int>(), version);
     auto event = new PlipSdl::SdlEvent();
     auto plip = new Plip::Plip(event, wnd);
@@ -89,6 +92,30 @@ int main(int argc, char **argv) {
 #endif
 
     gameLoop(plip, timer);
+    */
+
+    auto memMap = new Plip::PlipMemoryMap();
+    auto ram1 = new Plip::PlipMemoryRam(0x2000);
+    auto ram2 = new Plip::PlipMemoryRam(0x2000);
+    auto ram3 = new Plip::PlipMemoryRam(0x1000);
+    auto ram4 = new Plip::PlipMemoryRam(0x1000);
+    auto ram5 = new Plip::PlipMemoryRam(0x2000);
+    auto ram6 = new Plip::PlipMemoryRam(0x2000);
+    auto ram7 = new Plip::PlipMemoryRam(0x2000);
+    auto ram8 = new Plip::PlipMemoryRam(0x4000);
+    memMap->AddBlock(ram1); // 0x0000 - 0x1FFF
+    memMap->AddBlock(ram2); // 0x2000 - 0x3FFF
+    memMap->AddBlock(ram3); // 0x4000 - 0x4FFF
+    memMap->AddBlock(ram4); // 0x5000 - 0x5FFF
+    memMap->AddBlock(ram5); // 0x6000 - 0x7FFF
+    memMap->AddBlock(ram6); // 0x8000 - 0x9FFF
+    memMap->AddBlock(ram7); // 0xA000 - 0xBFFF
+    memMap->AddBlock(ram8); // 0xC000 - 0xFFFF
+
+    memMap->AssignBlock(ram4, 0x1000, 0x0000, 0x1000);
+    memMap->UnassignBlock(0x4000, 0x800);
+
+    std::cout << "Map length: " << memMap->GetLength() << std::endl;
 
     return 0;
 }
