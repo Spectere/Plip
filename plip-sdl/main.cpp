@@ -17,21 +17,40 @@
 #include "Timer/TimerSdl.h"
 #endif
 
+// TODO: Allow this to be user-defined.
+#define FRAME_TIME 16666666  // 60hz
+
 void gameLoop(Plip::Plip *plip, PlipSdl::Timer *timer) {
+    auto input = plip->GetInput();
+    auto video = plip->GetVideo();
+
     auto event = new PlipSdl::SdlEvent();
+
+    // <TEMP>
     SDL_Event ev;
+    // </TEMP>
 
     bool running = true;
     while(running) {
-        while(SDL_PollEvent(&ev)) {  // TODO: Temporary event loop. Remove me.
+        timer->StopwatchStart();
+
+        // <TEMP>>
+        // TODO: Temporary event loop. Remove me.
+        while(SDL_PollEvent(&ev)) {
             switch(ev.type) {
                 case SDL_QUIT:
                     running = false;
                     break;
             }
         }
+        // </TEMP>
 
-        timer->Nanosleep(16666666);
+        auto time = timer->StopwatchStop();
+        auto delay = FRAME_TIME - time;
+        while(delay < 0)
+            delay += FRAME_TIME;
+
+        timer->Nanosleep(delay);
     }
 }
 
