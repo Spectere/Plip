@@ -24,7 +24,8 @@ namespace Plip {
     }
 
     void PlipInput::UpdateInput(int id, PlipInputData data) {
-        if(m_coreInput.find(id) == m_coreInput.end()) return;
-        m_coreInput.find(id)->second.SetData(data);
+        auto it = m_coreInput.find(id);
+        if(it == m_coreInput.end()) return;
+        it->second.SetData(data);
     }
 }

@@ -4,10 +4,12 @@
  */
 
 #include <iostream>
+#include <string>
 
 #include "cxxopts.hpp"
 #include "Plip.h"
 
+#include "Config.h"
 #include "SDL/SdlEvent.h"
 #include "SDL/SdlWindow.h"
 
@@ -17,38 +19,28 @@
 #include "Timer/TimerSdl.h"
 #endif
 
-// TODO: Allow this to be user-defined.
-#define FRAME_TIME 16666666  // 60hz
-
-void gameLoop(Plip::Plip *plip, PlipSdl::Timer *timer) {
+void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::Timer *timer) {
     auto input = plip->GetInput();
     auto video = plip->GetVideo();
 
-    auto event = new PlipSdl::SdlEvent();
+    auto event = new PlipSdl::SdlEvent(input);
 
-    // <TEMP>
-    SDL_Event ev;
-    // </TEMP>
+    auto targetFps = std::stoi(config->GetValue("video", "targetFps"));
+    auto frameTime = 1000000000 / targetFps;
 
-    bool running = true;
+    std::cout << targetFps << "hz (" << frameTime << "ns)" << std::endl;
+
+    auto running = true;
     while(running) {
         timer->StopwatchStart();
 
-        // <TEMP>>
-        // TODO: Temporary event loop. Remove me.
-        while(SDL_PollEvent(&ev)) {
-            switch(ev.type) {
-                case SDL_QUIT:
-                    running = false;
-                    break;
-            }
-        }
-        // </TEMP>
+        if(event->ProcessEvents() == PlipSdl::SdlUiEvent::Quit)
+            running = false;
 
         auto time = timer->StopwatchStop();
-        auto delay = FRAME_TIME - time;
+        auto delay = frameTime - time;
         while(delay < 0)
-            delay += FRAME_TIME;
+            delay += frameTime;
 
         timer->Nanosleep(delay);
     }
@@ -62,18 +54,22 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
                 .show_positional_help();
 
         options.add_options(cxxopts::hidden_group)
-                ("c,core", "the core that should be used", cxxopts::value<std::string>())
-                ("f,filename", "the path to the ROM", cxxopts::value<std::string>())
+                ("core", "the core that should be used", cxxopts::value<std::string>())
+                ("filename", "the path to the ROM", cxxopts::value<std::string>())
                 ("positional", "", cxxopts::value<std::vector<std::string>>())
         ;
 
         options.add_options()
                 ("h,help", "shows this help screen and exits")
+                ("c,config", "specifies a config file", cxxopts::value<std::string>())
                 ("l,list-cores", "shows a list of all supported cores and exits")
-                ("V,version", "displays the version information and exits");
+                ("V,version", "displays the version information and exits")
+        ;
 
         options.add_options("Video")
-                ("s,scale", "sets the default window scaling", cxxopts::value<int>()->default_value("1"));
+                ( "f,fps", "sets the target frame rate", cxxopts::value<int>()->default_value("60"))
+                ( "s,scale", "sets the default window scaling", cxxopts::value<int>()->default_value("1"))
+        ;
 
         options.parse_positional({"core", "filename", "positional"});
 
@@ -114,7 +110,25 @@ int main(int argc, char **argv) {
 
     SDL_Init(0);
 
-    auto wnd = new PlipSdl::SdlWindow(opts["scale"].as<int>(), version);
+    // TODO: Make the config handler less of a mess. :|
+    auto config = new PlipSdl::Config();
+    config->SetValue("video", "scale", "1");
+    config->SetValue("video", "targetFps", "60");
+
+    if(opts["config"].count()) {
+        auto configFile = opts["config"].as<std::string>();
+        if(!config->LoadFile(configFile))
+            std::cerr << "Error opening config file: " << configFile << std::endl;
+    }
+
+    if(opts["scale"].count())
+        config->SetValue("video", "scale", std::to_string(opts["scale"].as<int>()));
+    if(opts["fps"].count())
+        config->SetValue("video", "targetFps", std::to_string(opts["fps"].as<int>()));
+
+    auto videoScale = std::stoi(config->GetValue("video", "scale"));
+
+    auto wnd = new PlipSdl::SdlWindow(videoScale, version);
     auto plip = new Plip::Plip(wnd);
 
 #ifdef UNIX
@@ -123,7 +137,7 @@ int main(int argc, char **argv) {
     auto timer = new PlipSdl::TimerSdl();
 #endif
 
-    gameLoop(plip, timer);
+    gameLoop(plip, config, timer);
 
     SDL_Quit();
     return 0;

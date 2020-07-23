@@ -26,7 +26,7 @@ if(GIT_FOUND)
             OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    message(STATUS "${APP_TITLE}: ${GIT_BRANCH}@${GIT_REVISION}; tag: ${GIT_TAG}")
+    message(STATUS "${PRODUCT_NAME}: ${GIT_BRANCH}@${GIT_REVISION}; tag: ${GIT_TAG}")
 else()
     message(STATUS "Git package not found. Unable to fetch version information.")
 endif()
