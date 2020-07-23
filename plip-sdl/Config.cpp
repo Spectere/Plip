@@ -3,6 +3,7 @@
  * Loads and stores configuration data in an INI-like format.
  */
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
