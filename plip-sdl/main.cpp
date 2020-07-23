@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "cxxopts.hpp"
 #include "Plip.h"
@@ -19,16 +20,24 @@
 #include "Timer/TimerSdl.h"
 #endif
 
+std::vector<std::vector<std::string>> defaultConfig = {
+        { "video", "scale"    , "1"  },
+        { "video", "targetFps", "60" }
+};
+
+std::vector<std::vector<std::string>> intParamMapping = {
+        { "scale", "video", "scale"     },
+        { "fps"  , "video", "targetFps" }
+};
+
 void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::Timer *timer) {
     auto input = plip->GetInput();
     auto video = plip->GetVideo();
 
     auto event = new PlipSdl::SdlEvent(input);
 
-    auto targetFps = std::stoi(config->GetValue("video", "targetFps"));
+    auto targetFps = config->GetValue<int>("video", "targetFps");
     auto frameTime = 1000000000 / targetFps;
-
-    std::cout << targetFps << "hz (" << frameTime << "ns)" << std::endl;
 
     auto running = true;
     while(running) {
@@ -110,10 +119,10 @@ int main(int argc, char **argv) {
 
     SDL_Init(0);
 
-    // TODO: Make the config handler less of a mess. :|
     auto config = new PlipSdl::Config();
-    config->SetValue("video", "scale", "1");
-    config->SetValue("video", "targetFps", "60");
+
+    for(auto opt : defaultConfig)
+        config->SetValue(opt[0], opt[1], opt[2]);
 
     if(opts["config"].count()) {
         auto configFile = opts["config"].as<std::string>();
@@ -121,12 +130,16 @@ int main(int argc, char **argv) {
             std::cerr << "Error opening config file: " << configFile << std::endl;
     }
 
-    if(opts["scale"].count())
-        config->SetValue("video", "scale", std::to_string(opts["scale"].as<int>()));
-    if(opts["fps"].count())
-        config->SetValue("video", "targetFps", std::to_string(opts["fps"].as<int>()));
+    for(auto param : intParamMapping) {
+        if(opts[param[0]].count()) {
+            config->SetValue(
+                    param[1], param[2],
+                    std::to_string(opts[param[0]].as<int>())
+            );
+        }
+    }
 
-    auto videoScale = std::stoi(config->GetValue("video", "scale"));
+    auto videoScale = config->GetValue<int>("video", "scale");
 
     auto wnd = new PlipSdl::SdlWindow(videoScale, version);
     auto plip = new Plip::Plip(wnd);

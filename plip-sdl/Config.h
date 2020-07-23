@@ -17,6 +17,21 @@ namespace PlipSdl {
         void SetValue(const std::string &key, const std::string &value);
         void SetValue(const std::string &section, const std::string &key, const std::string &value);
 
+        template<typename T>
+        T GetValue(const std::string &key) {
+            return GetValue<T>(global, key);
+        }
+
+        template<typename T>
+        T GetValue(const std::string &section, const std::string &key) {
+            auto val = GetValue(section, key);
+            T output;
+
+            std::stringstream conversion(val);
+            conversion >> output;
+            return output;
+        }
+
         const std::string global = "\x01";
         const std::string empty = "\xff";
 
