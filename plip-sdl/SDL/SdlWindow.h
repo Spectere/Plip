@@ -7,7 +7,7 @@
 
 #include <SDL.h>
 
-#include "PlipVideo.h"
+#include "Video/PlipVideo.h"
 
 namespace PlipSdl {
     class SdlWindow : public Plip::PlipVideo {
@@ -20,6 +20,8 @@ namespace PlipSdl {
         void Draw(void *data) override;
         bool EndDraw() override;
         Plip::PlipVideoFormat GetFormat() override;
+        int GetHeight() override;
+        int GetWidth() override;
         void Render() override;
         void Resize(int width, int height) override;
         void SetTitle(std::string title) override;
@@ -29,6 +31,7 @@ namespace PlipSdl {
     private:
         void CreateTexture();
         bool SelectFormat(uint32_t format);
+        static uint32_t SelectSdlFormat(Plip::PlipVideoFormat format);
 
         const int m_initWidth = 64;
         const int m_initHeight = 64;

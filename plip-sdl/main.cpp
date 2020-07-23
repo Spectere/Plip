@@ -8,16 +8,31 @@
 #include "cxxopts.hpp"
 #include "Plip.h"
 
-#include "SdlEvent.h"
-#include "SdlWindow.h"
+#include "SDL/SdlEvent.h"
+#include "SDL/SdlWindow.h"
 
 #ifdef UNIX
-#include "TimerPosix.h"
+#include "Timer/TimerPosix.h"
 #else
-#include "TimerSdl.h"
+#include "Timer/TimerSdl.h"
 #endif
 
 void gameLoop(Plip::Plip *plip, PlipSdl::Timer *timer) {
+    auto event = new PlipSdl::SdlEvent();
+    SDL_Event ev;
+
+    bool running = true;
+    while(running) {
+        while(SDL_PollEvent(&ev)) {  // TODO: Temporary event loop. Remove me.
+            switch(ev.type) {
+                case SDL_QUIT:
+                    running = false;
+                    break;
+            }
+        }
+
+        timer->Nanosleep(16666666);
+    }
 }
 
 cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
@@ -78,9 +93,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    SDL_Init(0);
+
     auto wnd = new PlipSdl::SdlWindow(opts["scale"].as<int>(), version);
-    auto event = new PlipSdl::SdlEvent();
-    auto plip = new Plip::Plip(event, wnd);
+    auto plip = new Plip::Plip(wnd);
 
 #ifdef UNIX
     auto timer = new PlipSdl::TimerPosix();
@@ -90,5 +106,6 @@ int main(int argc, char **argv) {
 
     gameLoop(plip, timer);
 
+    SDL_Quit();
     return 0;
 }

@@ -5,7 +5,7 @@
 
 #include <sstream>
 
-#include "PlipVideoException.h"
+#include "Video/PlipVideoException.h"
 
 #include "SdlWindow.h"
 
@@ -14,6 +14,8 @@ namespace PlipSdl {
         std::stringstream error;
 
         m_scale = scale;
+
+        SDL_InitSubSystem(SDL_INIT_VIDEO);
 
         // Try to create a window.
         m_window = SDL_CreateWindow(title.c_str(),
@@ -75,29 +77,7 @@ namespace PlipSdl {
     void SdlWindow::CreateTexture() {
         if(m_texture != nullptr) SDL_DestroyTexture(m_texture);
 
-        uint32_t pixelFormat;
-        switch(m_format) {
-            case Plip::PlipVideoFormat::RGB888:
-                pixelFormat = SDL_PIXELFORMAT_RGB888;
-                break;
-            case Plip::PlipVideoFormat::BGR888:
-                pixelFormat = SDL_PIXELFORMAT_BGR888;
-                break;
-            case Plip::PlipVideoFormat::ARGB8888:
-                pixelFormat = SDL_PIXELFORMAT_ARGB8888;
-                break;
-            case Plip::PlipVideoFormat::ABGR8888:
-                pixelFormat = SDL_PIXELFORMAT_ABGR8888;
-                break;
-            case Plip::PlipVideoFormat::RGBA8888:
-                pixelFormat = SDL_PIXELFORMAT_RGBA8888;
-                break;
-            case Plip::PlipVideoFormat::BGRA8888:
-                pixelFormat = SDL_PIXELFORMAT_BGRA8888;
-                break;
-            default:
-                throw Plip::PlipVideoException("Unsupported pixel format.");
-        }
+        uint32_t pixelFormat = SelectSdlFormat(m_format);
 
         m_texture = nullptr;
         m_texture = SDL_CreateTexture(m_renderer,
@@ -124,6 +104,14 @@ namespace PlipSdl {
         return m_format;
     }
 
+    int SdlWindow::GetHeight() {
+        return m_height;
+    }
+
+    int SdlWindow::GetWidth() {
+        return m_width;
+    }
+
     void SdlWindow::Render() {
         SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
         SDL_RenderPresent(m_renderer);
@@ -142,26 +130,77 @@ namespace PlipSdl {
 
     bool SdlWindow::SelectFormat(uint32_t format) {
         switch(format) {
-            case SDL_PIXELFORMAT_RGB888:
+            case SDL_PIXELFORMAT_RGB24:
                 m_format = Plip::PlipVideoFormat::RGB888;
                 return true;
-            case SDL_PIXELFORMAT_BGR888:
+
+            case SDL_PIXELFORMAT_BGR24:
                 m_format = Plip::PlipVideoFormat::BGR888;
                 return true;
+
+            case SDL_PIXELFORMAT_RGB888:
+                m_format = Plip::PlipVideoFormat::XRGB8888;
+                return true;
+
+            case SDL_PIXELFORMAT_BGR888:
+                m_format = Plip::PlipVideoFormat::XBGR8888;
+                return true;
+
             case SDL_PIXELFORMAT_ARGB8888:
                 m_format = Plip::PlipVideoFormat::ARGB8888;
                 return true;
+
             case SDL_PIXELFORMAT_ABGR8888:
                 m_format = Plip::PlipVideoFormat::ABGR8888;
                 return true;
+
+            case SDL_PIXELFORMAT_RGBX8888:
+                m_format = Plip::PlipVideoFormat::RGBX8888;
+                return true;
+
+            case SDL_PIXELFORMAT_BGRX8888:
+                m_format = Plip::PlipVideoFormat::BGRX8888;
+                return true;
+
             case SDL_PIXELFORMAT_RGBA8888:
                 m_format = Plip::PlipVideoFormat::RGBA8888;
                 return true;
+
             case SDL_PIXELFORMAT_BGRA8888:
                 m_format = Plip::PlipVideoFormat::BGRA8888;
                 return true;
+
             default:
                 return false;
+        }
+    }
+
+    uint32_t SdlWindow::SelectSdlFormat(Plip::PlipVideoFormat format) {
+        switch(format) {
+            case Plip::PlipVideoFormat::RGB888:
+                return SDL_PIXELFORMAT_RGB24;
+
+            case Plip::PlipVideoFormat::BGR888:
+                return SDL_PIXELFORMAT_BGR24;
+
+            case Plip::PlipVideoFormat::XRGB8888:
+            case Plip::PlipVideoFormat::ARGB8888:
+                return SDL_PIXELFORMAT_ARGB8888;
+
+            case Plip::PlipVideoFormat::XBGR8888:
+            case Plip::PlipVideoFormat::ABGR8888:
+                return SDL_PIXELFORMAT_ABGR8888;
+
+            case Plip::PlipVideoFormat::RGBX8888:
+            case Plip::PlipVideoFormat::RGBA8888:
+                return SDL_PIXELFORMAT_RGBA8888;
+
+            case Plip::PlipVideoFormat::BGRX8888:
+            case Plip::PlipVideoFormat::BGRA8888:
+                return SDL_PIXELFORMAT_BGRA8888;
+
+            default:
+                throw Plip::PlipVideoException("Unsupported pixel format.");
         }
     }
 

@@ -33,12 +33,17 @@ add_custom_target(
 
 add_library(${lib_name}
         libplip/Plip.cpp
-        libplip/PlipInput.cpp
-        libplip/PlipInputDefinition.cpp
-        libplip/PlipMemoryMap.cpp
-        libplip/PlipMemoryRam.cpp
-        libplip/PlipMemoryRom.cpp
+        libplip/Input/PlipInput.cpp
+        libplip/Input/PlipInputDefinition.cpp
+        libplip/Memory/PlipMemoryMap.cpp
+        libplip/Memory/PlipMemoryRam.cpp
+        libplip/Memory/PlipMemoryRom.cpp
+        libplip/Video/PlipVideo.cpp
 )
+
+if(BIG_ENDIAN)
+    target_compile_definitions(${lib_name} PRIVATE CORE_BIG_ENDIAN)
+endif()
 
 add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)
 
@@ -47,17 +52,17 @@ add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)
 ########
 add_executable(${gui_name}
         plip-sdl/main.cpp
-        plip-sdl/SdlEvent.cpp
-        plip-sdl/SdlWindow.cpp
+        plip-sdl/SDL/SdlEvent.cpp
+        plip-sdl/SDL/SdlWindow.cpp
 )
 
 if(UNIX)
     target_sources(${gui_name} PRIVATE
-        plip-sdl/TimerPosix.cpp
+            plip-sdl/Timer/TimerPosix.cpp
     )
 else()
     target_sources(${gui_name} PRIVATE
-        plip-sdl/TimerSdl.cpp
+            plip-sdl/Timer/TimerSdl.cpp
     )
 endif()
 

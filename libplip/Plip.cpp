@@ -7,8 +7,7 @@
 #include "PlipVersion.h"
 
 namespace Plip {
-    Plip::Plip(PlipInput *input, PlipVideo *video) {
-        m_input = input;
+    Plip::Plip(PlipVideo *video) {
         m_video = video;
     }
 

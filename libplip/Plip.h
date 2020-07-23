@@ -7,13 +7,13 @@
 
 #include <string>
 
-#include "PlipInput.h"
-#include "PlipVideo.h"
+#include "Input/PlipInput.h"
+#include "Video/PlipVideo.h"
 
 namespace Plip {
     class Plip {
     public:
-        Plip(PlipInput *input, PlipVideo *video);
+        explicit Plip(PlipVideo *video);
 
         static std::string GetVersion();
 
@@ -21,7 +21,7 @@ namespace Plip {
         PlipVideo* GetVideo();
 
     private:
-        PlipInput *m_input;
+        PlipInput *m_input = new PlipInput();
         PlipVideo *m_video;
     };
 }
