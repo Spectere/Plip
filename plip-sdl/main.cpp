@@ -43,6 +43,9 @@ void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *even
         if(event->ProcessEvents() == PlipSdl::SdlUiEvent::Quit)
             running = false;
 
+        // As implemented, this will not be able to compensate for the host being
+        // unable to keep up with the emulation core.
+        // TODO: Fix this so that it will skip frames where appropriate.
         plip->Run(frameTime);
 
         auto time = timer->StopwatchStop();
