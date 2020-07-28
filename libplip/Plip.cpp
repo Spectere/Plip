@@ -6,6 +6,8 @@
 #include "Plip.h"
 #include "PlipVersion.h"
 
+#include "Core/PlipChip8.h"
+
 namespace Plip {
     Plip::Plip(PlipVideo *video) {
         m_video = video;
@@ -29,5 +31,17 @@ namespace Plip {
 
     PlipVideo* Plip::GetVideo() {
         return m_video;
+    }
+
+    PlipError Plip::Load(PlipValidCore core, const std::string &path) {
+        switch(core) {
+            case PlipValidCore::Chip8:
+                m_core = new Core::PlipChip8(m_input);
+                break;
+            default:
+                return PlipError::InvalidCore;
+        }
+
+        return m_core->Load(path);
     }
 }

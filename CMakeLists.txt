@@ -33,6 +33,9 @@ add_custom_target(
 
 add_library(${lib_name}
         libplip/Plip.cpp
+        libplip/PlipCore.cpp
+        libplip/PlipIo.cpp
+        libplip/Core/PlipChip8.cpp
         libplip/Input/PlipInput.cpp
         libplip/Input/PlipInputDefinition.cpp
         libplip/Memory/PlipMemoryMap.cpp

@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include "PlipCore.h"
+#include "PlipError.h"
 #include "Input/PlipInput.h"
 #include "Video/PlipVideo.h"
 
@@ -19,8 +21,10 @@ namespace Plip {
 
         PlipInput* GetInput();
         PlipVideo* GetVideo();
+        PlipError Load(PlipValidCore core, const std::string &path);
 
     private:
+        PlipCore *m_core = nullptr;
         PlipInput *m_input = new PlipInput();
         PlipVideo *m_video;
     };
