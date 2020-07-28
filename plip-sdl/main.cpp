@@ -111,6 +111,22 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    auto coreList = Plip::Plip::GetSupportedCores();
+    if(opts["list-cores"].count()) {
+        std::cout << "Supported cores:\n\n";
+        std::cout << "    Name    |    Description\n";
+        std::cout << "--------------------------------\n";
+
+        for(auto core : coreList) {
+            std::string name = core.name;
+            name.append(10 - name.length(), ' ');  // Pad string.
+            std::cout << " " << name << " | " << core.description << '\n';
+        }
+
+        std::cout << std::endl;
+        return 0;
+    }
+
     if(!opts.count("core") || !opts.count("filename")) {
         std::cerr << "The name of the core and the filename must be specified!\n\n"
                   << "Please see the usage information (" << argv[0] << " -h) for more information." << std::endl;
@@ -128,6 +144,25 @@ int main(int argc, char **argv) {
         auto configFile = opts["config"].as<std::string>();
         if(!config->LoadFile(configFile))
             std::cerr << "Error opening config file: " << configFile << std::endl;
+    }
+
+    // Check for core name validity.
+    auto found = false;
+    auto coreName = opts["core"].as<std::string>();
+    auto filename = opts["filename"].as<std::string>();
+    Plip::PlipValidCore coreTag;
+    for(auto core : coreList) {
+        if(core.name != coreName) continue;
+
+        found = true;
+        coreTag = core.descriptor;
+        break;
+    }
+
+    if(!found) {
+        std::cout << "Invalid core specified (" << coreName << ").\n\n";
+        std::cout << "Please check the core list (" << argv[0] << " -l) for valid entries." << std::endl;
+        return 1;
     }
 
     for(auto param : intParamMapping) {
@@ -149,6 +184,23 @@ int main(int argc, char **argv) {
 #else
     auto timer = new PlipSdl::TimerSdl();
 #endif
+
+    auto result = plip->Load(coreTag, filename);
+    switch(result) {
+        case Plip::PlipError::FileNotFound:
+            std::cout << "File not found (" << filename << ")!\n" << std::endl;
+            return 1;
+        case Plip::PlipError::InvalidCore:
+            std::cout << "BUG: Core implemented improperly!\n" << std::endl;
+            return 1;
+        default:
+            break;
+    }
+
+    auto dCore = plip->GetCore();
+    auto dMap = dCore->GetMemoryMap();
+    auto b = dMap->GetByte(0x200);
+    std::cout << b << std::endl;
 
     gameLoop(plip, config, timer);
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "PlipError.h"
 #include "Input/PlipInput.h"
@@ -16,9 +17,17 @@ namespace Plip {
         Chip8
     };
 
+    struct PlipCoreDescription {
+        const char *name;
+        PlipValidCore descriptor;
+        const char *description;
+    };
+
     class PlipCore {
     public:
-        virtual const PlipMemoryMap* GetMemoryMap() final { return m_memoryMap; }
+        static std::vector<PlipCoreDescription> GetSupportedCores();
+
+        virtual PlipMemoryMap* GetMemoryMap() final { return m_memoryMap; }
         virtual PlipError Load(const std::string &path) = 0;
 
     protected:
@@ -26,5 +35,13 @@ namespace Plip {
 
         PlipInput *m_input;
         PlipMemoryMap *m_memoryMap = new PlipMemoryMap();
+
+        static constexpr PlipCoreDescription m_supportedCores[] = {
+                {
+                        "chip8",
+                        PlipValidCore::Chip8,
+                        "CHIP-8"
+                }
+        };
     };
 }

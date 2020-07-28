@@ -13,8 +13,16 @@ namespace Plip {
         m_video = video;
     }
 
+    PlipCore* Plip::GetCore() {
+        return m_core;
+    }
+
     PlipInput* Plip::GetInput() {
         return m_input;
+    }
+
+    std::vector<PlipCoreDescription> Plip::GetSupportedCores() {
+        return PlipCore::GetSupportedCores();
     }
 
     std::string Plip::GetVersion() {

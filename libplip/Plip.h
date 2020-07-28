@@ -13,12 +13,14 @@
 #include "Video/PlipVideo.h"
 
 namespace Plip {
-    class Plip {
+    class Plip final {
     public:
         explicit Plip(PlipVideo *video);
 
         static std::string GetVersion();
+        static std::vector<PlipCoreDescription> GetSupportedCores();
 
+        PlipCore* GetCore();
         PlipInput* GetInput();
         PlipVideo* GetVideo();
         PlipError Load(PlipValidCore core, const std::string &path);
