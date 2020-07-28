@@ -30,11 +30,8 @@ std::vector<std::vector<std::string>> intParamMapping = {
         { "fps"  , "video", "targetFps" }
 };
 
-void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::Timer *timer) {
-    auto input = plip->GetInput();
+void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
     auto video = plip->GetVideo();
-
-    auto event = new PlipSdl::SdlEvent(input);
 
     auto targetFps = config->GetValue<int>("video", "targetFps");
     auto frameTime = 1000000000 / targetFps;
@@ -45,6 +42,8 @@ void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::Timer *timer) 
 
         if(event->ProcessEvents() == PlipSdl::SdlUiEvent::Quit)
             running = false;
+
+        plip->Run(frameTime);
 
         auto time = timer->StopwatchStop();
         auto delay = frameTime - time;
@@ -197,7 +196,19 @@ int main(int argc, char **argv) {
             break;
     }
 
-    gameLoop(plip, config, timer);
+    auto input = plip->GetInput();
+    auto event = new PlipSdl::SdlEvent(input);
+
+    // Load inputs for the active core.
+    std::string section = "input." + coreName;
+    for(const auto& coreInput : input->GetInputList()) {
+        auto key = config->GetValue(section, coreInput.second.GetDescription());
+        if(key == config->empty) continue;
+
+        event->AddDigitalBinding(coreInput.first, key);
+    }
+
+    gameLoop(plip, config, event, timer);
 
     SDL_Quit();
     return 0;

@@ -19,6 +19,7 @@ namespace Plip {
         virtual void AddInput(std::unordered_map<int, PlipInputDefinition> inputList);
         virtual void ClearInput();
         virtual PlipInputData GetInput(int id);
+        std::unordered_map<int, PlipInputDefinition> GetInputList() { return m_coreInput; }
         virtual void UpdateInput(int id, PlipInputData data);
 
     private:

@@ -24,6 +24,7 @@ namespace Plip {
         PlipInput* GetInput();
         PlipVideo* GetVideo();
         PlipError Load(PlipValidCore core, const std::string &path);
+        void Run(long ns);
 
     private:
         PlipCore *m_core = nullptr;

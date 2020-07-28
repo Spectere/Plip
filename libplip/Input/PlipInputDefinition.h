@@ -20,9 +20,9 @@ namespace Plip {
     public:
         PlipInputDefinition(PlipInputType type, const std::string &description);
 
-        PlipInputData GetData() const;
-        std::string GetDescription() const;
-        PlipInputType GetType() const;
+        [[nodiscard]] PlipInputData GetData() const;
+        [[nodiscard]] std::string GetDescription() const;
+        [[nodiscard]] PlipInputType GetType() const;
         void SetData(PlipInputData data);
 
     private:

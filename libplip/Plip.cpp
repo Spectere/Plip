@@ -52,4 +52,8 @@ namespace Plip {
 
         return m_core->Load(path);
     }
+
+    void Plip::Run(long ns) {
+        m_core->Delta(ns);
+    }
 }

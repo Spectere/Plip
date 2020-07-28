@@ -27,6 +27,7 @@ namespace Plip {
     public:
         static std::vector<PlipCoreDescription> GetSupportedCores();
 
+        virtual void Delta(long ns) = 0;
         virtual PlipMemoryMap* GetMemoryMap() final { return m_memoryMap; }
         virtual PlipError Load(const std::string &path) = 0;
 
@@ -36,6 +37,7 @@ namespace Plip {
         PlipInput *m_input;
         PlipMemoryMap *m_memoryMap = new PlipMemoryMap();
 
+    private:
         static constexpr PlipCoreDescription m_supportedCores[] = {
                 {
                         "chip8",
