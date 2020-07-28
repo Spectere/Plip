@@ -12,6 +12,7 @@
 #include "../PlipCore.h"
 #include "../PlipError.h"
 #include "../Input/PlipInput.h"
+#include "../Memory/PlipMemoryRam.h"
 
 namespace Plip::Core {
     class PlipChip8 : public PlipCore {
@@ -19,5 +20,11 @@ namespace Plip::Core {
         explicit PlipChip8(PlipInput *input);
 
         PlipError Load(const std::string &path) override;
+
+        static const uint32_t ProgramOffset = 0x200;
+        static const uint32_t RamSize = 0x1000;
+
+    private:
+        PlipMemoryRam *m_ram;
     };
 }

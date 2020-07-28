@@ -10,6 +10,7 @@
 
 namespace Plip::Core {
     PlipChip8::PlipChip8(PlipInput *input) : Plip::PlipCore(input) {
+        m_ram = new PlipMemoryRam(RamSize);
     }
 
     PlipError PlipChip8::Load(const std::string &path) {
@@ -17,8 +18,19 @@ namespace Plip::Core {
         if(!io::FileExists(path)) return PlipError::FileNotFound;
 
         auto size = io::GetSize(path);
-        auto ram = io::ReadRam(path, io::GetSize(path), 0x200, 0x1000);
-        m_memoryMap->AddBlock(&ram);
+        auto data = io::ReadFile(path, size);
+
+        // Zero RAM.
+        for(auto i = 0; i < RamSize; i++)
+            m_ram->SetByte(i, 0x00);
+
+        // Load program.
+        auto ramByte = ProgramOffset;
+        auto dataByte = 0;
+        while(dataByte < size && ramByte < RamSize)
+            m_ram->SetByte(ramByte++, data[dataByte++]);
+
+        m_memoryMap->AddBlock(m_ram);
         return PlipError::Success;
     }
 }

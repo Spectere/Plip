@@ -197,11 +197,6 @@ int main(int argc, char **argv) {
             break;
     }
 
-    auto dCore = plip->GetCore();
-    auto dMap = dCore->GetMemoryMap();
-    auto b = dMap->GetByte(0x200);
-    std::cout << b << std::endl;
-
     gameLoop(plip, config, timer);
 
     SDL_Quit();

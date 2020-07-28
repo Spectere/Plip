@@ -36,30 +36,4 @@ namespace Plip {
         auto file = LoadFile(path);
         return ReadFile(file, size);
     }
-
-    PlipMemoryRam PlipIo::ReadRam(std::ifstream &file, uintmax_t dataSize, uint32_t offset, uint32_t ramSize) {
-        auto data = ReadFile(file, dataSize);
-        auto ram = PlipMemoryRam(ramSize);
-
-        auto ramByte = offset;
-        auto dataByte = 0;
-        while(ramByte < dataSize && ramByte < ramSize)
-            ram.SetByte(ramByte++, data[dataByte++]);
-
-        return ram;
-    }
-
-    PlipMemoryRam PlipIo::ReadRam(const std::string &path, uintmax_t dataSize, uint32_t offset, uint32_t ramSize) {
-        auto file = LoadFile(path);
-        return ReadRam(file, dataSize, offset, ramSize);
-    }
-
-    PlipMemoryRom PlipIo::ReadRom(std::ifstream &file, uintmax_t size) {
-        return PlipMemoryRom(ReadFile(file, size).data(), size);
-    }
-
-    PlipMemoryRom PlipIo::ReadRom(const std::string &path, uintmax_t size) {
-        auto file = LoadFile(path);
-        return ReadRom(file, size);
-    }
 }
