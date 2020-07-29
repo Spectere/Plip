@@ -1,16 +1,16 @@
-/* PlipChip8.cpp
+/* Chip8Instance.cpp
  *
  * A CHIP-8 implementation for Plip.
  *
  * (hahaha, more like PLIP-8 amirite)
  */
 
-#include "PlipChip8.h"
-#include "../PlipIo.h"
+#include "Chip8Instance.h"
+#include "../../PlipIo.h"
 
-#include <iostream>
-namespace Plip::Core {
-    PlipChip8::PlipChip8(PlipInput *input) : Plip::PlipCore(input) {
+namespace Plip::Core::Chip8 {
+    Chip8Instance::Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video)
+    : Plip::PlipCore(audio, input, video) {
         m_ram = new PlipMemoryRam(RamSize);
         m_memoryMap->AddBlock(m_ram);
 
@@ -32,10 +32,10 @@ namespace Plip::Core {
         m_input->AddInput(0xF, PlipInputDefinition(PlipInputType::Digital, "F"), { .digital = false });
     }
 
-    void PlipChip8::Delta(long ns) {
+    void Chip8Instance::Delta(long ns) {
     }
 
-    PlipError PlipChip8::Load(const std::string &path) {
+    PlipError Chip8Instance::Load(const std::string &path) {
         using io = Plip::PlipIo;
         if(!io::FileExists(path)) return PlipError::FileNotFound;
 
@@ -58,7 +58,7 @@ namespace Plip::Core {
         return PlipError::Success;
     }
 
-    void PlipChip8::WriteCharacterSet(uint32_t address) {
+    void Chip8Instance::WriteCharacterSet(uint32_t address) {
         for(auto i = 0; i < m_charsetLength; i++)
             m_memoryMap->SetByte(address + i, m_charset[i]);
     }

@@ -6,11 +6,14 @@
 #pragma once
 
 #include <string>
+#include <tuple>
 #include <vector>
 
-#include "PlipError.h"
-#include "Input/PlipInput.h"
-#include "Memory/PlipMemoryMap.h"
+#include "../PlipError.h"
+#include "../Audio/PlipAudio.h"
+#include "../Input/PlipInput.h"
+#include "../Video/PlipVideo.h"
+#include "../Memory/PlipMemoryMap.h"
 
 namespace Plip {
     enum class PlipValidCore {
@@ -32,9 +35,12 @@ namespace Plip {
         virtual PlipError Load(const std::string &path) = 0;
 
     protected:
-        explicit PlipCore(PlipInput *input);
+        explicit PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video);
 
+        PlipAudio *m_audio;
         PlipInput *m_input;
+        PlipVideo *m_video;
+
         PlipMemoryMap *m_memoryMap = new PlipMemoryMap();
 
     private:

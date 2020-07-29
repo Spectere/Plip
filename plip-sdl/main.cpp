@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "cxxopts.hpp"
-#include "Plip.h"
+#include "PlipInstance.h"
 
 #include "Config.h"
 #include "SDL/SdlAudio.h"
@@ -54,7 +54,7 @@ std::vector<float> waveGen() {
     return res;
 }
 
-void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
+void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
     auto audio = plip->GetAudio();
     auto video = plip->GetVideo();
 
@@ -136,14 +136,14 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
 
 int main(int argc, char **argv) {
     auto opts = parseCmdLine(argc, argv);
-    auto version = Plip::Plip::GetVersion();
+    auto version = Plip::PlipInstance::GetVersion();
 
     if(opts.count("version")) {
         std::cout << version << std::endl;
         return 0;
     }
 
-    auto coreList = Plip::Plip::GetSupportedCores();
+    auto coreList = Plip::PlipInstance::GetSupportedCores();
     if(opts["list-cores"].count()) {
         std::cout << "Supported cores:\n\n";
         std::cout << "    Name    |    Description\n";
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
 
     auto wnd = new PlipSdl::SdlWindow(videoScale, version);
     auto audio = new PlipSdl::SdlAudio();
-    auto plip = new Plip::Plip(wnd, audio);
+    auto plip = new Plip::PlipInstance(wnd, audio);
 
 #ifdef UNIX
     auto timer = new PlipSdl::TimerPosix();

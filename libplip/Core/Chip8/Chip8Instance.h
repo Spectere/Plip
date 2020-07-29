@@ -1,4 +1,4 @@
-/* PlipChip8.h
+/* Chip8Instance.h
  *
  * A CHIP-8 implementation for Plip.
  *
@@ -10,14 +10,15 @@
 #include <string>
 
 #include "../PlipCore.h"
-#include "../PlipError.h"
-#include "../Input/PlipInput.h"
-#include "../Memory/PlipMemoryRam.h"
+#include "../../PlipError.h"
+#include "../../PlipInstance.h"
+#include "../../Input/PlipInput.h"
+#include "../../Memory/PlipMemoryRam.h"
 
-namespace Plip::Core {
-    class PlipChip8 : public PlipCore {
+namespace Plip::Core::Chip8 {
+    class Chip8Instance : public PlipCore {
     public:
-        explicit PlipChip8(PlipInput *input);
+        Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video);
 
         void Delta(long ns) override;
         PlipError Load(const std::string &path) override;

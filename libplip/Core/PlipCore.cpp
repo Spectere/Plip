@@ -6,8 +6,10 @@
 #include "PlipCore.h"
 
 namespace Plip {
-    PlipCore::PlipCore(PlipInput *input) {
+    PlipCore::PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video) {
+        m_audio = audio;
         m_input = input;
+        m_video = video;
     }
 
     std::vector<PlipCoreDescription> PlipCore::GetSupportedCores() {

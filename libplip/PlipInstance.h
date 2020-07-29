@@ -1,4 +1,4 @@
-/* Plip.h
+/* PlipInstance.h
  *
  * The main class for controlling the Plip emulation suite.
  */
@@ -7,16 +7,16 @@
 
 #include <string>
 
-#include "PlipCore.h"
 #include "PlipError.h"
+#include "Core/PlipCore.h"
 #include "Audio/PlipAudio.h"
 #include "Input/PlipInput.h"
 #include "Video/PlipVideo.h"
 
 namespace Plip {
-    class Plip final {
+    class PlipInstance final {
     public:
-        explicit Plip(PlipVideo *video, PlipAudio *audio);
+        PlipInstance(PlipVideo *video, PlipAudio *audio);
 
         static std::string GetVersion();
         static std::vector<PlipCoreDescription> GetSupportedCores();

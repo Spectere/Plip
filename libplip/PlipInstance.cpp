@@ -1,36 +1,36 @@
-/* Plip.cpp
+/* PlipInstance.cpp
  *
  * The main class for controlling the Plip emulation suite.
  */
 
-#include "Plip.h"
+#include "PlipInstance.h"
 #include "PlipVersion.h"
 
-#include "Core/PlipChip8.h"
+#include "Core/Chip8/Chip8Instance.h"
 
 namespace Plip {
-    Plip::Plip(PlipVideo *video, PlipAudio *audio) {
+    PlipInstance::PlipInstance(PlipVideo *video, PlipAudio *audio) {
         m_audio = audio;
         m_video = video;
     }
 
-    PlipAudio* Plip::GetAudio() {
+    PlipAudio* PlipInstance::GetAudio() {
         return m_audio;
     }
 
-    PlipCore* Plip::GetCore() {
+    PlipCore* PlipInstance::GetCore() {
         return m_core;
     }
 
-    PlipInput* Plip::GetInput() {
+    PlipInput* PlipInstance::GetInput() {
         return m_input;
     }
 
-    std::vector<PlipCoreDescription> Plip::GetSupportedCores() {
+    std::vector<PlipCoreDescription> PlipInstance::GetSupportedCores() {
         return PlipCore::GetSupportedCores();
     }
 
-    std::string Plip::GetVersion() {
+    std::string PlipInstance::GetVersion() {
         #ifndef GIT_FOUND
             return PRODUCT_NAME;
         #else
@@ -42,14 +42,14 @@ namespace Plip {
         #endif // GIT_FOUND
     }
 
-    PlipVideo* Plip::GetVideo() {
+    PlipVideo* PlipInstance::GetVideo() {
         return m_video;
     }
 
-    PlipError Plip::Load(PlipValidCore core, const std::string &path) {
+    PlipError PlipInstance::Load(PlipValidCore core, const std::string &path) {
         switch(core) {
             case PlipValidCore::Chip8:
-                m_core = new Core::PlipChip8(m_input);
+                m_core = new Core::Chip8::Chip8Instance(m_audio, m_input, m_video);
                 break;
             default:
                 return PlipError::InvalidCore;
@@ -58,7 +58,7 @@ namespace Plip {
         return m_core->Load(path);
     }
 
-    void Plip::Run(long ns) {
+    void PlipInstance::Run(long ns) {
         m_core->Delta(ns);
     }
 }
