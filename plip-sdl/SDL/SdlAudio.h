@@ -17,6 +17,7 @@ namespace PlipSdl {
 
         void DequeueAll() override;
         void Enqueue(std::vector<float> buffer) override;
+        int GetBufferSize() override;
         uintmax_t GetQueueSize() override;
 
         static const int SampleLength = 4096;

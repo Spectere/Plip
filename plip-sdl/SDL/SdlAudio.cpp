@@ -14,9 +14,9 @@ namespace PlipSdl {
         // Open audio device.
         SDL_AudioSpec want {};
 
-        want.freq = 8000; // Plip::PlipAudio::SampleRate;
-        want.format = AUDIO_S8;
-        want.channels = 1; // Plip::PlipAudio::Channels;
+        want.freq = Plip::PlipAudio::SampleRate;
+        want.format = AUDIO_F32;
+        want.channels = Plip::PlipAudio::Channels;
         want.samples = SampleLength;
         want.callback = nullptr;
 
@@ -79,6 +79,10 @@ namespace PlipSdl {
     void SdlAudio::Enqueue(std::vector<float> buffer) {
         if(!IsActive()) return;
         (this->*m_playFunc)(buffer.data(), buffer.size());
+    }
+
+    int SdlAudio::GetBufferSize() {
+        return m_spec.samples;
     }
 
     uintmax_t SdlAudio::GetQueueSize() {

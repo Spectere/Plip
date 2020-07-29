@@ -34,9 +34,14 @@ add_custom_target(
 add_library(${lib_name}
         libplip/PlipInstance.cpp
         libplip/PlipIo.cpp
+        libplip/PlipUtility.cpp
 
         libplip/Core/PlipCore.cpp
         libplip/Core/Chip8/Chip8Instance.cpp
+
+        libplip/Cpu/PlipCpu.cpp
+        libplip/Cpu/Chip8/Chip8.cpp
+        libplip/Cpu/Chip8/Chip8.Ops.cpp
 
         libplip/Input/PlipInput.cpp
         libplip/Input/PlipInputDefinition.cpp

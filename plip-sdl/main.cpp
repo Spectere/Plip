@@ -31,29 +31,6 @@ std::vector<std::vector<std::string>> intParamMapping = {
         { "fps"  , "video", "targetFps" }
 };
 
-#include <cmath>
-double angle = 0.0;
-std::vector<float> waveGen() {
-    using pa = Plip::PlipAudio;
-
-    auto vol = 0.5;
-    auto len = PlipSdl::SdlAudio::SampleLength * 8;
-    auto hz = 440;
-    auto smp = pa::SampleRate;
-    auto chan = pa::Channels;
-    std::vector<float> res;
-
-    auto cycles = (double)hz / (double)smp;
-    auto delta = cycles * 2.0 * M_PI;
-    for(auto i = 0; i < len; i++) {
-        for(auto c = 0; c < chan; c++)
-            res.push_back(vol * std::sin(angle));
-        angle += delta;
-    }
-
-    return res;
-}
-
 void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
     auto audio = plip->GetAudio();
     auto video = plip->GetVideo();
@@ -72,9 +49,6 @@ void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEve
         // unable to keep up with the emulation core.
         // TODO: Fix this so that it will skip frames where appropriate.
         plip->Run(frameTime);
-
-        if(audio->GetQueueSize() < PlipSdl::SdlAudio::SampleLength / 2)
-            audio->Enqueue(waveGen());
 
         auto time = timer->StopwatchStop();
         auto delay = frameTime - time;

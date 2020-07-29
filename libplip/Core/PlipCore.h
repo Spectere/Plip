@@ -31,7 +31,7 @@ namespace Plip {
         static std::vector<PlipCoreDescription> GetSupportedCores();
 
         virtual void Delta(long ns) = 0;
-        virtual PlipMemoryMap* GetMemoryMap() final { return m_memoryMap; }
+        virtual PlipMemoryMap* GetMemoryMap() final { return m_memory; }
         virtual PlipError Load(const std::string &path) = 0;
 
     protected:
@@ -41,7 +41,7 @@ namespace Plip {
         PlipInput *m_input;
         PlipVideo *m_video;
 
-        PlipMemoryMap *m_memoryMap = new PlipMemoryMap();
+        PlipMemoryMap *m_memory = new PlipMemoryMap();
 
     private:
         static constexpr PlipCoreDescription m_supportedCores[] = {
