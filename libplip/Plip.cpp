@@ -9,8 +9,13 @@
 #include "Core/PlipChip8.h"
 
 namespace Plip {
-    Plip::Plip(PlipVideo *video) {
+    Plip::Plip(PlipVideo *video, PlipAudio *audio) {
+        m_audio = audio;
         m_video = video;
+    }
+
+    PlipAudio* Plip::GetAudio() {
+        return m_audio;
     }
 
     PlipCore* Plip::GetCore() {

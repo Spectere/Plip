@@ -11,6 +11,7 @@
 #include "Plip.h"
 
 #include "Config.h"
+#include "SDL/SdlAudio.h"
 #include "SDL/SdlEvent.h"
 #include "SDL/SdlWindow.h"
 
@@ -30,7 +31,31 @@ std::vector<std::vector<std::string>> intParamMapping = {
         { "fps"  , "video", "targetFps" }
 };
 
+#include <cmath>
+double angle = 0.0;
+std::vector<float> waveGen() {
+    using pa = Plip::PlipAudio;
+
+    auto vol = 0.5;
+    auto len = PlipSdl::SdlAudio::SampleLength * 8;
+    auto hz = 440;
+    auto smp = pa::SampleRate;
+    auto chan = pa::Channels;
+    std::vector<float> res;
+
+    auto cycles = (double)hz / (double)smp;
+    auto delta = cycles * 2.0 * M_PI;
+    for(auto i = 0; i < len; i++) {
+        for(auto c = 0; c < chan; c++)
+            res.push_back(vol * std::sin(angle));
+        angle += delta;
+    }
+
+    return res;
+}
+
 void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
+    auto audio = plip->GetAudio();
     auto video = plip->GetVideo();
 
     auto targetFps = config->GetValue<int>("video", "targetFps");
@@ -48,6 +73,9 @@ void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *even
         // TODO: Fix this so that it will skip frames where appropriate.
         plip->Run(frameTime);
 
+        if(audio->GetQueueSize() < PlipSdl::SdlAudio::SampleLength / 2)
+            audio->Enqueue(waveGen());
+
         auto time = timer->StopwatchStop();
         auto delay = frameTime - time;
         while(delay < 0)
@@ -55,6 +83,8 @@ void gameLoop(Plip::Plip *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *even
 
         timer->Nanosleep(delay);
     }
+
+    audio->DequeueAll();
 }
 
 cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
@@ -179,7 +209,8 @@ int main(int argc, char **argv) {
     auto videoScale = config->GetValue<int>("video", "scale");
 
     auto wnd = new PlipSdl::SdlWindow(videoScale, version);
-    auto plip = new Plip::Plip(wnd);
+    auto audio = new PlipSdl::SdlAudio();
+    auto plip = new Plip::Plip(wnd, audio);
 
 #ifdef UNIX
     auto timer = new PlipSdl::TimerPosix();
