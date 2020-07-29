@@ -32,25 +32,38 @@ add_custom_target(
 )
 
 add_library(${lib_name}
+        ################################
+        # Backend / Frontend Interface #
+        ################################
         libplip/PlipInstance.cpp
         libplip/PlipIo.cpp
         libplip/PlipUtility.cpp
-
         libplip/Core/PlipCore.cpp
-        libplip/Core/Chip8/Chip8Instance.cpp
-
         libplip/Cpu/PlipCpu.cpp
-        libplip/Cpu/Chip8/Chip8.cpp
-        libplip/Cpu/Chip8/Chip8.Ops.cpp
-
         libplip/Input/PlipInput.cpp
         libplip/Input/PlipInputDefinition.cpp
-
         libplip/Memory/PlipMemoryMap.cpp
         libplip/Memory/PlipMemoryRam.cpp
         libplip/Memory/PlipMemoryRom.cpp
-
         libplip/Video/PlipVideo.cpp
+
+        ##########
+        # Cores #
+        #########
+        # CHIP-8
+        libplip/Core/Chip8/Chip8Instance.cpp
+        libplip/Core/GameBoy/GameBoyInstance.cpp
+
+        ########
+        # CPUs #
+        ########
+        # CHIP-8
+        libplip/Cpu/Chip8/Chip8.cpp
+        libplip/Cpu/Chip8/Chip8.Ops.cpp
+
+        # Sharp LR35902
+        libplip/Cpu/SharpLr35902/SharpLr35902.cpp
+        libplip/Cpu/SharpLr35902/SharpLr35902.Ops.cpp
 )
 
 if(BIG_ENDIAN)
