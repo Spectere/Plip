@@ -99,6 +99,31 @@ namespace Plip::Cpu {
         }
     }
 
+    std::tuple<uint8_t*, uint8_t*> SharpLr35902::GetRegisterPair(uint8_t idx) {
+        uint8_t *high, *low;
+        switch(idx) {
+            case IDX_16_BC:
+                high = &(m_reg.b);
+                low = &(m_reg.c);
+            case IDX_16_DE:
+                high = &(m_reg.d);
+                low = &(m_reg.e);
+            case IDX_16_HL:
+                high = &(m_reg.h);
+                low = &(m_reg.l);
+            case IDX_16_SP:
+                high = (uint8_t*)(&(m_reg.sp));
+                low = high + 1;  // :)
+            default:
+                std::stringstream ex;
+                ex << "invalid 16-bit register pair index: "
+                   << PlipUtility::FormatHex(idx, 2)
+                   << "\n\n" << DumpRegisters();
+                throw PlipEmulationException(ex.str().c_str());
+        }
+        return std::make_tuple(high, low);
+    }
+
     void SharpLr35902::PerformReset(uint32_t pc) {
         m_reg.a = 0;
         m_reg.f = 0;

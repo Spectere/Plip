@@ -19,10 +19,10 @@
 #define ADDR_HLP     0b10  // HL+
 #define ADDR_HLM     0b11  // HL-
 
-#define IDX_PAIR_BC  0b00
-#define IDX_PAIR_DE  0b01
-#define IDX_PAIR_HL  0b10
-#define IDX_PAIR_SP  0b11
+#define IDX_16_BC    0b00
+#define IDX_16_DE    0b01
+#define IDX_16_HL    0b10
+#define IDX_16_SP    0b11
 
 #define ZERO         7
 #define SUBTRACT     6
@@ -43,6 +43,7 @@
 #define OP_MASK(mask, code) (m_instr[0] & (mask)) == (code)
 #define OP_CB_MASK(code, mask) (m_instr[1] & (mask)) == (code)
 
+#define OP_REG_16(idx) ((m_instr[(idx)] >> 4) & 0b00000011)
 #define OP_REG_X(idx) ((m_instr[(idx)] >> 3) & 0b00000111)
 #define OP_REG_Y(idx) (m_instr[(idx)] & 0b00000111)
 

@@ -15,7 +15,14 @@ namespace Plip::Cpu {
     void SharpLr35902::Decode() {
         if(OP(0b00000000)) {
             // NOP
-            NUM_MCYCLES(2);       } else if(OP_MASK(0b11000000, 0b01000000)) {
+            NUM_MCYCLES(2);
+        } else if(OP_MASK(0b11001111, 0b00000100)) {
+            // INC rr
+            OpIncPair();
+        } else if(OP_MASK(0b11001111, 0b00001011)) {
+            // DEC rr
+            OpDecPair();
+        } else if(OP_MASK(0b11000000, 0b01000000)) {
             // LD r, r' / LD r, (HL) / LD (HL), r
             OpLdRegReg();
         } else if(OP_MASK(0b11000111, 0b00000110)) {

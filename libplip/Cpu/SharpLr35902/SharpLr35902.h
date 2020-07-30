@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "../PlipCpu.h"
@@ -41,6 +42,7 @@ namespace Plip::Cpu {
         void DecodeCB();
         [[nodiscard]] std::string DumpRegisters() const;
         uint8_t* GetRegister8(uint8_t idx);
+        std::tuple<uint8_t*, uint8_t*> GetRegisterPair(uint8_t idx);
         uint16_t GetAddress(uint8_t idx);
 
         static inline uint16_t Combine(uint8_t *high, uint8_t *low) {
@@ -62,6 +64,8 @@ namespace Plip::Cpu {
             Split(val, high, low);
         }
 
+        void OpDecPair();
+        void OpIncPair();
         void OpLdMemReg();
         void OpLdRegImm();
         void OpLdRegMem();

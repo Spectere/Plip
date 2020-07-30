@@ -11,6 +11,24 @@
 #include "SharpLr35902.Macros.h"
 
 namespace Plip::Cpu {
+    void SharpLr35902::OpDecPair() {
+        uint8_t *high = nullptr;
+        uint8_t *low = nullptr;
+
+        std::tie(high, low) = GetRegisterPair(OP_REG_16(0));
+        DecPair(high, low);
+        NUM_MCYCLES(2);
+    }
+
+    void SharpLr35902::OpIncPair() {
+        uint8_t *high = nullptr;
+        uint8_t *low = nullptr;
+
+        std::tie(high, low) = GetRegisterPair(OP_REG_16(0));
+        IncPair(high, low);
+        NUM_MCYCLES(2);
+    }
+
     void SharpLr35902::OpLdMemReg() {
         uint16_t addr;
         uint8_t *src;
@@ -68,7 +86,7 @@ namespace Plip::Cpu {
                 dest = GetRegister8(OP_REG_X(0));
             } else if(OP_MASK(0b11001111, 0b00001010)) {
                 // LD A, (rr)
-                addr = GetAddress((m_instr[0] >> 4) & 0b11);
+                addr = GetAddress(OP_REG_16(0));
                 dest = &(m_reg.a);
             } else {
                 std::stringstream ex;
