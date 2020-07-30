@@ -5,29 +5,29 @@
 
 #pragma once
 
-#define IDX_B    0b000
-#define IDX_C    0b001
-#define IDX_D    0b010
-#define IDX_E    0b011
-#define IDX_H    0b100
-#define IDX_L    0b101
-#define IDX_HL   0b110
-#define IDX_A    0b111
+#define IDX_B        0b000
+#define IDX_C        0b001
+#define IDX_D        0b010
+#define IDX_E        0b011
+#define IDX_H        0b100
+#define IDX_L        0b101
+#define IDX_HL       0b110
+#define IDX_A        0b111
 
-#define ADDR_BC  0b00
-#define ADDR_DE  0b01
-#define ADDR_HLP 0b10  // HL+
-#define ADDR_HLM 0b11  // HL-
+#define ADDR_BC      0b00
+#define ADDR_DE      0b01
+#define ADDR_HLP     0b10  // HL+
+#define ADDR_HLM     0b11  // HL-
 
 #define IDX_PAIR_BC  0b00
 #define IDX_PAIR_DE  0b01
 #define IDX_PAIR_HL  0b10
 #define IDX_PAIR_SP  0b11
 
-#define ZERO       7
-#define SUBTRACT   6
-#define HALFCARRY  5
-#define CARRY      4
+#define ZERO         7
+#define SUBTRACT     6
+#define HALFCARRY    5
+#define CARRY        4
 
 #define MEM_READ(addr) m_memory->GetByte(addr)
 #define MEM_WRITE(addr, val) m_memory->SetByte(addr, val)
