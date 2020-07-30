@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "../PlipCpu.h"
@@ -30,14 +31,23 @@ namespace Plip::Cpu {
         };
 
         void Cycle() override;
+        Registers GetRegisters() { return m_reg; }
         void Reset(uint32_t pc) override;
 
     private:
         void PerformReset(uint32_t pc);
 
+        void Decode();
+        void DecodeCB();
+        [[nodiscard]] std::string DumpRegisters() const;
+        uint8_t* GetRegister8(uint8_t idx);
+
+        void OpLdRN();  // 0b00xxx110
+        void OpLdRR();  // 0b01xxxyyy
+
         bool m_allowFetch = true;
         std::vector<uint8_t> m_instr;
         Registers m_reg {};
-        uint8_t m_stage = 0;
+        uint8_t m_mcycle = 0;
     };
 }

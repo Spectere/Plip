@@ -63,6 +63,7 @@ add_library(${lib_name}
 
         # Sharp LR35902
         libplip/Cpu/SharpLr35902/SharpLr35902.cpp
+        libplip/Cpu/SharpLr35902/SharpLr35902.Decode.cpp
         libplip/Cpu/SharpLr35902/SharpLr35902.Ops.cpp
 )
 
