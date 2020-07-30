@@ -11,12 +11,102 @@
 #include "SharpLr35902.Macros.h"
 
 namespace Plip::Cpu {
+    void SharpLr35902::OpDecReg() {
+        auto dest = OP_REG_X(0);
+        uint8_t old;
+
+        if(dest == IDX_HL) {
+            // DEC (HL)
+            switch(m_mcycle) {
+                case 2:
+                    FETCH_ADDR(REG_HL);
+                    old = m_instr[1];
+                    (m_instr[1])--;
+
+                    if((m_instr[1] & 0xF0) != (old & 0xF0)) FLAG_SET(HALFCARRY);
+                    else FLAG_CLEAR(HALFCARRY);
+
+                    break;
+
+                case 3:
+                    MEM_WRITE(REG_HL, m_instr[1]);
+
+                    FLAG_SET(SUBTRACT);
+                    CHECK_ZERO(m_instr[1]);
+                    break;
+
+                default: break;
+            }
+
+            NUM_MCYCLES(4);
+            return;
+        }
+
+        // DEC r
+        auto reg = GetRegister8(dest);
+        old = *reg;
+        (*reg)--;
+
+        FLAG_SET(SUBTRACT);
+        CHECK_ZERO(*reg);
+
+        if((old & 0xF0) != ((*reg) & 0xF0)) FLAG_SET(HALFCARRY);
+        else FLAG_CLEAR(HALFCARRY);
+
+        NUM_MCYCLES(2);
+    }
+
     void SharpLr35902::OpDecPair() {
         uint8_t *high = nullptr;
         uint8_t *low = nullptr;
 
         std::tie(high, low) = GetRegisterPair(OP_REG_16(0));
         DecPair(high, low);
+        NUM_MCYCLES(2);
+    }
+
+    void SharpLr35902::OpIncReg() {
+        auto dest = OP_REG_X(0);
+        uint8_t old;
+
+        if(dest == IDX_HL) {
+            // INC (HL)
+            switch(m_mcycle) {
+                case 2:
+                    FETCH_ADDR(REG_HL);
+                    old = m_instr[1];
+                    (m_instr[1])++;
+
+                    if((m_instr[1] & 0xF0) != (old & 0xF0)) FLAG_SET(HALFCARRY);
+                    else FLAG_CLEAR(HALFCARRY);
+
+                    break;
+
+                case 3:
+                    MEM_WRITE(REG_HL, m_instr[1]);
+
+                    FLAG_CLEAR(SUBTRACT);
+                    CHECK_ZERO(m_instr[1]);
+                    break;
+
+                default: break;
+            }
+
+            NUM_MCYCLES(4);
+            return;
+        }
+
+        // INC r
+        auto reg = GetRegister8(dest);
+        old = *reg;
+        (*reg)--;
+
+        FLAG_CLEAR(SUBTRACT);
+        CHECK_ZERO(*reg);
+
+        if((old & 0xF0) != ((*reg) & 0xF0)) FLAG_SET(HALFCARRY);
+        else FLAG_CLEAR(HALFCARRY);
+
         NUM_MCYCLES(2);
     }
 
@@ -36,7 +126,7 @@ namespace Plip::Cpu {
         if(m_mcycle == 2) {
             if(OP_MASK(0b11111000, 0b01110000)) {
                 // LD (HL), r
-                addr = REG_COMBINE(m_reg.h, m_reg.l);
+                addr = REG_HL;
                 src = GetRegister8(OP_REG_X(0));
             } else if(OP_MASK(0b11001111, 0b00000010)) {
                 // LD (rr), A
@@ -82,7 +172,7 @@ namespace Plip::Cpu {
         if(m_mcycle == 2) {
             if(OP_MASK(0b11000111, 0b01000110)) {
                 // LD r, (HL)
-                addr = REG_COMBINE(m_reg.h, m_reg.l);
+                addr = REG_HL;
                 dest = GetRegister8(OP_REG_X(0));
             } else if(OP_MASK(0b11001111, 0b00001010)) {
                 // LD A, (rr)

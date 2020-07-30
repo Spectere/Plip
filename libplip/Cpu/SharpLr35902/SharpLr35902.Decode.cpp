@@ -16,7 +16,13 @@ namespace Plip::Cpu {
         if(OP(0b00000000)) {
             // NOP
             NUM_MCYCLES(2);
-        } else if(OP_MASK(0b11001111, 0b00000100)) {
+        } else if(OP_MASK(0b11000111, 0b00000100)) {
+            // INC r
+            OpIncReg();
+        } else if(OP_MASK(0b11000111, 0b00000101)) {
+            // DEC r
+            OpDecReg();
+        } else if(OP_MASK(0b11001111, 0b00000011)) {
             // INC rr
             OpIncPair();
         } else if(OP_MASK(0b11001111, 0b00001011)) {

@@ -64,7 +64,9 @@ namespace Plip::Cpu {
             Split(val, high, low);
         }
 
+        void OpDecReg();
         void OpDecPair();
+        void OpIncReg();
         void OpIncPair();
         void OpLdMemReg();
         void OpLdRegImm();
