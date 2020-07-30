@@ -42,9 +42,43 @@ namespace Plip::Cpu {
              << util::DumpValue(" H", m_reg.h, 2) << '\n'
              << util::DumpValue(" L", m_reg.l, 2) << "\n\n"
              << util::DumpValue("PC", m_reg.pc, 4) << '\n'
-             << util::DumpValue("SP", m_reg.sp, 4) << '\n';
+             << util::DumpValue("SP", m_reg.sp, 4) << "\n\n"
+             << "Instruction Cache:";
+
+        if(m_instr.empty()) {
+            dump << " [[empty]]";
+        } else {
+            for(auto i : m_instr)
+                dump << " " << util::FormatHex(i, 2);
+        }
 
         return dump.str();
+    }
+
+    uint16_t SharpLr35902::GetAddress(uint8_t idx) {
+        uint16_t val;
+
+        switch(idx) {
+            case ADDR_BC: return REG_COMBINE(m_reg.b, m_reg.c);
+            case ADDR_DE: return REG_COMBINE(m_reg.d, m_reg.e);
+
+            case ADDR_HLP:
+                val = REG_COMBINE(m_reg.h, m_reg.l);
+                IncPair(&(m_reg.h), &(m_reg.l));
+                return val;
+
+            case ADDR_HLM:
+                val = REG_COMBINE(m_reg.h, m_reg.l);
+                DecPair(&(m_reg.h), &(m_reg.l));
+                return val;
+
+            default:
+                std::stringstream ex;
+                ex << "invalid address register pair index: "
+                   << PlipUtility::FormatHex(idx, 2)
+                   << "\n\n" << DumpRegisters();
+                throw PlipEmulationException(ex.str().c_str());
+        }
     }
 
     uint8_t* SharpLr35902::GetRegister8(uint8_t idx) {
@@ -58,7 +92,8 @@ namespace Plip::Cpu {
             case IDX_L: return &(m_reg.l);
             default:
                 std::stringstream ex;
-                ex << "invalid 8-bit register index: " << PlipUtility::FormatHex(idx, 2)
+                ex << "invalid 8-bit register index: "
+                   << PlipUtility::FormatHex(idx, 2)
                    << "\n\n" << DumpRegisters();
                 throw PlipEmulationException(ex.str().c_str());
         }

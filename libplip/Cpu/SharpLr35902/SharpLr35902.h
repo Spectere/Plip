@@ -41,9 +41,31 @@ namespace Plip::Cpu {
         void DecodeCB();
         [[nodiscard]] std::string DumpRegisters() const;
         uint8_t* GetRegister8(uint8_t idx);
+        uint16_t GetAddress(uint8_t idx);
 
-        void OpLdRN();  // 0b00xxx110
-        void OpLdRR();  // 0b01xxxyyy
+        static inline uint16_t Combine(uint8_t *high, uint8_t *low) {
+            return ((*high << 8) + *low);
+        }
+
+        static inline void Split(uint16_t val, uint8_t *high, uint8_t *low) {
+            *high = val >> 8;
+            *low = val & 0xFF;
+        }
+
+        static inline void DecPair(uint8_t *high, uint8_t *low, uint16_t amount = 1) {
+            uint16_t val = Combine(high, low) - amount;
+            Split(val, high, low);
+        }
+
+        static inline void IncPair(uint8_t *high, uint8_t *low, uint16_t amount = 1) {
+            uint16_t val = Combine(high, low) + amount;
+            Split(val, high, low);
+        }
+
+        void OpLdMemReg();
+        void OpLdRegImm();
+        void OpLdRegMem();
+        void OpLdRegReg();
 
         bool m_allowFetch = true;
         std::vector<uint8_t> m_instr;
