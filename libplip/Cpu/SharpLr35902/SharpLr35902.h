@@ -45,7 +45,7 @@ namespace Plip::Cpu {
         std::tuple<uint8_t*, uint8_t*> GetRegisterPair(uint8_t idx);
         uint16_t GetAddress(uint8_t idx);
 
-        static inline uint16_t Combine(uint8_t *high, uint8_t *low) {
+        static inline uint16_t Combine(const uint8_t *high, const uint8_t *low) {
             return ((*high << 8) + *low);
         }
 

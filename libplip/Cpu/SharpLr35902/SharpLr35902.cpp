@@ -105,15 +105,19 @@ namespace Plip::Cpu {
             case IDX_16_BC:
                 high = &(m_reg.b);
                 low = &(m_reg.c);
+                break;
             case IDX_16_DE:
                 high = &(m_reg.d);
                 low = &(m_reg.e);
+                break;
             case IDX_16_HL:
                 high = &(m_reg.h);
                 low = &(m_reg.l);
+                break;
             case IDX_16_SP:
                 high = (uint8_t*)(&(m_reg.sp));
                 low = high + 1;  // :)
+                break;
             default:
                 std::stringstream ex;
                 ex << "invalid 16-bit register pair index: "

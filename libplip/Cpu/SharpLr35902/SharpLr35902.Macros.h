@@ -37,7 +37,7 @@
 
 #define BEGIN_EXECUTE m_allowFetch = false
 #define END_EXECUTE m_instr.clear(); m_mcycle = 2; m_allowFetch = true
-#define NUM_MCYCLES(val) if(++m_mcycle >= (val)) { END_EXECUTE; }
+#define NUM_MCYCLES(val) do { if(++m_mcycle >= (val)) { END_EXECUTE; } } while(0)
 
 #define OP(code) m_instr[0] == (code)
 #define OP_MASK(mask, code) (m_instr[0] & (mask)) == (code)
@@ -56,4 +56,4 @@
 #define FLAG_CLEAR(bit) m_reg.f &= ~(1 << (bit))
 #define FLAG_SET(bit) m_reg.f |= (1 << (bit))
 
-#define CHECK_ZERO(val) { if((val) == 0) FLAG_SET(ZERO); else FLAG_CLEAR(ZERO); }
+#define CHECK_ZERO(val) do { if((val) == 0) FLAG_SET(ZERO); else FLAG_CLEAR(ZERO); } while(0)
