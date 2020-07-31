@@ -33,10 +33,10 @@ namespace Plip::Cpu {
 
         void Cycle() override;
         Registers GetRegisters() { return m_reg; }
-        void Reset(uint32_t pc) override;
+        void Reset() override;
 
     private:
-        void PerformReset(uint32_t pc);
+        void PerformReset();
 
         void Decode();
         void DecodeCB();

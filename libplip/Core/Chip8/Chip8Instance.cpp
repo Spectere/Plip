@@ -40,7 +40,7 @@ namespace Plip::Core::Chip8 {
         m_videoOutput = malloc(ScreenWidth * ScreenHeight * m_videoFormat.pixelWidth);
 
         m_cpu = new Cpu::Chip8(ClockRate, m_memory, CharacterSet, m_input);
-        m_cpu->Reset(0x200);
+        m_cpu->Reset();
 
         m_cycleTime = m_cpu->GetCycleTime();
 

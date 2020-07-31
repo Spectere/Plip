@@ -20,7 +20,7 @@ namespace Plip::Cpu {
         void DelayTimer();
         uint64_t* GetVideo() { return m_videoBuffer; }
         [[nodiscard]] bool IsAudioPlaying() const { return m_timerAudio >= 2; }
-        void Reset(uint32_t pc) override;
+        void Reset() override;
 
         static const int VideoSize = 32;  // 64 x 32
 

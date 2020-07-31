@@ -97,11 +97,11 @@ namespace Plip::Cpu {
         return dump.str();
     }
 
-    void Chip8::Reset(uint32_t pc) {
+    void Chip8::Reset() {
         m_timerAudio = 0;
         m_timerDelay = 0;
         m_sp = 0;
-        m_pc = pc;
+        m_pc = 0x200;
         m_i = 0;
 
         for(auto &reg : m_reg)

@@ -128,7 +128,7 @@ namespace Plip::Cpu {
         return std::make_tuple(high, low);
     }
 
-    void SharpLr35902::PerformReset(uint32_t pc) {
+    void SharpLr35902::PerformReset() {
         m_reg.a = 0;
         m_reg.f = 0;
         m_reg.b = 0;
@@ -139,14 +139,14 @@ namespace Plip::Cpu {
         m_reg.l = 0;
 
         m_reg.sp = 0;
-        m_reg.pc = pc;
+        m_reg.pc = 0;
 
         m_allowFetch = true;
         m_instr.clear();
         m_mcycle = 0;
     }
 
-    void SharpLr35902::Reset(uint32_t pc) {
-        PerformReset(pc);
+    void SharpLr35902::Reset() {
+        PerformReset();
     }
 }
