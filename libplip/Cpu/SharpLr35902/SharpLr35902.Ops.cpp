@@ -468,7 +468,7 @@ namespace Plip::Cpu {
             // RES n, (HL)
             if(m_mcycle == 3) {
                 FETCH_ADDR(REG_HL);
-            } else if(m_mcycle == 4) {
+            } else {
                 MEM_WRITE(REG_HL, m_instr[2] &= (1 << idx));
             }
             NUM_MCYCLES(5);
@@ -488,7 +488,7 @@ namespace Plip::Cpu {
             // SET n, (HL)
             if(m_mcycle == 3) {
                 FETCH_ADDR(REG_HL);
-            } else if(m_mcycle == 4) {
+            } else {
                 MEM_WRITE(REG_HL, m_instr[2] |= (1 << idx));
             }
             NUM_MCYCLES(5);
@@ -508,7 +508,7 @@ namespace Plip::Cpu {
             // BIT n, (HL)
             if(m_mcycle == 3) {
                 FETCH_ADDR(REG_HL);
-            } else if(m_mcycle == 4) {
+            } else {
                 FLAG_CLEAR(SUBTRACT);
                 FLAG_SET(HALFCARRY);
                 CHECK_ZERO(m_instr[2] & (1 << idx));
@@ -521,6 +521,285 @@ namespace Plip::Cpu {
         FLAG_CLEAR(SUBTRACT);
         FLAG_SET(HALFCARRY);
         CHECK_ZERO(*(GetRegister8(reg)) & (1 << idx));
+
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpNibbleSwap() {
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // SWAP (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                uint8_t res = (m_instr[2] << 4) + (m_instr[2] & 0x0F);
+                MEM_WRITE(REG_HL, res);
+                CHECK_ZERO(res);
+                FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+            }
+
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // SWAP r
+        auto r = GetRegister8(reg);
+        *r = (*r << 4) + (*r & 0x0F);
+        CHECK_ZERO(*r);
+        FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpRotateLeft() {
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // RLC (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else if(m_mcycle == 4) {
+                auto res = m_instr[2];
+                uint8_t msb = res >> 7;
+                if(msb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+                res <<= 1;
+                res |= msb;
+                CHECK_ZERO(res);
+                MEM_WRITE(REG_HL, res);
+            }
+
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // RLC r
+        auto r = GetRegister8(reg);
+        uint8_t msb = *r >> 7;
+        if(msb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        *r <<= 1;
+        *r |= msb;
+        CHECK_ZERO(*r);
+
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpRotateLeftThruCarry() {
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // RL (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                auto res = m_instr[2];
+                uint8_t cf = FLAG_TEST(CARRY) ? 1 : 0;
+                if(res & 0b10000000) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+                res <<= 1;
+                res |= cf;
+                CHECK_ZERO(res);
+            }
+
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // RL r
+        auto r = GetRegister8(reg);
+        uint8_t cf = FLAG_TEST(CARRY) ? 1 : 0;
+        if(*r & 0b10000000) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        *r <<= 1;
+        *r |= cf;
+        CHECK_ZERO(*r);
+
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpRotateRight() {
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // RRC (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else if(m_mcycle == 4) {
+                auto res = m_instr[2];
+                uint8_t lsb = res & 0b00000001;
+                if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+                res >>= 1;
+                res |= (lsb << 7);
+                CHECK_ZERO(res);
+                MEM_WRITE(REG_HL, res);
+            }
+
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // RRC r
+        auto r = GetRegister8(reg);
+        uint8_t lsb = *r & 0b00000001;
+        if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        *r >>= 1;
+        *r |= (lsb << 7);
+        CHECK_ZERO(*r);
+
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpRotateRightThruCarry() {
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // RR (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                auto res = m_instr[2];
+                uint8_t cf = FLAG_TEST(CARRY) ? 0b10000000 : 0;
+                if(res & 0b00000001) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+                res >>= 1;
+                res |= cf;
+                CHECK_ZERO(res);
+            }
+
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // RR r
+        auto r = GetRegister8(reg);
+        uint8_t cf = FLAG_TEST(CARRY) ? 0b10000000 : 0;
+        if(*r & 0b00000001) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        *r >>= 1;
+        *r |= cf;
+        CHECK_ZERO(*r);
+
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpShiftLeftArithmetic() {
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // SLA (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else if(m_mcycle == 4) {
+                auto res = m_instr[2];
+                uint8_t msb = res & 0b10000000;
+                if(msb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+                res <<= 1;
+                CHECK_ZERO(res);
+                MEM_WRITE(REG_HL, res);
+            }
+
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // SLA r
+        auto r = GetRegister8(reg);
+        uint8_t msb = *r & 0b10000000;
+        if(msb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        *r <<= 1;
+        CHECK_ZERO(*r);
+
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpShiftRightArithmetic() {
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // SRA (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else if(m_mcycle == 4) {
+                auto res = m_instr[2];
+                uint8_t msb = reg & 0b10000000;
+                uint8_t lsb = res & 0b00000001;
+                if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+                res >>= 1;
+                res |= msb;
+                CHECK_ZERO(res);
+                MEM_WRITE(REG_HL, res);
+            }
+
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // SRA r
+        auto r = GetRegister8(reg);
+        uint8_t msb = *r & 0b10000000;
+        uint8_t lsb = *r & 0b00000001;
+        if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        *r >>= 1;
+        *r |= msb;
+        CHECK_ZERO(*r);
+
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpShiftRightLogical() {
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // SRL (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else if(m_mcycle == 4) {
+                auto res = m_instr[2];
+                uint8_t lsb = res & 0b00000001;
+                if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+                res >>= 1;
+                CHECK_ZERO(res);
+                MEM_WRITE(REG_HL, res);
+            }
+
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // SRL r
+        auto r = GetRegister8(reg);
+        uint8_t lsb = *r & 0b00000001;
+        if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        *r >>= 1;
+        CHECK_ZERO(*r);
 
         NUM_MCYCLES(3);
     }

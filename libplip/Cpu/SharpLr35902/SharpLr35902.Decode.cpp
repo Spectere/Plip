@@ -79,7 +79,31 @@ namespace Plip::Cpu {
     }
 
     void SharpLr35902::DecodeCB() {
-        if(OP_CB_MASK(0b11000000, 0b01000000)) {
+        if(OP_CB_MASK(0b11111000, 0b00000000)) {
+            // RLC r
+            OpRotateLeft();
+        } else if(OP_CB_MASK(0b11111000, 0b00001000)) {
+            // RRC r
+            OpRotateRight();
+        } else if(OP_CB_MASK(0b11111000, 0b00010000)) {
+            // RL r
+            OpRotateLeftThruCarry();
+        } else if(OP_CB_MASK(0b11111000, 0b00011000)) {
+            // RR r
+            OpRotateRightThruCarry();
+        } else if(OP_CB_MASK(0b11111000, 0b00100000)) {
+            // SLA r
+            OpShiftLeftArithmetic();
+        } else if(OP_CB_MASK(0b11111000, 0b00101000)) {
+            // SRA r
+            OpShiftRightArithmetic();
+        } else if(OP_CB_MASK(0b11111000, 0b00110000)) {
+            // SWAP r
+            OpNibbleSwap();
+        } else if(OP_CB_MASK(0b11111000, 0b00111000)) {
+            // SRL r
+            OpShiftRightLogical();
+        } else if(OP_CB_MASK(0b11000000, 0b01000000)) {
             // BIT n, r
             OpBitTest();
         } else if(OP_CB_MASK(0b11000000, 0b10000000)) {

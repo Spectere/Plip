@@ -86,6 +86,14 @@ namespace Plip::Cpu {
         void OpBitClear();
         void OpBitSet();
         void OpBitTest();
+        void OpNibbleSwap();
+        void OpRotateLeft();
+        void OpRotateLeftThruCarry();
+        void OpRotateRight();
+        void OpRotateRightThruCarry();
+        void OpShiftLeftArithmetic();
+        void OpShiftRightArithmetic();
+        void OpShiftRightLogical();
 
         bool m_allowFetch = true;
         std::vector<uint8_t> m_instr;
