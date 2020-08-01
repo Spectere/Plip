@@ -16,7 +16,8 @@ namespace Plip::Cpu {
      */
     // ADD A, n
     void SharpLr35902::OpAccumAddImm() {
-        FETCH_IMM(2) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             uint16_t res = m_reg.a + m_instr[1];
             CHECK_CARRY(res);
             CHECK_HALFCARRY(m_reg.a, res);
@@ -29,7 +30,8 @@ namespace Plip::Cpu {
 
     // ADC A, n
     void SharpLr35902::OpAccumAddCarryImm() {
-        FETCH_IMM(2) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             uint16_t res = m_reg.a + m_instr[1] + (FLAG_TEST(CARRY) ? 1 : 0);
             CHECK_CARRY(res);
             CHECK_HALFCARRY(m_reg.a, res);
@@ -42,7 +44,8 @@ namespace Plip::Cpu {
 
     // AND n
     void SharpLr35902::OpAccumAndImm() {
-        FETCH_IMM(2) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             m_reg.a &= m_instr[1];
             CHECK_ZERO(m_reg.a);
             FLAG_SET(HALFCARRY);
@@ -54,7 +57,8 @@ namespace Plip::Cpu {
 
     // CP n
     void SharpLr35902::OpAccumCarryImm() {
-        FETCH_IMM(2) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             uint16_t res = m_reg.a - m_instr[1];
             CHECK_CARRY(res);
             CHECK_HALFCARRY(m_reg.a, res);
@@ -74,7 +78,8 @@ namespace Plip::Cpu {
 
     // OR n
     void SharpLr35902::OpAccumOrImm() {
-        FETCH_IMM(2) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             m_reg.a |= m_instr[1];
             CHECK_ZERO(m_reg.a);
             FLAG_CLEAR(HALFCARRY);
@@ -134,7 +139,8 @@ namespace Plip::Cpu {
 
     // SUB A, n
     void SharpLr35902::OpAccumSubImm() {
-        FETCH_IMM(2) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             uint16_t res = m_reg.a - m_instr[1];
             CHECK_CARRY(res);
             CHECK_HALFCARRY(m_reg.a, res);
@@ -147,7 +153,8 @@ namespace Plip::Cpu {
 
     // SBC A, n
     void SharpLr35902::OpAccumSubBorrowImm() {
-        FETCH_IMM(2) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             uint16_t res = m_reg.a - m_instr[1] - (FLAG_TEST(CARRY) ? 1 : 0);
             CHECK_CARRY(res);
             CHECK_HALFCARRY(m_reg.a, res);
@@ -160,7 +167,8 @@ namespace Plip::Cpu {
 
     // XOR n
     void SharpLr35902::OpAccumXorImm() {
-        FETCH_IMM(2) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             m_reg.a ^= m_instr[1];
             CHECK_ZERO(m_reg.a);
             FLAG_CLEAR(HALFCARRY);
@@ -178,9 +186,8 @@ namespace Plip::Cpu {
 
         if(src == IDX_HL) {
             // ADD A, (HL)
-            if(m_mcycle == 2) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
                 res = m_reg.a + m_instr[1];
                 CHECK_CARRY(res);
                 CHECK_HALFCARRY(m_reg.a, res);
@@ -211,9 +218,8 @@ namespace Plip::Cpu {
 
         if(src == IDX_HL) {
             // ADC A, (HL)
-            if(m_mcycle == 2) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
                 res = m_reg.a + m_instr[1] + (FLAG_TEST(CARRY) ? 1 : 0);
                 CHECK_CARRY(res);
                 CHECK_HALFCARRY(m_reg.a, res);
@@ -243,9 +249,8 @@ namespace Plip::Cpu {
 
         if(src == IDX_HL) {
             // AND (HL)
-            if(m_mcycle == 2) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
                 m_reg.a &= m_instr[1];
                 CHECK_ZERO(m_reg.a);
                 FLAG_CLEAR(SUBTRACT);
@@ -274,9 +279,8 @@ namespace Plip::Cpu {
 
         if(src == IDX_HL) {
             // CP (HL)
-            if(m_mcycle == 2) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
                 res = m_reg.a - m_instr[1];
                 CHECK_CARRY(res);
                 CHECK_HALFCARRY(m_reg.a, res);
@@ -301,45 +305,31 @@ namespace Plip::Cpu {
     // DEC (HL)
     void SharpLr35902::OpDecReg() {
         auto dest = OP_REG_X(0);
-        uint8_t old;
+        uint16_t res;
 
         if(dest == IDX_HL) {
             // DEC (HL)
-            switch(m_mcycle) {
-                case 2:
-                    FETCH_ADDR(REG_HL);
-                    old = m_instr[1];
-                    (m_instr[1])--;
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
+                res = m_instr[1] - 1;
 
-                    if((m_instr[1] & 0xF0) != (old & 0xF0)) FLAG_SET(HALFCARRY);
-                    else FLAG_CLEAR(HALFCARRY);
+                FLAG_SET(SUBTRACT);
+                CHECK_HALFCARRY(m_instr[1], res);
+                CHECK_ZERO(m_instr[1]);
 
-                    break;
-
-                case 3:
-                    MEM_WRITE(REG_HL, m_instr[1]);
-
-                    FLAG_SET(SUBTRACT);
-                    CHECK_ZERO(m_instr[1]);
-                    break;
-
-                default: break;
+                MEM_WRITE(REG_HL, m_instr[1]);
             }
-
             NUM_MCYCLES(4);
             return;
         }
 
         // DEC r
         auto reg = GetRegister8(dest);
-        old = *reg;
-        (*reg)--;
+        res = *reg - 1;
 
         FLAG_SET(SUBTRACT);
+        CHECK_HALFCARRY(*reg, res);
         CHECK_ZERO(*reg);
-
-        if((old & 0xF0) != ((*reg) & 0xF0)) FLAG_SET(HALFCARRY);
-        else FLAG_CLEAR(HALFCARRY);
 
         NUM_MCYCLES(2);
     }
@@ -349,7 +339,7 @@ namespace Plip::Cpu {
         uint8_t *high = nullptr;
         uint8_t *low = nullptr;
 
-        std::tie(high, low) = GetRegisterPair(OP_REG_16(0));
+        std::tie(high, low) = GetRegisterPair(OP_REG16(0));
         DecPair(high, low);
         NUM_MCYCLES(2);
     }
@@ -366,45 +356,31 @@ namespace Plip::Cpu {
     // INC (HL)
     void SharpLr35902::OpIncReg() {
         auto dest = OP_REG_X(0);
-        uint8_t old;
+        uint16_t res;
 
         if(dest == IDX_HL) {
             // INC (HL)
-            switch(m_mcycle) {
-                case 2:
-                    FETCH_ADDR(REG_HL);
-                    old = m_instr[1];
-                    (m_instr[1])++;
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
+                res = m_instr[1] + 1;
 
-                    if((m_instr[1] & 0xF0) != (old & 0xF0)) FLAG_SET(HALFCARRY);
-                    else FLAG_CLEAR(HALFCARRY);
+                FLAG_CLEAR(SUBTRACT);
+                CHECK_HALFCARRY(m_instr[1], res);
+                CHECK_ZERO(m_instr[1]);
 
-                    break;
-
-                case 3:
-                    MEM_WRITE(REG_HL, m_instr[1]);
-
-                    FLAG_CLEAR(SUBTRACT);
-                    CHECK_ZERO(m_instr[1]);
-                    break;
-
-                default: break;
+                MEM_WRITE(REG_HL, m_instr[1]);
             }
-
             NUM_MCYCLES(4);
             return;
         }
 
         // INC r
         auto reg = GetRegister8(dest);
-        old = *reg;
-        (*reg)--;
+        res = *reg + 1;
 
         FLAG_CLEAR(SUBTRACT);
+        CHECK_HALFCARRY(*reg, res);
         CHECK_ZERO(*reg);
-
-        if((old & 0xF0) != ((*reg) & 0xF0)) FLAG_SET(HALFCARRY);
-        else FLAG_CLEAR(HALFCARRY);
 
         NUM_MCYCLES(2);
     }
@@ -414,7 +390,7 @@ namespace Plip::Cpu {
         uint8_t *high = nullptr;
         uint8_t *low = nullptr;
 
-        std::tie(high, low) = GetRegisterPair(OP_REG_16(0));
+        std::tie(high, low) = GetRegisterPair(OP_REG16(0));
         IncPair(high, low);
         NUM_MCYCLES(2);
     }
@@ -422,25 +398,21 @@ namespace Plip::Cpu {
     // LD (HL), r
     // LD (rr), A
     void SharpLr35902::OpLdMemReg() {
-        uint16_t addr;
-        uint8_t *src;
+        auto dest = OP_REG_X(0);
+        auto src = OP_REG_Y(0);
 
-        if(m_mcycle == 2) {
-            if(OP_MASK(0b11111000, 0b01110000)) {
-                // LD (HL), r
-                addr = REG_HL;
-                src = GetRegister8(OP_REG_X(0));
-            } else if(OP_MASK(0b11001111, 0b00000010)) {
-                // LD (rr), A
-                addr = GetAddress((m_instr[0] >> 4) & 0b11);
-                src = &(m_reg.a);
-            } else {
-                std::stringstream ex;
-                ex << "OpLdMemReg: invalid operation\n\n" << DumpRegisters();
-                throw PlipEmulationException(ex.str().c_str());
+        if(dest == REG_HL) {
+            // LD (HL), r
+            CYCLE(2) {
+                auto reg = *GetRegister8(src);
+                MEM_WRITE(REG_HL, reg);
             }
-
-            *src = MEM_READ(addr);
+        } else {
+            // LD (rr), A
+            CYCLE(2) {
+                auto reg = GetAddress(OP_REG16(0));
+                MEM_WRITE(reg, m_reg.a);
+            }
         }
         NUM_MCYCLES(3);
     }
@@ -452,60 +424,42 @@ namespace Plip::Cpu {
 
         if(dest == IDX_HL) {
             // LD (HL), n
-            if(m_mcycle == 2) {
-                FETCH;
-            } else if(m_mcycle == 3) {
-                MEM_WRITE(REG_HL, *(GetRegister8(OP_REG_Y(0))));
+            FETCH_IMM_CYCLE(2);
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
+                MEM_WRITE(REG_HL, m_instr[1]);
             }
-            NUM_MCYCLES(3);
+            NUM_MCYCLES(4);
             return;
         }
 
         // LD r, n
-        if(m_mcycle == 2) {
-            FETCH;
-        } else if(m_mcycle == 3) {
+        FETCH_IMM_CYCLE(2);
+        CYCLE(3) {
             *(GetRegister8(OP_REG_Y(0))) = m_instr[1];
-        }
-        NUM_MCYCLES(4);
-    }
-
-    // LD r, (HL)
-    // LD A, (rr)
-    void SharpLr35902::OpLdRegMem() {
-        uint16_t addr;
-        uint8_t *dest;
-
-        if(m_mcycle == 2) {
-            if(OP_MASK(0b11000111, 0b01000110)) {
-                // LD r, (HL)
-                addr = REG_HL;
-                dest = GetRegister8(OP_REG_X(0));
-            } else if(OP_MASK(0b11001111, 0b00001010)) {
-                // LD A, (rr)
-                addr = GetAddress(OP_REG_16(0));
-                dest = &(m_reg.a);
-            } else {
-                std::stringstream ex;
-                ex << "OpLdRegMem: invalid operation\n\n" << DumpRegisters();
-                throw PlipEmulationException(ex.str().c_str());
-            }
-
-            MEM_WRITE(addr, *dest);
         }
         NUM_MCYCLES(3);
     }
 
-    // (!) LD (HL), (HL)
+    // LD A, (rr)
+    void SharpLr35902::OpLdRegMem() {
+        FETCH_ADDR_CYCLE(2, GetAddress(OP_REG16(0)));
+        CYCLE(3) {
+            m_reg.a = m_instr[1];
+        }
+        NUM_MCYCLES(3);
+    }
+
+    // [!] LD (HL), (HL)
     // LD r, r'
-    // LD r, (HL) -> OpLdRegMem()
+    // LD r, (HL)
     // LD (HL), r
     void SharpLr35902::OpLdRegReg() {
         auto dest = OP_REG_X(0);
         auto src = OP_REG_Y(0);
 
         if(dest == IDX_HL && src == IDX_HL) {
-            // (!) LD (HL), (HL)
+            // [!] LD (HL), (HL)
             std::stringstream ex;
             ex << "illegal instruction: LD (HL), (HL)\n\n" << DumpRegisters();
             throw PlipEmulationException(ex.str().c_str());
@@ -513,14 +467,17 @@ namespace Plip::Cpu {
 
         if(dest == IDX_HL) {
             // LD (HL), r
-            if(m_mcycle == 2) {
+            CYCLE(2) {
                 MEM_WRITE(REG_HL, *(GetRegister8(src)));
             }
-
             NUM_MCYCLES(3);
         } else if(src == IDX_HL) {
             // LD r, (HL)
-            OpLdRegMem();
+            FETCH_ADDR_CYCLE(2, IDX_HL);
+            CYCLE(3) {
+                *(GetRegister8(dest)) = m_instr[1];
+            }
+            NUM_MCYCLES(3);
         } else {
             // LD r, r'
             *(GetRegister8(dest)) = *(GetRegister8(src));
@@ -535,9 +492,8 @@ namespace Plip::Cpu {
 
         if(src == IDX_HL) {
             // OR (HL)
-            if(m_mcycle == 2) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
                 m_reg.a |= m_instr[1];
                 CHECK_ZERO(m_reg.a);
                 FLAG_CLEAR(SUBTRACT);
@@ -574,9 +530,8 @@ namespace Plip::Cpu {
 
         if(src == IDX_HL) {
             // SUB A, (HL)
-            if(m_mcycle == 2) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
                 res = m_reg.a - m_instr[1];
                 CHECK_CARRY(res);
                 CHECK_HALFCARRY(m_reg.a, res);
@@ -607,9 +562,8 @@ namespace Plip::Cpu {
 
         if(src == IDX_HL) {
             // SBC A, (HL)
-            if(m_mcycle == 2) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
                 res = m_reg.a - m_instr[1] - (FLAG_TEST(CARRY) ? 1 : 0);
                 CHECK_CARRY(res);
                 CHECK_HALFCARRY(m_reg.a, res);
@@ -639,9 +593,8 @@ namespace Plip::Cpu {
 
         if(src == IDX_HL) {
             // XOR (HL)
-            if(m_mcycle == 2) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(2, REG_HL);
+            CYCLE(3) {
                 m_reg.a ^= m_instr[1];
                 CHECK_ZERO(m_reg.a);
                 FLAG_CLEAR(SUBTRACT);
@@ -673,9 +626,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // RES n, (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 MEM_WRITE(REG_HL, m_instr[2] &= (1 << idx));
             }
             NUM_MCYCLES(5);
@@ -695,9 +647,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // SET n, (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 MEM_WRITE(REG_HL, m_instr[2] |= (1 << idx));
             }
             NUM_MCYCLES(5);
@@ -717,9 +668,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // BIT n, (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 FLAG_CLEAR(SUBTRACT);
                 FLAG_SET(HALFCARRY);
                 CHECK_ZERO(m_instr[2] & (1 << idx));
@@ -743,9 +693,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // SWAP (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 uint8_t res = (m_instr[2] << 4) + (m_instr[2] & 0x0F);
                 MEM_WRITE(REG_HL, res);
                 CHECK_ZERO(res);
@@ -776,9 +725,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // RLC (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else if(m_mcycle == 4) {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 auto res = m_instr[2];
                 uint8_t msb = res >> 7;
                 CHECK_BIT_CARRY(msb);
@@ -814,9 +762,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // RL (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 auto res = m_instr[2];
                 uint8_t cf = FLAG_TEST(CARRY) ? 1 : 0;
                 CHECK_BIT_CARRY(res & 0b10000000);
@@ -851,9 +798,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // RRC (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else if(m_mcycle == 4) {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 auto res = m_instr[2];
                 uint8_t lsb = res & 0b00000001;
                 CHECK_BIT_CARRY(lsb);
@@ -889,9 +835,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // RR (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 auto res = m_instr[2];
                 uint8_t cf = FLAG_TEST(CARRY) ? 0b10000000 : 0;
                 CHECK_BIT_CARRY(res & 0b00000001);
@@ -926,9 +871,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // SLA (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else if(m_mcycle == 4) {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 auto res = m_instr[2];
                 uint8_t msb = res & 0b10000000;
                 CHECK_BIT_CARRY(msb);
@@ -962,9 +906,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // SRA (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else if(m_mcycle == 4) {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 auto res = m_instr[2];
                 uint8_t msb = reg & 0b10000000;
                 uint8_t lsb = res & 0b00000001;
@@ -1002,9 +945,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_HL) {
             // SRL (HL)
-            if(m_mcycle == 3) {
-                FETCH_ADDR(REG_HL);
-            } else if(m_mcycle == 4) {
+            FETCH_ADDR_CYCLE(3, REG_HL);
+            CYCLE(4) {
                 auto res = m_instr[2];
                 uint8_t lsb = res & 0b00000001;
                 CHECK_BIT_CARRY(lsb);

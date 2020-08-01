@@ -34,7 +34,9 @@
 
 #define FETCH m_instr.push_back(MEM_READ(m_reg.pc++))
 #define FETCH_ADDR(addr) m_instr.push_back(MEM_READ(addr))
-#define FETCH_IMM(cycle) if(m_mcycle == cycle) { FETCH; } else
+#define FETCH_ADDR_CYCLE(cycle, addr) do { if(m_mcycle == (cycle)) { FETCH_ADDR(addr); } } while(0)
+#define FETCH_IMM_CYCLE(cycle) do { if(m_mcycle == (cycle)) { FETCH; } } while(0)
+#define CYCLE(cycle) if(m_mcycle == (cycle))
 
 #define BEGIN_EXECUTE m_allowFetch = false
 #define END_EXECUTE m_instr.clear(); m_mcycle = 2; m_allowFetch = true
@@ -44,7 +46,7 @@
 #define OP_MASK(mask, code) (m_instr[0] & (mask)) == (code)
 #define OP_CB_MASK(mask, code) (m_instr[1] & (mask)) == (code)
 
-#define OP_REG_16(idx) ((m_instr[(idx)] >> 4) & 0b00000011)
+#define OP_REG16(idx) ((m_instr[(idx)] >> 4) & 0b00000011)
 #define OP_REG_X(idx) ((m_instr[(idx)] >> 3) & 0b00000111)
 #define OP_REG_Y(idx) (m_instr[(idx)] & 0b00000111)
 
