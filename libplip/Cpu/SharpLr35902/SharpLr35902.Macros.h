@@ -55,5 +55,10 @@
 
 #define FLAG_CLEAR(bit) m_reg.f &= ~(1 << (bit))
 #define FLAG_SET(bit) m_reg.f |= (1 << (bit))
+#define FLAG_TEST(bit) (m_reg.f &= (1 << (bit)))
 
-#define CHECK_ZERO(val) do { if((val) == 0) FLAG_SET(ZERO); else FLAG_CLEAR(ZERO); } while(0)
+#define CHECK_CARRY(val) do { if((val) & 0xFF00) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY); } while(0)
+#define CHECK_HALFCARRY(old, val) do { \
+    if(((val) & 0xFFF0) == ((old) & 0xF0)) FLAG_SET(HALFCARRY); \
+    else FLAG_CLEAR(HALFCARRY); } while(0)
+#define CHECK_ZERO(val) do { if(val) FLAG_CLEAR(ZERO); else FLAG_SET(ZERO); } while(0)

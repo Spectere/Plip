@@ -65,6 +65,10 @@ namespace Plip::Cpu {
         }
 
         // Standard opcodes.
+        void OpAdd();
+        void OpAddCarry();
+        void OpAnd();
+        void OpCarry();
         void OpDecReg();
         void OpDecPair();
         void OpIncReg();
@@ -73,6 +77,10 @@ namespace Plip::Cpu {
         void OpLdRegImm();
         void OpLdRegMem();
         void OpLdRegReg();
+        void OpOr();
+        void OpSub();
+        void OpSubBorrow();
+        void OpXor();
 
         // CB-prefixed opcodes.
         void OpBitClear();

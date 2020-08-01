@@ -46,6 +46,30 @@ namespace Plip::Cpu {
         } else if(OP_MASK(0b11001111, 0b00000010)) {
             // LD (rr), A
             OpLdMemReg();
+        } else if(OP_MASK(0b11111000, 0b10000000)) {
+            // ADD A, r
+            OpAdd();
+        } else if(OP_MASK(0b11111000, 0b10001000)) {
+            // ADC A, r
+            OpAddCarry();
+        } else if(OP_MASK(0b11111000, 0b10010000)) {
+            // SUB A, r
+            OpSub();
+        } else if(OP_MASK(0b11111000, 0b10011000)) {
+            // SBC A, r
+            OpSubBorrow();
+        } else if(OP_MASK(0b11111000, 0b10100000)) {
+            // AND r
+            OpAnd();
+        } else if(OP_MASK(0b11111000, 0b10101000)) {
+            // XOR r
+            OpXor();
+        } else if(OP_MASK(0b11111000, 0b10110000)) {
+            // OR r
+            OpOr();
+        } else if(OP_MASK(0b11111000, 0b10111000)) {
+            // CP r
+            OpCarry();
         } else {
             std::stringstream ex;
             ex << "unknown opcode: " << PlipUtility::FormatHex(m_instr[0], 2)

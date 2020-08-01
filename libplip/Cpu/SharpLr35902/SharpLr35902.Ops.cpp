@@ -14,6 +14,125 @@ namespace Plip::Cpu {
     /*
      * Standard opcodes: starts at m_mcycle == 2.
      */
+    void SharpLr35902::OpAdd() {
+        auto src = OP_REG_Y(0);
+        uint16_t res;
+
+        if(src == IDX_HL) {
+            // ADD A, (HL)
+            if(m_mcycle == 2) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                res = m_reg.a + m_instr[1];
+                CHECK_CARRY(res);
+                CHECK_HALFCARRY(m_reg.a, res);
+                m_reg.a = res & 0xFF;
+                CHECK_ZERO(m_reg.a);
+                FLAG_CLEAR(SUBTRACT);
+            }
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        // ADD A, r
+        res = m_reg.a + *(GetRegister8(src));
+        CHECK_CARRY(res);
+        CHECK_HALFCARRY(m_reg.a, res);
+        m_reg.a = res & 0xFF;
+        CHECK_ZERO(m_reg.a);
+        FLAG_CLEAR(SUBTRACT);
+
+        NUM_MCYCLES(2);
+    }
+
+    void SharpLr35902::OpAddCarry() {
+        auto src = OP_REG_Y(0);
+        uint16_t res;
+
+        if(src == IDX_HL) {
+            // ADC A, (HL)
+            if(m_mcycle == 2) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                res = m_reg.a + m_instr[1] + FLAG_TEST(CARRY) ? 1 : 0;
+                CHECK_CARRY(res);
+                CHECK_HALFCARRY(m_reg.a, res);
+                m_reg.a = res & 0xFF;
+                CHECK_ZERO(m_reg.a);
+                FLAG_CLEAR(SUBTRACT);
+            }
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        // ADC A, r
+        res = m_reg.a + *(GetRegister8(src)) + FLAG_TEST(CARRY) ? 1 : 0;
+        CHECK_CARRY(res);
+        CHECK_HALFCARRY(m_reg.a, res);
+        m_reg.a = res & 0xFF;
+        CHECK_ZERO(m_reg.a);
+        FLAG_CLEAR(SUBTRACT);
+
+        NUM_MCYCLES(2);
+    }
+
+    void SharpLr35902::OpAnd() {
+        auto src = OP_REG_Y(0);
+
+        if(src == IDX_HL) {
+            // AND (HL)
+            if(m_mcycle == 2) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                m_reg.a &= m_instr[1];
+                CHECK_ZERO(m_reg.a);
+                FLAG_CLEAR(SUBTRACT);
+                FLAG_CLEAR(CARRY);
+                FLAG_SET(HALFCARRY);
+            }
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        // AND r
+        m_reg.a &= *(GetRegister8(src));
+        CHECK_ZERO(m_reg.a);
+        FLAG_CLEAR(SUBTRACT);
+        FLAG_CLEAR(CARRY);
+        FLAG_SET(HALFCARRY);
+
+        NUM_MCYCLES(2);
+    }
+
+    void SharpLr35902::OpCarry() {
+        auto src = OP_REG_Y(0);
+        uint16_t res;
+
+        if(src == IDX_HL) {
+            // CP (HL)
+            if(m_mcycle == 2) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                res = m_reg.a - m_instr[1];
+                CHECK_CARRY(res);
+                CHECK_HALFCARRY(m_reg.a, res);
+                CHECK_ZERO(res & 0xFF);
+                FLAG_SET(SUBTRACT);
+            }
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        // CP r
+        res = m_reg.a - *(GetRegister8(src));
+        CHECK_CARRY(res);
+        CHECK_HALFCARRY(m_reg.a, res);
+        CHECK_ZERO(res & 0xFF);
+        FLAG_SET(SUBTRACT);
+
+        NUM_MCYCLES(2);
+    }
+
     void SharpLr35902::OpDecReg() {
         auto dest = OP_REG_X(0);
         uint8_t old;
@@ -220,6 +339,124 @@ namespace Plip::Cpu {
         }
     }
 
+    void SharpLr35902::OpOr() {
+        auto src = OP_REG_Y(0);
+
+        if(src == IDX_HL) {
+            // OR (HL)
+            if(m_mcycle == 2) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                m_reg.a |= m_instr[1];
+                CHECK_ZERO(m_reg.a);
+                FLAG_CLEAR(SUBTRACT);
+                FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+            }
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        // OP r
+        m_reg.a |= *(GetRegister8(src));
+        CHECK_ZERO(m_reg.a);
+        FLAG_CLEAR(SUBTRACT);
+        FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+
+        NUM_MCYCLES(2);
+    }
+
+    void SharpLr35902::OpSub() {
+        auto src = OP_REG_Y(0);
+        uint16_t res;
+
+        if(src == IDX_HL) {
+            // SUB A, (HL)
+            if(m_mcycle == 2) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                res = m_reg.a - m_instr[1];
+                CHECK_CARRY(res);
+                CHECK_HALFCARRY(m_reg.a, res);
+                m_reg.a = res & 0xFF;
+                CHECK_ZERO(m_reg.a);
+                FLAG_SET(SUBTRACT);
+            }
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        // SUB A, r
+        res = m_reg.a - *(GetRegister8(src));
+        CHECK_CARRY(res);
+        CHECK_HALFCARRY(m_reg.a, res);
+        m_reg.a = res & 0xFF;
+        CHECK_ZERO(m_reg.a);
+        FLAG_SET(SUBTRACT);
+
+        NUM_MCYCLES(2);
+    }
+
+    void SharpLr35902::OpSubBorrow() {
+        auto src = OP_REG_Y(0);
+        uint16_t res;
+
+        if(src == IDX_HL) {
+            // SBC A, (HL)
+            if(m_mcycle == 2) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                res = m_reg.a - m_instr[1] - FLAG_TEST(CARRY) ? 1 : 0;
+                CHECK_CARRY(res);
+                CHECK_HALFCARRY(m_reg.a, res);
+                m_reg.a = res & 0xFF;
+                CHECK_ZERO(m_reg.a);
+                FLAG_SET(SUBTRACT);
+            }
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        // SBC A, r
+        res = m_reg.a - *(GetRegister8(src)) - FLAG_TEST(CARRY) ? 1 : 0;
+        CHECK_CARRY(res);
+        CHECK_HALFCARRY(m_reg.a, res);
+        m_reg.a = res & 0xFF;
+        CHECK_ZERO(m_reg.a);
+        FLAG_SET(SUBTRACT);
+
+        NUM_MCYCLES(2);
+    }
+
+    void SharpLr35902::OpXor() {
+        auto src = OP_REG_Y(0);
+
+        if(src == IDX_HL) {
+            // XOR (HL)
+            if(m_mcycle == 2) {
+                FETCH_ADDR(REG_HL);
+            } else {
+                m_reg.a ^= m_instr[1];
+                CHECK_ZERO(m_reg.a);
+                FLAG_CLEAR(SUBTRACT);
+                FLAG_CLEAR(CARRY);
+                FLAG_CLEAR(HALFCARRY);
+            }
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        // XOR r
+        m_reg.a ^= *(GetRegister8(src));
+        CHECK_ZERO(m_reg.a);
+        FLAG_CLEAR(SUBTRACT);
+        FLAG_CLEAR(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+
+        NUM_MCYCLES(2);
+    }
+
     /*
      * CB-prefixed opcodes: starts at m_mcycle == 3
      */
@@ -274,11 +511,7 @@ namespace Plip::Cpu {
             } else if(m_mcycle == 4) {
                 FLAG_CLEAR(SUBTRACT);
                 FLAG_SET(HALFCARRY);
-
-                if(m_instr[2] & (1 << idx))
-                    FLAG_CLEAR(ZERO);
-                else
-                    FLAG_SET(ZERO);
+                CHECK_ZERO(m_instr[2] & (1 << idx));
             }
             NUM_MCYCLES(5);
             return;
@@ -287,11 +520,7 @@ namespace Plip::Cpu {
         // BIT n, r
         FLAG_CLEAR(SUBTRACT);
         FLAG_SET(HALFCARRY);
-
-        if(*(GetRegister8(reg)) & (1 << idx))
-            FLAG_CLEAR(ZERO);
-        else
-            FLAG_SET(ZERO);
+        CHECK_ZERO(*(GetRegister8(reg)) & (1 << idx));
 
         NUM_MCYCLES(3);
     }
