@@ -16,6 +16,12 @@ namespace Plip::Cpu {
         if(OP(0b00000000)) {
             // NOP
             NUM_MCYCLES(2);
+        } else if(OP(0b11001011)) {
+            // 0xCB
+            if(m_mcycle == 2)
+                FETCH;
+            else
+                DecodeCB();
         } else if(OP_MASK(0b11000111, 0b00000100)) {
             // INC r
             OpIncReg();
@@ -49,6 +55,20 @@ namespace Plip::Cpu {
     }
 
     void SharpLr35902::DecodeCB() {
-
+        if(OP_CB_MASK(0b11000000, 0b01000000)) {
+            // BIT n, r
+            OpBitTest();
+        } else if(OP_CB_MASK(0b11000000, 0b10000000)) {
+            // SET n, r
+            OpBitSet();
+        } else if(OP_CB_MASK(0b11000000, 0b11000000)) {
+            // RES n, r
+            OpBitClear();
+        } else {
+            std::stringstream ex;
+            ex << "unknown opcode: 0xCB " << PlipUtility::FormatHex(m_instr[1], 2)
+               << "\n\n" << DumpRegisters();
+            throw PlipEmulationException(ex.str().c_str());
+        }
     }
 }

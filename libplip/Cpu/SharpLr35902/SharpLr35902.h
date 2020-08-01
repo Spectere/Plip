@@ -64,6 +64,7 @@ namespace Plip::Cpu {
             Split(val, high, low);
         }
 
+        // Standard opcodes.
         void OpDecReg();
         void OpDecPair();
         void OpIncReg();
@@ -72,6 +73,11 @@ namespace Plip::Cpu {
         void OpLdRegImm();
         void OpLdRegMem();
         void OpLdRegReg();
+
+        // CB-prefixed opcodes.
+        void OpBitClear();
+        void OpBitSet();
+        void OpBitTest();
 
         bool m_allowFetch = true;
         std::vector<uint8_t> m_instr;

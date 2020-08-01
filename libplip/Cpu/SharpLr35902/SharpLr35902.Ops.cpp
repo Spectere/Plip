@@ -11,6 +11,9 @@
 #include "SharpLr35902.Macros.h"
 
 namespace Plip::Cpu {
+    /*
+     * Standard opcodes: starts at m_mcycle == 2.
+     */
     void SharpLr35902::OpDecReg() {
         auto dest = OP_REG_X(0);
         uint8_t old;
@@ -202,8 +205,9 @@ namespace Plip::Cpu {
 
         if(dest == IDX_HL) {
             // LD (HL), r
-            if(m_mcycle == 2)
+            if(m_mcycle == 2) {
                 MEM_WRITE(REG_HL, *(GetRegister8(src)));
+            }
 
             NUM_MCYCLES(3);
         } else if(src == IDX_HL) {
@@ -214,5 +218,81 @@ namespace Plip::Cpu {
             *(GetRegister8(dest)) = *(GetRegister8(src));
             NUM_MCYCLES(2);
         }
+    }
+
+    /*
+     * CB-prefixed opcodes: starts at m_mcycle == 3
+     */
+    void SharpLr35902::OpBitClear() {
+        auto idx = OP_REG_X(1);
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // RES n, (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else if(m_mcycle == 4) {
+                MEM_WRITE(REG_HL, m_instr[2] &= (1 << idx));
+            }
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // RES n, r
+        *(GetRegister8(reg)) &= (1 << idx);
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpBitSet() {
+        auto idx = OP_REG_X(1);
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // SET n, (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else if(m_mcycle == 4) {
+                MEM_WRITE(REG_HL, m_instr[2] |= (1 << idx));
+            }
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // SET n, r
+        *(GetRegister8(reg)) |= (1 << idx);
+        NUM_MCYCLES(3);
+    }
+
+    void SharpLr35902::OpBitTest() {
+        auto idx = OP_REG_X(1);
+        auto reg = OP_REG_Y(1);
+
+        if(reg == IDX_HL) {
+            // BIT n, (HL)
+            if(m_mcycle == 3) {
+                FETCH_ADDR(REG_HL);
+            } else if(m_mcycle == 4) {
+                FLAG_CLEAR(SUBTRACT);
+                FLAG_SET(HALFCARRY);
+
+                if(m_instr[2] & (1 << idx))
+                    FLAG_CLEAR(ZERO);
+                else
+                    FLAG_SET(ZERO);
+            }
+            NUM_MCYCLES(5);
+            return;
+        }
+
+        // BIT n, r
+        FLAG_CLEAR(SUBTRACT);
+        FLAG_SET(HALFCARRY);
+
+        if(*(GetRegister8(reg)) & (1 << idx))
+            FLAG_CLEAR(ZERO);
+        else
+            FLAG_SET(ZERO);
+
+        NUM_MCYCLES(3);
     }
 }

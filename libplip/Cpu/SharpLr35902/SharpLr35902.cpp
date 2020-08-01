@@ -14,7 +14,7 @@
 namespace Plip::Cpu {
     SharpLr35902::SharpLr35902(long hz, PlipMemoryMap *memoryMap, uint32_t pc)
     : PlipCpu(hz, memoryMap) {
-        PerformReset(pc);
+        PerformReset();
     }
 
     void SharpLr35902::Cycle() {

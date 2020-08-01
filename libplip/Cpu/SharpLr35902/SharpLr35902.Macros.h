@@ -37,11 +37,11 @@
 
 #define BEGIN_EXECUTE m_allowFetch = false
 #define END_EXECUTE m_instr.clear(); m_mcycle = 2; m_allowFetch = true
-#define NUM_MCYCLES(val) do { if(++m_mcycle >= (val)) { END_EXECUTE; } } while(0)
+#define NUM_MCYCLES(val) do { if(++m_mcycle > (val)) { END_EXECUTE; } } while(0)
 
 #define OP(code) m_instr[0] == (code)
 #define OP_MASK(mask, code) (m_instr[0] & (mask)) == (code)
-#define OP_CB_MASK(code, mask) (m_instr[1] & (mask)) == (code)
+#define OP_CB_MASK(mask, code) (m_instr[1] & (mask)) == (code)
 
 #define OP_REG_16(idx) ((m_instr[(idx)] >> 4) & 0b00000011)
 #define OP_REG_X(idx) ((m_instr[(idx)] >> 3) & 0b00000111)
