@@ -22,6 +22,51 @@ namespace Plip::Cpu {
                 FETCH;
             else
                 DecodeCB();
+        } else if(OP(0b00000111)) {
+            // RLCA
+            OpAccumRotateLeft();
+        } else if(OP(0b00001111)) {
+            // RRCA
+            OpAccumRotateRight();
+        } else if(OP(0b00010111)) {
+            // RLA
+            OpAccumRotateLeftThruCarry();
+        } else if(OP(0b00011111)) {
+            // RRA
+            OpAccumRotateRightThruCarry();
+        } else if(OP(0b00101111)) {
+            // CPL
+            OpAccumFlip();
+        } else if(OP(0b00110111)) {
+            // SCF
+            OpSetCarry();
+        } else if(OP(0b00111111)) {
+            // CCF
+            OpFlipCarry();
+        } else if(OP(0b11000110)) {
+            // ADD A, n
+            OpAccumAddImm();
+        } else if(OP(0b11001110)) {
+            // ADC A, n
+            OpAccumAddCarryImm();
+        } else if(OP(0b11010110)) {
+            // SUB A, n
+            OpAccumSubImm();
+        } else if(OP(0b11011110)) {
+            // SBC A, n
+            OpAccumSubBorrowImm();
+        } else if(OP(0b11100110)) {
+            // AND n
+            OpAccumAndImm();
+        } else if(OP(0b11101110)) {
+            // XOR n
+            OpAccumXorImm();
+        } else if(OP(0b11110110)) {
+            // OR n
+            OpAccumOrImm();
+        } else if(OP(0b11111110)) {
+            // CP n
+            OpAccumCarryImm();
         } else if(OP_MASK(0b11000111, 0b00000100)) {
             // INC r
             OpIncReg();

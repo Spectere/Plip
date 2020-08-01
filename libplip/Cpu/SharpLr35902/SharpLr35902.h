@@ -65,12 +65,26 @@ namespace Plip::Cpu {
         }
 
         // Standard opcodes.
+        void OpAccumAddImm();
+        void OpAccumAddCarryImm();
+        void OpAccumAndImm();
+        void OpAccumCarryImm();
+        void OpAccumFlip();
+        void OpAccumOrImm();
+        void OpAccumRotateLeft();
+        void OpAccumRotateLeftThruCarry();
+        void OpAccumRotateRight();
+        void OpAccumRotateRightThruCarry();
+        void OpAccumSubImm();
+        void OpAccumSubBorrowImm();
+        void OpAccumXorImm();
         void OpAdd();
         void OpAddCarry();
         void OpAnd();
         void OpCarry();
         void OpDecReg();
         void OpDecPair();
+        void OpFlipCarry();
         void OpIncReg();
         void OpIncPair();
         void OpLdMemReg();
@@ -78,6 +92,7 @@ namespace Plip::Cpu {
         void OpLdRegMem();
         void OpLdRegReg();
         void OpOr();
+        void OpSetCarry();
         void OpSub();
         void OpSubBorrow();
         void OpXor();

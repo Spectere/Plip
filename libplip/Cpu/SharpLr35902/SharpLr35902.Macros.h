@@ -34,6 +34,7 @@
 
 #define FETCH m_instr.push_back(MEM_READ(m_reg.pc++))
 #define FETCH_ADDR(addr) m_instr.push_back(MEM_READ(addr))
+#define FETCH_IMM(cycle) if(m_mcycle == cycle) { FETCH; } else
 
 #define BEGIN_EXECUTE m_allowFetch = false
 #define END_EXECUTE m_instr.clear(); m_mcycle = 2; m_allowFetch = true
@@ -54,9 +55,11 @@
 #define REG_HL REG_COMBINE(m_reg.h, m_reg.l)
 
 #define FLAG_CLEAR(bit) m_reg.f &= ~(1 << (bit))
+#define FLAG_FLIP(bit) m_reg.f ^= (1 << (bit))
 #define FLAG_SET(bit) m_reg.f |= (1 << (bit))
 #define FLAG_TEST(bit) (m_reg.f &= (1 << (bit)))
 
+#define CHECK_BIT_CARRY(val) do { if(val) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY); } while(0)
 #define CHECK_CARRY(val) do { if((val) & 0xFF00) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY); } while(0)
 #define CHECK_HALFCARRY(old, val) do { \
     if(((val) & 0xFFF0) == ((old) & 0xF0)) FLAG_SET(HALFCARRY); \

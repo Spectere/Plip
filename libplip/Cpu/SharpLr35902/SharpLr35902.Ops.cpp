@@ -14,6 +14,162 @@ namespace Plip::Cpu {
     /*
      * Standard opcodes: starts at m_mcycle == 2.
      */
+    // ADD A, n
+    void SharpLr35902::OpAccumAddImm() {
+        FETCH_IMM(2) {
+            uint16_t res = m_reg.a + m_instr[1];
+            CHECK_CARRY(res);
+            CHECK_HALFCARRY(m_reg.a, res);
+            m_reg.a = res & 0xFF;
+            CHECK_ZERO(m_reg.a);
+            FLAG_CLEAR(SUBTRACT);
+        }
+        NUM_MCYCLES(3);
+    }
+
+    // ADC A, n
+    void SharpLr35902::OpAccumAddCarryImm() {
+        FETCH_IMM(2) {
+            uint16_t res = m_reg.a + m_instr[1] + (FLAG_TEST(CARRY) ? 1 : 0);
+            CHECK_CARRY(res);
+            CHECK_HALFCARRY(m_reg.a, res);
+            m_reg.a = res & 0xFF;
+            CHECK_ZERO(m_reg.a);
+            FLAG_CLEAR(SUBTRACT);
+        }
+        NUM_MCYCLES(3);
+    }
+
+    // AND n
+    void SharpLr35902::OpAccumAndImm() {
+        FETCH_IMM(2) {
+            m_reg.a &= m_instr[1];
+            CHECK_ZERO(m_reg.a);
+            FLAG_SET(HALFCARRY);
+            FLAG_CLEAR(CARRY);
+            FLAG_CLEAR(SUBTRACT);
+        }
+        NUM_MCYCLES(3);
+    }
+
+    // CP n
+    void SharpLr35902::OpAccumCarryImm() {
+        FETCH_IMM(2) {
+            uint16_t res = m_reg.a - m_instr[1];
+            CHECK_CARRY(res);
+            CHECK_HALFCARRY(m_reg.a, res);
+            CHECK_ZERO(res & 0xFF);
+            FLAG_SET(SUBTRACT);
+        }
+        NUM_MCYCLES(3);
+    }
+
+    // CPL
+    void SharpLr35902::OpAccumFlip() {
+        m_reg.a = ~(m_reg.a);
+        FLAG_SET(SUBTRACT);
+        FLAG_SET(HALFCARRY);
+        NUM_MCYCLES(2);
+    }
+
+    // OR n
+    void SharpLr35902::OpAccumOrImm() {
+        FETCH_IMM(2) {
+            m_reg.a |= m_instr[1];
+            CHECK_ZERO(m_reg.a);
+            FLAG_CLEAR(HALFCARRY);
+            FLAG_CLEAR(CARRY);
+            FLAG_CLEAR(SUBTRACT);
+        }
+        NUM_MCYCLES(3);
+    }
+
+    // RLCA
+    void SharpLr35902::OpAccumRotateLeft() {
+        CHECK_BIT_CARRY(m_reg.a & 0b10000000);
+        m_reg.a <<= 1;
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        FLAG_CLEAR(ZERO);
+
+        NUM_MCYCLES(2);
+    }
+
+    // RLA
+    void SharpLr35902::OpAccumRotateLeftThruCarry() {
+        uint8_t cf = FLAG_TEST(CARRY) ? 1 : 0;
+        CHECK_BIT_CARRY(m_reg.a & 0b10000000);
+        m_reg.a <<=1;
+        m_reg.a |= cf;
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        FLAG_CLEAR(ZERO);
+
+        NUM_MCYCLES(2);
+    }
+
+    // RRCA
+    void SharpLr35902::OpAccumRotateRight() {
+        CHECK_BIT_CARRY(m_reg.a & 0b00000001);
+        m_reg.a >>= 1;
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        FLAG_CLEAR(ZERO);
+
+        NUM_MCYCLES(2);
+    }
+
+    // RRA
+    void SharpLr35902::OpAccumRotateRightThruCarry() {
+        uint8_t cf = FLAG_TEST(CARRY) ? 0b10000000 : 0;
+        CHECK_BIT_CARRY(m_reg.a & 0b00000001);
+        m_reg.a >>= 1;
+        m_reg.a |= cf;
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        FLAG_CLEAR(ZERO);
+
+        NUM_MCYCLES(2);
+    }
+
+    // SUB A, n
+    void SharpLr35902::OpAccumSubImm() {
+        FETCH_IMM(2) {
+            uint16_t res = m_reg.a - m_instr[1];
+            CHECK_CARRY(res);
+            CHECK_HALFCARRY(m_reg.a, res);
+            m_reg.a = res & 0xFF;
+            CHECK_ZERO(m_reg.a);
+            FLAG_SET(SUBTRACT);
+        }
+        NUM_MCYCLES(3);
+    }
+
+    // SBC A, n
+    void SharpLr35902::OpAccumSubBorrowImm() {
+        FETCH_IMM(2) {
+            uint16_t res = m_reg.a - m_instr[1] - (FLAG_TEST(CARRY) ? 1 : 0);
+            CHECK_CARRY(res);
+            CHECK_HALFCARRY(m_reg.a, res);
+            m_reg.a = res & 0xFF;
+            CHECK_ZERO(m_reg.a);
+            FLAG_SET(SUBTRACT);
+        }
+        NUM_MCYCLES(3);
+    }
+
+    // XOR n
+    void SharpLr35902::OpAccumXorImm() {
+        FETCH_IMM(2) {
+            m_reg.a ^= m_instr[1];
+            CHECK_ZERO(m_reg.a);
+            FLAG_CLEAR(HALFCARRY);
+            FLAG_CLEAR(CARRY);
+            FLAG_CLEAR(SUBTRACT);
+        }
+        NUM_MCYCLES(3);
+    }
+
     // ADD A, r
     // ADD A, (HL)
     void SharpLr35902::OpAdd() {
@@ -58,7 +214,7 @@ namespace Plip::Cpu {
             if(m_mcycle == 2) {
                 FETCH_ADDR(REG_HL);
             } else {
-                res = m_reg.a + m_instr[1] + FLAG_TEST(CARRY) ? 1 : 0;
+                res = m_reg.a + m_instr[1] + (FLAG_TEST(CARRY) ? 1 : 0);
                 CHECK_CARRY(res);
                 CHECK_HALFCARRY(m_reg.a, res);
                 m_reg.a = res & 0xFF;
@@ -195,6 +351,14 @@ namespace Plip::Cpu {
 
         std::tie(high, low) = GetRegisterPair(OP_REG_16(0));
         DecPair(high, low);
+        NUM_MCYCLES(2);
+    }
+
+    // CCF
+    void SharpLr35902::OpFlipCarry() {
+        FLAG_FLIP(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
         NUM_MCYCLES(2);
     }
 
@@ -394,6 +558,14 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // SCF
+    void SharpLr35902::OpSetCarry() {
+        FLAG_SET(CARRY);
+        FLAG_CLEAR(HALFCARRY);
+        FLAG_CLEAR(SUBTRACT);
+        NUM_MCYCLES(2);
+    }
+
     // SUB r
     // SUB (HL)
     void SharpLr35902::OpSub() {
@@ -438,7 +610,7 @@ namespace Plip::Cpu {
             if(m_mcycle == 2) {
                 FETCH_ADDR(REG_HL);
             } else {
-                res = m_reg.a - m_instr[1] - FLAG_TEST(CARRY) ? 1 : 0;
+                res = m_reg.a - m_instr[1] - (FLAG_TEST(CARRY) ? 1 : 0);
                 CHECK_CARRY(res);
                 CHECK_HALFCARRY(m_reg.a, res);
                 m_reg.a = res & 0xFF;
@@ -609,7 +781,7 @@ namespace Plip::Cpu {
             } else if(m_mcycle == 4) {
                 auto res = m_instr[2];
                 uint8_t msb = res >> 7;
-                if(msb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                CHECK_BIT_CARRY(msb);
                 FLAG_CLEAR(HALFCARRY);
                 FLAG_CLEAR(SUBTRACT);
                 res <<= 1;
@@ -625,7 +797,7 @@ namespace Plip::Cpu {
         // RLC r
         auto r = GetRegister8(reg);
         uint8_t msb = *r >> 7;
-        if(msb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        CHECK_BIT_CARRY(msb);
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         *r <<= 1;
@@ -647,7 +819,7 @@ namespace Plip::Cpu {
             } else {
                 auto res = m_instr[2];
                 uint8_t cf = FLAG_TEST(CARRY) ? 1 : 0;
-                if(res & 0b10000000) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                CHECK_BIT_CARRY(res & 0b10000000);
                 FLAG_CLEAR(HALFCARRY);
                 FLAG_CLEAR(SUBTRACT);
                 res <<= 1;
@@ -662,7 +834,7 @@ namespace Plip::Cpu {
         // RL r
         auto r = GetRegister8(reg);
         uint8_t cf = FLAG_TEST(CARRY) ? 1 : 0;
-        if(*r & 0b10000000) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        CHECK_BIT_CARRY(*r & 0b10000000);
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         *r <<= 1;
@@ -684,7 +856,7 @@ namespace Plip::Cpu {
             } else if(m_mcycle == 4) {
                 auto res = m_instr[2];
                 uint8_t lsb = res & 0b00000001;
-                if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                CHECK_BIT_CARRY(lsb);
                 FLAG_CLEAR(HALFCARRY);
                 FLAG_CLEAR(SUBTRACT);
                 res >>= 1;
@@ -700,7 +872,7 @@ namespace Plip::Cpu {
         // RRC r
         auto r = GetRegister8(reg);
         uint8_t lsb = *r & 0b00000001;
-        if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        CHECK_BIT_CARRY(lsb);
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         *r >>= 1;
@@ -722,7 +894,7 @@ namespace Plip::Cpu {
             } else {
                 auto res = m_instr[2];
                 uint8_t cf = FLAG_TEST(CARRY) ? 0b10000000 : 0;
-                if(res & 0b00000001) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                CHECK_BIT_CARRY(res & 0b00000001);
                 FLAG_CLEAR(HALFCARRY);
                 FLAG_CLEAR(SUBTRACT);
                 res >>= 1;
@@ -737,7 +909,7 @@ namespace Plip::Cpu {
         // RR r
         auto r = GetRegister8(reg);
         uint8_t cf = FLAG_TEST(CARRY) ? 0b10000000 : 0;
-        if(*r & 0b00000001) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        CHECK_BIT_CARRY(*r & 0b00000001);
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         *r >>= 1;
@@ -759,7 +931,7 @@ namespace Plip::Cpu {
             } else if(m_mcycle == 4) {
                 auto res = m_instr[2];
                 uint8_t msb = res & 0b10000000;
-                if(msb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                CHECK_BIT_CARRY(msb);
                 FLAG_CLEAR(HALFCARRY);
                 FLAG_CLEAR(SUBTRACT);
                 res <<= 1;
@@ -774,7 +946,7 @@ namespace Plip::Cpu {
         // SLA r
         auto r = GetRegister8(reg);
         uint8_t msb = *r & 0b10000000;
-        if(msb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        CHECK_BIT_CARRY(msb);
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         *r <<= 1;
@@ -796,7 +968,7 @@ namespace Plip::Cpu {
                 auto res = m_instr[2];
                 uint8_t msb = reg & 0b10000000;
                 uint8_t lsb = res & 0b00000001;
-                if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                CHECK_BIT_CARRY(lsb);
                 FLAG_CLEAR(HALFCARRY);
                 FLAG_CLEAR(SUBTRACT);
                 res >>= 1;
@@ -813,7 +985,7 @@ namespace Plip::Cpu {
         auto r = GetRegister8(reg);
         uint8_t msb = *r & 0b10000000;
         uint8_t lsb = *r & 0b00000001;
-        if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        CHECK_BIT_CARRY(lsb);
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         *r >>= 1;
@@ -835,7 +1007,7 @@ namespace Plip::Cpu {
             } else if(m_mcycle == 4) {
                 auto res = m_instr[2];
                 uint8_t lsb = res & 0b00000001;
-                if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+                CHECK_BIT_CARRY(lsb);
                 FLAG_CLEAR(HALFCARRY);
                 FLAG_CLEAR(SUBTRACT);
                 res >>= 1;
@@ -850,7 +1022,7 @@ namespace Plip::Cpu {
         // SRL r
         auto r = GetRegister8(reg);
         uint8_t lsb = *r & 0b00000001;
-        if(lsb) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY);
+        CHECK_BIT_CARRY(lsb);
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         *r >>= 1;
