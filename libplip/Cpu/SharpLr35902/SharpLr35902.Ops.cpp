@@ -14,6 +14,8 @@ namespace Plip::Cpu {
     /*
      * Standard opcodes: starts at m_mcycle == 2.
      */
+    // ADD A, r
+    // ADD A, (HL)
     void SharpLr35902::OpAdd() {
         auto src = OP_REG_Y(0);
         uint16_t res;
@@ -45,6 +47,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // ADC A, r
+    // ADC A, (HL)
     void SharpLr35902::OpAddCarry() {
         auto src = OP_REG_Y(0);
         uint16_t res;
@@ -76,6 +80,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // AND r
+    // AND (HL)
     void SharpLr35902::OpAnd() {
         auto src = OP_REG_Y(0);
 
@@ -104,6 +110,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // CP r
+    // CP (HL)
     void SharpLr35902::OpCarry() {
         auto src = OP_REG_Y(0);
         uint16_t res;
@@ -133,6 +141,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // DEC r
+    // DEC (HL)
     void SharpLr35902::OpDecReg() {
         auto dest = OP_REG_X(0);
         uint8_t old;
@@ -178,6 +188,7 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // DEC rr
     void SharpLr35902::OpDecPair() {
         uint8_t *high = nullptr;
         uint8_t *low = nullptr;
@@ -187,6 +198,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // INC r
+    // INC (HL)
     void SharpLr35902::OpIncReg() {
         auto dest = OP_REG_X(0);
         uint8_t old;
@@ -232,6 +245,7 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // INC rr
     void SharpLr35902::OpIncPair() {
         uint8_t *high = nullptr;
         uint8_t *low = nullptr;
@@ -241,6 +255,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // LD (HL), r
+    // LD (rr), A
     void SharpLr35902::OpLdMemReg() {
         uint16_t addr;
         uint8_t *src;
@@ -265,6 +281,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // LD r, n
+    // LD (HL), n
     void SharpLr35902::OpLdRegImm() {
         auto dest = OP_REG_Y(0);
 
@@ -276,17 +294,20 @@ namespace Plip::Cpu {
                 MEM_WRITE(REG_HL, *(GetRegister8(OP_REG_Y(0))));
             }
             NUM_MCYCLES(3);
-        } else {
-            // LD r, n
-            if(m_mcycle == 2) {
-                FETCH;
-            } else if(m_mcycle == 3) {
-                *(GetRegister8(OP_REG_Y(0))) = m_instr[1];
-            }
-            NUM_MCYCLES(4);
+            return;
         }
+
+        // LD r, n
+        if(m_mcycle == 2) {
+            FETCH;
+        } else if(m_mcycle == 3) {
+            *(GetRegister8(OP_REG_Y(0))) = m_instr[1];
+        }
+        NUM_MCYCLES(4);
     }
 
+    // LD r, (HL)
+    // LD A, (rr)
     void SharpLr35902::OpLdRegMem() {
         uint16_t addr;
         uint8_t *dest;
@@ -311,6 +332,10 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // (!) LD (HL), (HL)
+    // LD r, r'
+    // LD r, (HL) -> OpLdRegMem()
+    // LD (HL), r
     void SharpLr35902::OpLdRegReg() {
         auto dest = OP_REG_X(0);
         auto src = OP_REG_Y(0);
@@ -339,6 +364,8 @@ namespace Plip::Cpu {
         }
     }
 
+    // OR r
+    // OR (HL)
     void SharpLr35902::OpOr() {
         auto src = OP_REG_Y(0);
 
@@ -367,6 +394,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // SUB r
+    // SUB (HL)
     void SharpLr35902::OpSub() {
         auto src = OP_REG_Y(0);
         uint16_t res;
@@ -398,6 +427,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // SBC r
+    // SBC (HL)
     void SharpLr35902::OpSubBorrow() {
         auto src = OP_REG_Y(0);
         uint16_t res;
@@ -429,6 +460,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // XOR r
+    // XOR (HL)
     void SharpLr35902::OpXor() {
         auto src = OP_REG_Y(0);
 
@@ -460,6 +493,8 @@ namespace Plip::Cpu {
     /*
      * CB-prefixed opcodes: starts at m_mcycle == 3
      */
+    // RES n, r
+    // RES n, (HL)
     void SharpLr35902::OpBitClear() {
         auto idx = OP_REG_X(1);
         auto reg = OP_REG_Y(1);
@@ -480,6 +515,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // SET n, r
+    // SET n, (HL)
     void SharpLr35902::OpBitSet() {
         auto idx = OP_REG_X(1);
         auto reg = OP_REG_Y(1);
@@ -500,6 +537,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // BIT n, r
+    // BIT n, (HL)
     void SharpLr35902::OpBitTest() {
         auto idx = OP_REG_X(1);
         auto reg = OP_REG_Y(1);
@@ -525,6 +564,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // SWAP n
+    // SWAP (HL)
     void SharpLr35902::OpNibbleSwap() {
         auto reg = OP_REG_Y(1);
 
@@ -556,6 +597,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // RLC r
+    // RLC (HL)
     void SharpLr35902::OpRotateLeft() {
         auto reg = OP_REG_Y(1);
 
@@ -592,6 +635,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // RL r
+    // RL (HL)
     void SharpLr35902::OpRotateLeftThruCarry() {
         auto reg = OP_REG_Y(1);
 
@@ -627,6 +672,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // RRC r
+    // RRC (HL)
     void SharpLr35902::OpRotateRight() {
         auto reg = OP_REG_Y(1);
 
@@ -663,6 +710,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // RR r
+    // RR (HL)
     void SharpLr35902::OpRotateRightThruCarry() {
         auto reg = OP_REG_Y(1);
 
@@ -698,6 +747,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // SLA r
+    // SLA (HL)
     void SharpLr35902::OpShiftLeftArithmetic() {
         auto reg = OP_REG_Y(1);
 
@@ -732,6 +783,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // SRA r
+    // SRA (HL)
     void SharpLr35902::OpShiftRightArithmetic() {
         auto reg = OP_REG_Y(1);
 
@@ -770,6 +823,8 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // SRL r
+    // SRL (HL)
     void SharpLr35902::OpShiftRightLogical() {
         auto reg = OP_REG_Y(1);
 
