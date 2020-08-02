@@ -344,6 +344,18 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // DI
+    void SharpLr35902::OpDisableInterrupts() {
+        m_ime = Disabled;
+        NUM_MCYCLES(2);
+    }
+
+    // EI
+    void SharpLr35902::OpEnableInterrupts() {
+        m_ime = Scheduled;
+        NUM_MCYCLES(2);
+    }
+
     // CCF
     void SharpLr35902::OpFlipCarry() {
         FLAG_FLIP(CARRY);

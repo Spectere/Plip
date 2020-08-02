@@ -67,6 +67,12 @@ namespace Plip::Cpu {
         } else if(OP(0b11111110)) {
             // CP n
             OpAccumCarryImm();
+        } else if(OP(0b11110011)) {
+            // DI
+            OpDisableInterrupts();
+        } else if(OP(0b11111011)) {
+            // EI
+            OpEnableInterrupts();
         } else if(OP_MASK(0b11000111, 0b00000100)) {
             // INC r
             OpIncReg();

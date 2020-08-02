@@ -15,7 +15,7 @@
 namespace Plip::Cpu {
     class SharpLr35902 : PlipCpu {
     public:
-        SharpLr35902(long hz, PlipMemoryMap* memoryMap, uint32_t pc);
+        SharpLr35902(long hz, PlipMemoryMap* memoryMap);
 
         struct Registers {
             uint8_t a;
@@ -36,6 +36,12 @@ namespace Plip::Cpu {
         void Reset() override;
 
     private:
+        enum ImeState {
+            Disabled,
+            Enabled,
+            Scheduled
+        };
+
         void PerformReset();
 
         void Decode();
@@ -84,6 +90,8 @@ namespace Plip::Cpu {
         void OpCarry();
         void OpDecReg();
         void OpDecPair();
+        void OpDisableInterrupts();
+        void OpEnableInterrupts();
         void OpFlipCarry();
         void OpIncReg();
         void OpIncPair();
@@ -111,6 +119,7 @@ namespace Plip::Cpu {
         void OpShiftRightLogical();
 
         bool m_allowFetch = true;
+        ImeState m_ime = Disabled;
         std::vector<uint8_t> m_instr;
         Registers m_reg {};
         uint8_t m_mcycle = 0;

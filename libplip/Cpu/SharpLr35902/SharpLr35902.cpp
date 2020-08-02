@@ -12,7 +12,7 @@
 #include "SharpLr35902.Macros.h"
 
 namespace Plip::Cpu {
-    SharpLr35902::SharpLr35902(long hz, PlipMemoryMap *memoryMap, uint32_t pc)
+    SharpLr35902::SharpLr35902(long hz, PlipMemoryMap *memoryMap)
     : PlipCpu(hz, memoryMap) {
         PerformReset();
     }
@@ -27,6 +27,9 @@ namespace Plip::Cpu {
             FETCH;
             BEGIN_EXECUTE;
         }
+
+        // Enable interrupts if they are scheduled.
+        if(m_ime == Scheduled) m_ime = Enabled;
     }
 
     std::string SharpLr35902::DumpRegisters() const {
