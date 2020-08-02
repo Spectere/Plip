@@ -42,6 +42,7 @@
 #define FETCH_ADDR(addr) m_instr.push_back(MEM_READ(addr))
 #define FETCH_ADDR_CYCLE(cycle, addr) do { if(m_mcycle == (cycle)) { FETCH_ADDR(addr); } } while(0)
 #define FETCH_IMM_CYCLE(cycle) do { if(m_mcycle == (cycle)) { FETCH; } } while(0)
+
 #define CYCLE(cycle) if(m_mcycle == (cycle))
 
 #define BEGIN_EXECUTE m_allowFetch = false
@@ -58,11 +59,11 @@
 #define OP_REG_X(idx) OP_IDX(idx)
 #define OP_REG_Y(idx) (m_instr[(idx)] & 0b00000111)
 
-#define REG_COMBINE(high, low) (((high) << 8) + (low))
-#define REG_AF REG_COMBINE(m_reg.a, m_reg.f)
-#define REG_BC REG_COMBINE(m_reg.b, m_reg.c)
-#define REG_DE REG_COMBINE(m_reg.d, m_reg.e)
-#define REG_HL REG_COMBINE(m_reg.h, m_reg.l)
+#define COMBINE16(high, low) (((high) << 8) + (low))
+#define REG_AF COMBINE16(m_reg.a, m_reg.f)
+#define REG_BC COMBINE16(m_reg.b, m_reg.c)
+#define REG_DE COMBINE16(m_reg.d, m_reg.e)
+#define REG_HL COMBINE16(m_reg.h, m_reg.l)
 
 #define SET_PC_IMM m_reg.pc = m_instr[2] << 8 | m_instr[1]
 #define SET_PC_STACK(cycle) \
@@ -77,8 +78,6 @@
         CYCLE(cycle)     { STACK_PUSH(m_reg.pc >> 8);   } \
         CYCLE(cycle + 1) { STACK_PUSH(m_reg.pc & 0xFF); } \
     } while(0)
-
-
 #define STACK_POP m_memory->GetByte(m_reg.sp++)
 
 #define FLAG_CLEAR(bit) m_reg.f &= ~(1 << (bit))

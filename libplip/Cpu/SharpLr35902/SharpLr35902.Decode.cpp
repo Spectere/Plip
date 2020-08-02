@@ -25,11 +25,14 @@ namespace Plip::Cpu {
         } else if(OP(0b00000111)) {
             // RLCA
             OpAccumRotateLeft();
+        } else if(OP(0b00001000)) {
+            // LD (nn), SP
+            OpLdMemSp();
         } else if(OP(0b00001111)) {
             // RRCA
             OpAccumRotateRight();
         } else if(OP(0b00011000)) {
-            // JR n
+            // JR e
             OpJumpRelUnc();
         } else if(OP(0b00010111)) {
             // RLA
@@ -73,27 +76,54 @@ namespace Plip::Cpu {
         } else if(OP(0b11011110)) {
             // SBC A, n
             OpAccumSubBorrowImm();
+        } else if(OP(0b11110000)) {
+            // LDH (n), A
+            OpLdMemHighAccum();
+        } else if(OP(0b11100010)) {
+            // LDH (C), A
+            OpLdMemHighCAccum();
         } else if(OP(0b11100110)) {
             // AND n
             OpAccumAndImm();
+        } else if(OP(0b11101000)) {
+            // ADD SP, e
+            OpAddSpReg();
         } else if(OP(0b11101001)) {
             // JP HP
             OpJumpRegUnc();
+        } else if(OP(0b11101010)) {
+            // LD (nn), A
+            OpLdMemAccum();
         } else if(OP(0b11101110)) {
             // XOR n
             OpAccumXorImm();
+        } else if(OP(0b11110000)) {
+            // LDH A, (n)
+            OpLdAccumMemHigh();
         } else if(OP(0b11110110)) {
             // OR n
             OpAccumOrImm();
-        } else if(OP(0b11111110)) {
-            // CP n
-            OpAccumCarryImm();
+        } else if(OP(0b11110010)) {
+            // LDH A, (C)
+            OpLdAccumMemHighC();
         } else if(OP(0b11110011)) {
             // DI
             OpDisableInterrupts();
+        } else if(OP(0b11111000)) {
+            // LD HL, SP+e
+            OpLdHlSpOffset();
+        } else if(OP(0b11111001)) {
+            // LD SP, HL
+            OpLdSpHl();
+        } else if(OP(0b11111010)) {
+            // LD A, (nn)
+            OpLdAccumMem();
         } else if(OP(0b11111011)) {
             // EI
             OpEnableInterrupts();
+        } else if(OP(0b11111110)) {
+            // CP n
+            OpAccumCarryImm();
         } else if(OP_MASK(0b11000111, 0b00000100)) {
             // INC r
             OpIncReg();
@@ -122,7 +152,7 @@ namespace Plip::Cpu {
             // LD rr, nn
             OpLdReg16Imm16();
         } else if(OP_MASK(0b11100111, 0b00100000)) {
-            // JR cc, n
+            // JR cc, e
             OpJumpRelCond();
         } else if(OP_MASK(0b11111000, 0b10000000)) {
             // ADD A, r

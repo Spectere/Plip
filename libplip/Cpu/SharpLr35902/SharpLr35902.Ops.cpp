@@ -251,6 +251,26 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // ADD SP, e
+    void SharpLr35902::OpAddSpReg() {
+        FETCH_CYCLE(2);
+        CYCLE(5) {
+            auto offset = (int8_t)m_instr[1];
+            uint32_t res = m_reg.sp + offset;
+
+            if(offset >= 0)
+                CHECK_ADD_HALFCARRY16(m_reg.sp, m_instr[1]);
+            else
+                CHECK_SUB_HALFCARRY(m_reg.sp, m_instr[1]);
+
+            m_reg.sp = res & 0xFFFF;
+            CHECK_CARRY16(res);
+            FLAG_CLEAR(ZERO);
+            FLAG_CLEAR(SUBTRACT);
+        }
+        NUM_MCYCLES(5);
+    }
+
     // ADC A, r
     // ADC A, (HL)
     void SharpLr35902::OpAddCarry() {
@@ -512,7 +532,7 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
-    // JR cc, n
+    // JR cc, e
     void SharpLr35902::OpJumpRelCond() {
         FETCH_CYCLE(2);
 
@@ -525,11 +545,80 @@ namespace Plip::Cpu {
         NUM_MCYCLES(4);
     }
 
-    // JR n
+    // JR e
     void SharpLr35902::OpJumpRelUnc() {
         FETCH_CYCLE(2);
         CYCLE(4) { m_reg.pc += (int8_t)m_instr[1]; }
         NUM_MCYCLES(4);
+    }
+
+    // LD A, (nn)
+    void SharpLr35902::OpLdAccumMem() {
+        FETCH_CYCLE(2);
+        FETCH_CYCLE(2);
+        CYCLE(4) {
+            m_reg.a = MEM_READ(COMBINE16(m_instr[2], m_instr[1]));
+        }
+        NUM_MCYCLES(5);
+    }
+
+    // LDH A, (n)
+    void SharpLr35902::OpLdAccumMemHigh() {
+        FETCH_CYCLE(2);
+        FETCH_ADDR_CYCLE(3, 0xFF00 | m_instr[1]);
+        CYCLE(4) { m_reg.a = m_instr[2]; }
+        NUM_MCYCLES(4);
+    }
+
+    // LDH A, (C)
+    void SharpLr35902::OpLdAccumMemHighC() {
+        FETCH_ADDR_CYCLE(2, 0xFF00 | m_reg.c);
+        CYCLE(3) { m_reg.a = m_instr[1]; }
+        NUM_MCYCLES(3);
+    }
+
+    // LD HL, SP+e
+    void SharpLr35902::OpLdHlSpOffset() {
+        FETCH_CYCLE(2);
+        CYCLE(4) {
+            auto offset = (int8_t)m_instr[1];
+            uint32_t res = m_reg.sp + offset;
+
+            if(offset >= 0)
+                CHECK_ADD_HALFCARRY16(m_reg.sp, m_instr[1]);
+            else
+                CHECK_SUB_HALFCARRY(m_reg.sp, m_instr[1]);
+
+            m_reg.h = (res >> 8) & 0xFF;
+            m_reg.l = res & 0xFF;
+            CHECK_CARRY16(res);
+            FLAG_CLEAR(ZERO);
+            FLAG_CLEAR(SUBTRACT);
+        }
+        NUM_MCYCLES(4);
+    }
+
+    // LD (nn), A
+    void SharpLr35902::OpLdMemAccum() {
+        FETCH_CYCLE(2);
+        FETCH_CYCLE(3);
+        CYCLE(4) {
+            MEM_WRITE(COMBINE16(m_instr[2], m_instr[1]), m_reg.a);
+        }
+        NUM_MCYCLES(5);
+    }
+
+    // LDH (n), A
+    void SharpLr35902::OpLdMemHighAccum() {
+        FETCH_CYCLE(2);
+        CYCLE(3) { MEM_WRITE(0xFF00 | m_instr[1], m_reg.a); }
+        NUM_MCYCLES(4);
+    }
+
+    // LDH (C), A
+    void SharpLr35902::OpLdMemHighCAccum() {
+        CYCLE(2) { MEM_WRITE(0xFF00 | m_reg.c, m_reg.a); }
+        NUM_MCYCLES(3);
     }
 
     // LD (HL), r
@@ -552,6 +641,17 @@ namespace Plip::Cpu {
             }
         }
         NUM_MCYCLES(3);
+    }
+
+    // LD (nn), SP
+    void SharpLr35902::OpLdMemSp() {
+        FETCH_CYCLE(2);
+        FETCH_CYCLE(3);
+        CYCLE(4) { MEM_WRITE(COMBINE16(m_instr[2], m_instr[1]),
+                             m_reg.sp &= 0xFF); }
+        CYCLE(5) { MEM_WRITE(COMBINE16(m_instr[2], m_instr[1]),
+                             m_reg.sp >> 8); }
+        NUM_MCYCLES(6);
     }
 
     // LD rr, nn
@@ -633,6 +733,13 @@ namespace Plip::Cpu {
             *(GetRegister8(dest)) = *(GetRegister8(src));
             NUM_MCYCLES(2);
         }
+    }
+
+    // LD SP, HL
+    void SharpLr35902::OpLdSpHl() {
+        CYCLE(2) { m_reg.sp &= 0xFF00; m_reg.sp |= m_reg.l; }
+        CYCLE(3) { m_reg.sp &= 0x00FF; m_reg.sp |= (m_reg.h << 8); }
+        NUM_MCYCLES(3);
     }
 
     // OR r

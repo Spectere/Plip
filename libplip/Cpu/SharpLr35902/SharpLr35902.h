@@ -89,6 +89,7 @@ namespace Plip::Cpu {
         void OpAdd();
         void OpAdd16();
         void OpAddCarry();
+        void OpAddSpReg();
         void OpAnd();
         void OpCallCond();
         void OpCallUnc();
@@ -106,11 +107,20 @@ namespace Plip::Cpu {
         void OpJumpRegUnc();
         void OpJumpRelCond();
         void OpJumpRelUnc();
+        void OpLdAccumMem();
+        void OpLdAccumMemHigh();
+        void OpLdAccumMemHighC();
+        void OpLdHlSpOffset();
+        void OpLdMemAccum();
+        void OpLdMemHighAccum();
+        void OpLdMemHighCAccum();
         void OpLdMemReg();
+        void OpLdMemSp();
         void OpLdReg16Imm16();
         void OpLdRegImm();
         void OpLdRegMem();
         void OpLdRegReg();
+        void OpLdSpHl();
         void OpOr();
         void OpPopReg16();
         void OpPushReg16();
