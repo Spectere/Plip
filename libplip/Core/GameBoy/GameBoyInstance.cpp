@@ -11,9 +11,13 @@
 
 #include "GameBoyInstance.h"
 
+#define READ_INPUT(idx) do { if(m_input->GetInput(idx).digital) m_keypad |= 1 << idx; } while(0)
+
 namespace Plip::Core::GameBoy {
     GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video)
     : PlipCore(audio, input, video) {
+        RegisterInput();
+
         m_videoRam = new Plip::PlipMemoryRam(0x2000);
         m_workRam = new Plip::PlipMemoryRam(0x2000);
         m_oam = new Plip::PlipMemoryRam(0xA0);
@@ -29,10 +33,12 @@ namespace Plip::Core::GameBoy {
         m_memory->AssignBlock(m_ioRegisters, 0xFF00);
         m_memory->AssignBlock(m_highRam, 0xFF80);
 
-        m_cpu = new Cpu::SharpLr35902(ClockRate, m_memory);
+        m_cpu = new Cpu::SharpLr35902(BaseClockRate, m_memory);
     }
 
-    void GameBoyInstance::Delta(long ns) {}
+    void GameBoyInstance::Delta(long ns) {
+        ReadInput();
+    }
 
     uint16_t GameBoyInstance::GetRomBankCount() {
         auto romSizeByte = m_rom->GetByte(0x0148);
@@ -151,5 +157,67 @@ namespace Plip::Core::GameBoy {
 
         // Sensor
         m_hasSensor = cartType == 0x22;
+    }
+
+    void GameBoyInstance::ReadInput() {
+        m_keypad = 0;
+        READ_INPUT(InputRight);
+        READ_INPUT(InputLeft);
+        READ_INPUT(InputUp);
+        READ_INPUT(InputDown);
+        READ_INPUT(InputA);
+        READ_INPUT(InputB);
+        READ_INPUT(InputSelect);
+        READ_INPUT(InputStart);
+    }
+
+    void GameBoyInstance::RegisterInput() {
+        m_input->AddInput(InputRight,
+                          PlipInputDefinition(
+                                  PlipInputType::Digital,
+                                  "Right"),
+                          { .digital = false });
+
+        m_input->AddInput(InputLeft,
+                          PlipInputDefinition(
+                                  PlipInputType::Digital,
+                                  "Left"),
+                          { .digital = false });
+
+        m_input->AddInput(InputUp,
+                          PlipInputDefinition(
+                                  PlipInputType::Digital,
+                                  "Up"),
+                          { .digital = false });
+
+        m_input->AddInput(InputDown,
+                          PlipInputDefinition(
+                                  PlipInputType::Digital,
+                                  "Down"),
+                          { .digital = false });
+
+        m_input->AddInput(InputA,
+                          PlipInputDefinition(
+                                  PlipInputType::Digital,
+                                  "A"),
+                          { .digital = false });
+
+        m_input->AddInput(InputB,
+                          PlipInputDefinition(
+                                  PlipInputType::Digital,
+                                  "B"),
+                          { .digital = false });
+
+        m_input->AddInput(InputSelect,
+                          PlipInputDefinition(
+                                  PlipInputType::Digital,
+                                  "Select"),
+                          { .digital = false });
+
+        m_input->AddInput(InputStart,
+                          PlipInputDefinition(
+                                  PlipInputType::Digital,
+                                  "Start"),
+                          { .digital = false });
     }
 }

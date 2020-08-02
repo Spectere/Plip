@@ -19,12 +19,22 @@ namespace Plip::Core::GameBoy {
         void Delta(long ns) override;
         PlipError Load(const std::string &path) override;
 
-        const int ClockRate = 4194304 / 4;
+        const int BaseClockRate = 4194304 / 4;
+        const int InputRight = 0;
+        const int InputLeft = 1;
+        const int InputUp = 2;
+        const int InputDown = 3;
+        const int InputA = 4;
+        const int InputB = 5;
+        const int InputSelect = 6;
+        const int InputStart = 7;
 
     private:
         uint16_t GetRomBankCount();
         void InitCartRam();
         void InitMbc();
+        void ReadInput();
+        void RegisterInput();
 
         enum MemoryBankController {
             None,
@@ -54,15 +64,17 @@ namespace Plip::Core::GameBoy {
         uint16_t m_romBanks = 0;
         uint16_t m_cartRamBanks = 0;
 
-        Plip::PlipMemoryRom *m_rom;
+        Plip::PlipMemoryRom *m_rom = nullptr;
         uint8_t m_unusableContents[0x60] {};
         Plip::PlipMemoryRom *m_unusable;
 
-        Plip::PlipMemoryRam *m_cartRam;
+        Plip::PlipMemoryRam *m_cartRam = nullptr;
         Plip::PlipMemoryRam *m_workRam;
         Plip::PlipMemoryRam *m_videoRam;
         Plip::PlipMemoryRam *m_oam;
         Plip::PlipMemoryRam *m_ioRegisters;
         Plip::PlipMemoryRam *m_highRam;
+
+        uint8_t m_keypad = 0;
     };
 }
