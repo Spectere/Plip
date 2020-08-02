@@ -49,7 +49,7 @@ namespace Plip::Cpu {
         [[nodiscard]] std::string DumpRegisters() const;
         uint8_t* GetRegister8(uint8_t idx);
         std::tuple<uint8_t*, uint8_t*> GetRegisterPair(uint8_t idx);
-        uint16_t GetAddress(uint8_t idx);
+        uint16_t GetRegister16Value(uint8_t idx);
 
         static inline uint16_t Combine(const uint8_t *high, const uint8_t *low) {
             return ((*high << 8) + *low);
@@ -85,6 +85,7 @@ namespace Plip::Cpu {
         void OpAccumSubBorrowImm();
         void OpAccumXorImm();
         void OpAdd();
+        void OpAdd16();
         void OpAddCarry();
         void OpAnd();
         void OpCarry();
@@ -96,10 +97,13 @@ namespace Plip::Cpu {
         void OpIncReg();
         void OpIncPair();
         void OpLdMemReg();
+        void OpLdReg16Imm16();
         void OpLdRegImm();
         void OpLdRegMem();
         void OpLdRegReg();
         void OpOr();
+        void OpPopReg16();
+        void OpPushReg16();
         void OpSetCarry();
         void OpSub();
         void OpSubBorrow();

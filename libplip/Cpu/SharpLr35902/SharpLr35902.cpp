@@ -58,7 +58,7 @@ namespace Plip::Cpu {
         return dump.str();
     }
 
-    uint16_t SharpLr35902::GetAddress(uint8_t idx) {
+    uint16_t SharpLr35902::GetRegister16Value(uint8_t idx) {
         uint16_t val;
 
         switch(idx) {

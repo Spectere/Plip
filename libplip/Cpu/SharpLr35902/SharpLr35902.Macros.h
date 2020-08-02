@@ -56,6 +56,9 @@
 #define REG_DE REG_COMBINE(m_reg.d, m_reg.e)
 #define REG_HL REG_COMBINE(m_reg.h, m_reg.l)
 
+#define STACK_PUSH(val) m_memory->SetByte(--m_reg.sp, (val))
+#define STACK_POP() m_memory->GetByte(m_reg.sp++)
+
 #define FLAG_CLEAR(bit) m_reg.f &= ~(1 << (bit))
 #define FLAG_FLIP(bit) m_reg.f ^= (1 << (bit))
 #define FLAG_SET(bit) m_reg.f |= (1 << (bit))
@@ -63,7 +66,14 @@
 
 #define CHECK_BIT_CARRY(val) do { if(val) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY); } while(0)
 #define CHECK_CARRY(val) do { if((val) & 0xFF00) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY); } while(0)
-#define CHECK_HALFCARRY(old, val) do { \
-    if(((val) & 0xFFF0) == ((old) & 0xF0)) FLAG_SET(HALFCARRY); \
+#define CHECK_CARRY16(val) do { if((val & 0xFFFF0000)) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY); } while(0)
+#define CHECK_ADD_HALFCARRY(left, right) do { \
+    if(((left) & 0x0F) + ((right) & 0x0F) > 0x0F) FLAG_SET(HALFCARRY); \
+    else FLAG_CLEAR(HALFCARRY); } while(0)
+#define CHECK_SUB_HALFCARRY(left, right) do { \
+    if(((left) & 0x0F) - ((right) & 0x0F) < 0x00) FLAG_SET(HALFCARRY); \
+    else FLAG_CLEAR(HALFCARRY); } while(0)
+#define CHECK_ADD_HALFCARRY16(left, right) do { \
+    if(((left) & 0x0FFF) + ((right) & 0x0FFF) > 0x0FFF) FLAG_SET(HALFCARRY); \
     else FLAG_CLEAR(HALFCARRY); } while(0)
 #define CHECK_ZERO(val) do { if(val) FLAG_CLEAR(ZERO); else FLAG_SET(ZERO); } while(0)

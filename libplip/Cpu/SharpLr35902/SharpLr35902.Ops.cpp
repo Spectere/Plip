@@ -20,7 +20,7 @@ namespace Plip::Cpu {
         CYCLE(3) {
             uint16_t res = m_reg.a + m_instr[1];
             CHECK_CARRY(res);
-            CHECK_HALFCARRY(m_reg.a, res);
+            CHECK_ADD_HALFCARRY(m_reg.a, m_instr[1]);
             m_reg.a = res & 0xFF;
             CHECK_ZERO(m_reg.a);
             FLAG_CLEAR(SUBTRACT);
@@ -34,7 +34,7 @@ namespace Plip::Cpu {
         CYCLE(3) {
             uint16_t res = m_reg.a + m_instr[1] + (FLAG_TEST(CARRY) ? 1 : 0);
             CHECK_CARRY(res);
-            CHECK_HALFCARRY(m_reg.a, res);
+            CHECK_ADD_HALFCARRY(m_reg.a, m_instr[1]);
             m_reg.a = res & 0xFF;
             CHECK_ZERO(m_reg.a);
             FLAG_CLEAR(SUBTRACT);
@@ -61,7 +61,7 @@ namespace Plip::Cpu {
         CYCLE(3) {
             uint16_t res = m_reg.a - m_instr[1];
             CHECK_CARRY(res);
-            CHECK_HALFCARRY(m_reg.a, res);
+            CHECK_SUB_HALFCARRY(m_reg.a, m_instr[1]);
             CHECK_ZERO(res & 0xFF);
             FLAG_SET(SUBTRACT);
         }
@@ -143,7 +143,7 @@ namespace Plip::Cpu {
         CYCLE(3) {
             uint16_t res = m_reg.a - m_instr[1];
             CHECK_CARRY(res);
-            CHECK_HALFCARRY(m_reg.a, res);
+            CHECK_SUB_HALFCARRY(m_reg.a, m_instr[1]);
             m_reg.a = res & 0xFF;
             CHECK_ZERO(m_reg.a);
             FLAG_SET(SUBTRACT);
@@ -157,7 +157,7 @@ namespace Plip::Cpu {
         CYCLE(3) {
             uint16_t res = m_reg.a - m_instr[1] - (FLAG_TEST(CARRY) ? 1 : 0);
             CHECK_CARRY(res);
-            CHECK_HALFCARRY(m_reg.a, res);
+            CHECK_SUB_HALFCARRY(m_reg.a, m_instr[1]);
             m_reg.a = res & 0xFF;
             CHECK_ZERO(m_reg.a);
             FLAG_SET(SUBTRACT);
@@ -190,7 +190,7 @@ namespace Plip::Cpu {
             CYCLE(3) {
                 res = m_reg.a + m_instr[1];
                 CHECK_CARRY(res);
-                CHECK_HALFCARRY(m_reg.a, res);
+                CHECK_ADD_HALFCARRY(m_reg.a, m_instr[1]);
                 m_reg.a = res & 0xFF;
                 CHECK_ZERO(m_reg.a);
                 FLAG_CLEAR(SUBTRACT);
@@ -200,14 +200,33 @@ namespace Plip::Cpu {
         }
 
         // ADD A, r
-        res = m_reg.a + *(GetRegister8(src));
+        auto val = *(GetRegister8(src));
+        res = m_reg.a + val;
         CHECK_CARRY(res);
-        CHECK_HALFCARRY(m_reg.a, res);
+        CHECK_ADD_HALFCARRY(m_reg.a, val);
         m_reg.a = res & 0xFF;
         CHECK_ZERO(m_reg.a);
         FLAG_CLEAR(SUBTRACT);
 
         NUM_MCYCLES(2);
+    }
+
+    // ADD HL, rr
+    void SharpLr35902::OpAdd16() {
+        CYCLE(3) {
+            auto hl = GetRegister16Value(IDX_16_HL);
+            auto val = GetRegister16Value(OP_REG16(0));
+
+            uint32_t res = hl + val;
+            CHECK_CARRY16(res);
+            CHECK_ADD_HALFCARRY16(hl, val);
+            FLAG_CLEAR(SUBTRACT);
+
+            m_reg.h = res >> 8;
+            m_reg.l = res & 0xFF;
+        }
+
+        NUM_MCYCLES(3);
     }
 
     // ADC A, r
@@ -222,7 +241,7 @@ namespace Plip::Cpu {
             CYCLE(3) {
                 res = m_reg.a + m_instr[1] + (FLAG_TEST(CARRY) ? 1 : 0);
                 CHECK_CARRY(res);
-                CHECK_HALFCARRY(m_reg.a, res);
+                CHECK_ADD_HALFCARRY(m_reg.a, m_instr[1]);
                 m_reg.a = res & 0xFF;
                 CHECK_ZERO(m_reg.a);
                 FLAG_CLEAR(SUBTRACT);
@@ -232,9 +251,10 @@ namespace Plip::Cpu {
         }
 
         // ADC A, r
-        res = m_reg.a + *(GetRegister8(src)) + FLAG_TEST(CARRY) ? 1 : 0;
+        auto val = *(GetRegister8(src));
+        res = m_reg.a + val + FLAG_TEST(CARRY) ? 1 : 0;
         CHECK_CARRY(res);
-        CHECK_HALFCARRY(m_reg.a, res);
+        CHECK_ADD_HALFCARRY(m_reg.a, val);
         m_reg.a = res & 0xFF;
         CHECK_ZERO(m_reg.a);
         FLAG_CLEAR(SUBTRACT);
@@ -283,7 +303,7 @@ namespace Plip::Cpu {
             CYCLE(3) {
                 res = m_reg.a - m_instr[1];
                 CHECK_CARRY(res);
-                CHECK_HALFCARRY(m_reg.a, res);
+                CHECK_SUB_HALFCARRY(m_reg.a, m_instr[1]);
                 CHECK_ZERO(res & 0xFF);
                 FLAG_SET(SUBTRACT);
             }
@@ -292,9 +312,10 @@ namespace Plip::Cpu {
         }
 
         // CP r
-        res = m_reg.a - *(GetRegister8(src));
+        auto val = *(GetRegister8(src));
+        res = m_reg.a - val;
         CHECK_CARRY(res);
-        CHECK_HALFCARRY(m_reg.a, res);
+        CHECK_SUB_HALFCARRY(m_reg.a, val);
         CHECK_ZERO(res & 0xFF);
         FLAG_SET(SUBTRACT);
 
@@ -314,10 +335,10 @@ namespace Plip::Cpu {
                 res = m_instr[1] - 1;
 
                 FLAG_SET(SUBTRACT);
-                CHECK_HALFCARRY(m_instr[1], res);
+                CHECK_SUB_HALFCARRY(m_instr[1], 1);
                 CHECK_ZERO(m_instr[1]);
 
-                MEM_WRITE(REG_HL, m_instr[1]);
+                MEM_WRITE(REG_HL, res);
             }
             NUM_MCYCLES(4);
             return;
@@ -328,8 +349,9 @@ namespace Plip::Cpu {
         res = *reg - 1;
 
         FLAG_SET(SUBTRACT);
-        CHECK_HALFCARRY(*reg, res);
+        CHECK_SUB_HALFCARRY(*reg, 1);
         CHECK_ZERO(*reg);
+        *reg = res;
 
         NUM_MCYCLES(2);
     }
@@ -377,10 +399,10 @@ namespace Plip::Cpu {
                 res = m_instr[1] + 1;
 
                 FLAG_CLEAR(SUBTRACT);
-                CHECK_HALFCARRY(m_instr[1], res);
+                CHECK_ADD_HALFCARRY(m_instr[1], 1);
                 CHECK_ZERO(m_instr[1]);
 
-                MEM_WRITE(REG_HL, m_instr[1]);
+                MEM_WRITE(REG_HL, res);
             }
             NUM_MCYCLES(4);
             return;
@@ -391,8 +413,9 @@ namespace Plip::Cpu {
         res = *reg + 1;
 
         FLAG_CLEAR(SUBTRACT);
-        CHECK_HALFCARRY(*reg, res);
+        CHECK_ADD_HALFCARRY(*reg, 1);
         CHECK_ZERO(*reg);
+        *reg = res;
 
         NUM_MCYCLES(2);
     }
@@ -422,11 +445,24 @@ namespace Plip::Cpu {
         } else {
             // LD (rr), A
             CYCLE(2) {
-                auto reg = GetAddress(OP_REG16(0));
+                auto reg = GetRegister16Value(OP_REG16(0));
                 MEM_WRITE(reg, m_reg.a);
             }
         }
         NUM_MCYCLES(3);
+    }
+
+    // LD rr, nn
+    void SharpLr35902::OpLdReg16Imm16() {
+        FETCH_IMM_CYCLE(2);
+        FETCH_IMM_CYCLE(3);
+        CYCLE(4) {
+            auto [high, low] = GetRegisterPair(OP_REG16(0));
+            *low = m_instr[1];
+            *high = m_instr[2];
+        }
+
+        NUM_MCYCLES(4);
     }
 
     // LD r, n
@@ -455,7 +491,7 @@ namespace Plip::Cpu {
 
     // LD A, (rr)
     void SharpLr35902::OpLdRegMem() {
-        FETCH_ADDR_CYCLE(2, GetAddress(OP_REG16(0)));
+        FETCH_ADDR_CYCLE(2, GetRegister16Value(OP_REG16(0)));
         CYCLE(3) {
             m_reg.a = m_instr[1];
         }
@@ -526,6 +562,41 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // POP rr
+    void SharpLr35902::OpPopReg16() {
+        auto reg = OP_REG16(0);
+        uint8_t *high, *low;
+
+        if(reg == IDX_16_SP) {
+            // AF shares an index with SP for PUSH/POP.
+            high = &(m_reg.a);
+            low = &(m_reg.f);
+        } else {
+            std::tie(high, low) = GetRegisterPair(reg);
+        }
+
+        CYCLE(2) { *low = STACK_POP(); }
+        CYCLE(3) { *high = STACK_POP(); }
+        NUM_MCYCLES(4);
+    }
+
+    // PUSH rr
+    void SharpLr35902::OpPushReg16() {
+        auto reg = OP_REG16(0);
+        uint16_t val;
+
+        if(reg == IDX_16_SP) {
+            // AF shares an index with SP for PUSH/POP.
+            val = (m_reg.a << 8) + m_reg.f;
+        } else {
+            GetRegister16Value(OP_REG16(0));
+        }
+
+        CYCLE(3) { STACK_PUSH(val >> 8); }
+        CYCLE(4) { STACK_PUSH(val & 0xFF); }
+        NUM_MCYCLES(5);
+    }
+
     // SCF
     void SharpLr35902::OpSetCarry() {
         FLAG_SET(CARRY);
@@ -546,7 +617,7 @@ namespace Plip::Cpu {
             CYCLE(3) {
                 res = m_reg.a - m_instr[1];
                 CHECK_CARRY(res);
-                CHECK_HALFCARRY(m_reg.a, res);
+                CHECK_SUB_HALFCARRY(m_reg.a, m_instr[1]);
                 m_reg.a = res & 0xFF;
                 CHECK_ZERO(m_reg.a);
                 FLAG_SET(SUBTRACT);
@@ -556,9 +627,10 @@ namespace Plip::Cpu {
         }
 
         // SUB A, r
-        res = m_reg.a - *(GetRegister8(src));
+        auto val = *(GetRegister8(src));
+        res = m_reg.a - val;
         CHECK_CARRY(res);
-        CHECK_HALFCARRY(m_reg.a, res);
+        CHECK_SUB_HALFCARRY(m_reg.a, val);
         m_reg.a = res & 0xFF;
         CHECK_ZERO(m_reg.a);
         FLAG_SET(SUBTRACT);
@@ -578,7 +650,7 @@ namespace Plip::Cpu {
             CYCLE(3) {
                 res = m_reg.a - m_instr[1] - (FLAG_TEST(CARRY) ? 1 : 0);
                 CHECK_CARRY(res);
-                CHECK_HALFCARRY(m_reg.a, res);
+                CHECK_SUB_HALFCARRY(m_reg.a, m_instr[1]);
                 m_reg.a = res & 0xFF;
                 CHECK_ZERO(m_reg.a);
                 FLAG_SET(SUBTRACT);
@@ -588,9 +660,10 @@ namespace Plip::Cpu {
         }
 
         // SBC A, r
-        res = m_reg.a - *(GetRegister8(src)) - FLAG_TEST(CARRY) ? 1 : 0;
+        auto val = *(GetRegister8(src));
+        res = m_reg.a - val - FLAG_TEST(CARRY) ? 1 : 0;
         CHECK_CARRY(res);
-        CHECK_HALFCARRY(m_reg.a, res);
+        CHECK_SUB_HALFCARRY(m_reg.a, val);
         m_reg.a = res & 0xFF;
         CHECK_ZERO(m_reg.a);
         FLAG_SET(SUBTRACT);

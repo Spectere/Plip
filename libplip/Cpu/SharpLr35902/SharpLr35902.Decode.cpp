@@ -97,9 +97,15 @@ namespace Plip::Cpu {
         } else if(OP_MASK(0b11001111, 0b00000010)) {
             // LD (rr), A
             OpLdMemReg();
+        } else if(OP_MASK(0b11001111, 0b00000001)) {
+            // LD rr, nn
+            OpLdReg16Imm16();
         } else if(OP_MASK(0b11111000, 0b10000000)) {
             // ADD A, r
             OpAdd();
+        } else if(OP_MASK(0b11001111, 0b00001010)) {
+            // ADD HL, rr
+            OpAdd16();
         } else if(OP_MASK(0b11111000, 0b10001000)) {
             // ADC A, r
             OpAddCarry();
@@ -121,6 +127,12 @@ namespace Plip::Cpu {
         } else if(OP_MASK(0b11111000, 0b10111000)) {
             // CP r
             OpCarry();
+        } else if(OP_MASK(0b11001111, 0b11000001)) {
+            // POP rr
+            OpPopReg16();
+        } else if(OP_MASK(0b11001111, 0b11000101)) {
+            // PUSH rr
+            OpPushReg16();
         } else {
             std::stringstream ex;
             ex << "unknown opcode: " << PlipUtility::FormatHex(m_instr[0], 2)
