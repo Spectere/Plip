@@ -9,7 +9,7 @@
 
 namespace Plip {
     void PlipMemoryMap::AddBlock(PlipMemory *memory, uint32_t offset) {
-        AddBlock(memory, offset, memory->GetLength());
+        AddBlock(memory, offset, memory->GetLength() - offset);
     }
 
     void PlipMemoryMap::AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length) {
@@ -26,6 +26,10 @@ namespace Plip {
             .offset = offset,
             .length = length
         });
+    }
+
+    void PlipMemoryMap::AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset) {
+        AssignBlock(memory, address, offset, memory->GetLength() - offset);
     }
 
     void PlipMemoryMap::AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length) {

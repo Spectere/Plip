@@ -7,6 +7,7 @@
 #include "PlipVersion.h"
 
 #include "Core/Chip8/Chip8Instance.h"
+#include "Core/GameBoy/GameBoyInstance.h"
 
 namespace Plip {
     PlipInstance::PlipInstance(PlipVideo *video, PlipAudio *audio) {
@@ -50,6 +51,9 @@ namespace Plip {
         switch(core) {
             case PlipValidCore::Chip8:
                 m_core = new Core::Chip8::Chip8Instance(m_audio, m_input, m_video);
+                break;
+            case PlipValidCore::GameBoy:
+                m_core = new Core::GameBoy::GameBoyInstance(m_audio, m_input, m_video);
                 break;
             default:
                 return PlipError::InvalidCore;
