@@ -60,9 +60,6 @@
 #define OP_REG_Y(idx) (m_instr[(idx)] & 0b00000111)
 
 #define COMBINE16(high, low) (((high) << 8) + (low))
-#define REG_AF COMBINE16(m_reg.a, m_reg.f)
-#define REG_BC COMBINE16(m_reg.b, m_reg.c)
-#define REG_DE COMBINE16(m_reg.d, m_reg.e)
 #define REG_HL COMBINE16(m_reg.h, m_reg.l)
 
 #define SET_PC_IMM m_reg.pc = m_instr[2] << 8 | m_instr[1]

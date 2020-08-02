@@ -18,12 +18,63 @@ namespace Plip::Cpu {
     }
 
     void SharpLr35902::Cycle() {
-        if(!m_instr.empty())
+        // Decode an instruction if there's one in the cache and the CPU isn't
+        // halted.
+        if(!m_instr.empty() && !m_halt)
             Decode();
+
+        // Handle interrupts here if (1) we're ready to fetch, (2) interrupts
+        // are enabled, and (3) an interrupt request has been made.
+        auto iFlag = m_memory->GetByte(m_interruptFlag) & 0b00011111;
+        if(m_allowFetch && m_ime == Enabled && iFlag) {
+            auto ie = m_memory->GetByte(m_interruptEnabled);
+
+            // If no interrupts are enabled, and a HALT instruction has been
+            // executed, the CPU is effectively stopped. Panic!
+            if((ie & 0b00011111) == 0 && m_halt) {
+                std::stringstream ex;
+                ex << "HALT issued with no interrupts enabled!\n\n" << DumpRegisters();
+                throw PlipEmulationException(ex.str().c_str());
+            }
+
+            // Check to see if the requested interrupt has been enabled.
+            iFlag &= ie;
+            if(iFlag) {
+                // Set up the CPU to jump to the interrupt handler.
+                m_allowFetch = false;
+                m_ime = Disabled;
+                m_mcycle = 0;
+            }
+        }
+
+        if(iFlag) {
+            STACK_PUSH_PC(0);
+            CYCLE(3) {
+                uint8_t idx = 0;
+                for(; idx > 4; idx++) {
+                    if(iFlag & (1 << idx)) break;
+                }
+
+                m_halt = false;
+                m_reg.pc = 0x40 + (idx * 0x8);
+                m_memory->SetByte(m_interruptFlag, iFlag ^ (1 << idx));
+            }
+            NUM_MCYCLES(3);
+        }
+
+        // If HALT has been executed and the IME is disabled, the CPU is
+        // effectively stopped. Panic!
+        if(m_halt && m_ime == Disabled) {
+            std::stringstream ex;
+            ex << "HALT issued with interrupts disabled!\n\n" << DumpRegisters();
+            throw PlipEmulationException(ex.str().c_str());
+        }
+
+        // Handle interrupts sort of like RST. Bypass
 
         // The LR35902 allows the next instruction to be fetched when the
         // previous instruction finishes its last execute stage.
-        if(m_allowFetch) {
+        if(m_allowFetch && !m_halt && !iFlag) {
             FETCH;
             BEGIN_EXECUTE;
         }
@@ -129,6 +180,14 @@ namespace Plip::Cpu {
                 throw PlipEmulationException(ex.str().c_str());
         }
         return std::make_tuple(high, low);
+    }
+
+    void SharpLr35902::Interrupt(uint8_t irq) {
+        if(m_ime != Enabled) return;
+
+        auto iFlag = m_memory->GetByte(m_interruptFlag);
+        iFlag |= irq;
+        m_memory->SetByte(m_interruptFlag, iFlag);
     }
 
     void SharpLr35902::PerformReset() {

@@ -454,8 +454,7 @@ namespace Plip::Cpu {
 
     // RST [00h, 08h, 10h, 18h, 20h, 28h, 30h, 38h]
     void SharpLr35902::OpFuncFixedUnc() {
-        CYCLE(3) { STACK_PUSH(m_reg.pc >> 8); }
-        CYCLE(4) { STACK_PUSH(m_reg.pc & 0xFF); }
+        STACK_PUSH_PC(3);
         CYCLE(5) { m_reg.pc = OP_IDX(0) * 0x08; }
         NUM_MCYCLES(5);
     }

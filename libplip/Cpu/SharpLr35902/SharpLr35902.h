@@ -12,6 +12,12 @@
 #include "../PlipCpu.h"
 #include "../../Memory/PlipMemoryMap.h"
 
+#define INTERRUPT_VBLANK   0b00000001
+#define INTERRUPT_LCDSTAT  0b00000010
+#define INTERRUPT_TIMER    0b00000100
+#define INTERRUPT_SERIAL   0b00010000
+#define INTERRUPT_JOYPAD   0b00100000
+
 namespace Plip::Cpu {
     class SharpLr35902 : PlipCpu {
     public:
@@ -32,6 +38,7 @@ namespace Plip::Cpu {
         };
 
         void Cycle() override;
+        void Interrupt(uint8_t irq);
         Registers GetRegisters() { return m_reg; }
         void Reset() override;
 
@@ -146,6 +153,9 @@ namespace Plip::Cpu {
         void OpShiftLeftArithmetic();
         void OpShiftRightArithmetic();
         void OpShiftRightLogical();
+
+        const uint16_t m_interruptEnabled = 0xFFFF;
+        const uint16_t m_interruptFlag = 0xFF0F;
 
         bool m_allowFetch = true;
         bool m_halt = false;
