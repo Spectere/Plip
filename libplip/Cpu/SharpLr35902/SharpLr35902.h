@@ -100,6 +100,7 @@ namespace Plip::Cpu {
         void OpEnableInterrupts();
         void OpFlipCarry();
         void OpFuncFixedUnc();
+        void OpHalt();
         void OpIncReg();
         void OpIncPair();
         void OpJumpAbsCond();
@@ -128,6 +129,7 @@ namespace Plip::Cpu {
         void OpRetUnc();
         void OpRetImeUnc();
         void OpSetCarry();
+        void OpStop();
         void OpSub();
         void OpSubBorrow();
         void OpXor();
@@ -146,6 +148,7 @@ namespace Plip::Cpu {
         void OpShiftRightLogical();
 
         bool m_allowFetch = true;
+        bool m_halt = false;
         ImeState m_ime = Disabled;
         std::vector<uint8_t> m_instr;
         Registers m_reg {};

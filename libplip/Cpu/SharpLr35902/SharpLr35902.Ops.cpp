@@ -460,6 +460,12 @@ namespace Plip::Cpu {
         NUM_MCYCLES(5);
     }
 
+    // HALT
+    void SharpLr35902::OpHalt() {
+        m_halt = true;
+        NUM_MCYCLES(2);
+    }
+
     // INC r
     // INC (HL)
     void SharpLr35902::OpIncReg() {
@@ -700,20 +706,12 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
-    // [!] LD (HL), (HL)
     // LD r, r'
     // LD r, (HL)
     // LD (HL), r
     void SharpLr35902::OpLdRegReg() {
         auto dest = OP_REG_X(0);
         auto src = OP_REG_Y(0);
-
-        if(dest == IDX_HL && src == IDX_HL) {
-            // [!] LD (HL), (HL)
-            std::stringstream ex;
-            ex << "illegal instruction: LD (HL), (HL)\n\n" << DumpRegisters();
-            throw PlipEmulationException(ex.str().c_str());
-        }
 
         if(dest == IDX_HL) {
             // LD (HL), r
@@ -836,6 +834,14 @@ namespace Plip::Cpu {
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         NUM_MCYCLES(2);
+    }
+
+    // STOP
+    void SharpLr35902::OpStop() {
+        // :(
+        std::stringstream ex;
+        ex << "STOP opcode executed\n\n" << DumpRegisters();
+        throw PlipEmulationException(ex.str().c_str());
     }
 
     // SUB r

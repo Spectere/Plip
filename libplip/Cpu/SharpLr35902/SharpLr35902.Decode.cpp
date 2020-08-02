@@ -31,6 +31,9 @@ namespace Plip::Cpu {
         } else if(OP(0b00001111)) {
             // RRCA
             OpAccumRotateRight();
+        } else if(OP(0b00010000)) {
+            // STOP
+            OpStop();
         } else if(OP(0b00011000)) {
             // JR e
             OpJumpRelUnc();
@@ -52,6 +55,9 @@ namespace Plip::Cpu {
         } else if(OP(0b00111111)) {
             // CCF
             OpFlipCarry();
+        } else if(OP(0b01110101)) {
+            // HALT
+            OpHalt();
         } else if(OP(0b11000110)) {
             // ADD A, n
             OpAccumAddImm();
