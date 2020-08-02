@@ -34,6 +34,9 @@ namespace Plip::Cpu {
         } else if(OP(0b00011111)) {
             // RRA
             OpAccumRotateRightThruCarry();
+        } else if(OP(0b00100111)) {
+            // DAA
+            OpAccumBcd();
         } else if(OP(0b00101111)) {
             // CPL
             OpAccumFlip();

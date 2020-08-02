@@ -74,6 +74,7 @@ namespace Plip::Cpu {
         void OpAccumAddImm();
         void OpAccumAddCarryImm();
         void OpAccumAndImm();
+        void OpAccumBcd();
         void OpAccumCarryImm();
         void OpAccumFlip();
         void OpAccumOrImm();

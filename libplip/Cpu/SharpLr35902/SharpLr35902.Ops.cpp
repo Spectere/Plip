@@ -55,6 +55,28 @@ namespace Plip::Cpu {
         NUM_MCYCLES(3);
     }
 
+    // DAA
+    void SharpLr35902::OpAccumBcd() {
+        // DAAaaaaaaaaaaaaaaaahhhhhhh!!!!
+        // Source: https://www.reddit.com/r/EmuDev/comments/4ycoix/a_guide_to_the_gameboys_halfcarry_flag/d6p3rtl/
+        uint8_t adjust = 0x00;
+
+        if(FLAG_TEST(CARRY) || (!FLAG_TEST(SUBTRACT) && m_reg.a > 0x99)) {
+            adjust |= 0x60;
+            FLAG_SET(CARRY);
+        }
+
+        if(FLAG_TEST(HALFCARRY) || (!FLAG_TEST(SUBTRACT) && (m_reg.a & 0x0F) > 0x09)) {
+            adjust |= 0x06;
+        }
+
+        m_reg.a += FLAG_TEST(SUBTRACT) ? -adjust : adjust;
+        CHECK_ZERO(m_reg.a);
+        FLAG_CLEAR(HALFCARRY);
+
+        NUM_MCYCLES(2);
+    }
+
     // CP n
     void SharpLr35902::OpAccumCarryImm() {
         FETCH_IMM_CYCLE(2);
