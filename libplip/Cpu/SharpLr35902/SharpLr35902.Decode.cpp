@@ -28,6 +28,9 @@ namespace Plip::Cpu {
         } else if(OP(0b00001111)) {
             // RRCA
             OpAccumRotateRight();
+        } else if(OP(0b00011000)) {
+            // JR n
+            OpJumpRelUnc();
         } else if(OP(0b00010111)) {
             // RLA
             OpAccumRotateLeftThruCarry();
@@ -49,9 +52,21 @@ namespace Plip::Cpu {
         } else if(OP(0b11000110)) {
             // ADD A, n
             OpAccumAddImm();
+        } else if(OP(0b11001001)) {
+            // RET
+            OpRetUnc();
+        } else if(OP(0b11000011)) {
+            // JP nn
+            OpJumpAbsUnc();
+        } else if(OP(0b11001101)) {
+            // CALL nn
+            OpCallUnc();
         } else if(OP(0b11001110)) {
             // ADC A, n
             OpAccumAddCarryImm();
+        } else if(OP(0b11011001)) {
+            // RETI
+            OpRetImeUnc();
         } else if(OP(0b11010110)) {
             // SUB A, n
             OpAccumSubImm();
@@ -61,6 +76,9 @@ namespace Plip::Cpu {
         } else if(OP(0b11100110)) {
             // AND n
             OpAccumAndImm();
+        } else if(OP(0b11101001)) {
+            // JP HP
+            OpJumpRegUnc();
         } else if(OP(0b11101110)) {
             // XOR n
             OpAccumXorImm();
@@ -103,6 +121,9 @@ namespace Plip::Cpu {
         } else if(OP_MASK(0b11001111, 0b00000001)) {
             // LD rr, nn
             OpLdReg16Imm16();
+        } else if(OP_MASK(0b11100111, 0b00100000)) {
+            // JR cc, n
+            OpJumpRelCond();
         } else if(OP_MASK(0b11111000, 0b10000000)) {
             // ADD A, r
             OpAdd();
@@ -130,12 +151,24 @@ namespace Plip::Cpu {
         } else if(OP_MASK(0b11111000, 0b10111000)) {
             // CP r
             OpCarry();
+        } else if(OP_MASK(0b11100111, 0b11000000)) {
+            // RET cc
+            OpRetCond();
+        } else if(OP_MASK(0b11100111, 0b11000010)) {
+            // JP cc, nn
+            OpJumpAbsCond();
+        } else if(OP_MASK(0b11100111, 0b11000100)) {
+            // CALL cc, nn
+            OpCallCond();
         } else if(OP_MASK(0b11001111, 0b11000001)) {
             // POP rr
             OpPopReg16();
         } else if(OP_MASK(0b11001111, 0b11000101)) {
             // PUSH rr
             OpPushReg16();
+        } else if(OP_MASK(0b11000111, 0b11000111)) {
+            // RST [00h, 08h, 10h, 18h, 20h, 28h, 30h, 38h]
+            OpFuncFixedUnc();
         } else {
             std::stringstream ex;
             ex << "unknown opcode: " << PlipUtility::FormatHex(m_instr[0], 2)

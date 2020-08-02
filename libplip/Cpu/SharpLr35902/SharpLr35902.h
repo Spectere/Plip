@@ -50,6 +50,7 @@ namespace Plip::Cpu {
         uint8_t* GetRegister8(uint8_t idx);
         std::tuple<uint8_t*, uint8_t*> GetRegisterPair(uint8_t idx);
         uint16_t GetRegister16Value(uint8_t idx);
+        bool TestConditional(uint8_t idx);
 
         static inline uint16_t Combine(const uint8_t *high, const uint8_t *low) {
             return ((*high << 8) + *low);
@@ -89,14 +90,22 @@ namespace Plip::Cpu {
         void OpAdd16();
         void OpAddCarry();
         void OpAnd();
+        void OpCallCond();
+        void OpCallUnc();
         void OpCarry();
         void OpDecReg();
         void OpDecPair();
         void OpDisableInterrupts();
         void OpEnableInterrupts();
         void OpFlipCarry();
+        void OpFuncFixedUnc();
         void OpIncReg();
         void OpIncPair();
+        void OpJumpAbsCond();
+        void OpJumpAbsUnc();
+        void OpJumpRegUnc();
+        void OpJumpRelCond();
+        void OpJumpRelUnc();
         void OpLdMemReg();
         void OpLdReg16Imm16();
         void OpLdRegImm();
@@ -105,6 +114,9 @@ namespace Plip::Cpu {
         void OpOr();
         void OpPopReg16();
         void OpPushReg16();
+        void OpRetCond();
+        void OpRetUnc();
+        void OpRetImeUnc();
         void OpSetCarry();
         void OpSub();
         void OpSubBorrow();

@@ -152,4 +152,19 @@ namespace Plip::Cpu {
     void SharpLr35902::Reset() {
         PerformReset();
     }
+
+    bool SharpLr35902::TestConditional(uint8_t idx) {
+        switch(idx) {
+            case COND_NZ: return !FLAG_TEST(ZERO);
+            case COND_Z: return FLAG_TEST(ZERO);
+            case COND_NC: return !FLAG_TEST(CARRY);
+            case COND_C: return FLAG_TEST(CARRY);
+            default:
+                std::stringstream ex;
+                ex << "invalid condition: "
+                   << PlipUtility::FormatHex(idx, 2)
+                   << "\n\n" << DumpRegisters();
+                throw PlipEmulationException(ex.str().c_str());
+        }
+    }
 }

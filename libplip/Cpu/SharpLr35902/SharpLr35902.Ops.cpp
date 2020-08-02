@@ -313,6 +313,30 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // CALL cc, nn
+    void SharpLr35902::OpCallCond() {
+        FETCH_CYCLE(2);
+        FETCH_CYCLE(3);
+
+        if(!TestConditional(OP_COND)) {
+            NUM_MCYCLES(4);
+            return;
+        }
+
+        STACK_PUSH_PC(5);
+        CYCLE(7) { m_reg.pc = (m_instr[2] << 8) | m_instr[1]; }
+        NUM_MCYCLES(7);
+    }
+
+    // CALL nn
+    void SharpLr35902::OpCallUnc() {
+        FETCH_CYCLE(2);
+        FETCH_CYCLE(3);
+        STACK_PUSH_PC(5);
+        CYCLE(7) { m_reg.pc = (m_instr[2] << 8) | m_instr[1]; }
+        NUM_MCYCLES(7);
+    }
+
     // CP r
     // CP (HL)
     void SharpLr35902::OpCarry() {
@@ -408,6 +432,14 @@ namespace Plip::Cpu {
         NUM_MCYCLES(2);
     }
 
+    // RST [00h, 08h, 10h, 18h, 20h, 28h, 30h, 38h]
+    void SharpLr35902::OpFuncFixedUnc() {
+        CYCLE(3) { STACK_PUSH(m_reg.pc >> 8); }
+        CYCLE(4) { STACK_PUSH(m_reg.pc & 0xFF); }
+        CYCLE(5) { m_reg.pc = OP_IDX(0) * 0x08; }
+        NUM_MCYCLES(5);
+    }
+
     // INC r
     // INC (HL)
     void SharpLr35902::OpIncReg() {
@@ -450,6 +482,54 @@ namespace Plip::Cpu {
         std::tie(high, low) = GetRegisterPair(OP_REG16(0));
         IncPair(high, low);
         NUM_MCYCLES(2);
+    }
+
+    // JP cc, nn
+    void SharpLr35902::OpJumpAbsCond() {
+        FETCH_CYCLE(2);
+        FETCH_CYCLE(3);
+
+        if(!TestConditional(OP_COND)) {
+            NUM_MCYCLES(4);
+            return;
+        }
+
+        CYCLE(5) { SET_PC_IMM; }
+        NUM_MCYCLES(5);
+    }
+
+    // JP nn
+    void SharpLr35902::OpJumpAbsUnc() {
+        FETCH_CYCLE(2);
+        FETCH_CYCLE(3);
+        CYCLE(5) { SET_PC_IMM; }
+        NUM_MCYCLES(5);
+    }
+
+    // JP HL
+    void SharpLr35902::OpJumpRegUnc() {
+        m_reg.pc = GetRegister16Value(IDX_16_HL);
+        NUM_MCYCLES(2);
+    }
+
+    // JR cc, n
+    void SharpLr35902::OpJumpRelCond() {
+        FETCH_CYCLE(2);
+
+        if(TestConditional(OP_COND)) {
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        CYCLE(4) { m_reg.pc += (int8_t)m_instr[1]; }
+        NUM_MCYCLES(4);
+    }
+
+    // JR n
+    void SharpLr35902::OpJumpRelUnc() {
+        FETCH_CYCLE(2);
+        CYCLE(4) { m_reg.pc += (int8_t)m_instr[1]; }
+        NUM_MCYCLES(4);
     }
 
     // LD (HL), r
@@ -597,8 +677,8 @@ namespace Plip::Cpu {
             std::tie(high, low) = GetRegisterPair(reg);
         }
 
-        CYCLE(2) { *low = STACK_POP(); }
-        CYCLE(3) { *high = STACK_POP(); }
+        CYCLE(2) { *low = STACK_POP; }
+        CYCLE(3) { *high = STACK_POP; }
         NUM_MCYCLES(4);
     }
 
@@ -616,6 +696,30 @@ namespace Plip::Cpu {
 
         CYCLE(3) { STACK_PUSH(val >> 8); }
         CYCLE(4) { STACK_PUSH(val & 0xFF); }
+        NUM_MCYCLES(5);
+    }
+
+    // RET
+    void SharpLr35902::OpRetUnc() {
+        SET_PC_STACK(2);
+        NUM_MCYCLES(5);
+    }
+
+    // RET cc
+    void SharpLr35902::OpRetCond() {
+        if(!TestConditional(OP_COND)) {
+            NUM_MCYCLES(3);
+            return;
+        }
+
+        SET_PC_STACK(3);
+        NUM_MCYCLES(6);
+    }
+
+    // RETI
+    void SharpLr35902::OpRetImeUnc() {
+        SET_PC_STACK(2);
+        CYCLE(4) { m_ime = Enabled; }
         NUM_MCYCLES(5);
     }
 

@@ -24,6 +24,11 @@
 #define IDX_16_HL    0b10
 #define IDX_16_SP    0b11
 
+#define COND_NZ      0b00
+#define COND_Z       0b01
+#define COND_NC      0b10
+#define COND_C       0b11
+
 #define ZERO         7
 #define SUBTRACT     6
 #define HALFCARRY    5
@@ -33,6 +38,7 @@
 #define MEM_WRITE(addr, val) m_memory->SetByte(addr, val)
 
 #define FETCH m_instr.push_back(MEM_READ(m_reg.pc++))
+#define FETCH_CYCLE(cycle) do { if(m_mcycle == (cycle)) { FETCH; } } while(0)
 #define FETCH_ADDR(addr) m_instr.push_back(MEM_READ(addr))
 #define FETCH_ADDR_CYCLE(cycle, addr) do { if(m_mcycle == (cycle)) { FETCH_ADDR(addr); } } while(0)
 #define FETCH_IMM_CYCLE(cycle) do { if(m_mcycle == (cycle)) { FETCH; } } while(0)
@@ -46,8 +52,10 @@
 #define OP_MASK(mask, code) (m_instr[0] & (mask)) == (code)
 #define OP_CB_MASK(mask, code) (m_instr[1] & (mask)) == (code)
 
+#define OP_COND ((m_instr[0] >> 3) & 0b00000011)
 #define OP_REG16(idx) ((m_instr[(idx)] >> 4) & 0b00000011)
-#define OP_REG_X(idx) ((m_instr[(idx)] >> 3) & 0b00000111)
+#define OP_IDX(idx) ((m_instr[(idx)] >> 3) & 0b00000111)
+#define OP_REG_X(idx) OP_IDX(idx)
 #define OP_REG_Y(idx) (m_instr[(idx)] & 0b00000111)
 
 #define REG_COMBINE(high, low) (((high) << 8) + (low))
@@ -56,8 +64,22 @@
 #define REG_DE REG_COMBINE(m_reg.d, m_reg.e)
 #define REG_HL REG_COMBINE(m_reg.h, m_reg.l)
 
+#define SET_PC_IMM m_reg.pc = m_instr[2] << 8 | m_instr[1]
+#define SET_PC_STACK(cycle) \
+    do { \
+        CYCLE(cycle)     { m_reg.pc &= 0xFF00; m_reg.pc |= STACK_POP;      } \
+        CYCLE(cycle + 1) { m_reg.pc &= 0x00FF; m_reg.pc |= STACK_POP << 8; } \
+    } while(0)
+
 #define STACK_PUSH(val) m_memory->SetByte(--m_reg.sp, (val))
-#define STACK_POP() m_memory->GetByte(m_reg.sp++)
+#define STACK_PUSH_PC(cycle) \
+    do { \
+        CYCLE(cycle)     { STACK_PUSH(m_reg.pc >> 8);   } \
+        CYCLE(cycle + 1) { STACK_PUSH(m_reg.pc & 0xFF); } \
+    } while(0)
+
+
+#define STACK_POP m_memory->GetByte(m_reg.sp++)
 
 #define FLAG_CLEAR(bit) m_reg.f &= ~(1 << (bit))
 #define FLAG_FLIP(bit) m_reg.f ^= (1 << (bit))
