@@ -52,7 +52,10 @@ add_library(${lib_name}
         #########
         # CHIP-8
         libplip/Core/Chip8/Chip8Instance.cpp
+
+        # GameBoy
         libplip/Core/GameBoy/GameBoyInstance.cpp
+        libplip/Core/GameBoy/GameBoyInstance.Video.cpp
 
         ########
         # CPUs #

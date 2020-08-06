@@ -36,6 +36,18 @@ namespace Plip::Core::GameBoy {
         void ReadInput();
         void RegisterInput();
 
+        // GameBoyInstance.video.cpp
+        int VideoCycle();
+
+        // Core
+        Plip::Cpu::SharpLr35902 *m_cpu;
+        long m_cycleTime {};
+        long m_cycleRemaining = 0;
+        bool m_running = false;
+        int m_dotCyclesRemaining = 0;
+        const int m_dotsPerCycle = 4;
+
+        // Cartridge Information
         enum MemoryBankController {
             None,
             Mbc1,
@@ -51,9 +63,6 @@ namespace Plip::Core::GameBoy {
             HuC3
         };
 
-        Plip::Cpu::SharpLr35902 *m_cpu;
-        bool m_running = false;
-
         MemoryBankController m_mbc = None;
         bool m_hasBattery = false;
         bool m_hasCamera = false;
@@ -64,6 +73,7 @@ namespace Plip::Core::GameBoy {
         uint16_t m_romBanks = 0;
         uint16_t m_cartRamBanks = 0;
 
+        // Memory
         Plip::PlipMemoryRom *m_rom = nullptr;
         uint8_t m_unusableContents[0x60] {};
         Plip::PlipMemoryRom *m_unusable;
@@ -75,6 +85,26 @@ namespace Plip::Core::GameBoy {
         Plip::PlipMemoryRam *m_ioRegisters;
         Plip::PlipMemoryRam *m_highRam;
 
+        // Input
         uint8_t m_keypad = 0;
+
+        // Video
+        const uint32_t m_addrLcdControl = 0xFF40;
+        const uint32_t m_lcdcStatus = 0xFF41;
+        const uint32_t m_scy = 0xFF42;   // R/W scroll Y
+        const uint32_t m_scx = 0xFF43;   // R/W - scroll X
+        const uint32_t m_lcdcY = 0xFF44;  // R
+        const uint32_t m_lyCompare = 0xFF45;   // R/W
+        const uint32_t m_oamDmaTransfer = 0xFF46;  // R/W
+        const uint32_t m_bgp = 0xFF47;   // R/W - BG/window palette
+        const uint32_t m_obp0 = 0xFF48;  // R/W - object palette 0
+        const uint32_t m_obp1 = 0xFF49;  // R/W - object palette 0
+        const uint32_t m_wy = 0xFF4A;    // R/W - window Y
+        const uint32_t m_wx = 0xFF7B;    // R/W - window X - 7
+
+        const uint32_t m_vramTileBase = 0x8000;
+        const uint32_t m_vramTileBlockOffset = 0x800;
+
+        int m_videoMode = 0;
     };
 }

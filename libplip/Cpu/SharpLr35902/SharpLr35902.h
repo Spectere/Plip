@@ -19,7 +19,7 @@
 #define INTERRUPT_JOYPAD   0b00100000
 
 namespace Plip::Cpu {
-    class SharpLr35902 : PlipCpu {
+    class SharpLr35902 : public PlipCpu {
     public:
         SharpLr35902(long hz, PlipMemoryMap* memoryMap);
 

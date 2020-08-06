@@ -34,10 +34,23 @@ namespace Plip::Core::GameBoy {
         m_memory->AssignBlock(m_highRam, 0xFF80);
 
         m_cpu = new Cpu::SharpLr35902(BaseClockRate, m_memory);
+        m_cycleTime = m_cpu->GetCycleTime();
     }
 
     void GameBoyInstance::Delta(long ns) {
+        m_cycleRemaining += ns;
+        m_dotCyclesRemaining += m_dotsPerCycle;
         ReadInput();
+
+        do {
+            m_cpu->Cycle();
+
+            do {
+                m_dotCyclesRemaining -= VideoCycle();
+            } while(m_dotCyclesRemaining > 0);
+
+            m_cycleRemaining -= m_cycleTime;
+        } while(m_cycleTime < m_cycleRemaining);
     }
 
     uint16_t GameBoyInstance::GetRomBankCount() {
@@ -76,7 +89,6 @@ namespace Plip::Core::GameBoy {
         InitMbc();
         if(m_mbc != None) m_romBanks = GetRomBankCount();
         if(m_hasRam) InitCartRam();
-        // Assign: 0xA000-0xBFFF (cart RAM)
 
         m_running = true;
         return PlipError::Success;
