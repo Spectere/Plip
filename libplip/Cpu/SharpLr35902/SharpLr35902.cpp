@@ -113,16 +113,16 @@ namespace Plip::Cpu {
         uint16_t val;
 
         switch(idx) {
-            case ADDR_BC: return COMBINE16(m_reg.b, m_reg.c);
-            case ADDR_DE: return COMBINE16(m_reg.d, m_reg.e);
+            case ADDR_BC: return COMBINE16LE(m_reg.b, m_reg.c);
+            case ADDR_DE: return COMBINE16LE(m_reg.d, m_reg.e);
 
             case ADDR_HLP:
-                val = COMBINE16(m_reg.h, m_reg.l);
+                val = COMBINE16LE(m_reg.h, m_reg.l);
                 IncPair(&(m_reg.h), &(m_reg.l));
                 return val;
 
             case ADDR_HLM:
-                val = COMBINE16(m_reg.h, m_reg.l);
+                val = COMBINE16LE(m_reg.h, m_reg.l);
                 DecPair(&(m_reg.h), &(m_reg.l));
                 return val;
 

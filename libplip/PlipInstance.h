@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "PlipConfig.h"
 #include "PlipError.h"
 #include "Core/PlipCore.h"
 #include "Audio/PlipAudio.h"
@@ -23,6 +24,7 @@ namespace Plip {
 
         PlipAudio* GetAudio();
         PlipCore* GetCore();
+        PlipConfig* GetConfig();
         PlipInput* GetInput();
         PlipVideo* GetVideo();
         PlipError Load(PlipValidCore core, const std::string &path);
@@ -31,6 +33,7 @@ namespace Plip {
     private:
         PlipAudio *m_audio;
         PlipCore *m_core = nullptr;
+        PlipConfig *m_config = new PlipConfig();
         PlipInput *m_input = new PlipInput();
         PlipVideo *m_video;
     };

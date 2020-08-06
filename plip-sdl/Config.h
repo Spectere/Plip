@@ -12,6 +12,7 @@
 namespace PlipSdl {
     class Config {
     public:
+        const std::unordered_map<std::string, std::string> *GetSection(const std::string &key);
         const std::string &GetValue(const std::string &key);
         const std::string &GetValue(const std::string &section, const std::string &key);
         bool LoadFile(const std::string &filename);

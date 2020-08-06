@@ -7,8 +7,10 @@
 
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
+#include "../PlipConfig.h"
 #include "../PlipError.h"
 #include "../Audio/PlipAudio.h"
 #include "../Input/PlipInput.h"
@@ -36,9 +38,10 @@ namespace Plip {
         virtual PlipError Load(const std::string &path) = 0;
 
     protected:
-        explicit PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video);
+        PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config);
 
         PlipAudio *m_audio;
+        PlipConfig *m_config;
         PlipInput *m_input;
         PlipVideo *m_video;
 

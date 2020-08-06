@@ -32,6 +32,15 @@ namespace PlipSdl {
         return str;
     }
 
+    const std::unordered_map<std::string, std::string> *Config::GetSection(const std::string &key) {
+        auto keyLower = ToLower(key);
+
+        auto itSection = m_section.find(keyLower);
+        if(itSection == m_section.end()) return nullptr;
+
+        return &(itSection->second);
+    }
+
     const std::string &Config::GetValue(const std::string &key) {
         return GetValue(global, key);
     }
@@ -41,10 +50,10 @@ namespace PlipSdl {
         auto keyLower = ToLower(key);
 
         auto itSection = m_section.find(secLower);
-        if(itSection == m_section.end()) return empty;
+        if(itSection == m_section.cend()) return empty;
 
         auto itKey = itSection->second.find(keyLower);
-        if(itKey == itSection->second.end()) return empty;
+        if(itKey == itSection->second.cend()) return empty;
 
         return itKey->second;
     }
@@ -70,8 +79,8 @@ namespace PlipSdl {
 
             if(line.front() == '[' && line.back() == ']') {
                 // Section
-                line.erase(line.begin());
-                line.erase(line.end() - 1);
+                line.erase(line.cbegin());
+                line.erase(line.cend() - 1);
                 section = Trim(line);
                 continue;
             }
@@ -101,7 +110,7 @@ namespace PlipSdl {
         auto keyLower = ToLower(key);
 
         auto itSection = m_section.find(secLower);
-        if(itSection == m_section.end()) {
+        if(itSection == m_section.cend()) {
             // O.o
             auto newSection = std::pair<std::string, std::unordered_map<std::string, std::string>>
                     (secLower, std::unordered_map<std::string, std::string>());
@@ -111,7 +120,7 @@ namespace PlipSdl {
         }
 
         auto itKey = itSection->second.find(keyLower);
-        if(itKey == itSection->second.end()) {
+        if(itKey == itSection->second.cend()) {
             itSection->second.insert(std::pair<std::string, std::string>(keyLower, value));
             return;
         }

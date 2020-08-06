@@ -19,6 +19,10 @@ namespace Plip {
         return m_audio;
     }
 
+    PlipConfig* PlipInstance::GetConfig() {
+        return m_config;
+    }
+
     PlipCore* PlipInstance::GetCore() {
         return m_core;
     }
@@ -50,10 +54,10 @@ namespace Plip {
     PlipError PlipInstance::Load(PlipValidCore core, const std::string &path) {
         switch(core) {
             case PlipValidCore::Chip8:
-                m_core = new Core::Chip8::Chip8Instance(m_audio, m_input, m_video);
+                m_core = new Core::Chip8::Chip8Instance(m_audio, m_input, m_video, m_config);
                 break;
             case PlipValidCore::GameBoy:
-                m_core = new Core::GameBoy::GameBoyInstance(m_audio, m_input, m_video);
+                m_core = new Core::GameBoy::GameBoyInstance(m_audio, m_input, m_video, m_config);
                 break;
             default:
                 return PlipError::InvalidCore;

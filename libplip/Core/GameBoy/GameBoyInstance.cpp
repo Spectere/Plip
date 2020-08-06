@@ -14,8 +14,8 @@
 #define READ_INPUT(idx) do { if(m_input->GetInput(idx).digital) m_keypad |= 1 << idx; } while(0)
 
 namespace Plip::Core::GameBoy {
-    GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video)
-    : PlipCore(audio, input, video) {
+    GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config)
+    : PlipCore(audio, input, video, config) {
         RegisterInput();
 
         m_videoRam = new Plip::PlipMemoryRam(0x2000);
@@ -45,9 +45,9 @@ namespace Plip::Core::GameBoy {
         do {
             m_cpu->Cycle();
 
-            do {
-                m_dotCyclesRemaining -= VideoCycle();
-            } while(m_dotCyclesRemaining > 0);
+            for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
+                VideoCycle();
+            }
 
             m_cycleRemaining -= m_cycleTime;
         } while(m_cycleTime < m_cycleRemaining);

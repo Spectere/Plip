@@ -35,6 +35,7 @@ add_library(${lib_name}
         ################################
         # Backend / Frontend Interface #
         ################################
+        libplip/PlipConfig.cpp
         libplip/PlipInstance.cpp
         libplip/PlipIo.cpp
         libplip/PlipUtility.cpp

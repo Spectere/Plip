@@ -186,11 +186,14 @@ int main(int argc, char **argv) {
     auto audio = new PlipSdl::SdlAudio();
     auto plip = new Plip::PlipInstance(wnd, audio);
 
-#ifdef UNIX
-    auto timer = new PlipSdl::TimerPosix();
-#else
-    auto timer = new PlipSdl::TimerSdl();
-#endif
+    // If the core config exists, send it to the core.
+    std::string coreConfigSection = "config." + coreName;
+    auto coreConfig = config->GetSection(coreConfigSection);
+    if(coreConfig != nullptr && !coreConfig->empty()) {
+        for(const auto &coreOption : *coreConfig) {
+            plip->GetConfig()->SetOption(coreOption.first, coreOption.second);
+        }
+    }
 
     auto result = plip->Load(coreTag, filename);
     switch(result) {
@@ -209,12 +212,19 @@ int main(int argc, char **argv) {
 
     // Load inputs for the active core.
     std::string section = "input." + coreName;
-    for(const auto& coreInput : input->GetInputList()) {
+    for(const auto &coreInput : input->GetInputList()) {
         auto key = config->GetValue(section, coreInput.second.GetDescription());
         if(key == config->empty) continue;
 
         event->AddDigitalBinding(coreInput.first, key);
     }
+
+    // Configure timer.
+#ifdef UNIX
+    auto timer = new PlipSdl::TimerPosix();
+#else
+    auto timer = new PlipSdl::TimerSdl();
+#endif
 
     gameLoop(plip, config, event, timer);
 

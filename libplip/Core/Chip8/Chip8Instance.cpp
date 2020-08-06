@@ -11,8 +11,8 @@
 #include "../../PlipIo.h"
 
 namespace Plip::Core::Chip8 {
-    Chip8Instance::Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video)
-    : Plip::PlipCore(audio, input, video) {
+    Chip8Instance::Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config)
+    : Plip::PlipCore(audio, input, video, config) {
         using pa = Plip::PlipAudio;
 
         m_ram = new PlipMemoryRam(RamSize);

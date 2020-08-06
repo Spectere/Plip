@@ -14,7 +14,7 @@
 namespace Plip::Core::GameBoy {
     class GameBoyInstance : public PlipCore {
     public:
-        GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video);
+        GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config);
 
         void Delta(long ns) override;
         PlipError Load(const std::string &path) override;
@@ -37,7 +37,7 @@ namespace Plip::Core::GameBoy {
         void RegisterInput();
 
         // GameBoyInstance.video.cpp
-        int VideoCycle();
+        void VideoCycle();
 
         // Core
         Plip::Cpu::SharpLr35902 *m_cpu;

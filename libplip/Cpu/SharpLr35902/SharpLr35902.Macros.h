@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "../../PlipMacros.h"
+
 #define IDX_B        0b000
 #define IDX_C        0b001
 #define IDX_D        0b010
@@ -59,8 +61,7 @@
 #define OP_REG_X(idx) OP_IDX(idx)
 #define OP_REG_Y(idx) (m_instr[(idx)] & 0b00000111)
 
-#define COMBINE16(high, low) (((high) << 8) + (low))
-#define REG_HL COMBINE16(m_reg.h, m_reg.l)
+#define REG_HL COMBINE16LE(m_reg.h, m_reg.l)
 
 #define SET_PC_IMM m_reg.pc = m_instr[2] << 8 | m_instr[1]
 #define SET_PC_STACK(cycle) \
@@ -77,10 +78,10 @@
     } while(0)
 #define STACK_POP m_memory->GetByte(m_reg.sp++)
 
-#define FLAG_CLEAR(bit) m_reg.f &= ~(1 << (bit))
-#define FLAG_FLIP(bit) m_reg.f ^= (1 << (bit))
-#define FLAG_SET(bit) m_reg.f |= (1 << (bit))
-#define FLAG_TEST(bit) (m_reg.f &= (1 << (bit)))
+#define FLAG_CLEAR(bit) BIT_CLEAR(m_reg.f, (bit))
+#define FLAG_FLIP(bit) BIT_FLIP(m_reg.f, (bit))
+#define FLAG_SET(bit) BIT_SET(m_reg.f, (bit))
+#define FLAG_TEST(bit) BIT_TEST(m_reg.f, (bit))
 
 #define CHECK_BIT_CARRY(val) do { if(val) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY); } while(0)
 #define CHECK_CARRY(val) do { if((val) & 0xFF00) FLAG_SET(CARRY); else FLAG_CLEAR(CARRY); } while(0)

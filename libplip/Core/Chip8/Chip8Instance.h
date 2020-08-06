@@ -19,7 +19,7 @@
 namespace Plip::Core::Chip8 {
     class Chip8Instance : public PlipCore {
     public:
-        Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video);
+        Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config);
         ~Chip8Instance();
 
         void Delta(long ns) override;

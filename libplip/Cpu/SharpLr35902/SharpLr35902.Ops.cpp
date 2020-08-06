@@ -562,7 +562,7 @@ namespace Plip::Cpu {
         FETCH_CYCLE(2);
         FETCH_CYCLE(2);
         CYCLE(4) {
-            m_reg.a = MEM_READ(COMBINE16(m_instr[2], m_instr[1]));
+            m_reg.a = MEM_READ(COMBINE16LE(m_instr[2], m_instr[1]));
         }
         NUM_MCYCLES(5);
     }
@@ -608,7 +608,7 @@ namespace Plip::Cpu {
         FETCH_CYCLE(2);
         FETCH_CYCLE(3);
         CYCLE(4) {
-            MEM_WRITE(COMBINE16(m_instr[2], m_instr[1]), m_reg.a);
+            MEM_WRITE(COMBINE16LE(m_instr[2], m_instr[1]), m_reg.a);
         }
         NUM_MCYCLES(5);
     }
@@ -652,9 +652,9 @@ namespace Plip::Cpu {
     void SharpLr35902::OpLdMemSp() {
         FETCH_CYCLE(2);
         FETCH_CYCLE(3);
-        CYCLE(4) { MEM_WRITE(COMBINE16(m_instr[2], m_instr[1]),
+        CYCLE(4) { MEM_WRITE(COMBINE16LE(m_instr[2], m_instr[1]),
                              m_reg.sp &= 0xFF); }
-        CYCLE(5) { MEM_WRITE(COMBINE16(m_instr[2], m_instr[1]),
+        CYCLE(5) { MEM_WRITE(COMBINE16LE(m_instr[2], m_instr[1]),
                              m_reg.sp >> 8); }
         NUM_MCYCLES(6);
     }

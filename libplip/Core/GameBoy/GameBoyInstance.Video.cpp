@@ -6,7 +6,6 @@
 #include "GameBoyInstance.h"
 
 namespace Plip::Core::GameBoy {
-    int GameBoyInstance::VideoCycle() {
-        return 1;
+    void GameBoyInstance::VideoCycle() {
     }
 }
