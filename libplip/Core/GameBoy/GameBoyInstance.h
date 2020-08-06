@@ -85,6 +85,16 @@ namespace Plip::Core::GameBoy {
         Plip::PlipMemoryRam *m_ioRegisters;
         Plip::PlipMemoryRam *m_highRam;
 
+        const uint32_t m_addrRom = 0x0000;
+        const uint32_t m_addrVideoRam = 0x8000;
+        const uint32_t m_addrWorkRam = 0xC000;
+        const uint32_t m_addrCartRam = 0xA000;
+        const uint32_t m_addrEchoRam = 0xE000;
+        const uint32_t m_addrOam = 0xFE00;
+        const uint32_t m_addrUnusable = 0xFEA0;
+        const uint32_t m_addrRegisters = 0xFF00;
+        const uint32_t m_addrHighRam = 0xFF80;
+
         // Input
         uint8_t m_keypad = 0;
 
@@ -103,7 +113,9 @@ namespace Plip::Core::GameBoy {
         const uint32_t m_wx = 0xFF7B;    // R/W - window X - 7
 
         const uint32_t m_vramTileBase = 0x8000;
-        const uint32_t m_vramTileBlockOffset = 0x800;
+        const uint32_t m_vramTileBlockOffset = 0x0800;
+        const uint32_t m_vramBgBase = 0x9800;
+        const uint32_t m_vramBgBlockOffset = 0x0400;
 
         int m_videoMode = 0;
     };

@@ -25,13 +25,13 @@ namespace Plip::Core::GameBoy {
         m_ioRegisters = new Plip::PlipMemoryRam(0x80);
         m_highRam = new Plip::PlipMemoryRam(0x80);
 
-        m_memory->AssignBlock(m_videoRam, 0x8000);
-        m_memory->AssignBlock(m_workRam, 0xC000);
-        m_memory->AssignBlock(m_workRam, 0xE000);  // ECHO RAM
-        m_memory->AssignBlock(m_oam, 0xFE00);
-        m_memory->AssignBlock(m_unusable, 0xFEA0);
-        m_memory->AssignBlock(m_ioRegisters, 0xFF00);
-        m_memory->AssignBlock(m_highRam, 0xFF80);
+        m_memory->AssignBlock(m_videoRam, m_addrVideoRam);
+        m_memory->AssignBlock(m_workRam, m_addrWorkRam);
+        m_memory->AssignBlock(m_workRam, m_addrEchoRam);  // ECHO RAM
+        m_memory->AssignBlock(m_oam, m_addrOam);
+        m_memory->AssignBlock(m_unusable, m_addrUnusable);
+        m_memory->AssignBlock(m_ioRegisters, m_addrRegisters);
+        m_memory->AssignBlock(m_highRam, m_addrHighRam);
 
         m_cpu = new Cpu::SharpLr35902(BaseClockRate, m_memory);
         m_cycleTime = m_cpu->GetCycleTime();
@@ -84,7 +84,7 @@ namespace Plip::Core::GameBoy {
         auto size = io::GetSize(path);
         auto data = io::ReadFile(path, size);
         m_rom = new Plip::PlipMemoryRom(data.data(), size);
-        m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x8000);
+        m_memory->AssignBlock(m_rom, m_addrRom, 0x0000, 0x8000);
 
         InitMbc();
         if(m_mbc != None) m_romBanks = GetRomBankCount();
@@ -115,9 +115,9 @@ namespace Plip::Core::GameBoy {
         m_cartRam = new Plip::PlipMemoryRam(8192 * m_cartRamBanks);
 
         if(ramSizeByte == 0x00) {
-            m_memory->AssignBlock(m_cartRam, 0xA000);
+            m_memory->AssignBlock(m_cartRam, m_addrCartRam);
         } else {
-            m_memory->AssignBlock(m_cartRam, 0xA000, 0x0000, 0x2000);
+            m_memory->AssignBlock(m_cartRam, m_addrCartRam, 0x0000, 0x2000);
         }
     }
 
