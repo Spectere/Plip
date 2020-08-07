@@ -82,7 +82,7 @@ namespace Plip::Cpu {
         } else if(OP(0b11011110)) {
             // SBC A, n
             OpAccumSubBorrowImm();
-        } else if(OP(0b11110000)) {
+        } else if(OP(0b11100000)) {
             // LDH (n), A
             OpLdMemHighAccum();
         } else if(OP(0b11100010)) {
