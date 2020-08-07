@@ -26,7 +26,7 @@ namespace Plip::Cpu {
         // Handle interrupts here if (1) we're ready to fetch, (2) interrupts
         // are enabled, and (3) an interrupt request has been made.
         auto iFlag = m_memory->GetByte(m_interruptFlag) & 0b00011111;
-        if(m_allowFetch && m_ime == Enabled && iFlag) {
+        if(m_allowFetch && m_ime == ScheduledState::Enabled && iFlag) {
             auto ie = m_memory->GetByte(m_interruptEnabled);
 
             // If no interrupts are enabled, and a HALT instruction has been
@@ -42,7 +42,7 @@ namespace Plip::Cpu {
             if(iFlag) {
                 // Set up the CPU to jump to the interrupt handler.
                 m_allowFetch = false;
-                m_ime = Disabled;
+                m_ime = ScheduledState::Disabled;
                 m_mcycle = 0;
             }
         }
@@ -64,7 +64,7 @@ namespace Plip::Cpu {
 
         // If HALT has been executed and the IME is disabled, the CPU is
         // effectively stopped. Panic!
-        if(m_halt && m_ime == Disabled) {
+        if(m_halt && m_ime == ScheduledState::Disabled) {
             std::stringstream ex;
             ex << "HALT issued with interrupts disabled!\n\n" << DumpRegisters();
             throw PlipEmulationException(ex.str().c_str());
@@ -80,7 +80,7 @@ namespace Plip::Cpu {
         }
 
         // Enable interrupts if they are scheduled.
-        if(m_ime == Scheduled) m_ime = Enabled;
+        if(m_ime == ScheduledState::Scheduled) m_ime = ScheduledState::Enabled;
     }
 
     std::string SharpLr35902::DumpRegisters() const {
@@ -183,7 +183,7 @@ namespace Plip::Cpu {
     }
 
     void SharpLr35902::Interrupt(uint8_t irq) {
-        if(m_ime != Enabled) return;
+        if(m_ime != ScheduledState::Enabled) return;
 
         auto iFlag = m_memory->GetByte(m_interruptFlag);
         iFlag |= irq;

@@ -434,13 +434,13 @@ namespace Plip::Cpu {
 
     // DI
     void SharpLr35902::OpDisableInterrupts() {
-        m_ime = Disabled;
+        m_ime = ScheduledState::Disabled;
         NUM_MCYCLES(2);
     }
 
     // EI
     void SharpLr35902::OpEnableInterrupts() {
-        m_ime = Scheduled;
+        m_ime = ScheduledState::Scheduled;
         NUM_MCYCLES(2);
     }
 
@@ -823,7 +823,7 @@ namespace Plip::Cpu {
     // RETI
     void SharpLr35902::OpRetImeUnc() {
         SET_PC_STACK(2);
-        CYCLE(4) { m_ime = Enabled; }
+        CYCLE(4) { m_ime = ScheduledState::Enabled; }
         NUM_MCYCLES(5);
     }
 
@@ -836,7 +836,7 @@ namespace Plip::Cpu {
     }
 
     // STOP
-    void SharpLr35902::OpStop() {
+    void SharpLr35902::OpStop() const {
         // :(
         std::stringstream ex;
         ex << "STOP opcode executed\n\n" << DumpRegisters();

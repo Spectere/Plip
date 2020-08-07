@@ -18,6 +18,8 @@ namespace Plip::Core::GameBoy {
     : PlipCore(audio, input, video, config) {
         RegisterInput();
 
+        m_spriteList = new uint8_t[m_maxSpritesPerScanline] {};
+
         m_videoRam = new Plip::PlipMemoryRam(0x2000);
         m_workRam = new Plip::PlipMemoryRam(0x2000);
         m_oam = new Plip::PlipMemoryRam(0xA0);
@@ -35,6 +37,11 @@ namespace Plip::Core::GameBoy {
 
         m_cpu = new Cpu::SharpLr35902(BaseClockRate, m_memory);
         m_cycleTime = m_cpu->GetCycleTime();
+    }
+
+    GameBoyInstance::~GameBoyInstance() {
+        delete m_cpu;
+        delete m_spriteList;
     }
 
     void GameBoyInstance::Delta(long ns) {

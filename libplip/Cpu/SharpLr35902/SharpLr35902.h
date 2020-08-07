@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "../PlipCpu.h"
+#include "../../PlipSupport.h"
 #include "../../Memory/PlipMemoryMap.h"
 
 #define INTERRUPT_VBLANK   0b00000001
@@ -38,22 +39,16 @@ namespace Plip::Cpu {
         };
 
         void Cycle() override;
+        [[nodiscard]] std::string DumpRegisters() const;
         void Interrupt(uint8_t irq);
         Registers GetRegisters() { return m_reg; }
         void Reset() override;
 
     private:
-        enum ImeState {
-            Disabled,
-            Enabled,
-            Scheduled
-        };
-
         void PerformReset();
 
         void Decode();
         void DecodeCB();
-        [[nodiscard]] std::string DumpRegisters() const;
         uint8_t* GetRegister8(uint8_t idx);
         std::tuple<uint8_t*, uint8_t*> GetRegisterPair(uint8_t idx);
         uint16_t GetRegister16Value(uint8_t idx);
@@ -136,7 +131,7 @@ namespace Plip::Cpu {
         void OpRetUnc();
         void OpRetImeUnc();
         void OpSetCarry();
-        void OpStop();
+        void OpStop() const;
         void OpSub();
         void OpSubBorrow();
         void OpXor();
@@ -159,7 +154,7 @@ namespace Plip::Cpu {
 
         bool m_allowFetch = true;
         bool m_halt = false;
-        ImeState m_ime = Disabled;
+        ScheduledState m_ime = ScheduledState::Disabled;
         std::vector<uint8_t> m_instr;
         Registers m_reg {};
         uint8_t m_mcycle = 0;

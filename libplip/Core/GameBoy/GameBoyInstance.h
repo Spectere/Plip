@@ -15,6 +15,7 @@ namespace Plip::Core::GameBoy {
     class GameBoyInstance : public PlipCore {
     public:
         GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config);
+        ~GameBoyInstance();
 
         void Delta(long ns) override;
         PlipError Load(const std::string &path) override;
@@ -38,6 +39,12 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance.video.cpp
         void VideoCycle();
+        bool VideoHBlank();
+        void VideoModePostTransition();
+        void VideoModePreTransition();
+        bool VideoOamSearch();
+        bool VideoVBlank();
+        bool VideoVidGen();
 
         // Core
         Plip::Cpu::SharpLr35902 *m_cpu;
@@ -99,24 +106,44 @@ namespace Plip::Core::GameBoy {
         uint8_t m_keypad = 0;
 
         // Video
-        const uint32_t m_addrLcdControl = 0xFF40;
-        const uint32_t m_lcdcStatus = 0xFF41;
-        const uint32_t m_scy = 0xFF42;   // R/W scroll Y
-        const uint32_t m_scx = 0xFF43;   // R/W - scroll X
-        const uint32_t m_lcdcY = 0xFF44;  // R
-        const uint32_t m_lyCompare = 0xFF45;   // R/W
-        const uint32_t m_oamDmaTransfer = 0xFF46;  // R/W
-        const uint32_t m_bgp = 0xFF47;   // R/W - BG/window palette
-        const uint32_t m_obp0 = 0xFF48;  // R/W - object palette 0
-        const uint32_t m_obp1 = 0xFF49;  // R/W - object palette 0
-        const uint32_t m_wy = 0xFF4A;    // R/W - window Y
-        const uint32_t m_wx = 0xFF7B;    // R/W - window X - 7
+        static const uint32_t m_regLcdControl = 0xFF40;
+        static const uint32_t m_regLcdcStatus = 0xFF41;
+        static const uint32_t m_regScy = 0xFF42;   // R/W scroll Y
+        static const uint32_t m_regScx = 0xFF43;   // R/W - scroll X
+        static const uint32_t m_regLy = 0xFF44;    // R
+        static const uint32_t m_regLyCompare = 0xFF45;   // R/W
+        static const uint32_t m_regOamDmaTransfer = 0xFF46;  // R/W
+        static const uint32_t m_regBgp = 0xFF47;   // R/W - BG/window palette
+        static const uint32_t m_regObp0 = 0xFF48;  // R/W - object palette 0
+        static const uint32_t m_regObp1 = 0xFF49;  // R/W - object palette 0
+        static const uint32_t m_regWy = 0xFF4A;    // R/W - window Y
+        static const uint32_t m_regWx = 0xFF7B;    // R/W - window X - 7
 
-        const uint32_t m_vramTileBase = 0x8000;
-        const uint32_t m_vramTileBlockOffset = 0x0800;
-        const uint32_t m_vramBgBase = 0x9800;
-        const uint32_t m_vramBgBlockOffset = 0x0400;
+        static const uint32_t m_vramTileBase = 0x8000;
+        static const uint32_t m_vramTileBlockOffset = 0x0800;
+        static const uint32_t m_vramBgBase = 0x9800;
+        static const uint32_t m_vramBgBlockOffset = 0x0400;
 
+        static const uint8_t m_maxSpritesPerScanline = 10;
+
+        static const uint32_t m_videoHBlankTime = 0;
+        static const uint32_t m_videoOamScanTime = 80;
+        static const uint32_t m_videoScanlineTime = 376;
+        static const uint32_t m_videoVBlankTime = 4560;
+
+        static const uint32_t m_videoModeHBlank = 0;
+        static const uint32_t m_videoModeVBlank = 1;
+        static const uint32_t m_videoModeOamSearch = 2;
+        static const uint32_t m_videoModePicGen = 3;
+
+        static const uint32_t m_screenWidth = 160;
+        static const uint32_t m_screenHeight = 144;
+
+        int m_dotCount = 0;
+        uint8_t *m_spriteList;
+        uint8_t m_spriteListIdx = 0;
+        int m_videoCoincidence = 0;
         int m_videoMode = 0;
+        int m_videoLy = 0;
     };
 }
