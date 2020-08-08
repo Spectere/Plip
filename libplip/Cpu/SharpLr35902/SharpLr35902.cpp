@@ -70,8 +70,6 @@ namespace Plip::Cpu {
             throw PlipEmulationException(ex.str().c_str());
         }
 
-        // Handle interrupts sort of like RST. Bypass
-
         // The LR35902 allows the next instruction to be fetched when the
         // previous instruction finishes its last execute stage.
         if(m_allowFetch && !m_halt && !iFlag) {

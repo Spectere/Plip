@@ -33,7 +33,7 @@ namespace PlipSdl {
         m_stopwatchVal = SDL_GetTicks();
     }
 
-    long TimerSdl::StopwatchStop() {
+    unsigned long TimerSdl::StopwatchStop() {
         Uint32 endVal = SDL_GetTicks();
         if(endVal >= m_stopwatchVal)
             return MS_TO_NS(endVal - m_stopwatchVal);

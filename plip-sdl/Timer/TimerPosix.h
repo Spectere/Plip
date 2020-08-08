@@ -16,7 +16,7 @@ namespace PlipSdl {
 
         void Nanosleep(long ns) override;
         void StopwatchStart() override;
-        long StopwatchStop() override;
+        unsigned long StopwatchStop() override;
 
     private:
         struct timespec m_stopwatchVal {};

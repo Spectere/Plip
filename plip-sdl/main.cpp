@@ -49,6 +49,7 @@ void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEve
         // unable to keep up with the emulation core.
         // TODO: Fix this so that it will skip frames where appropriate.
         plip->Run(frameTime);
+        video->Render();
 
         auto time = timer->StopwatchStop();
         auto delay = frameTime - time;

@@ -18,7 +18,7 @@ namespace PlipSdl {
 
         void Nanosleep(long ns) override;
         void StopwatchStart() override;
-        long StopwatchStop() override;
+        unsigned long StopwatchStop() override;
 
     private:
         float m_sleepSkew = 0;

@@ -19,12 +19,13 @@ namespace PlipSdl {
         clock_gettime(CLOCK_MONOTONIC, &m_stopwatchVal);
     }
 
-    long TimerPosix::StopwatchStop() {
+    unsigned long TimerPosix::StopwatchStop() {
         struct timespec end_val;
 
         clock_gettime(CLOCK_MONOTONIC, &end_val);
-        return ((end_val.tv_sec - m_stopwatchVal.tv_sec) * 1000000)
-               + (end_val.tv_nsec - m_stopwatchVal.tv_nsec);
+        unsigned long start = m_stopwatchVal.tv_sec * 1000000000 + m_stopwatchVal.tv_nsec;
+        unsigned long end = end_val.tv_sec * 1000000000 + end_val.tv_nsec;
+        return end - start;
     }
 #pragma clang diagnostic pop
 }

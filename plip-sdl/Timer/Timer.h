@@ -10,7 +10,7 @@ namespace PlipSdl {
     public:
         virtual void Nanosleep(long ns) = 0;
         virtual void StopwatchStart() = 0;
-        virtual long StopwatchStop() = 0;
+        virtual unsigned long StopwatchStop() = 0;
 
     protected:
         Timer() = default;
