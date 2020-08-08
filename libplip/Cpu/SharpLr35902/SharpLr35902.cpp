@@ -203,6 +203,8 @@ namespace Plip::Cpu {
         m_reg.sp = 0;
         m_reg.pc = 0;
 
+        m_ime = ScheduledState::Disabled;
+
         m_allowFetch = true;
         m_instr.clear();
         m_mcycle = 0;
@@ -212,7 +214,7 @@ namespace Plip::Cpu {
         PerformReset();
     }
 
-    bool SharpLr35902::TestConditional(uint8_t idx) {
+    bool SharpLr35902::TestConditional(uint8_t idx) const {
         switch(idx) {
             case COND_NZ: return !FLAG_TEST(ZERO);
             case COND_Z: return FLAG_TEST(ZERO);

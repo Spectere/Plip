@@ -52,7 +52,7 @@ namespace Plip::Cpu {
         uint8_t* GetRegister8(uint8_t idx);
         std::tuple<uint8_t*, uint8_t*> GetRegisterPair(uint8_t idx);
         uint16_t GetRegister16Value(uint8_t idx);
-        bool TestConditional(uint8_t idx);
+        bool TestConditional(uint8_t idx) const;
 
         static inline uint16_t Combine(const uint8_t *high, const uint8_t *low) {
             return ((*high << 8) + *low);

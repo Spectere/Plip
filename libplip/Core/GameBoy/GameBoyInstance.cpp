@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "../../PlipEmulationException.h"
+#include "../../PlipInitializationException.h"
 #include "../../PlipIo.h"
 #include "../../PlipUtility.h"
 
@@ -16,10 +17,28 @@
 namespace Plip::Core::GameBoy {
     GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config)
     : PlipCore(audio, input, video, config) {
+        using io = Plip::PlipIo;
+
+        // Initialize input.
         RegisterInput();
+        m_memory->SetByte(m_regJoypad, 0b11111111);
+
+        // Load the boot ROM.
+        m_bootRomPath = m_config->GetOption("bootRom");
+        if(m_bootRomPath == m_config->empty)
+            throw PlipInitializationException("Boot ROM must be specified in the core config.");
+        if(!io::FileExists(m_bootRomPath))
+            throw PlipInitializationException("Specified Boot ROM could not be found.");
+
+        auto size = io::GetSize(m_bootRomPath);
+        auto data = io::ReadFile(m_bootRomPath, size);
+        m_bootRom = new Plip::PlipMemoryRom(data.data(), size);
+
+        // Initialize framebuffers and video subsystem.
 
         m_spriteList = new uint8_t[m_maxSpritesPerScanline] {};
 
+        // Initialize system RAM.
         m_videoRam = new Plip::PlipMemoryRam(0x2000);
         m_workRam = new Plip::PlipMemoryRam(0x2000);
         m_oam = new Plip::PlipMemoryRam(0xA0);
@@ -35,7 +54,8 @@ namespace Plip::Core::GameBoy {
         m_memory->AssignBlock(m_ioRegisters, m_addrRegisters);
         m_memory->AssignBlock(m_highRam, m_addrHighRam);
 
-        m_cpu = new Cpu::SharpLr35902(BaseClockRate, m_memory);
+        // Initialize CPU.
+        m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory);
         m_cycleTime = m_cpu->GetCycleTime();
     }
 
@@ -50,8 +70,31 @@ namespace Plip::Core::GameBoy {
         ReadInput();
 
         do {
+            // Run a single CPU cycle.
             m_cpu->Cycle();
 
+            // Check the input register.
+            // TODO: Simulate DMG/SGB propagation delay.
+            auto inputReg = m_memory->GetByte(m_regJoypad);
+            if(!BIT_TEST(inputReg, 5)) {
+                // Button keys selected.
+                BIT_SET(inputReg, 4);
+                inputReg &= ~(m_keypad >> 4);  // Pull the inputs low.
+            } else if(!BIT_TEST(inputReg, 4)) {
+                // Direction keys selected.
+                BIT_SET(inputReg, 5);
+                inputReg &= ~(m_keypad & 0b00001111);
+            }
+            m_memory->SetByte(m_regJoypad, inputReg);
+
+            if(!m_bootRomFlag && m_cpu->GetRegisters().pc >= 0x100) {
+                m_bootRomFlag = 1;
+
+                // Swap the boot ROM out for the cartridge ROM.
+                m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
+            }
+
+            // Run 4 dot clock cycles (4.19MHz)
             for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
                 VideoCycle();
             }
@@ -96,6 +139,13 @@ namespace Plip::Core::GameBoy {
         InitMbc();
         if(m_mbc != None) m_romBanks = GetRomBankCount();
         if(m_hasRam) InitCartRam();
+
+        // Set startup registers.
+        m_memory->SetByte(m_regLcdControl, 0x83);  // LCD on, BG/OBJ enabled
+
+        // Load the boot ROM into 0x0000-0x00FF.
+        m_memory->AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
+        m_bootRomFlag = 0;
 
         m_running = true;
         return PlipError::Success;

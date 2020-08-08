@@ -20,7 +20,7 @@ namespace Plip::Core::GameBoy {
         void Delta(long ns) override;
         PlipError Load(const std::string &path) override;
 
-        const int BaseClockRate = 4194304 / 4;
+        const int BaseClockRate = 4194304;
         const int InputRight = 0;
         const int InputLeft = 1;
         const int InputUp = 2;
@@ -47,6 +47,8 @@ namespace Plip::Core::GameBoy {
         bool VideoVidGen();
 
         // Core
+        uint8_t m_bootRomFlag = 0;
+        std::string m_bootRomPath;
         Plip::Cpu::SharpLr35902 *m_cpu;
         long m_cycleTime {};
         long m_cycleRemaining = 0;
@@ -81,6 +83,7 @@ namespace Plip::Core::GameBoy {
         uint16_t m_cartRamBanks = 0;
 
         // Memory
+        Plip::PlipMemoryRom *m_bootRom = nullptr;
         Plip::PlipMemoryRom *m_rom = nullptr;
         uint8_t m_unusableContents[0x60] {};
         Plip::PlipMemoryRom *m_unusable;
@@ -104,6 +107,8 @@ namespace Plip::Core::GameBoy {
 
         // Input
         uint8_t m_keypad = 0;
+
+        const uint32_t m_regJoypad = 0xFF00;
 
         // Video
         static const uint32_t m_regLcdControl = 0xFF40;
