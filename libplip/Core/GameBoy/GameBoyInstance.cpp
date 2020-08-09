@@ -35,9 +35,11 @@ namespace Plip::Core::GameBoy {
         m_bootRom = new Plip::PlipMemoryRom(data.data(), size);
 
         // Initialize framebuffers and video subsystem.
+        m_video->Resize(m_screenWidth, m_screenHeight);
         m_videoFmt = Plip::PlipVideo::GetFormatInfo(video->GetFormat());
         auto vidBufferSize = m_videoFmt.pixelWidth * m_screenWidth * m_screenWidth;
         m_videoBuffer = new uint8_t[vidBufferSize];
+        m_videoMode = m_videoModeOamSearch;
 
         m_spriteList = new uint8_t[m_maxSpritesPerScanline] {};
         m_spriteListSorted = new uint8_t[m_maxSpritesPerScanline] {};
@@ -102,9 +104,13 @@ namespace Plip::Core::GameBoy {
                 m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
             }
 
-            // Run 4 dot clock cycles (4.19MHz)
-            for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
-                VideoCycle();
+            auto lcdc = m_memory->GetByte(m_regLcdControl);
+
+            // Run 4 dot clock cycles (4.19MHz) if the display is enabled.
+            if(BIT_TEST(lcdc, 7)) {
+                for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
+                    VideoCycle();
+                }
             }
             m_memory->SetByte(m_regLy, m_videoLy);
 
@@ -149,12 +155,9 @@ namespace Plip::Core::GameBoy {
         if(m_mbc != None) m_romBanks = GetRomBankCount();
         if(m_hasRam) InitCartRam();
 
-        // Set startup registers.
-        m_memory->SetByte(m_regLcdControl, 0x83);  // LCD on, BG/OBJ enabled
-
         // Load the boot ROM into 0x0000-0x00FF.
         m_memory->AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
-        m_bootRomFlag = 0;
+        m_bootRomFlag = false;
 
         m_running = true;
         return PlipError::Success;

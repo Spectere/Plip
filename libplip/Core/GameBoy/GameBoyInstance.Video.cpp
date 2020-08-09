@@ -41,7 +41,7 @@ namespace Plip::Core::GameBoy {
             // Mode transition.
             VideoModePreTransition();
             m_videoMode = ++m_videoMode > 3 ? 0 : m_videoMode;
-            if(m_videoMode == 1 && m_videoLy <= m_screenHeight)
+            if(m_videoMode == 1 && m_videoLy < m_screenHeight)
                 m_videoMode++;  // only transition to 1 after the last HBlank
             VideoModePostTransition();
         }
@@ -123,6 +123,7 @@ namespace Plip::Core::GameBoy {
                 m_oam->SetWritable(false);
                 m_videoRam->SetWritable(false);
                 m_dotCount = 0;
+                m_vidGenStage = BackgroundScrolling;
                 break;
 
             default:
@@ -169,8 +170,9 @@ namespace Plip::Core::GameBoy {
         uint8_t wx, wy;
         uint8_t bgp, obp0, obp1;
         uint8_t lcdc, stat;
-        uint8_t tileX, tileY, tilePX, tilePY, tileIdx, tile, pixelColor;
-        uint8_t pixelData, lineOffset;
+        uint8_t tileX, tileY, tilePX, tilePY, pixelColor;
+        uint16_t mapIdx, tileIdx;
+        uint8_t pixelDataLow, pixelDataHigh, pixelDataCombined, lineOffset, tileShift;
         uint16_t tileDataAddr, tileMapAddr;
         auto pos = (m_videoLy * m_screenWidth) + m_videoLx;
 
@@ -178,40 +180,42 @@ namespace Plip::Core::GameBoy {
             case BackgroundScrolling:
                 // Pause the dot clock to simulate the background shifter.
                 scx = m_memory->GetByte(m_regScx);
-                if(m_vidGenTick++ > scx % 8) {
+                if(++m_vidGenTick > scx % 8) {
                     m_vidGenTick = 0;
                     m_vidGenStage = Drawing;
                 }
                 break;
 
             case Drawing:
-                //if(--m_vidGenTick > 0) break;
-
+                // TODO: Add timing routine.
                 scx = m_memory->GetByte(m_regScx);
                 scy = m_memory->GetByte(m_regScy);
                 bgp = m_memory->GetByte(m_regBgp);
                 obp0 = m_memory->GetByte(m_regObp0);
                 obp1 = m_memory->GetByte(m_regObp1);
 
-                // BG palette: FF47 (m_regBgp)
-                // Object palettes: FF48, FF49 (m_regObp0, m_regObp1)
                 lcdc = m_memory->GetByte(m_regLcdControl);
                 if(!BIT_TEST(lcdc, 7)) break;
 
                 if(BIT_TEST(lcdc, 0)) { // BG/Window Display Enabled
-                    tileDataAddr = BIT_TEST(lcdc, 4) ? 0x8800 : 0x8000;
-                    tileMapAddr = BIT_TEST(lcdc, 3) ? 0x9800 : 0x9C00;
-                    tileX = (scx + m_videoLx) % 32;
-                    tileY = (scy + m_videoLy) % 32;
+                    tileDataAddr = BIT_TEST(lcdc, 4) ? 0x8000 : 0x8800;
+                    tileMapAddr = BIT_TEST(lcdc, 3) ? 0x9C00 : 0x9800;
+                    tileX = (scx + m_videoLx) / 8;
+                    tileY = (scy + m_videoLy) / 8;
                     tilePX = (scx + m_videoLx) % 8;
                     tilePY = (scy + m_videoLy) % 8;
-                    tileIdx = tileY * 32 * 2;
-                    lineOffset = tilePX >= 4 ? 1 : 0;
-                    tile = m_memory->GetByte(tileMapAddr + tileIdx);
-                    pixelData = m_memory->GetByte(tileDataAddr * tile + lineOffset);
 
-                    pixelData = (pixelData >> ((tilePX & 0b11) * 2)) & 0b11;
-                    pixelColor = (bgp >> (pixelData * 2)) & 0b11;
+                    mapIdx = (tileY * 32) + tileX;
+                    tileIdx = m_memory->GetByte(tileMapAddr + mapIdx);
+
+                    lineOffset = tilePY * 2;
+
+                    pixelDataLow = m_memory->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset);
+                    pixelDataHigh = m_memory->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
+                    tileShift = 7 - tilePX;
+                    pixelDataCombined = ((pixelDataHigh >> tileShift) << 1) | (pixelDataLow >> tileShift);
+
+                    pixelColor = (bgp >> (pixelDataCombined * 2)) & 0b11;
                     Plot(pixelColor, pos);
 
                     if(BIT_TEST(lcdc, 5)) {
@@ -220,15 +224,7 @@ namespace Plip::Core::GameBoy {
 
                         if(!(wx > 166 || wy > 143) || m_videoLx >= wx || m_videoLy >= wy) {
                             tileMapAddr = BIT_TEST(lcdc, 6) ? 0x9800 : 0x9C00;
-                            tileX = (m_videoLx - wx) % 32;
-                            tileY = (m_videoLy - wy) % 32;
-                            tilePX = (m_videoLx - wx) % 8;
-                            tilePY = (m_videoLy - wy) % 8;
-                            tileIdx = tileY * 32 * 2;
-                            lineOffset = tilePX >= 4 ? 1 : 0;
-                            pixelData = m_memory->GetByte(tileDataAddr * tile + lineOffset);
-
-                            // Draw window.  TODO: implement me.
+                            // TODO: Window rendering.
                         }
                     }
                 } else {
