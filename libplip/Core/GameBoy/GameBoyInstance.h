@@ -64,7 +64,7 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance.video.cpp
         void VideoCycle();
-        bool VideoHBlank() const;
+        [[nodiscard]] bool VideoHBlank() const;
         void VideoModePostTransition();
         void VideoModePreTransition();
         bool VideoOamSearch();
