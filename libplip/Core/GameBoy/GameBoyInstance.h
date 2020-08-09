@@ -122,38 +122,38 @@ namespace Plip::Core::GameBoy {
         Plip::PlipMemoryRam *m_ioRegisters;
         Plip::PlipMemoryRam *m_highRam;
 
-        const uint32_t m_addrRom = 0x0000;
-        const uint32_t m_addrVideoRam = 0x8000;
-        const uint32_t m_addrWorkRam = 0xC000;
-        const uint32_t m_addrCartRam = 0xA000;
-        const uint32_t m_addrEchoRam = 0xE000;
-        const uint32_t m_addrOam = 0xFE00;
-        const uint32_t m_addrUnusable = 0xFEA0;
-        const uint32_t m_addrRegisters = 0xFF00;
-        const uint32_t m_addrHighRam = 0xFF80;
+        static const uint32_t m_addrRom = 0x0000;
+        static const uint32_t m_addrVideoRam = 0x8000;
+        static const uint32_t m_addrWorkRam = 0xC000;
+        static const uint32_t m_addrCartRam = 0xA000;
+        static const uint32_t m_addrEchoRam = 0xE000;
+        static const uint32_t m_addrOam = 0xFE00;
+        static const uint32_t m_addrUnusable = 0xFEA0;
+        static const uint32_t m_addrRegisters = 0xFF00;
+        static const uint32_t m_addrHighRam = 0xFF80;
 
         // Input
         uint8_t m_keypad = 0;
 
-        const uint32_t m_regJoypad = 0xFF00;
+        const uint32_t m_regJoypad = 0xFF00 - m_addrRegisters;
 
         // Video
-        static const uint32_t m_regLcdControl = 0xFF40;
-        static const uint32_t m_regLcdcStatus = 0xFF41;
-        static const uint32_t m_regScy = 0xFF42;   // R/W scroll Y
-        static const uint32_t m_regScx = 0xFF43;   // R/W - scroll X
-        static const uint32_t m_regLy = 0xFF44;    // R
-        static const uint32_t m_regLyCompare = 0xFF45;   // R/W
-        static const uint32_t m_regOamDmaTransfer = 0xFF46;  // R/W
-        static const uint32_t m_regBgp = 0xFF47;   // R/W - BG/window palette
-        static const uint32_t m_regObp0 = 0xFF48;  // R/W - object palette 0
-        static const uint32_t m_regObp1 = 0xFF49;  // R/W - object palette 0
-        static const uint32_t m_regWy = 0xFF4A;    // R/W - window Y
-        static const uint32_t m_regWx = 0xFF7B;    // R/W - window X - 7
+        static const uint32_t m_regLcdControl = 0xFF40 - m_addrRegisters;
+        static const uint32_t m_regLcdcStatus = 0xFF41 - m_addrRegisters;
+        static const uint32_t m_regScy = 0xFF42 - m_addrRegisters;   // R/W scroll Y
+        static const uint32_t m_regScx = 0xFF43 - m_addrRegisters;   // R/W - scroll X
+        static const uint32_t m_regLy = 0xFF44 - m_addrRegisters;    // R
+        static const uint32_t m_regLyCompare = 0xFF45 - m_addrRegisters;   // R/W
+        static const uint32_t m_regOamDmaTransfer = 0xFF46 - m_addrRegisters;  // R/W
+        static const uint32_t m_regBgp = 0xFF47 - m_addrRegisters;   // R/W - BG/window palette
+        static const uint32_t m_regObp0 = 0xFF48 - m_addrRegisters;  // R/W - object palette 0
+        static const uint32_t m_regObp1 = 0xFF49 - m_addrRegisters;  // R/W - object palette 0
+        static const uint32_t m_regWy = 0xFF4A - m_addrRegisters;    // R/W - window Y
+        static const uint32_t m_regWx = 0xFF7B - m_addrRegisters;    // R/W - window X - 7
 
-        static const uint32_t m_vramTileBase = 0x8000;
+        static const uint32_t m_vramTileBase = 0x8000 - m_addrVideoRam;
         static const uint32_t m_vramTileBlockOffset = 0x0800;
-        static const uint32_t m_vramBgBase = 0x9800;
+        static const uint32_t m_vramBgBase = 0x9800 - m_addrVideoRam;
         static const uint32_t m_vramBgBlockOffset = 0x0400;
 
         static const uint8_t m_maxSpritesPerScanline = 10;

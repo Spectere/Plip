@@ -85,7 +85,7 @@ namespace Plip::Core::GameBoy {
 
             // Check the input register.
             // TODO: Simulate DMG/SGB propagation delay.
-            auto inputReg = m_memory->GetByte(m_regJoypad);
+            auto inputReg = m_ioRegisters->GetByte(m_regJoypad);
             if(!BIT_TEST(inputReg, 5)) {
                 // Button keys selected.
                 BIT_SET(inputReg, 4);
@@ -95,7 +95,7 @@ namespace Plip::Core::GameBoy {
                 BIT_SET(inputReg, 5);
                 inputReg &= ~(m_keypad & 0b00001111);
             }
-            m_memory->SetByte(m_regJoypad, inputReg);
+            m_ioRegisters->SetByte(m_regJoypad, inputReg);
 
             if(!m_bootRomFlag && m_cpu->GetRegisters().pc >= 0x100) {
                 m_bootRomFlag = true;
@@ -104,7 +104,7 @@ namespace Plip::Core::GameBoy {
                 m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
             }
 
-            auto lcdc = m_memory->GetByte(m_regLcdControl);
+            auto lcdc = m_ioRegisters->GetByte(m_regLcdControl);
 
             // Run 4 dot clock cycles (4.19MHz) if the display is enabled.
             if(BIT_TEST(lcdc, 7)) {
@@ -112,7 +112,7 @@ namespace Plip::Core::GameBoy {
                     VideoCycle();
                 }
             }
-            m_memory->SetByte(m_regLy, m_videoLy);
+            m_ioRegisters->SetByte(m_regLy, m_videoLy);
 
             m_cycleRemaining -= m_cycleTime;
         } while(m_cycleTime < m_cycleRemaining);

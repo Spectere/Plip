@@ -46,9 +46,9 @@ namespace Plip::Core::GameBoy {
             VideoModePostTransition();
         }
 
-        auto stat = m_memory->GetByte(m_regLcdcStatus) & 0b11111000;
+        auto stat = m_ioRegisters->GetByte(m_regLcdcStatus) & 0b11111000;
         stat |= (m_videoCoincidence << 2) | m_videoMode;
-        m_memory->SetByte(m_regLcdcStatus, stat);
+        m_ioRegisters->SetByte(m_regLcdcStatus, stat);
     }
 
     bool GameBoyInstance::VideoHBlank() const {
@@ -58,14 +58,14 @@ namespace Plip::Core::GameBoy {
     bool GameBoyInstance::VideoOamSearch() {
         if(m_dotCount != 0) return m_dotCount < m_videoOamScanTime;
 
-        auto spriteHeight = ((m_memory->GetByte(m_regLcdControl) >> 2) & 1) ? 16 : 8;
+        auto spriteHeight = ((m_ioRegisters->GetByte(m_regLcdControl) >> 2) & 1) ? 16 : 8;
 
         // Just do everything at once since the OAM will be locked at this point.
         m_spriteListIdx = 0;
         for(auto sprIdx = 0; sprIdx < 0; sprIdx++) {
-            auto sprAddr = m_addrOam + (4 * sprIdx);
-            auto sprY = m_memory->GetByte(sprAddr);
-            auto sprX = m_addrOam + (4 * sprIdx);
+            auto sprAddr = 4 * sprIdx;
+            auto sprY = m_oam->GetByte(sprAddr);
+            auto sprX = m_oam->GetByte(sprAddr + 1);
 
             if(sprX == 0 || sprX >= m_screenWidth + 8) continue;
             if(m_videoLy >= sprY - spriteHeight || m_videoLy < sprY - (16 - spriteHeight)) {
@@ -79,7 +79,7 @@ namespace Plip::Core::GameBoy {
     }
 
     void GameBoyInstance::VideoModePostTransition() {
-        uint8_t stat = m_memory->GetByte(m_regLcdcStatus);
+        uint8_t stat = m_ioRegisters->GetByte(m_regLcdcStatus);
 
         // New mode.
         switch(m_videoMode) {
@@ -109,7 +109,7 @@ namespace Plip::Core::GameBoy {
                 m_videoRam->SetWritable(true);
                 memset(m_spriteList, 0x00, m_maxSpritesPerScanline);
                 m_dotCount = 0;
-                m_videoCoincidence = m_videoLy == m_memory->GetByte(m_regLyCompare) ? 1 : 0;
+                m_videoCoincidence = m_videoLy == m_ioRegisters->GetByte(m_regLyCompare) ? 1 : 0;
 
                 if(BIT_TEST(stat, 5))  // OAM interrupt
                     m_cpu->Interrupt(INTERRUPT_LCDSTAT);
@@ -179,7 +179,7 @@ namespace Plip::Core::GameBoy {
         switch(m_vidGenStage) {
             case BackgroundScrolling:
                 // Pause the dot clock to simulate the background shifter.
-                scx = m_memory->GetByte(m_regScx);
+                scx = m_ioRegisters->GetByte(m_regScx);
                 if(++m_vidGenTick > scx % 8) {
                     m_vidGenTick = 0;
                     m_vidGenStage = Drawing;
@@ -188,30 +188,30 @@ namespace Plip::Core::GameBoy {
 
             case Drawing:
                 // TODO: Add timing routine.
-                scx = m_memory->GetByte(m_regScx);
-                scy = m_memory->GetByte(m_regScy);
-                bgp = m_memory->GetByte(m_regBgp);
-                obp0 = m_memory->GetByte(m_regObp0);
-                obp1 = m_memory->GetByte(m_regObp1);
+                scx = m_ioRegisters->GetByte(m_regScx);
+                scy = m_ioRegisters->GetByte(m_regScy);
+                bgp = m_ioRegisters->GetByte(m_regBgp);
+                obp0 = m_ioRegisters->GetByte(m_regObp0);
+                obp1 = m_ioRegisters->GetByte(m_regObp1);
 
-                lcdc = m_memory->GetByte(m_regLcdControl);
+                lcdc = m_ioRegisters->GetByte(m_regLcdControl);
                 if(!BIT_TEST(lcdc, 7)) break;
 
                 if(BIT_TEST(lcdc, 0)) { // BG/Window Display Enabled
-                    tileDataAddr = BIT_TEST(lcdc, 4) ? 0x8000 : 0x8800;
-                    tileMapAddr = BIT_TEST(lcdc, 3) ? 0x9C00 : 0x9800;
+                    tileDataAddr = m_vramTileBase + (BIT_TEST(lcdc, 4) ? 0 : m_vramTileBlockOffset);
+                    tileMapAddr = m_vramBgBase + (BIT_TEST(lcdc, 3) ? m_vramBgBlockOffset : 0);
                     tileX = (scx + m_videoLx) / 8;
                     tileY = (scy + m_videoLy) / 8;
                     tilePX = (scx + m_videoLx) % 8;
                     tilePY = (scy + m_videoLy) % 8;
 
                     mapIdx = (tileY * 32) + tileX;
-                    tileIdx = m_memory->GetByte(tileMapAddr + mapIdx);
+                    tileIdx = m_videoRam->GetByte(tileMapAddr + mapIdx);
 
                     lineOffset = tilePY * 2;
 
-                    pixelDataLow = m_memory->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset);
-                    pixelDataHigh = m_memory->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
+                    pixelDataLow = m_videoRam->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset);
+                    pixelDataHigh = m_videoRam->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
                     tileShift = 7 - tilePX;
                     pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
                                       | ((pixelDataLow >> tileShift) & 0b1);
@@ -220,8 +220,8 @@ namespace Plip::Core::GameBoy {
                     Plot(pixelColor, pos);
 
                     if(BIT_TEST(lcdc, 5)) {
-                        wx = m_memory->GetByte(m_regWx) - 7;
-                        wy = m_memory->GetByte(m_regWy);
+                        wx = m_ioRegisters->GetByte(m_regWx) - 7;
+                        wy = m_ioRegisters->GetByte(m_regWy);
 
                         if(!(wx > 166 || wy > 143) || m_videoLx >= wx || m_videoLy >= wy) {
                             tileMapAddr = BIT_TEST(lcdc, 6) ? 0x9800 : 0x9C00;

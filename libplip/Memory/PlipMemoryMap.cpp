@@ -15,17 +15,19 @@ namespace Plip {
     void PlipMemoryMap::AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length) {
         uint32_t start = 0;
 
-        if(m_range.begin() != m_range.end()) {
-            auto last = m_range.back();
+        if(m_rangeList.begin() != m_rangeList.end()) {
+            auto last = m_rangeList.back();
             start = last.startAddress + last.length;
         }
 
-        m_range.push_back({
+        m_rangeList.push_back({
             .startAddress = start,
             .memory = memory,
             .offset = offset,
             .length = length
         });
+
+        UpdateVector();
     }
 
     void PlipMemoryMap::AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset) {
@@ -38,45 +40,33 @@ namespace Plip {
     }
 
     void PlipMemoryMap::AssignBlockDirect(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length) {
-        auto it = m_range.begin();
-        auto end = m_range.end();
+        auto it = m_rangeList.begin();
+        auto end = m_rangeList.end();
 
         while(it != end) {
             if(it->startAddress > address) break;
             it++;
         }
 
-        m_range.insert(it, {
-            .startAddress = address,
-            .memory = memory,
-            .offset = offset,
-            .length = length
+        m_rangeList.insert(it, {
+                .startAddress = address,
+                .memory = memory,
+                .offset = offset,
+                .length = length
         });
-    }
 
-    std::tuple<PlipMemory*, uint32_t> PlipMemoryMap::FindAddress(uint32_t address) {
-        for(auto const &memory : m_range) {
-            if(address < memory.startAddress || address > memory.startAddress + memory.length - 1)
-                continue;
-
-            return { memory.memory, address - memory.startAddress + memory.offset };
-        }
-
-        return { nullptr, 0 };
+        UpdateVector();
     }
 
     uint8_t PlipMemoryMap::GetByte(uint32_t address) {
-        auto [ memory, offset ] = FindAddress(address);
+        auto block = FindAddress(address);
 
-        if(memory == nullptr) return 0;
-        return memory->GetByte(offset);
+        if(block.memory == nullptr) return 0;
+        return block.memory->GetByte(block.offset);
     }
 
     uint32_t PlipMemoryMap::GetLength() {
-        if(m_range.begin() == m_range.end()) return 0;
-
-        auto last = m_range.back();
-        return last.startAddress + last.length;
+        return m_range.size();
     }
 
     PlipMemoryMap::BlockRangeResult PlipMemoryMap::IsBlockInRange(
@@ -92,10 +82,10 @@ namespace Plip {
     }
 
     void PlipMemoryMap::SetByte(uint32_t address, uint8_t value) {
-        auto [ memory, offset ] = FindAddress(address);
+        auto block = FindAddress(address);
 
-        if(memory == nullptr) return;
-        memory->SetByte(offset, value);
+        if(block.memory == nullptr) return;
+        block.memory->SetByte(block.offset, value);
     }
 
     void PlipMemoryMap::UnassignBlock(uint32_t address, uint32_t length) {
@@ -110,8 +100,8 @@ namespace Plip {
 
         auto endAddress = address + length - 1;  // end address
 
-        auto it = m_range.begin();
-        auto end = m_range.end();
+        auto it = m_rangeList.begin();
+        auto end = m_rangeList.end();
         auto foundBlock = false;
 
         while(it != end) {
@@ -130,7 +120,7 @@ namespace Plip {
                 case CompletelyInRange:
                     // This block can be removed.
                     foundBlock = true;
-                    it = m_range.erase(it);
+                    it = m_rangeList.erase(it);
                     continue;
 
                 case PartiallyInRange:
@@ -171,5 +161,13 @@ namespace Plip {
                     continue;
             }
         }
+
+        UpdateVector();
+    }
+
+    void PlipMemoryMap::UpdateVector() {
+        m_range.clear();
+        for(auto const &range : m_rangeList)
+            m_range.push_back(range);
     }
 }

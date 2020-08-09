@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <list>
+#include <vector>
 
 #include "PlipMemory.h"
 
@@ -20,6 +21,10 @@ namespace Plip {
 
     class PlipMemoryMap {
     public:
+        uint8_t operator[] (uint32_t offset) {
+            return GetByte(offset);
+        };
+
         void AddBlock(PlipMemory *memory, uint32_t offset = 0);
         void AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length);
         void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset = 0);
@@ -36,10 +41,27 @@ namespace Plip {
             CompletelyInRange
         };
 
-        void AssignBlockDirect(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
-        std::tuple<PlipMemory*, uint32_t> FindAddress(uint32_t address);
-        static inline BlockRangeResult IsBlockInRange(const PlipMemoryMapRange &block, uint32_t startAddress, uint32_t endAddress);
+        struct FindResults {
+            PlipMemory* memory;
+            uint32_t offset;
+        };
 
-        std::list<PlipMemoryMapRange> m_range;
+        inline FindResults FindAddress(uint32_t address) {
+            for(auto range : m_range) {
+                if(address < range.startAddress || address > range.startAddress + range.length - 1)
+                    continue;
+
+                return { range.memory, address - range.startAddress + range.offset };
+            }
+
+            return { nullptr, 0 };
+        };
+
+        void AssignBlockDirect(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
+        static inline BlockRangeResult IsBlockInRange(const PlipMemoryMapRange &block, uint32_t startAddress, uint32_t endAddress);
+        void UpdateVector();
+
+        std::list<PlipMemoryMapRange> m_rangeList;
+        std::vector<PlipMemoryMapRange> m_range;
     };
 }
