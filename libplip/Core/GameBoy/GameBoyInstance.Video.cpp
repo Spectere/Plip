@@ -213,7 +213,8 @@ namespace Plip::Core::GameBoy {
                     pixelDataLow = m_memory->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset);
                     pixelDataHigh = m_memory->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
                     tileShift = 7 - tilePX;
-                    pixelDataCombined = ((pixelDataHigh >> tileShift) << 1) | (pixelDataLow >> tileShift);
+                    pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
+                                      | ((pixelDataLow >> tileShift) & 0b1);
 
                     pixelColor = (bgp >> (pixelDataCombined * 2)) & 0b11;
                     Plot(pixelColor, pos);
