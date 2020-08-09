@@ -41,8 +41,8 @@ namespace Plip::Core::GameBoy {
             // Mode transition.
             VideoModePreTransition();
             m_videoMode = ++m_videoMode > 3 ? 0 : m_videoMode;
-            if(m_videoMode == 1 && m_videoLy < m_screenHeight)
-                m_videoMode++;  // only transition to 1 after the last hblank
+            if(m_videoMode == 1 && m_videoLy <= m_screenHeight)
+                m_videoMode++;  // only transition to 1 after the last HBlank
             VideoModePostTransition();
         }
 
@@ -51,7 +51,7 @@ namespace Plip::Core::GameBoy {
         m_memory->SetByte(m_regLcdcStatus, stat);
     }
 
-    bool GameBoyInstance::VideoHBlank() {
+    bool GameBoyInstance::VideoHBlank() const {
         return m_dotCount < m_videoScanlineTime;
     }
 
@@ -79,39 +79,52 @@ namespace Plip::Core::GameBoy {
     }
 
     void GameBoyInstance::VideoModePostTransition() {
-        bool coincidenceIntEnabled;
+        uint8_t stat = m_memory->GetByte(m_regLcdcStatus);
 
         // New mode.
         switch(m_videoMode) {
             case m_videoModeHBlank:
                 m_oam->SetWritable(true);
                 m_videoRam->SetWritable(true);
+                if(BIT_TEST(stat, 3)) m_cpu->Interrupt(INTERRUPT_LCDSTAT);
                 break;
+
             case m_videoModeVBlank:
                 m_oam->SetWritable(true);
                 m_videoRam->SetWritable(true);
                 m_dotCount = 0;
+
+                // Plot the current buffer to the screen and flip buffers.
+                m_video->BeginDraw();
+                m_video->Draw(m_videoBuffer);
+                m_video->EndDraw();
+                m_video->Render();
+
                 m_cpu->Interrupt(INTERRUPT_VBLANK);
+                if(BIT_TEST(stat, 4)) m_cpu->Interrupt(INTERRUPT_LCDSTAT);
                 break;
+
             case m_videoModeOamSearch:
                 m_oam->SetWritable(false);
                 m_videoRam->SetWritable(true);
                 memset(m_spriteList, 0x00, m_maxSpritesPerScanline);
                 m_dotCount = 0;
                 m_videoCoincidence = m_videoLy == m_memory->GetByte(m_regLyCompare) ? 1 : 0;
-                coincidenceIntEnabled = BIT_TEST(m_memory->GetByte(m_regLcdcStatus), 6);
 
-                if(coincidenceIntEnabled) {
-                    // Coincidence flag interrupt enabled.
+                if(BIT_TEST(stat, 5))  // OAM interrupt
                     m_cpu->Interrupt(INTERRUPT_LCDSTAT);
-                }
+
+                if(m_videoCoincidence && BIT_TEST(stat, 6))  // LYC=LY interrupt.
+                    m_cpu->Interrupt(INTERRUPT_LCDSTAT);
 
                 break;
+
             case m_videoModePicGen:
                 m_oam->SetWritable(false);
                 m_videoRam->SetWritable(false);
                 m_dotCount = 0;
                 break;
+
             default:
                 std::stringstream ex;
                 ex << "Invalid video mode: "
@@ -125,6 +138,7 @@ namespace Plip::Core::GameBoy {
         // Previous mode.
         switch(m_videoMode) {
             case m_videoModeHBlank:
+                m_videoLx = 0;
                 m_videoLy++;
                 break;
             case m_videoModeVBlank:
@@ -151,6 +165,89 @@ namespace Plip::Core::GameBoy {
     }
 
     bool GameBoyInstance::VideoVidGen() {
-        return false;
+        uint8_t scx, scy;
+        uint8_t wx, wy;
+        uint8_t bgp, obp0, obp1;
+        uint8_t lcdc, stat;
+        uint8_t tileX, tileY, tilePX, tilePY, tileIdx, tile, pixelColor;
+        uint8_t pixelData, lineOffset;
+        uint16_t tileDataAddr, tileMapAddr;
+        auto pos = (m_videoLy * m_screenWidth) + m_videoLx;
+
+        switch(m_vidGenStage) {
+            case BackgroundScrolling:
+                // Pause the dot clock to simulate the background shifter.
+                scx = m_memory->GetByte(m_regScx);
+                if(m_vidGenTick++ > scx % 8) {
+                    m_vidGenTick = 0;
+                    m_vidGenStage = Drawing;
+                }
+                break;
+
+            case Drawing:
+                //if(--m_vidGenTick > 0) break;
+
+                scx = m_memory->GetByte(m_regScx);
+                scy = m_memory->GetByte(m_regScy);
+                bgp = m_memory->GetByte(m_regBgp);
+                obp0 = m_memory->GetByte(m_regObp0);
+                obp1 = m_memory->GetByte(m_regObp1);
+
+                // BG palette: FF47 (m_regBgp)
+                // Object palettes: FF48, FF49 (m_regObp0, m_regObp1)
+                lcdc = m_memory->GetByte(m_regLcdControl);
+                if(!BIT_TEST(lcdc, 7)) break;
+
+                if(BIT_TEST(lcdc, 0)) { // BG/Window Display Enabled
+                    tileDataAddr = BIT_TEST(lcdc, 4) ? 0x8800 : 0x8000;
+                    tileMapAddr = BIT_TEST(lcdc, 3) ? 0x9800 : 0x9C00;
+                    tileX = (scx + m_videoLx) % 32;
+                    tileY = (scy + m_videoLy) % 32;
+                    tilePX = (scx + m_videoLx) % 8;
+                    tilePY = (scy + m_videoLy) % 8;
+                    tileIdx = tileY * 32 * 2;
+                    lineOffset = tilePX >= 4 ? 1 : 0;
+                    tile = m_memory->GetByte(tileMapAddr + tileIdx);
+                    pixelData = m_memory->GetByte(tileDataAddr * tile + lineOffset);
+
+                    pixelData = (pixelData >> ((tilePX & 0b11) * 2)) & 0b11;
+                    pixelColor = (bgp >> (pixelData * 2)) & 0b11;
+                    Plot(pixelColor, pos);
+
+                    if(BIT_TEST(lcdc, 5)) {
+                        wx = m_memory->GetByte(m_regWx) - 7;
+                        wy = m_memory->GetByte(m_regWy);
+
+                        if(!(wx > 166 || wy > 143) || m_videoLx >= wx || m_videoLy >= wy) {
+                            tileMapAddr = BIT_TEST(lcdc, 6) ? 0x9800 : 0x9C00;
+                            tileX = (m_videoLx - wx) % 32;
+                            tileY = (m_videoLy - wy) % 32;
+                            tilePX = (m_videoLx - wx) % 8;
+                            tilePY = (m_videoLy - wy) % 8;
+                            tileIdx = tileY * 32 * 2;
+                            lineOffset = tilePX >= 4 ? 1 : 0;
+                            pixelData = m_memory->GetByte(tileDataAddr * tile + lineOffset);
+
+                            // Draw window.  TODO: implement me.
+                        }
+                    }
+                } else {
+                    // BG/Window display disabled. Draw a white pixel.
+                    Plot(0b11, pos);
+                }
+
+                m_videoLx++;
+
+                break;
+
+            default:
+                std::stringstream ex;
+                ex << "Invalid video generation stage: "
+                   << PlipUtility::FormatHex((int)m_vidGenStage, 1) << "\n\n"
+                   << m_cpu->DumpRegisters();
+                throw Plip::PlipEmulationException(ex.str().c_str());
+        }
+
+        return m_videoLx < m_screenWidth;
     }
 }

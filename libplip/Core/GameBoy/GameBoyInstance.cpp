@@ -35,8 +35,15 @@ namespace Plip::Core::GameBoy {
         m_bootRom = new Plip::PlipMemoryRom(data.data(), size);
 
         // Initialize framebuffers and video subsystem.
+        m_videoFmt = Plip::PlipVideo::GetFormatInfo(video->GetFormat());
+        auto vidBufferSize = m_videoFmt.pixelWidth * m_screenWidth * m_screenWidth;
+        m_videoBuffer = new uint8_t[vidBufferSize];
 
         m_spriteList = new uint8_t[m_maxSpritesPerScanline] {};
+        m_spriteListSorted = new uint8_t[m_maxSpritesPerScanline] {};
+
+        // Paint the frame buffer white.
+        memset(m_videoBuffer, 0xFF, vidBufferSize);
 
         // Initialize system RAM.
         m_videoRam = new Plip::PlipMemoryRam(0x2000);
@@ -62,6 +69,7 @@ namespace Plip::Core::GameBoy {
     GameBoyInstance::~GameBoyInstance() {
         delete m_cpu;
         delete m_spriteList;
+        delete m_videoBuffer;
     }
 
     void GameBoyInstance::Delta(long ns) {
@@ -98,6 +106,7 @@ namespace Plip::Core::GameBoy {
             for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
                 VideoCycle();
             }
+            m_memory->SetByte(m_regLy, m_videoLy);
 
             m_cycleRemaining -= m_cycleTime;
         } while(m_cycleTime < m_cycleRemaining);

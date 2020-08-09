@@ -31,6 +31,31 @@ namespace Plip::Core::GameBoy {
         const int InputStart = 7;
 
     private:
+        inline void Plot(uint8_t color, int pos) {
+            switch(color) {
+                case 0b00:
+                    // White
+                    m_videoFmt.plot(m_videoBuffer, pos, 255, 255, 255);
+                    break;
+                case 0b01:
+                    // Light Gray
+                    m_videoFmt.plot(m_videoBuffer, pos, 172, 172, 172);
+                    break;
+                case 0b10:
+                    // Dark Gray
+                    m_videoFmt.plot(m_videoBuffer, pos, 86, 86, 86);
+                    break;
+                case 0b11:
+                    // Black
+                    m_videoFmt.plot(m_videoBuffer, pos, 0, 0, 0);
+                    break;
+                default:
+                    // Huh. Okay, make it pretty obvious that something's up.
+                    m_videoFmt.plot(m_videoBuffer, pos, 255, 0, 0);
+                    break;
+            }
+        }
+
         uint16_t GetRomBankCount();
         void InitCartRam();
         void InitMbc();
@@ -39,7 +64,7 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance.video.cpp
         void VideoCycle();
-        bool VideoHBlank();
+        bool VideoHBlank() const;
         void VideoModePostTransition();
         void VideoModePreTransition();
         bool VideoOamSearch();
@@ -55,6 +80,8 @@ namespace Plip::Core::GameBoy {
         bool m_running = false;
         int m_dotCyclesRemaining = 0;
         const int m_dotsPerCycle = 4;
+        uint8_t *m_videoBuffer;
+        PlipVideoFormatInfo m_videoFmt;
 
         // Cartridge Information
         enum MemoryBankController {
@@ -144,11 +171,20 @@ namespace Plip::Core::GameBoy {
         static const uint32_t m_screenWidth = 160;
         static const uint32_t m_screenHeight = 144;
 
+        enum VidGenStage {
+            BackgroundScrolling,
+            Drawing
+        };
+
         int m_dotCount = 0;
         uint8_t *m_spriteList;
+        uint8_t *m_spriteListSorted;
         uint8_t m_spriteListIdx = 0;
         int m_videoCoincidence = 0;
         int m_videoMode = 0;
+        int m_videoLx = 0;
         int m_videoLy = 0;
+        VidGenStage m_vidGenStage = BackgroundScrolling;
+        int m_vidGenTick = 0;
     };
 }
