@@ -96,7 +96,7 @@ namespace Plip::Core::GameBoy {
             m_memory->SetByte(m_regJoypad, inputReg);
 
             if(!m_bootRomFlag && m_cpu->GetRegisters().pc >= 0x100) {
-                m_bootRomFlag = 1;
+                m_bootRomFlag = true;
 
                 // Swap the boot ROM out for the cartridge ROM.
                 m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);

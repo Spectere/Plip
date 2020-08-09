@@ -167,8 +167,8 @@ namespace Plip::Cpu {
                 low = &(m_reg.l);
                 break;
             case IDX_16_SP:
-                high = (uint8_t*)(&(m_reg.sp));
-                low = high + 1;  // :)
+                low = (uint8_t*)(&(m_reg.sp));
+                high = low + 1;  // :)
                 break;
             default:
                 std::stringstream ex;

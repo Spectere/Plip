@@ -72,7 +72,7 @@ namespace Plip::Core::GameBoy {
         bool VideoVidGen();
 
         // Core
-        uint8_t m_bootRomFlag = 0;
+        bool m_bootRomFlag = false;
         std::string m_bootRomPath;
         Plip::Cpu::SharpLr35902 *m_cpu;
         long m_cycleTime {};

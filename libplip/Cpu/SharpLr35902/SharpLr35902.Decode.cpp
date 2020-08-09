@@ -18,10 +18,8 @@ namespace Plip::Cpu {
             NUM_MCYCLES(2);
         } else if(OP(0b11001011)) {
             // 0xCB
-            if(m_mcycle == 2)
-                FETCH;
-            else
-                DecodeCB();
+            CYCLE(2) { FETCH; m_mcycle++; }
+            else { DecodeCB(); }
         } else if(OP(0b00000111)) {
             // RLCA
             OpAccumRotateLeft();

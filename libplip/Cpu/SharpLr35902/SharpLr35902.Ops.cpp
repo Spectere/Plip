@@ -402,7 +402,7 @@ namespace Plip::Cpu {
 
                 FLAG_SET(SUBTRACT);
                 CHECK_SUB_HALFCARRY(m_instr[1], 1);
-                CHECK_ZERO(m_instr[1]);
+                CHECK_ZERO(res);
 
                 MEM_WRITE(REG_HL, res);
             }
@@ -416,7 +416,7 @@ namespace Plip::Cpu {
 
         FLAG_SET(SUBTRACT);
         CHECK_SUB_HALFCARRY(*reg, 1);
-        CHECK_ZERO(*reg);
+        CHECK_ZERO(res);
         *reg = res;
 
         NUM_MCYCLES(2);
@@ -479,7 +479,7 @@ namespace Plip::Cpu {
 
                 FLAG_CLEAR(SUBTRACT);
                 CHECK_ADD_HALFCARRY(m_instr[1], 1);
-                CHECK_ZERO(m_instr[1]);
+                CHECK_ZERO(res);
 
                 MEM_WRITE(REG_HL, res);
             }
@@ -493,7 +493,7 @@ namespace Plip::Cpu {
 
         FLAG_CLEAR(SUBTRACT);
         CHECK_ADD_HALFCARRY(*reg, 1);
-        CHECK_ZERO(*reg);
+        CHECK_ZERO(res);
         *reg = res;
 
         NUM_MCYCLES(2);
@@ -541,9 +541,11 @@ namespace Plip::Cpu {
     void SharpLr35902::OpJumpRelCond() {
         FETCH_CYCLE(2);
 
-        if(TestConditional(OP_COND)) {
-            NUM_MCYCLES(3);
-            return;
+        CYCLE(3) {
+            if(!TestConditional(OP_COND)) {
+                NUM_MCYCLES(3);
+                return;
+            }
         }
 
         CYCLE(4) { m_reg.pc += (int8_t)m_instr[1]; }
@@ -675,7 +677,7 @@ namespace Plip::Cpu {
     // LD r, n
     // LD (HL), n
     void SharpLr35902::OpLdRegImm() {
-        auto dest = OP_REG_Y(0);
+        auto dest = OP_REG_X(0);
 
         if(dest == IDX_HL) {
             // LD (HL), n
@@ -691,7 +693,7 @@ namespace Plip::Cpu {
         // LD r, n
         FETCH_IMM_CYCLE(2);
         CYCLE(3) {
-            *(GetRegister8(OP_REG_Y(0))) = m_instr[1];
+            *(GetRegister8(dest)) = m_instr[1];
         }
         NUM_MCYCLES(3);
     }
@@ -795,7 +797,7 @@ namespace Plip::Cpu {
             // AF shares an index with SP for PUSH/POP.
             val = (m_reg.a << 8) + m_reg.f;
         } else {
-            GetRegister16Value(OP_REG16(0));
+            val = GetRegister16Value(OP_REG16(0));
         }
 
         CYCLE(3) { STACK_PUSH(val >> 8); }
@@ -1095,6 +1097,7 @@ namespace Plip::Cpu {
                 res <<= 1;
                 res |= cf;
                 CHECK_ZERO(res);
+                MEM_WRITE(REG_HL, res);
             }
 
             NUM_MCYCLES(5);
@@ -1168,6 +1171,7 @@ namespace Plip::Cpu {
                 res >>= 1;
                 res |= cf;
                 CHECK_ZERO(res);
+                MEM_WRITE(REG_HL, res);
             }
 
             NUM_MCYCLES(5);
