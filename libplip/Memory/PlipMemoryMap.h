@@ -47,7 +47,8 @@ namespace Plip {
         };
 
         inline FindResults FindAddress(uint32_t address) {
-            for(auto range : m_range) {
+            for(auto i = 0; i < m_rangeCount; i++) {
+                auto range = m_range[i];
                 if(address < range.startAddress || address > range.startAddress + range.length - 1)
                     continue;
 
@@ -63,5 +64,6 @@ namespace Plip {
 
         std::list<PlipMemoryMapRange> m_rangeList;
         std::vector<PlipMemoryMapRange> m_range;
+        int m_rangeCount;
     };
 }

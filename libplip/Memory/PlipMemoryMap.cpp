@@ -169,5 +169,6 @@ namespace Plip {
         m_range.clear();
         for(auto const &range : m_rangeList)
             m_range.push_back(range);
+        m_rangeCount = m_range.size();
     }
 }
