@@ -3,6 +3,7 @@
  * Simulated graphics hardware for the GameBoy core.
  */
 
+#include <cstring>
 #include <sstream>
 
 #include "../../PlipEmulationException.h"

@@ -3,6 +3,7 @@
  * A GameBoy core for Plip.
  */
 
+#include <cstring>
 #include <sstream>
 
 #include "../../PlipEmulationException.h"
