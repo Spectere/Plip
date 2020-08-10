@@ -76,13 +76,66 @@ namespace Plip::Core::GameBoy {
     }
 
     void GameBoyInstance::Delta(long ns) {
+        PlipMemoryValue lastWrite {};
         m_cycleRemaining += ns;
         m_dotCyclesRemaining += m_dotsPerCycle;
         ReadInput();
 
         do {
             // Run a single CPU cycle.
+            m_memory->ClearLastWrite();
             m_cpu->Cycle();
+            lastWrite = m_memory->GetLastWrite();
+
+            // Emulate MBC functionality.
+            if(m_mbc != None) MbcCycle(lastWrite);
+
+            // Divider
+            if(lastWrite.address == 0xFF04) {
+                // Reset divider.
+                m_divider = m_dividerTick = 0;
+                m_ioRegisters->SetByte(m_regDivider, m_divider);
+            } else {
+                m_dividerTick += 4;
+                if(m_dividerTick == 0) {
+                    // Increment divider when the divider tick wraps around
+                    // (4194304 / 16384 == 256).
+                    m_divider++;
+                    m_ioRegisters->SetByte(m_regDivider, m_divider);
+                }
+            }
+
+            // Timer
+            auto tac = m_ioRegisters->GetByte(m_regTac);
+            if(BIT_TEST(tac, 2)) {
+                // Check for a scheduled interrupt.
+                if(m_timerIntScheduled) {
+                    // Do not interrupt if TIMA has been written to.
+                    if(lastWrite.address != m_regTima) m_cpu->Interrupt(INTERRUPT_TIMER);
+                    m_timerIntScheduled = false;
+                }
+
+                // Increment internal timer and increment TIMA if necessary.
+                ++m_timerTick;
+                switch(tac & 0b11) {
+                    case 0b00:  // 4096hz / 1024 clocks / 256 mcycles
+                        if(m_timerTick == 0)
+                            IncrementTimer();
+                        break;
+                    case 0b01:  // 262144hz / 16 clocks / 4 mcycles
+                        if(m_timerTick >= 4)
+                            IncrementTimer();
+                        break;
+                    case 0b10:  // 65536hz / 64 clocks / 16 mcycles
+                        if(m_timerTick >= 16)
+                            IncrementTimer();
+                        break;
+                    case 0b11:  // 16384hz / 256 clocks / 64 mcycles
+                        if(m_timerTick >= 64)
+                            IncrementTimer();
+                        break;
+                }
+            }
 
             // Check the input register.
             // TODO: Simulate DMG/SGB propagation delay.
@@ -177,7 +230,6 @@ namespace Plip::Core::GameBoy {
         m_memory->AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
         m_bootRomFlag = false;
 
-        m_running = true;
         return PlipError::Success;
     }
 

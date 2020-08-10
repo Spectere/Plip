@@ -30,10 +30,10 @@ namespace Plip::Core::GameBoy {
         }
     }
 
-    void GameBoyInstance::MbcCycle() {
+    void GameBoyInstance::MbcCycle(PlipMemoryValue lastWrite) {
         switch(m_mbc) {
             case None: break;
-            case Mbc1: Mbc1Cycle(); break;
+            case Mbc1: Mbc1Cycle(lastWrite); break;
             default:
                 std::stringstream ex;
                 ex << "invalid/unsupported memory bank controller: "
@@ -42,8 +42,7 @@ namespace Plip::Core::GameBoy {
         }
     }
 
-    void GameBoyInstance::Mbc1Cycle() {
-        PlipMemoryValue lastWrite = m_memory->GetLastWritten();
+    void GameBoyInstance::Mbc1Cycle(PlipMemoryValue lastWrite) {
         if(lastWrite.address >= 0x8000) return;
 
         if(lastWrite.address < 0x2000) {
@@ -90,6 +89,5 @@ namespace Plip::Core::GameBoy {
             // Banking mode select.
             m_mbcMode = lastWrite.value & 0b1;
         }
-        m_memory->ClearLastWritten();
     }
 }

@@ -63,7 +63,7 @@ namespace Plip {
         m_lastRead.value = 0;
     }
 
-    void PlipMemoryMap::ClearLastWritten() {
+    void PlipMemoryMap::ClearLastWrite() {
         m_lastWritten.address = 0;
         m_lastWritten.value = 0;
     }
@@ -82,7 +82,7 @@ namespace Plip {
         return m_lastRead;
     }
 
-    PlipMemoryValue PlipMemoryMap::GetLastWritten() {
+    PlipMemoryValue PlipMemoryMap::GetLastWrite() {
         return m_lastWritten;
     }
 
