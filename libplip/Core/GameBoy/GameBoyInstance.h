@@ -58,9 +58,14 @@ namespace Plip::Core::GameBoy {
 
         uint16_t GetRomBankCount();
         void InitCartRam();
-        void InitMbc();
+        void ReadCartFeatures();
         void ReadInput();
         void RegisterInput();
+
+        // GameBoyInstance.mbc.cpp
+        void MbcInit();
+        void MbcCycle();
+        void Mbc1Cycle();
 
         // GameBoyInstance.video.cpp
         void VideoCycle();
@@ -82,7 +87,7 @@ namespace Plip::Core::GameBoy {
         const int m_dotsPerCycle = 4;
         uint8_t *m_videoBuffer;
         size_t m_videoBufferSize;
-        PlipVideoFormatInfo m_videoFmt;
+        PlipVideoFormatInfo m_videoFmt {};
 
         // Cartridge Information
         enum MemoryBankController {
@@ -110,6 +115,12 @@ namespace Plip::Core::GameBoy {
         uint16_t m_romBanks = 0;
         uint16_t m_cartRamBanks = 0;
 
+        // MBC
+        uint8_t m_mbcMode = 0;
+        uint8_t m_mbcRomBank = 0;
+        uint8_t m_mbcRamBank = 0;
+        bool m_mbcRamEnabled = false;
+
         // Memory
         Plip::PlipMemoryRom *m_bootRom = nullptr;
         Plip::PlipMemoryRom *m_rom = nullptr;
@@ -124,6 +135,7 @@ namespace Plip::Core::GameBoy {
         Plip::PlipMemoryRam *m_highRam;
 
         static const uint32_t m_addrRom = 0x0000;
+        static const uint32_t m_addrBankedRom = 0x4000;
         static const uint32_t m_addrVideoRam = 0x8000;
         static const uint32_t m_addrWorkRam = 0xC000;
         static const uint32_t m_addrCartRam = 0xA000;
@@ -183,7 +195,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_spriteListIdx = 0;
         int m_videoCoincidence = 0;
         int m_videoMode = 0;
-        uint8_t m_videoLastLcdc;
+        uint8_t m_videoLastLcdc = 0;
         int m_videoLx = 0;
         int m_videoLy = 0;
         VidGenStage m_vidGenStage = BackgroundScrolling;

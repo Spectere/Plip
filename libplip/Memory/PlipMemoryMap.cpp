@@ -58,11 +58,32 @@ namespace Plip {
         UpdateVector();
     }
 
+    void PlipMemoryMap::ClearLastRead() {
+        m_lastRead.address = 0;
+        m_lastRead.value = 0;
+    }
+
+    void PlipMemoryMap::ClearLastWritten() {
+        m_lastWritten.address = 0;
+        m_lastWritten.value = 0;
+    }
+
     uint8_t PlipMemoryMap::GetByte(uint32_t address) {
         auto block = FindAddress(address);
 
         if(block.memory == nullptr) return 0;
-        return block.memory->GetByte(block.offset);
+
+        m_lastRead.address = address;
+        m_lastRead.value = block.memory->GetByte(block.offset);
+        return m_lastRead.value;
+    }
+
+    PlipMemoryValue PlipMemoryMap::GetLastRead() {
+        return m_lastRead;
+    }
+
+    PlipMemoryValue PlipMemoryMap::GetLastWritten() {
+        return m_lastWritten;
     }
 
     uint32_t PlipMemoryMap::GetLength() {
@@ -86,6 +107,8 @@ namespace Plip {
 
         if(block.memory == nullptr) return;
         block.memory->SetByte(block.offset, value);
+        m_lastWritten.address = address;
+        m_lastWritten.value = value;
     }
 
     void PlipMemoryMap::UnassignBlock(uint32_t address, uint32_t length) {

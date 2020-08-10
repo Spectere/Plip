@@ -19,6 +19,11 @@ namespace Plip {
         uint32_t length;
     };
 
+    struct PlipMemoryValue {
+        uint32_t address;
+        uint8_t value;
+    };
+
     class PlipMemoryMap {
     public:
         uint8_t operator[] (uint32_t offset) {
@@ -29,7 +34,11 @@ namespace Plip {
         void AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length);
         void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset = 0);
         void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
+        void ClearLastRead();
+        void ClearLastWritten();
         uint8_t GetByte(uint32_t address);
+        PlipMemoryValue GetLastRead();
+        PlipMemoryValue GetLastWritten();
         uint32_t GetLength();
         void SetByte(uint32_t address, uint8_t value);
         void UnassignBlock(uint32_t address, uint32_t length);
@@ -62,6 +71,8 @@ namespace Plip {
         static inline BlockRangeResult IsBlockInRange(const PlipMemoryMapRange &block, uint32_t startAddress, uint32_t endAddress);
         void UpdateVector();
 
+        PlipMemoryValue m_lastRead {};
+        PlipMemoryValue m_lastWritten {};
         std::list<PlipMemoryMapRange> m_rangeList;
         std::vector<PlipMemoryMapRange> m_range;
         int m_rangeCount;

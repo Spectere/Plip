@@ -121,7 +121,7 @@ namespace Plip::Core::GameBoy {
                 m_videoLx = m_videoLy = 0;
                 m_videoMode = m_videoModeOamSearch;
 
-                memset(m_videoBuffer, 0x00, m_videoBufferSize);
+                memset(m_videoBuffer, 0xFF, m_videoBufferSize);
                 m_video->BeginDraw();
                 m_video->Draw(m_videoBuffer);
                 m_video->EndDraw();
@@ -144,8 +144,8 @@ namespace Plip::Core::GameBoy {
             case 0x02: return 8;   // 128KB
             case 0x03: return 16;  // 256KB
             case 0x04: return 32;  // 512 KB
-            case 0x05: return m_mbc == Mbc1 ? 63 : 64;   // 1024KB
-            case 0x06: return m_mbc == Mbc1 ? 125 : 128; // 2048KB
+            case 0x05: return 64;  // 1024KB
+            case 0x06: return 128; // 2048KB
             case 0x07: return 256; // 4096KB
             case 0x08: return 512; // 8192KB
             case 0x52: return 72;  // 1152KB
@@ -168,9 +168,10 @@ namespace Plip::Core::GameBoy {
         m_rom = new Plip::PlipMemoryRom(data.data(), size);
         m_memory->AssignBlock(m_rom, m_addrRom, 0x0000, 0x8000);
 
-        InitMbc();
+        ReadCartFeatures();
         if(m_mbc != None) m_romBanks = GetRomBankCount();
         if(m_hasRam) InitCartRam();
+        MbcInit();
 
         // Load the boot ROM into 0x0000-0x00FF.
         m_memory->AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
@@ -207,14 +208,16 @@ namespace Plip::Core::GameBoy {
         }
     }
 
-    void GameBoyInstance::InitMbc() {
+    void GameBoyInstance::ReadCartFeatures() {
         auto cartType = m_rom->GetByte(0x0147);
 
         // MBC
         switch(cartType) {
             case 0x00: case 0x08: case 0x09:
-                m_mbc = None;
-                break;
+                m_mbc = None; break;
+
+            case 0x01: case 0x02: case 0x03:
+                m_mbc = Mbc1; break;
 
             default:
                 std::stringstream ex;
