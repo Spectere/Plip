@@ -196,7 +196,6 @@ namespace Plip::Core::GameBoy {
                 obp1 = m_ioRegisters->GetByte(m_regObp1);
 
                 lcdc = m_ioRegisters->GetByte(m_regLcdControl);
-                if(!BIT_TEST(lcdc, 7)) break;
 
                 if(BIT_TEST(lcdc, 0)) { // BG/Window Display Enabled
                     tileDataAddr = m_vramTileBase + (BIT_TEST(lcdc, 4) ? 0 : m_vramTileBlockOffset);
@@ -225,8 +224,25 @@ namespace Plip::Core::GameBoy {
                         wy = m_ioRegisters->GetByte(m_regWy);
 
                         if(!(wx > 166 || wy > 143) || m_videoLx >= wx || m_videoLy >= wy) {
-                            tileMapAddr = BIT_TEST(lcdc, 6) ? 0x9800 : 0x9C00;
-                            // TODO: Window rendering.
+                            tileMapAddr = m_vramBgBase + (BIT_TEST(lcdc, 6) ? m_vramBgBlockOffset : 0);
+                            tileX = (m_videoLx + wx) / 8;
+                            tileY = (m_videoLy + wy) / 8;
+                            tilePX = (m_videoLx + wx) % 8;
+                            tilePY = (m_videoLy + wy) % 8;
+
+                            mapIdx = (tileY * 32) + tileX;
+                            tileIdx = m_videoRam->GetByte(tileMapAddr + mapIdx);
+
+                            lineOffset = tilePY * 2;
+
+                            pixelDataLow = m_videoRam->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset);
+                            pixelDataHigh = m_videoRam->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
+                            tileShift = 7 - tilePX;
+                            pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
+                                                | ((pixelDataLow >> tileShift) & 0b1);
+
+                            pixelColor = (bgp >> (pixelDataCombined * 2)) & 0b11;
+                            Plot(pixelColor, pos);
                         }
                     }
                 } else {

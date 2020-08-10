@@ -38,15 +38,15 @@ namespace Plip::Core::GameBoy {
         // Initialize framebuffers and video subsystem.
         m_video->Resize(m_screenWidth, m_screenHeight);
         m_videoFmt = Plip::PlipVideo::GetFormatInfo(video->GetFormat());
-        auto vidBufferSize = m_videoFmt.pixelWidth * m_screenWidth * m_screenWidth;
-        m_videoBuffer = new uint8_t[vidBufferSize];
+        m_videoBufferSize = m_videoFmt.pixelWidth * m_screenWidth * m_screenWidth;
+        m_videoBuffer = new uint8_t[m_videoBufferSize];
         m_videoMode = m_videoModeOamSearch;
 
         m_spriteList = new uint8_t[m_maxSpritesPerScanline] {};
         m_spriteListSorted = new uint8_t[m_maxSpritesPerScanline] {};
 
         // Paint the frame buffer white.
-        memset(m_videoBuffer, 0xFF, vidBufferSize);
+        memset(m_videoBuffer, 0xFF, m_videoBufferSize);
 
         // Initialize system RAM.
         m_videoRam = new Plip::PlipMemoryRam(0x2000);
@@ -112,8 +112,24 @@ namespace Plip::Core::GameBoy {
                 for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
                     VideoCycle();
                 }
+            } else if(BIT_TEST(m_videoLastLcdc, 7)) {
+                // The LCD display was disabled in this CPU cycle. Clear the
+                // buffer, make sure the memory is accessible, and reset the PPU.
+                m_oam->SetWritable(true);
+                m_videoRam->SetWritable(true);
+
+                m_videoLx = m_videoLy = 0;
+                m_videoMode = m_videoModeOamSearch;
+
+                memset(m_videoBuffer, 0x00, m_videoBufferSize);
+                m_video->BeginDraw();
+                m_video->Draw(m_videoBuffer);
+                m_video->EndDraw();
+                m_video->Render();
             }
+
             m_ioRegisters->SetByte(m_regLy, m_videoLy);
+            m_videoLastLcdc = lcdc;
 
             m_cycleRemaining -= m_cycleTime;
         } while(m_cycleTime < m_cycleRemaining);

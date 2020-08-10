@@ -81,6 +81,7 @@ namespace Plip::Core::GameBoy {
         int m_dotCyclesRemaining = 0;
         const int m_dotsPerCycle = 4;
         uint8_t *m_videoBuffer;
+        size_t m_videoBufferSize;
         PlipVideoFormatInfo m_videoFmt;
 
         // Cartridge Information
@@ -182,6 +183,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_spriteListIdx = 0;
         int m_videoCoincidence = 0;
         int m_videoMode = 0;
+        uint8_t m_videoLastLcdc;
         int m_videoLx = 0;
         int m_videoLy = 0;
         VidGenStage m_vidGenStage = BackgroundScrolling;
