@@ -6,7 +6,10 @@ set(lib_name "plip")
 project(${gui_name})
 set(CMAKE_CXX_STANDARD 17)
 
+INCLUDE(FindPkgConfig)
+
 find_package(SDL2 REQUIRED)
+PKG_SEARCH_MODULE(SDL2IMAGE REQUIRED SDL2_image>=2.0.0)
 
 if(UNIX)
     add_compile_definitions(UNIX)
@@ -104,9 +107,11 @@ endif()
 target_include_directories(${gui_name}
         PRIVATE ${CMAKE_SOURCE_DIR}/libplip
         PUBLIC ${SDL2_INCLUDE_DIRS}
+        PUBLIC ${SDL2IMAGE_INCLUDE_DIRS}
 )
 
 target_link_libraries(${gui_name}
         plip
         ${SDL2_LIBRARIES}
+        ${SDL2IMAGE_LIBRARIES}
 )
