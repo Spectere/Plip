@@ -32,7 +32,7 @@ std::vector<std::vector<std::string>> intParamMapping = {
         { "fps"  , "video", "targetFps" }
 };
 
-void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
+void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::Console *console, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
     auto audio = plip->GetAudio();
     auto video = plip->GetVideo();
 
@@ -40,16 +40,29 @@ void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEve
     auto frameTime = 1000000000 / targetFps;
 
     auto running = true;
+    PlipSdl::SdlUiEvent uiEvent;
     while(running) {
         timer->StopwatchStart();
 
-        if(event->ProcessEvents() == PlipSdl::SdlUiEvent::Quit)
+        if(console->GetConsoleEnabled()) {
+            // Console is enabled. Don't run the core.
+            uiEvent = console->ProcessEvents();
+            console->Run();
+        } else {
+            uiEvent = event->ProcessEvents();
+
+            // As implemented, this will not be able to compensate for the host being
+            // unable to keep up with the emulation core.
+            // TODO: Fix this so that it will skip frames where appropriate.
+            plip->Run(frameTime);
+        }
+
+        if(uiEvent == PlipSdl::SdlUiEvent::Quit)
             running = false;
 
-        // As implemented, this will not be able to compensate for the host being
-        // unable to keep up with the emulation core.
-        // TODO: Fix this so that it will skip frames where appropriate.
-        plip->Run(frameTime);
+        if(uiEvent == PlipSdl::SdlUiEvent::ToggleConsole) {
+            console->ToggleConsole();
+        }
 
         auto time = timer->StopwatchStop();
         auto delay = frameTime - time;
@@ -210,6 +223,18 @@ int main(int argc, char **argv) {
 
     auto input = plip->GetInput();
     auto event = new PlipSdl::SdlEvent(input);
+    auto console = new PlipSdl::Console(wnd);
+
+    // Load the console input key.
+    auto consoleKey = config->GetValue("console", "key");
+    if(consoleKey == config->empty) {
+        // Most modern keyboards lack F24 keys for some reason. :)
+        event->SetConsoleKey(SDL_SCANCODE_F24);
+        console->SetConsoleKey(SDL_SCANCODE_F24);
+    } else {
+        event->SetConsoleKey(consoleKey);
+        console->SetConsoleKey(consoleKey);
+    }
 
     // Load inputs for the active core.
     std::string section = "input." + coreName;
@@ -227,7 +252,7 @@ int main(int argc, char **argv) {
     auto timer = new PlipSdl::TimerSdl();
 #endif
 
-    gameLoop(plip, config, event, timer);
+    gameLoop(plip, config, console, event, timer);
 
     SDL_Quit();
     return 0;

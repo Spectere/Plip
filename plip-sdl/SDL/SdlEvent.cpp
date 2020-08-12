@@ -24,7 +24,10 @@ namespace PlipSdl {
         while(SDL_PollEvent(&ev)) {
             switch(ev.type) {
                 case SDL_KEYDOWN:
-                    UpdateDigitalInput(ev.key.keysym.scancode, true);
+                    if(ev.key.keysym.scancode == m_consoleKey)
+                        uiEvent = SdlUiEvent::ToggleConsole;
+                    else
+                        UpdateDigitalInput(ev.key.keysym.scancode, true);
                     break;
 
                 case SDL_KEYUP:
@@ -38,6 +41,15 @@ namespace PlipSdl {
         }
 
         return uiEvent;
+    }
+
+    void SdlEvent::SetConsoleKey(SDL_Scancode scancode) {
+        m_consoleKey = scancode;
+    }
+
+    void SdlEvent::SetConsoleKey(const std::string &binding) {
+        auto scancode = SDL_GetScancodeFromName(binding.c_str());
+        SetConsoleKey(scancode);
     }
 
     void SdlEvent::UpdateDigitalInput(SDL_Scancode scancode, bool value) {

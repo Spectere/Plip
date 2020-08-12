@@ -127,6 +127,10 @@ namespace PlipSdl {
         return m_format;
     }
 
+    int SdlWindow::GetGameScale() {
+        return m_gameScale;
+    }
+
     int SdlWindow::GetHeight() {
         return m_height;
     }
@@ -149,6 +153,7 @@ namespace PlipSdl {
         SDL_SetWindowSize(m_window, m_width * m_gameScale, m_height * m_gameScale);
 
         // Destroy and recreate the texture.
+        CreateConsoleTexture();
         CreateGameTexture();
     }
 

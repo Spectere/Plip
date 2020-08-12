@@ -29,6 +29,7 @@ namespace PlipSdl {
         bool BeginDrawConsole();
         void DrawConsole(void *data);
         bool EndDrawConsole();
+        int GetGameScale();
         void SetConsoleEnabled(bool enabled);
         void SetGameScale(int scale);
 
