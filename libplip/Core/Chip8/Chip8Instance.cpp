@@ -91,7 +91,7 @@ namespace Plip::Core::Chip8 {
             for(auto x = 0; x < ScreenWidth; x++) {
                 auto bit = row >> (63 - x) & 0x1;
                 m_videoFormat.plot(m_videoOutput, y * ScreenWidth + x,
-                        bit * 255, bit * 255, bit * 255);
+                        bit * 255, bit * 255, bit * 255, 255);
             }
         }
 

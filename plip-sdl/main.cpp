@@ -11,6 +11,7 @@
 #include "PlipInstance.h"
 
 #include "Config.h"
+#include "Console.h"
 #include "SDL/SdlAudio.h"
 #include "SDL/SdlEvent.h"
 #include "SDL/SdlWindow.h"

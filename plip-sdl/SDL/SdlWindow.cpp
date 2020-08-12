@@ -10,17 +10,17 @@
 #include "SdlWindow.h"
 
 namespace PlipSdl {
-    SdlWindow::SdlWindow(int scale, const std::string &title) {
+    SdlWindow::SdlWindow(int gameScale, const std::string &title) {
         std::stringstream error;
 
-        m_scale = scale;
+        m_gameScale = gameScale;
 
         SDL_InitSubSystem(SDL_INIT_VIDEO);
 
         // Try to create a window.
         m_window = SDL_CreateWindow(title.c_str(),
-                SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                m_width * m_scale, m_height * m_scale, 0);
+                                    SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                    m_width * m_gameScale, m_height * m_gameScale, 0);
 
         if(m_window == nullptr) {
             error << "Unable to create SDL window: " << SDL_GetError();
@@ -57,46 +57,69 @@ namespace PlipSdl {
         // Try to create a small starting texture. This will be removed and
         // recreated later, but we want to ensure that we can make one in the
         // first place.
-        CreateTexture();
+        CreateConsoleTexture();
+        CreateGameTexture();
     }
 
     SdlWindow::~SdlWindow() {
-        if(m_texture != nullptr) SDL_DestroyTexture(m_texture);
+        if(m_gameTex != nullptr) SDL_DestroyTexture(m_gameTex);
         if(m_renderer != nullptr) SDL_DestroyRenderer(m_renderer);
         if(m_window != nullptr) SDL_DestroyWindow(m_window);
     }
 
     bool SdlWindow::BeginDraw() {
-        return SDL_LockTexture(m_texture, nullptr, &m_texData, &m_pitch) == 0;
+        return SDL_LockTexture(m_gameTex, nullptr, &m_texData, &m_pitch) == 0;
+    }
+
+    bool SdlWindow::BeginDrawConsole() {
+        return SDL_LockTexture(m_conTex, nullptr, &m_texData, &m_pitch) == 0;
     }
 
     void SdlWindow::Clear() {
         SDL_RenderClear(m_renderer);
     }
 
-    void SdlWindow::CreateTexture() {
-        if(m_texture != nullptr) SDL_DestroyTexture(m_texture);
+    void SdlWindow::CreateTexture(SDL_Texture **texture, int width, int height, SDL_BlendMode blendMode) {
+        if(*texture != nullptr) SDL_DestroyTexture(*texture);
 
         uint32_t pixelFormat = SelectSdlFormat(m_format);
 
-        m_texture = nullptr;
-        m_texture = SDL_CreateTexture(m_renderer,
-                pixelFormat, SDL_TEXTUREACCESS_STREAMING,
-                m_width, m_height);
+        *texture = SDL_CreateTexture(m_renderer,
+                                      pixelFormat, SDL_TEXTUREACCESS_STREAMING,
+                                      width, height);
+        SDL_SetTextureBlendMode(*texture, blendMode);
 
-        if(m_texture == nullptr) {
+        if(*texture == nullptr) {
             std::stringstream error;
             error << "Unable to create SDL texture: " << SDL_GetError();
             throw Plip::PlipVideoException(error.str().c_str());
         }
     }
 
+    void SdlWindow::CreateConsoleTexture() {
+        CreateTexture(&m_conTex, m_width * m_gameScale, m_height * m_gameScale,
+                      SDL_BLENDMODE_BLEND);
+    }
+
+    void SdlWindow::CreateGameTexture() {
+        CreateTexture(&m_gameTex, m_width, m_height);
+    }
+
     void SdlWindow::Draw(void *data) {
         memcpy(m_texData, data, m_pitch * m_height);
     }
 
+    void SdlWindow::DrawConsole(void *data) {
+        memcpy(m_texData, data, m_pitch * m_height * m_gameScale);
+    }
+
     bool SdlWindow::EndDraw() {
-        SDL_UnlockTexture(m_texture);
+        SDL_UnlockTexture(m_gameTex);
+        return true;
+    }
+
+    bool SdlWindow::EndDrawConsole() {
+        SDL_UnlockTexture(m_conTex);
         return true;
     }
 
@@ -113,7 +136,8 @@ namespace PlipSdl {
     }
 
     void SdlWindow::Render() {
-        SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
+        SDL_RenderCopy(m_renderer, m_gameTex, nullptr, nullptr);
+        if(m_drawConsole) SDL_RenderCopy(m_renderer, m_conTex, nullptr, nullptr);
         SDL_RenderPresent(m_renderer);
     }
 
@@ -122,10 +146,10 @@ namespace PlipSdl {
         m_height = height;
 
         // Resize the window.
-        SDL_SetWindowSize(m_window, m_width * m_scale, m_height * m_scale);
+        SDL_SetWindowSize(m_window, m_width * m_gameScale, m_height * m_gameScale);
 
         // Destroy and recreate the texture.
-        CreateTexture();
+        CreateGameTexture();
     }
 
     bool SdlWindow::SelectFormat(uint32_t format) {
@@ -204,9 +228,13 @@ namespace PlipSdl {
         }
     }
 
-    void SdlWindow::SetScale(int scale) {
-        m_scale = scale;
-        SDL_SetWindowSize(m_window, m_width * m_scale, m_height * m_scale);
+    void SdlWindow::SetConsoleEnabled(bool enabled) {
+        m_drawConsole = enabled;
+    }
+
+    void SdlWindow::SetGameScale(int scale) {
+        m_gameScale = scale;
+        SDL_SetWindowSize(m_window, m_width * m_gameScale, m_height * m_gameScale);
     }
 
     void SdlWindow::SetTitle(std::string title) {

@@ -84,6 +84,7 @@ add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)
 add_executable(${gui_name}
         plip-sdl/main.cpp
         plip-sdl/Config.cpp
+        plip-sdl/Console.cpp
 
         plip-sdl/SDL/SdlAudio.cpp
         plip-sdl/SDL/SdlEvent.cpp

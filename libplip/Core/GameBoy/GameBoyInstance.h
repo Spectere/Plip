@@ -35,23 +35,23 @@ namespace Plip::Core::GameBoy {
             switch(color) {
                 case 0b00:
                     // White
-                    m_videoFmt.plot(m_videoBuffer, pos, 255, 255, 255);
+                    m_videoFmt.plot(m_videoBuffer, pos, 255, 255, 255, 255);
                     break;
                 case 0b01:
                     // Light Gray
-                    m_videoFmt.plot(m_videoBuffer, pos, 172, 172, 172);
+                    m_videoFmt.plot(m_videoBuffer, pos, 172, 172, 172, 255);
                     break;
                 case 0b10:
                     // Dark Gray
-                    m_videoFmt.plot(m_videoBuffer, pos, 86, 86, 86);
+                    m_videoFmt.plot(m_videoBuffer, pos, 86, 86, 86, 255);
                     break;
                 case 0b11:
                     // Black
-                    m_videoFmt.plot(m_videoBuffer, pos, 0, 0, 0);
+                    m_videoFmt.plot(m_videoBuffer, pos, 0, 0, 0, 255);
                     break;
                 default:
                     // Huh. Okay, make it pretty obvious that something's up.
-                    m_videoFmt.plot(m_videoBuffer, pos, 255, 0, 0);
+                    m_videoFmt.plot(m_videoBuffer, pos, 255, 0, 0, 255);
                     break;
             }
         }

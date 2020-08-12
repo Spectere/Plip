@@ -16,10 +16,10 @@ namespace Plip {
                 return { .pixelWidth = 3, .plot = PlipVideo::PlotBgr888 };
 
             case PlipVideoFormat::XRGB8888:
-                return { .pixelWidth = 4, .plot = PlipVideo::PlotArgb8888 };
+                return { .pixelWidth = 4, .plot = PlipVideo::PlotXrgb8888 };
 
             case PlipVideoFormat::XBGR8888:
-                return { .pixelWidth = 4, .plot = PlipVideo::PlotAbgr8888 };
+                return { .pixelWidth = 4, .plot = PlipVideo::PlotXbgr8888 };
 
             case PlipVideoFormat::ARGB8888:
                 return { .pixelWidth = 4, .plot = PlipVideo::PlotArgb8888 };
@@ -28,10 +28,10 @@ namespace Plip {
                 return { .pixelWidth = 4, .plot = PlipVideo::PlotAbgr8888 };
 
             case PlipVideoFormat::RGBX8888:
-                return { .pixelWidth = 4, .plot = PlipVideo::PlotRgba8888 };
+                return { .pixelWidth = 4, .plot = PlipVideo::PlotRgbx8888 };
 
             case PlipVideoFormat::BGRX8888:
-                return { .pixelWidth = 4, .plot = PlipVideo::PlotBgra8888 };
+                return { .pixelWidth = 4, .plot = PlipVideo::PlotBgrx8888 };
 
             case PlipVideoFormat::RGBA8888:
                 return { .pixelWidth = 4, .plot = PlipVideo::PlotRgba8888 };
