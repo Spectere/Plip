@@ -25,11 +25,11 @@ namespace PlipSdl {
 
     private:
         bool m_consoleEnabled = false;
-        SDL_Scancode m_consoleKey;
+        SDL_Scancode m_consoleKey {};
         bool m_firstUse = true;
         SdlWindow *m_video;
         uint8_t *m_videoBuffer = nullptr;
-        Plip::PlipVideoFormatInfo m_vidFmt;
-        int m_width, m_height;
+        Plip::PlipVideoFormatInfo m_vidFmt {};
+        int m_width = 0, m_height = 0;
     };
 }

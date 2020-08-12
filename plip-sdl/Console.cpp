@@ -41,7 +41,7 @@ namespace PlipSdl {
     }
 
     void Console::Resize() {
-        if(m_videoBuffer != nullptr) delete m_videoBuffer;
+        delete m_videoBuffer;
 
         m_width = m_video->GetWidth() * m_video->GetGameScale();
         m_height = m_video->GetHeight() * m_video->GetGameScale();
