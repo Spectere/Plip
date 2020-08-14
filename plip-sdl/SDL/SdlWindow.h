@@ -29,7 +29,7 @@ namespace PlipSdl {
         bool BeginDrawConsole();
         bool EndDrawConsole();
         [[nodiscard]] int GetGameScale() const;
-        SDL_Renderer *GetRenderer() const;
+        [[nodiscard]] SDL_Renderer *GetRenderer() const;
         void SetConsoleEnabled(bool enabled);
         void SetGameScale(int scale);
 
