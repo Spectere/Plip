@@ -127,7 +127,7 @@ namespace PlipSdl {
         return m_format;
     }
 
-    int SdlWindow::GetGameScale() {
+    int SdlWindow::GetGameScale() const {
         return m_gameScale;
     }
 

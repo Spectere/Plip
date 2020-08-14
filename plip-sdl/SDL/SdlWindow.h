@@ -19,9 +19,9 @@ namespace PlipSdl {
         void Clear() override;
         void Draw(void *data) override;
         bool EndDraw() override;
-        Plip::PlipVideoFormat GetFormat() override;
-        int GetHeight() override;
-        int GetWidth() override;
+        [[nodiscard]] Plip::PlipVideoFormat GetFormat() override;
+        [[nodiscard]] int GetHeight() override;
+        [[nodiscard]] int GetWidth() override;
         void Render() override;
         void Resize(int width, int height) override;
         void SetTitle(std::string title) override;
@@ -29,7 +29,7 @@ namespace PlipSdl {
         bool BeginDrawConsole();
         void DrawConsole(void *data);
         bool EndDrawConsole();
-        int GetGameScale();
+        [[nodiscard]] int GetGameScale() const;
         void SetConsoleEnabled(bool enabled);
         void SetGameScale(int scale);
 
