@@ -27,14 +27,16 @@ namespace PlipSdl {
         void SetTitle(std::string title) override;
 
         bool BeginDrawConsole();
-        void DrawConsole(void *data);
         bool EndDrawConsole();
         [[nodiscard]] int GetGameScale() const;
+        SDL_Renderer *GetRenderer() const;
         void SetConsoleEnabled(bool enabled);
         void SetGameScale(int scale);
 
     private:
-        void CreateTexture(SDL_Texture **texture, int width, int height, SDL_BlendMode blendMode = SDL_BLENDMODE_NONE);
+        void CreateTexture(SDL_Texture **texture, int width, int height,
+                           SDL_BlendMode blendMode = SDL_BLENDMODE_NONE,
+                           SDL_TextureAccess access = SDL_TEXTUREACCESS_STREAMING);
         void CreateConsoleTexture();
         void CreateGameTexture();
         bool SelectFormat(uint32_t format);

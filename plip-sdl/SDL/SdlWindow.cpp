@@ -72,20 +72,23 @@ namespace PlipSdl {
     }
 
     bool SdlWindow::BeginDrawConsole() {
-        return SDL_LockTexture(m_conTex, nullptr, &m_texData, &m_pitch) == 0;
+        if(!SDL_RenderTargetSupported(m_renderer)) return false;
+        SDL_SetRenderTarget(m_renderer, m_conTex);
+        return true;
     }
 
     void SdlWindow::Clear() {
         SDL_RenderClear(m_renderer);
     }
 
-    void SdlWindow::CreateTexture(SDL_Texture **texture, int width, int height, SDL_BlendMode blendMode) {
+    void SdlWindow::CreateTexture(SDL_Texture **texture, int width, int height,
+                                  SDL_BlendMode blendMode, SDL_TextureAccess access) {
         if(*texture != nullptr) SDL_DestroyTexture(*texture);
 
         uint32_t pixelFormat = SelectSdlFormat(m_format);
 
         *texture = SDL_CreateTexture(m_renderer,
-                                      pixelFormat, SDL_TEXTUREACCESS_STREAMING,
+                                      pixelFormat, access,
                                       width, height);
         SDL_SetTextureBlendMode(*texture, blendMode);
 
@@ -98,7 +101,7 @@ namespace PlipSdl {
 
     void SdlWindow::CreateConsoleTexture() {
         CreateTexture(&m_conTex, m_width * m_gameScale, m_height * m_gameScale,
-                      SDL_BLENDMODE_BLEND);
+                      SDL_BLENDMODE_BLEND, SDL_TEXTUREACCESS_TARGET);
     }
 
     void SdlWindow::CreateGameTexture() {
@@ -109,17 +112,13 @@ namespace PlipSdl {
         memcpy(m_texData, data, m_pitch * m_height);
     }
 
-    void SdlWindow::DrawConsole(void *data) {
-        memcpy(m_texData, data, m_pitch * m_height * m_gameScale);
-    }
-
     bool SdlWindow::EndDraw() {
         SDL_UnlockTexture(m_gameTex);
         return true;
     }
 
     bool SdlWindow::EndDrawConsole() {
-        SDL_UnlockTexture(m_conTex);
+        SDL_SetRenderTarget(m_renderer, nullptr);
         return true;
     }
 
@@ -133,6 +132,10 @@ namespace PlipSdl {
 
     int SdlWindow::GetHeight() {
         return m_height;
+    }
+
+    SDL_Renderer *SdlWindow::GetRenderer() const {
+        return m_renderer;
     }
 
     int SdlWindow::GetWidth() {

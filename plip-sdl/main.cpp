@@ -225,6 +225,13 @@ int main(int argc, char **argv) {
     auto event = new PlipSdl::SdlEvent(input);
     auto console = new PlipSdl::Console(wnd);
 
+    auto consoleFont = config->GetValue("console", "font");
+    if(consoleFont == config->empty) {
+        std::cout << "Console font path not defined!\n" << std::endl;
+        return 1;
+    }
+    console->LoadFont(consoleFont);
+
     // Load the console input key.
     auto consoleKey = config->GetValue("console", "key");
     if(consoleKey == config->empty) {
