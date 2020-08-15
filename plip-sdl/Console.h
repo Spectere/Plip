@@ -27,8 +27,30 @@ namespace PlipSdl {
         void SetConsoleKey(SDL_Scancode scancode);
         void SetConsoleKey(const std::string &binding);
         void ToggleConsole();
+        void Write(char ch);
+        void Write(const std::string &str);
 
     private:
+        inline void DisplayPrompt() {
+            Write("] ");
+        }
+
+        inline void Initialize() {
+            if(!m_firstUse) return;
+
+            Resize();
+            m_firstUse = false;
+            DisplayPrompt();
+        }
+
+        inline void NewCommand() {
+            m_input.clear();
+            DisplayPrompt();
+        }
+
+        void EnterPressed();
+        void Scroll(int lines = 1);
+
         const int m_charCountX = 16;
         const int m_charCountY = 16;
 
@@ -46,6 +68,7 @@ namespace PlipSdl {
         int m_wndWidth = 0, m_wndHeight = 0;
         int m_charWidth = 0, m_charHeight = 0;
         int m_conWidth = 0, m_conHeight = 0;
+        int m_cursor = 0;
 
         uint8_t *m_conBuffer {};
         std::vector<char> m_input {};

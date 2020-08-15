@@ -25,12 +25,7 @@ namespace PlipSdl {
         for(auto i = 0; i < m_conWidth * m_conHeight; i++)
             m_conBuffer[i] = 0x20;
 
-        // Test code. TODO: Remove me :)
-        const std::string str = "Hello world!";
-        auto i = 0;
-        for(auto ch : str)
-            m_conBuffer[i++] = ch;
-        m_conBuffer[m_conWidth * m_conHeight - 1] = 0x7F;
+        m_cursor = 0;
     }
 
     void Console::Draw() {
@@ -52,6 +47,22 @@ namespace PlipSdl {
 
             SDL_RenderCopy(m_renderer, m_fontTex, &src, &dest);
         }
+    }
+
+    void Console::EnterPressed() {
+        Write("\n");
+
+        if(m_input.empty()) {
+            NewCommand();
+            return;
+        }
+
+        // Test code, echo the results back. TODO: Delete me :)
+        std::string str(m_input.cbegin(), m_input.cend());
+        Write(str);
+        Write('\n');
+
+        NewCommand();
     }
 
     bool Console::GetConsoleEnabled() const {
@@ -81,10 +92,33 @@ namespace PlipSdl {
         auto uiEvent = SdlUiEvent::None;
 
         while(SDL_PollEvent(&ev)) {
+            int idx;
+            char ch;
             switch(ev.type) {
                 case SDL_KEYDOWN:
                     if(ev.key.keysym.scancode == m_consoleKey)
                         uiEvent = SdlUiEvent::ToggleConsole;
+
+                    if(ev.key.keysym.scancode == SDL_SCANCODE_BACKSPACE) {
+                        if(m_input.empty()) break;
+
+                        m_input.pop_back();
+                        m_conBuffer[--m_cursor] = 0x20;
+                    }
+
+                    if(ev.key.keysym.scancode == SDL_SCANCODE_KP_ENTER ||
+                       ev.key.keysym.scancode == SDL_SCANCODE_RETURN ||
+                       ev.key.keysym.scancode == SDL_SCANCODE_RETURN2) {
+                            EnterPressed();
+                    }
+                    break;
+
+                case SDL_TEXTINPUT:
+                    idx = 0;
+                    while((ch = ev.text.text[idx++]) != 0) {
+                        m_input.push_back(ch);
+                        Write(ch);
+                    }
                     break;
 
                 case SDL_QUIT:
@@ -120,6 +154,22 @@ namespace PlipSdl {
         m_video->Render();
     }
 
+    void Console::Scroll(int lines) {
+        if(lines <= 0) return;
+        if(lines >= m_conHeight) {
+            Clear();
+            m_cursor = m_conWidth * (m_conHeight - 1);
+        }
+
+        memcpy(m_conBuffer,
+               m_conBuffer + (m_conWidth * lines),
+               m_conWidth * m_conHeight - (m_conWidth * lines));
+        memset(m_conBuffer + (m_conWidth * (m_conHeight - lines)),
+               0x20, lines * m_conWidth);
+
+        m_cursor -= m_conWidth;
+    }
+
     void Console::SetConsoleEnabled(bool enabled) {
         m_consoleEnabled = enabled;
         m_video->SetConsoleEnabled(m_consoleEnabled);
@@ -135,10 +185,30 @@ namespace PlipSdl {
     }
 
     void Console::ToggleConsole() {
-        if(m_firstUse) {
-            Resize();
-            m_firstUse = false;
-        }
+        Initialize();
         SetConsoleEnabled(!m_consoleEnabled);
+
+        if(m_consoleEnabled)
+            SDL_StartTextInput();
+        else
+            SDL_StopTextInput();
+    }
+
+    void Console::Write(const char ch) {
+        Initialize();
+        if(ch == '\n') {
+            auto row = m_cursor / m_conWidth;
+            m_cursor = (row + 1) * m_conWidth;
+        } else {
+            m_conBuffer[m_cursor++] = ch;
+        }
+
+        if(m_cursor >= m_conWidth * m_conHeight)
+            Scroll();
+    }
+
+    void Console::Write(const std::string &str) {
+        for(auto ch : str)
+            Write(ch);
     }
 }
