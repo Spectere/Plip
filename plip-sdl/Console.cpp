@@ -180,21 +180,7 @@ done:
                                   void (*func)(Console*, const std::vector<std::string> &args)) {
         auto lowerName = StringUtil::ToLower(commandName);
 
-        if(m_commandList.empty()) {
-            m_commandList.push_front({lowerName, func});
-            return;
-        }
-
-        for(auto it = m_commandList.cbegin(); it != m_commandList.cend(); it++) {
-            if(lowerName < it->name) continue;
-
-            m_commandList.insert(it, { lowerName, func });
-            goto cmdSort;
-        }
-
         m_commandList.push_back({ lowerName, func });
-
-cmdSort:
         m_commandList.sort([](const Command &first, const Command &second) {
             return first.name < second.name;
         });
