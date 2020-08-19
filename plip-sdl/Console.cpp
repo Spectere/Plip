@@ -3,10 +3,14 @@
  * A Quake-style console implementation.
  */
 
+#include <list>
+#include <sstream>
+
 #include <SDL.h>
 #include <SDL_image.h>
 
 #include "Console.h"
+#include "StringUtil.h"
 
 namespace PlipSdl {
     Console::Console(SdlWindow *wnd) {
@@ -57,16 +61,62 @@ namespace PlipSdl {
             return;
         }
 
-        // Test code, echo the results back. TODO: Delete me :)
         std::string str(m_input.cbegin(), m_input.cend());
-        Write(str);
-        Write('\n');
+        m_lastInput = str;
+        if(StringUtil::Trim(str).empty()) {
+            NewCommand();
+            return;
+        }
 
+        std::vector<std::string> cmdLine(StringUtil::Split(str, ' '));
+        auto cmd = StringUtil::ToLower(cmdLine[0]);
+
+        // Build a list of candidates.
+        std::list<Command> candidates;
+        auto len = cmd.length();
+        for(const auto &it : m_commandList) {
+            if(it.name.substr(0, len) != cmd) continue;
+            candidates.push_back(it);
+        }
+
+        if(candidates.empty()) {
+            // No candidates.
+            WriteError("command not found");
+        } else if(candidates.size() == 1) {
+            // Only one candidate. Execute the attached function.
+            candidates.cbegin()->func(this, cmdLine);
+        } else {
+            std::stringstream ss;
+            bool first = true;
+            ss << "Ambiguous command. Possible candidates: ";
+
+            // Check for an exact match.
+            for(const auto &it : candidates) {
+                if(it.name != cmd) {
+                    if(first) first = false;
+                    else ss << ", ";
+                    ss << it.name;
+                    continue;
+                }
+
+                it.func(this, cmdLine);
+                goto done;
+            }
+
+            // Print the list of candidates.
+            WriteLine(ss.str());
+        }
+
+done:
         NewCommand();
     }
 
     bool Console::GetConsoleEnabled() const {
         return m_consoleEnabled;
+    }
+
+    std::string Console::GetLastInput() const {
+        return m_lastInput;
     }
 
     bool Console::LoadFont(const std::string &filename) {
@@ -97,7 +147,7 @@ namespace PlipSdl {
             switch(ev.type) {
                 case SDL_KEYDOWN:
                     if(ev.key.keysym.scancode == m_consoleKey)
-                        uiEvent = SdlUiEvent::ToggleConsole;
+                        ToggleConsole();
 
                     if(ev.key.keysym.scancode == SDL_SCANCODE_BACKSPACE) {
                         if(m_input.empty()) break;
@@ -128,6 +178,23 @@ namespace PlipSdl {
         }
 
         return uiEvent;
+    }
+
+    void Console::RegisterCommand(const std::string &commandName,
+                                  void (*func)(Console*, const std::vector<std::string> &args)) {
+        auto lowerName = StringUtil::ToLower(commandName);
+
+        if(m_commandList.empty()) {
+            m_commandList.push_front({lowerName, func});
+            return;
+        }
+
+        for(auto it = m_commandList.cbegin(); it != m_commandList.cend(); it++) {
+            if(lowerName < it->name) continue;
+
+            m_commandList.insert(it, { lowerName, func });
+            break;
+        }
     }
 
     void Console::Resize() {

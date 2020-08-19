@@ -32,6 +32,12 @@ std::vector<std::vector<std::string>> intParamMapping = {
         { "fps"  , "video", "targetFps" }
 };
 
+auto m_running = false;
+
+void consoleQuit(PlipSdl::Console *console, const std::vector<std::string> &args) {
+    m_running = false;
+}
+
 void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::Console *console, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
     auto audio = plip->GetAudio();
     auto video = plip->GetVideo();
@@ -39,9 +45,9 @@ void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::Consol
     auto targetFps = config->GetValue<int>("video", "targetFps");
     auto frameTime = 1000000000 / targetFps;
 
-    auto running = true;
+    m_running = true;
     PlipSdl::SdlUiEvent uiEvent;
-    while(running) {
+    while(m_running) {
         timer->StopwatchStart();
 
         if(console->GetConsoleEnabled()) {
@@ -58,11 +64,10 @@ void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::Consol
         }
 
         if(uiEvent == PlipSdl::SdlUiEvent::Quit)
-            running = false;
+            m_running = false;
 
-        if(uiEvent == PlipSdl::SdlUiEvent::ToggleConsole) {
+        if(uiEvent == PlipSdl::SdlUiEvent::ToggleConsole)
             console->ToggleConsole();
-        }
 
         auto time = timer->StopwatchStop();
         auto delay = frameTime - time;
@@ -224,6 +229,7 @@ int main(int argc, char **argv) {
     auto input = plip->GetInput();
     auto event = new PlipSdl::SdlEvent(input);
     auto console = new PlipSdl::Console(wnd);
+    console->RegisterCommand("quit", consoleQuit);
 
     auto consoleFont = config->GetValue("console", "font");
     if(consoleFont == config->empty) {
@@ -235,9 +241,8 @@ int main(int argc, char **argv) {
     // Load the console input key.
     auto consoleKey = config->GetValue("console", "key");
     if(consoleKey == config->empty) {
-        // Most modern keyboards lack F24 keys for some reason. :)
-        event->SetConsoleKey(SDL_SCANCODE_F24);
-        console->SetConsoleKey(SDL_SCANCODE_F24);
+        event->SetConsoleKey(SDL_SCANCODE_GRAVE);
+        console->SetConsoleKey(SDL_SCANCODE_GRAVE);
     } else {
         event->SetConsoleKey(consoleKey);
         console->SetConsoleKey(consoleKey);

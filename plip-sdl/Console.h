@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <list>
 #include <vector>
 
 #include "SDL/SdlEvent.h"
@@ -19,8 +20,11 @@ namespace PlipSdl {
         void Clear();
         void Draw();
         [[nodiscard]] bool GetConsoleEnabled() const;
+        [[nodiscard]] std::string GetLastInput() const;
         bool LoadFont(const std::string &filename);
         SdlUiEvent ProcessEvents();
+        void RegisterCommand(const std::string &commandName,
+                             void (*func)(Console*, const std::vector<std::string> &args));
         void Resize();
         void Run();
         void SetConsoleEnabled(bool enabled);
@@ -30,7 +34,26 @@ namespace PlipSdl {
         void Write(char ch);
         void Write(const std::string &str);
 
+        inline void WriteError(const std::string &str) {
+            Write("error: ");
+            WriteLine(str);
+        }
+
+        inline void WriteLine(const std::string &str = "") {
+            if(!str.empty())
+                Write(str);
+            Write('\n');
+        }
+
     private:
+        struct Command {
+            std::string name;
+            void (*func)(Console*, const std::vector<std::string> &args);
+        };
+
+        void EnterPressed();
+        void Scroll(int lines = 1);
+
         inline void DisplayPrompt() {
             Write("] ");
         }
@@ -47,9 +70,6 @@ namespace PlipSdl {
             m_input.clear();
             DisplayPrompt();
         }
-
-        void EnterPressed();
-        void Scroll(int lines = 1);
 
         const int m_charCountX = 16;
         const int m_charCountY = 16;
@@ -71,6 +91,8 @@ namespace PlipSdl {
         int m_cursor = 0;
 
         uint8_t *m_conBuffer {};
+        std::string m_lastInput {};
         std::vector<char> m_input {};
+        std::list<Command> m_commandList {};
     };
 }

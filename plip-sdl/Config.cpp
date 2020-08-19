@@ -8,32 +8,11 @@
 #include <iostream>
 
 #include "Config.h"
+#include "StringUtil.h"
 
 namespace PlipSdl {
-    static inline std::string Trim(std::string str) {
-        // Trim front.
-        str.erase(str.cbegin(), std::find_if(str.cbegin(), str.cend(), [](unsigned char c) {
-            return !std::isspace(c);
-        }));
-
-        // Trim back.
-        str.erase(std::find_if(str.crbegin(), str.crend(), [](unsigned char c) {
-            return !std::isspace(c);
-        }).base(), str.cend());
-
-        return str;
-    }
-
-    static inline std::string ToLower(std::string str) {
-        std::transform(str.cbegin(), str.cend(), str.begin(), [](unsigned char c) {
-            return std::tolower(c);
-        });
-
-        return str;
-    }
-
     const std::unordered_map<std::string, std::string> *Config::GetSection(const std::string &key) {
-        auto keyLower = ToLower(key);
+        auto keyLower = StringUtil::ToLower(key);
 
         auto itSection = m_section.find(keyLower);
         if(itSection == m_section.end()) return nullptr;
@@ -46,8 +25,8 @@ namespace PlipSdl {
     }
 
     const std::string &Config::GetValue(const std::string &section, const std::string &key) {
-        auto secLower = ToLower(section);
-        auto keyLower = ToLower(key);
+        auto secLower = StringUtil::ToLower(section);
+        auto keyLower = StringUtil::ToLower(key);
 
         auto itSection = m_section.find(secLower);
         if(itSection == m_section.cend()) return empty;
@@ -69,7 +48,7 @@ namespace PlipSdl {
         std::string line;
         int lineNum = 0;
         while(std::getline(file, line)) {
-            line = Trim(line);
+            line = StringUtil::Trim(line);
             ++lineNum;
 
             if(line.empty()) continue;
@@ -81,7 +60,7 @@ namespace PlipSdl {
                 // Section
                 line.erase(line.cbegin());
                 line.erase(line.cend() - 1);
-                section = Trim(line);
+                section = StringUtil::Trim(line);
                 continue;
             }
 
@@ -92,8 +71,8 @@ namespace PlipSdl {
                 continue;
             }
 
-            auto key = Trim(line.substr(0, equals));
-            auto value = Trim(line.substr(equals + 1, std::string::npos));
+            auto key = StringUtil::Trim(line.substr(0, equals));
+            auto value = StringUtil::Trim(line.substr(equals + 1, std::string::npos));
             SetValue(section, key, value);
         }
 
@@ -106,8 +85,8 @@ namespace PlipSdl {
     }
 
     void Config::SetValue(const std::string &section, const std::string &key, const std::string &value) {
-        auto secLower = ToLower(section);
-        auto keyLower = ToLower(key);
+        auto secLower = StringUtil::ToLower(section);
+        auto keyLower = StringUtil::ToLower(key);
 
         auto itSection = m_section.find(secLower);
         if(itSection == m_section.cend()) {
