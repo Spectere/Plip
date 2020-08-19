@@ -20,7 +20,6 @@ namespace PlipSdl {
         void Clear();
         void Draw();
         [[nodiscard]] bool GetConsoleEnabled() const;
-        [[nodiscard]] std::string GetLastInput() const;
         bool LoadFont(const std::string &filename);
         SdlUiEvent ProcessEvents();
         void RegisterCommand(const std::string &commandName,
@@ -48,10 +47,11 @@ namespace PlipSdl {
     private:
         struct Command {
             std::string name;
-            void (*func)(Console*, const std::vector<std::string> &args);
+            void (*func)(Console*, const std::vector<std::string>&);
         };
 
         void EnterPressed();
+        void RegisterInternalCommands();
         void Scroll(int lines = 1);
 
         inline void DisplayPrompt() {
@@ -91,7 +91,6 @@ namespace PlipSdl {
         int m_cursor = 0;
 
         uint8_t *m_conBuffer {};
-        std::string m_lastInput {};
         std::vector<char> m_input {};
         std::list<Command> m_commandList {};
     };

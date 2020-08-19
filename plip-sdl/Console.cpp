@@ -17,8 +17,9 @@ namespace PlipSdl {
         m_video = wnd;
         m_renderer = wnd->GetRenderer();
         m_vidFmt = Plip::PlipVideo::GetFormatInfo(m_video->GetFormat());
-
         IMG_Init(0);
+
+        RegisterInternalCommands();
     }
 
     Console::~Console() {
@@ -62,7 +63,6 @@ namespace PlipSdl {
         }
 
         std::string str(m_input.cbegin(), m_input.cend());
-        m_lastInput = str;
         if(StringUtil::Trim(str).empty()) {
             NewCommand();
             return;
@@ -113,10 +113,6 @@ done:
 
     bool Console::GetConsoleEnabled() const {
         return m_consoleEnabled;
-    }
-
-    std::string Console::GetLastInput() const {
-        return m_lastInput;
     }
 
     bool Console::LoadFont(const std::string &filename) {
@@ -193,8 +189,30 @@ done:
             if(lowerName < it->name) continue;
 
             m_commandList.insert(it, { lowerName, func });
-            break;
+            goto cmdSort;
         }
+
+        m_commandList.push_back({ lowerName, func });
+
+cmdSort:
+        m_commandList.sort([](const Command &first, const Command &second) {
+            return first.name < second.name;
+        });
+    }
+
+    void Console::RegisterInternalCommands() {
+        RegisterCommand("help", [](Console *console, const std::vector<std::string> &args) {
+            console->Write("valid commands: ");
+
+            bool first = true;
+            for(auto &it : console->m_commandList) {
+                if(first) first = false;
+                else console->Write(", ");
+
+                console->Write(it.name);
+            }
+            console->WriteLine();
+        });
     }
 
     void Console::Resize() {
