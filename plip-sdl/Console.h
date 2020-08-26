@@ -19,6 +19,7 @@ namespace PlipSdl {
 
         static bool ParseInt(const std::string &str, int *val);
         static bool ParseLong(const std::string &str, long *val);
+        static bool ParseULong(const std::string &str, unsigned long *val);
 
         void Clear();
         void Draw();
@@ -45,6 +46,11 @@ namespace PlipSdl {
             if(!str.empty())
                 Write(str);
             Write('\n');
+        }
+
+        inline void WriteWarn(const std::string &str) {
+            Write("warn: ");
+            WriteLine(str);
         }
 
     private:

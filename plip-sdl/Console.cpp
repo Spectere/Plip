@@ -162,6 +162,20 @@ done:
         return true;
     }
 
+    bool Console::ParseULong(const std::string &str, unsigned long *val) {
+        if(str.empty()) return false;
+
+        try {
+            *val = std::stol(str, nullptr, 0);
+        } catch(std::invalid_argument&) {
+            return false;
+        } catch(std::out_of_range&) {
+            return false;
+        }
+
+        return true;
+    }
+
     SdlUiEvent Console::ProcessEvents() {
         SDL_Event ev;
         auto uiEvent = SdlUiEvent::None;

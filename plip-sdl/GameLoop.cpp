@@ -3,6 +3,9 @@
  * The main emulation loop.
  */
 
+#include <iomanip>
+#include <sstream>
+
 #include "GameLoop.h"
 
 namespace PlipSdl {
@@ -18,12 +21,59 @@ namespace PlipSdl {
 
         m_console->RegisterCommand("dump",
                                    [this](auto &&console, auto &&args) { ConsoleDump(console, args); });
+        m_console->RegisterCommand("mem",
+                                   [this](auto &&console, auto &&args) { ConsoleMem(console, args); });
         m_console->RegisterCommand("quit",
                                    [this](auto&&, auto&&) { m_running = false; });
     }
 
     void GameLoop::ConsoleDump(Console *console, const std::vector<std::string> &args) {
         console->WriteLine(m_plip->GetCore()->DumpRegisters());
+    }
+
+    void GameLoop::ConsoleMem(Console *console, const std::vector<std::string> &args) {
+        std::stringstream ss;
+        auto mem = m_plip->GetCore()->GetMemoryMap();
+
+        auto printHex = [](uintmax_t val, int precision) {
+            std::stringstream fmt;
+            fmt << "0x" << std::uppercase << std::setfill('0') << std::setw(precision)
+                << std::hex << val;
+            return fmt.str();
+        };
+
+        if(args.size() < 2) {
+            console->WriteLine("usage: mem [address] ([value])");
+            return;
+        }
+
+        unsigned long input;
+        if(!Console::ParseULong(args[1], &input)) {
+            console->WriteLine("invalid address");
+            return;
+        }
+
+        auto addr = (uint32_t)input;
+
+        uint8_t val;
+        if(args.size() < 3) {
+            val = mem->GetByte(addr);
+        } else {
+            if(!Console::ParseULong(args[2], &input)) {
+                console->WriteError("invalid value");
+                return;
+            }
+
+            if(input > 0xFF)
+                console->WriteWarn("value will be truncated");
+
+            val = input & 0xFF;
+            mem->SetByte(addr, val);
+        }
+
+        ss << "[" << printHex(addr, 8) << "] == " << std::to_string(val) << " ("
+           << printHex(val, 2) << ")";
+        console->WriteLine(ss.str());
     }
 
     void GameLoop::Play() {

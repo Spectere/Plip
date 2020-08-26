@@ -21,6 +21,7 @@ namespace PlipSdl {
 
     private:
         void ConsoleDump(Console *console, const std::vector<std::string> &args);
+        void ConsoleMem(Console *console, const std::vector<std::string> &args);
 
         Plip::PlipInstance *m_plip;
         Console *m_console;
