@@ -18,6 +18,7 @@ namespace Plip::Core::GameBoy {
         ~GameBoyInstance();
 
         void Delta(long ns) override;
+        std::string DumpRegisters() override;
         PlipError Load(const std::string &path) override;
 
         const int BaseClockRate = 4194304;
@@ -92,7 +93,6 @@ namespace Plip::Core::GameBoy {
         bool m_bootRomFlag = false;
         std::string m_bootRomPath;
         Plip::Cpu::SharpLr35902 *m_cpu;
-        long m_cycleTime {};
         long m_cycleRemaining = 0;
         int m_dotCyclesRemaining = 0;
         const int m_dotsPerCycle = 4;

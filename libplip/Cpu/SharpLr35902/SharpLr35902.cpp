@@ -103,6 +103,7 @@ namespace Plip::Cpu {
             for(auto i : m_instr)
                 dump << " " << util::FormatHex(i, 2);
         }
+        dump << "\nMCycle: " << std::to_string(m_mcycle);
 
         return dump.str();
     }

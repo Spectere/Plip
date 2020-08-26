@@ -5,6 +5,7 @@
 
 #include <list>
 #include <sstream>
+#include <utility>
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -84,7 +85,7 @@ namespace PlipSdl {
             WriteError("command not found");
         } else if(candidates.size() == 1) {
             // Only one candidate. Execute the attached function.
-            candidates.cbegin()->func(this, cmdLine);
+            candidates.cbegin()->callback(this, cmdLine);
         } else {
             std::stringstream ss;
             bool first = true;
@@ -99,7 +100,7 @@ namespace PlipSdl {
                     continue;
                 }
 
-                it.func(this, cmdLine);
+                it.callback(this, cmdLine);
                 goto done;
             }
 
@@ -129,6 +130,34 @@ done:
         m_charWidth = m_fontSurf->w / m_charCountX;
         m_charHeight = m_fontSurf->h / m_charCountY;
         Resize();
+
+        return true;
+    }
+
+    bool Console::ParseInt(const std::string &str, int *val) {
+        if(str.empty()) return false;
+
+        try {
+            *val = std::stoi(str, nullptr, 0);
+        } catch(std::invalid_argument&) {
+            return false;
+        } catch(std::out_of_range&) {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Console::ParseLong(const std::string &str, long *val) {
+        if(str.empty()) return false;
+
+        try {
+            *val = std::stol(str, nullptr, 0);
+        } catch(std::invalid_argument&) {
+            return false;
+        } catch(std::out_of_range&) {
+            return false;
+        }
 
         return true;
     }
@@ -177,17 +206,17 @@ done:
     }
 
     void Console::RegisterCommand(const std::string &commandName,
-                                  void (*func)(Console*, const std::vector<std::string> &args)) {
+                                  std::function<void(Console*, const std::vector<std::string> &args)> callback) {
         auto lowerName = StringUtil::ToLower(commandName);
 
-        m_commandList.push_back({ lowerName, func });
+        m_commandList.push_back({ lowerName, std::move(callback) });
         m_commandList.sort([](const Command &first, const Command &second) {
             return first.name < second.name;
         });
     }
 
     void Console::RegisterInternalCommands() {
-        RegisterCommand("help", [](Console *console, const std::vector<std::string> &args) {
+        RegisterCommand("help", [](Console *console, const std::vector<std::string>&) {
             console->Write("valid commands: ");
 
             bool first = true;

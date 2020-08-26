@@ -101,9 +101,11 @@ namespace Plip::Core::Chip8 {
         m_video->Render();
     }
 
-    std::vector<float> Chip8Instance::GenerateSilence() {
-        using pa = Plip::PlipAudio;
+    std::string Chip8Instance::DumpRegisters() {
+        return m_cpu->DumpRegisters();
+    }
 
+    std::vector<float> Chip8Instance::GenerateSilence() {
         std::vector<float> res;
         for(auto i = 0; i < m_sampleCount; i++) {
             for(auto c = 0; c < m_channels; c++)
@@ -115,8 +117,6 @@ namespace Plip::Core::Chip8 {
     }
 
     std::vector<float> Chip8Instance::GenerateSine() {
-        using pa = Plip::PlipAudio;
-
         std::vector<float> res;
         for(auto i = 0; i < m_sampleCount; i++) {
             for(auto c = 0; c < m_channels; c++)

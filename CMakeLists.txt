@@ -88,6 +88,7 @@ add_executable(${gui_name}
         plip-sdl/main.cpp
         plip-sdl/Config.cpp
         plip-sdl/Console.cpp
+        plip-sdl/GameLoop.cpp
 
         plip-sdl/SDL/SdlAudio.cpp
         plip-sdl/SDL/SdlEvent.cpp

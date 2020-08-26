@@ -188,6 +188,10 @@ namespace Plip::Core::GameBoy {
         } while(m_cycleTime < m_cycleRemaining);
     }
 
+    std::string GameBoyInstance::DumpRegisters() {
+        return m_cpu->DumpRegisters();
+    }
+
     uint16_t GameBoyInstance::GetRomBankCount() {
         auto romSizeByte = m_rom->GetByte(0x0148);
 

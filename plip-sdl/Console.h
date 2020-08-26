@@ -17,13 +17,16 @@ namespace PlipSdl {
         explicit Console(SdlWindow *wnd);
         ~Console();
 
+        static bool ParseInt(const std::string &str, int *val);
+        static bool ParseLong(const std::string &str, long *val);
+
         void Clear();
         void Draw();
         [[nodiscard]] bool GetConsoleEnabled() const;
         bool LoadFont(const std::string &filename);
         SdlUiEvent ProcessEvents();
         void RegisterCommand(const std::string &commandName,
-                             void (*func)(Console*, const std::vector<std::string> &args));
+                             std::function<void(Console*, const std::vector<std::string> &args)> callback);
         void Resize();
         void Run();
         void SetConsoleEnabled(bool enabled);
@@ -47,7 +50,7 @@ namespace PlipSdl {
     private:
         struct Command {
             std::string name;
-            void (*func)(Console*, const std::vector<std::string>&);
+            std::function<void(Console*, const std::vector<std::string> &args)> callback;
         };
 
         void EnterPressed();

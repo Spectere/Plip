@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "cxxopts.hpp"
@@ -12,6 +13,7 @@
 
 #include "Config.h"
 #include "Console.h"
+#include "GameLoop.h"
 #include "SDL/SdlAudio.h"
 #include "SDL/SdlEvent.h"
 #include "SDL/SdlWindow.h"
@@ -27,58 +29,17 @@ std::vector<std::vector<std::string>> defaultConfig = {
         { "video", "targetFps", "60" }
 };
 
+std::unordered_map<std::string, SDL_Scancode> defaultFrontendKeys = {
+        { "console", SDL_SCANCODE_GRAVE },
+        { "frameadvance", SDL_SCANCODE_RIGHTBRACKET },
+        { "pause", SDL_SCANCODE_BACKSLASH },
+        { "step", SDL_SCANCODE_LEFTBRACKET }
+};
+
 std::vector<std::vector<std::string>> intParamMapping = {
         { "scale", "video", "scale"     },
         { "fps"  , "video", "targetFps" }
 };
-
-auto m_running = false;
-
-void consoleQuit(PlipSdl::Console *console, const std::vector<std::string> &args) {
-    m_running = false;
-}
-
-void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::Console *console, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
-    auto audio = plip->GetAudio();
-    auto video = plip->GetVideo();
-
-    auto targetFps = config->GetValue<int>("video", "targetFps");
-    auto frameTime = 1000000000 / targetFps;
-
-    m_running = true;
-    PlipSdl::SdlUiEvent uiEvent;
-    while(m_running) {
-        timer->StopwatchStart();
-
-        if(console->GetConsoleEnabled()) {
-            // Console is enabled. Don't run the core.
-            uiEvent = console->ProcessEvents();
-            console->Run();
-        } else {
-            uiEvent = event->ProcessEvents();
-
-            // As implemented, this will not be able to compensate for the host being
-            // unable to keep up with the emulation core.
-            // TODO: Fix this so that it will skip frames where appropriate.
-            plip->Run(frameTime);
-        }
-
-        if(uiEvent == PlipSdl::SdlUiEvent::Quit)
-            m_running = false;
-
-        if(uiEvent == PlipSdl::SdlUiEvent::ToggleConsole)
-            console->ToggleConsole();
-
-        auto time = timer->StopwatchStop();
-        auto delay = frameTime - time;
-        while(delay < 0)
-            delay += frameTime;
-
-        timer->Nanosleep(delay);
-    }
-
-    audio->DequeueAll();
-}
 
 cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
     try {
@@ -200,6 +161,7 @@ int main(int argc, char **argv) {
     }
 
     auto videoScale = config->GetValue<int>("video", "scale");
+    auto targetFps = config->GetValue<int>("video", "targetFps");
 
     auto wnd = new PlipSdl::SdlWindow(videoScale, version);
     auto audio = new PlipSdl::SdlAudio();
@@ -229,7 +191,6 @@ int main(int argc, char **argv) {
     auto input = plip->GetInput();
     auto event = new PlipSdl::SdlEvent(input);
     auto console = new PlipSdl::Console(wnd);
-    console->RegisterCommand("quit", consoleQuit);
 
     auto consoleFont = config->GetValue("console", "font");
     if(consoleFont == config->empty) {
@@ -238,15 +199,33 @@ int main(int argc, char **argv) {
     }
     console->LoadFont(consoleFont);
 
-    // Load the console input key.
-    auto consoleKey = config->GetValue("console", "key");
-    if(consoleKey == config->empty) {
-        event->SetConsoleKey(SDL_SCANCODE_GRAVE);
-        console->SetConsoleKey(SDL_SCANCODE_GRAVE);
-    } else {
-        event->SetConsoleKey(consoleKey);
-        console->SetConsoleKey(consoleKey);
+    // Load the frontend keys.
+    for(auto &it : defaultFrontendKeys) {
+        auto key = config->GetValue("input.frontend", it.first);
+
+        if(key == config->empty)
+            event->SetKey(it.first, it.second);
+        else
+            event->SetKey(it.first, key);
     }
+
+    // Set the console key.
+    auto consoleDefault = defaultFrontendKeys.find("console");
+    auto consoleKey = config->GetValue("input.frontend", "console");
+    if(consoleDefault == defaultFrontendKeys.cend()) {
+        std::cerr << "[BUG] No default console key set!" << std::endl;
+
+        if(consoleKey == config->empty) {
+            // Don't continue without a functional console.
+            std::cerr << "[ERROR] No console key set!" << std::endl;
+            return 2;
+        }
+    }
+
+    if(consoleKey == config->empty)
+        console->SetConsoleKey(consoleDefault->second);
+    else
+        console->SetConsoleKey(consoleKey);
 
     // Load inputs for the active core.
     std::string section = "input." + coreName;
@@ -264,7 +243,8 @@ int main(int argc, char **argv) {
     auto timer = new PlipSdl::TimerSdl();
 #endif
 
-    gameLoop(plip, config, console, event, timer);
+    auto game = new PlipSdl::GameLoop(plip, console, event, timer, targetFps);
+    game->Play();
 
     SDL_Quit();
     return 0;

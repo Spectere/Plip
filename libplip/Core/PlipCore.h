@@ -33,7 +33,12 @@ namespace Plip {
     public:
         static std::vector<PlipCoreDescription> GetSupportedCores();
 
+        [[nodiscard]] bool GetPaused() const;
+        [[nodiscard]] long GetStepTime() const;
+        void SetPaused(bool value);
+
         virtual void Delta(long ns) = 0;
+        virtual std::string DumpRegisters() = 0;
         virtual PlipMemoryMap* GetMemoryMap() final { return m_memory; }
         virtual PlipError Load(const std::string &path) = 0;
 
@@ -46,6 +51,9 @@ namespace Plip {
         PlipVideo *m_video;
 
         PlipMemoryMap *m_memory = new PlipMemoryMap();
+
+        long m_cycleTime {};
+        bool m_paused = false;
 
     private:
         static constexpr PlipCoreDescription m_supportedCores[] = {

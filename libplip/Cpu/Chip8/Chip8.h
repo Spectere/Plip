@@ -18,6 +18,7 @@ namespace Plip::Cpu {
 
         void Cycle() override;
         void DelayTimer();
+        std::string DumpRegisters();
         uint64_t* GetVideo() { return m_videoBuffer; }
         [[nodiscard]] bool IsAudioPlaying() const { return m_timerAudio >= 2; }
         void Reset() override;
@@ -25,8 +26,6 @@ namespace Plip::Cpu {
         static const int VideoSize = 32;  // 64 x 32
 
     private:
-        std::string DumpRegisters();
-
         inline uint16_t Fetch() {
             uint8_t high = m_memory->GetByte(m_pc++);
             uint8_t low = m_memory->GetByte(m_pc++);

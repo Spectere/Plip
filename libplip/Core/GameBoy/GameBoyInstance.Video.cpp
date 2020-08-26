@@ -247,7 +247,7 @@ namespace Plip::Core::GameBoy {
                     }
                 } else {
                     // BG/Window display disabled. Draw a white pixel.
-                    Plot(0b11, pos);
+                    Plot(0b00, pos);
                 }
 
                 m_videoLx++;

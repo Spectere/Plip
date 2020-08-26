@@ -26,6 +26,12 @@ namespace PlipSdl {
                 case SDL_KEYDOWN:
                     if(ev.key.keysym.scancode == m_consoleKey)
                         uiEvent = SdlUiEvent::ToggleConsole;
+                    else if(ev.key.keysym.scancode == m_frameAdvanceKey)
+                        uiEvent = SdlUiEvent::FrameAdvance;
+                    else if(ev.key.keysym.scancode == m_pauseKey)
+                        uiEvent = SdlUiEvent::PlayPause;
+                    else if(ev.key.keysym.scancode == m_stepKey)
+                        uiEvent = SdlUiEvent::Step;
                     else
                         UpdateDigitalInput(ev.key.keysym.scancode, true);
                     break;
@@ -43,13 +49,29 @@ namespace PlipSdl {
         return uiEvent;
     }
 
-    void SdlEvent::SetConsoleKey(SDL_Scancode scancode) {
-        m_consoleKey = scancode;
+    void SdlEvent::SetKey(const std::string &action, SDL_Scancode scancode) {
+        switch(Hash(action.c_str())) {
+            case Hash("console"):
+                m_consoleKey = scancode;
+                break;
+
+            case Hash("frameadvance"):
+                m_frameAdvanceKey = scancode;
+                break;
+
+            case Hash("pause"):
+                m_pauseKey = scancode;
+                break;
+
+            case Hash("step"):
+                m_stepKey = scancode;
+                break;
+        }
     }
 
-    void SdlEvent::SetConsoleKey(const std::string &binding) {
+    void SdlEvent::SetKey(const std::string &action, const std::string &binding) {
         auto scancode = SDL_GetScancodeFromName(binding.c_str());
-        SetConsoleKey(scancode);
+        SetKey(action, scancode);
     }
 
     void SdlEvent::UpdateDigitalInput(SDL_Scancode scancode, bool value) {

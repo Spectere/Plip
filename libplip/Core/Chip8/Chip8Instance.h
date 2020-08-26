@@ -23,6 +23,7 @@ namespace Plip::Core::Chip8 {
         ~Chip8Instance();
 
         void Delta(long ns) override;
+        std::string DumpRegisters() override;
         PlipError Load(const std::string &path) override;
 
         static const uint32_t ClockRate = 500;
@@ -43,7 +44,6 @@ namespace Plip::Core::Chip8 {
         Cpu::Chip8 *m_cpu;
         long m_cycleRemaining = 0;
         long m_delayRemaining = DelayTimerTick;
-        long m_cycleTime = 0;
         PlipMemoryRam *m_ram;
         std::unordered_map<int, PlipInputDefinition> m_inputList;
         Plip::PlipVideoFormatInfo m_videoFormat {};
