@@ -87,7 +87,7 @@ namespace Plip {
     }
 
     uint32_t PlipMemoryMap::GetLength() {
-        return m_range.size();
+        return m_range.crbegin()->startAddress + m_range.crbegin()->memory->GetLength();
     }
 
     PlipMemoryMap::BlockRangeResult PlipMemoryMap::IsBlockInRange(

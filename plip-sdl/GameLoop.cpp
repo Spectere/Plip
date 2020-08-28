@@ -49,11 +49,18 @@ namespace PlipSdl {
 
         unsigned long input;
         if(!Console::ParseULong(args[1], &input)) {
-            console->WriteLine("invalid address");
+            console->WriteError("unable to parse address");
             return;
         }
 
         auto addr = (uint32_t)input;
+
+        if(addr >= mem->GetLength()) {
+            ss << "specified address is out of range\n"
+               << "maximum value: " << printHex(mem->GetLength() - 1, 8) << "\n";
+            console->WriteError(ss.str());
+            return;
+        }
 
         uint8_t val;
         if(args.size() < 3) {
