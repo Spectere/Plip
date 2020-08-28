@@ -41,6 +41,7 @@ namespace Plip {
         virtual std::string DumpRegisters() = 0;
         virtual PlipMemoryMap* GetMemoryMap() final { return m_memory; }
         virtual PlipError Load(const std::string &path) = 0;
+        virtual void Redraw() = 0;
 
     protected:
         PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config);

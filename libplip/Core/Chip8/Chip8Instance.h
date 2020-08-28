@@ -25,6 +25,7 @@ namespace Plip::Core::Chip8 {
         void Delta(long ns) override;
         std::string DumpRegisters() override;
         PlipError Load(const std::string &path) override;
+        void Redraw() override;
 
         static const uint32_t ClockRate = 500;
         static const uint32_t CharacterSet = 0x100;

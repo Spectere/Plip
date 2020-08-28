@@ -27,6 +27,7 @@ namespace PlipSdl {
         Console *m_console;
         SdlEvent *m_event;
         Timer *m_timer;
+        SdlWindow *m_wnd;
 
         int m_updateRate;
         int m_updateTime;

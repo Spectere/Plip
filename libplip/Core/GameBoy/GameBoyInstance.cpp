@@ -328,6 +328,13 @@ namespace Plip::Core::GameBoy {
         READ_INPUT(InputStart);
     }
 
+    void GameBoyInstance::Redraw() {
+        m_video->BeginDraw();
+        m_video->Draw(m_videoBuffer);
+        m_video->EndDraw();
+        m_video->Render();
+    }
+
     void GameBoyInstance::RegisterInput() {
         m_input->AddInput(InputRight,
                           PlipInputDefinition(

@@ -20,6 +20,7 @@ namespace Plip::Core::GameBoy {
         void Delta(long ns) override;
         std::string DumpRegisters() override;
         PlipError Load(const std::string &path) override;
+        void Redraw() override;
 
         const int BaseClockRate = 4194304;
         const int InputRight = 0;

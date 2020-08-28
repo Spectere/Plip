@@ -113,6 +113,21 @@ namespace PlipSdl {
     }
 
     bool SdlWindow::EndDraw() {
+        // Overlay the pause icon if it's enabled.
+        if(m_drawPauseIcon) {
+            auto sX = m_width - m_pauseOffsetX - m_pauseSizeX;
+            auto xRun = m_pauseSizeX / 3;
+            auto maxY = m_height - m_pauseOffsetY;
+            auto sY = maxY - m_pauseSizeY;
+            for(auto y = sY; y < maxY; y++) {
+                auto offset = (y * m_width) + sX;
+                for(auto x = 0; x < m_pauseSizeX; x++) {
+                    if(x / xRun == 1) continue;
+                    m_fmtInfo.plot(m_texData, offset + x, 255, 0, 0, 255);
+                }
+            }
+        }
+
         SDL_UnlockTexture(m_gameTex);
         return true;
     }
@@ -164,47 +179,50 @@ namespace PlipSdl {
         switch(format) {
             case SDL_PIXELFORMAT_RGB24:
                 m_format = Plip::PlipVideoFormat::RGB888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_BGR24:
                 m_format = Plip::PlipVideoFormat::BGR888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_RGB888:
                 m_format = Plip::PlipVideoFormat::XRGB8888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_BGR888:
                 m_format = Plip::PlipVideoFormat::XBGR8888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_ARGB8888:
                 m_format = Plip::PlipVideoFormat::ARGB8888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_ABGR8888:
                 m_format = Plip::PlipVideoFormat::ABGR8888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_RGBX8888:
                 m_format = Plip::PlipVideoFormat::RGBX8888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_BGRX8888:
                 m_format = Plip::PlipVideoFormat::BGRX8888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_RGBA8888:
                 m_format = Plip::PlipVideoFormat::RGBA8888;
-                return true;
+                break;
 
             case SDL_PIXELFORMAT_BGRA8888:
                 m_format = Plip::PlipVideoFormat::BGRA8888;
-                return true;
+                break;
 
             default:
                 return false;
         }
+
+        m_fmtInfo = Plip::PlipVideo::GetFormatInfo(m_format);
+        return true;
     }
 
     uint32_t SdlWindow::SelectSdlFormat(Plip::PlipVideoFormat format) {
@@ -238,6 +256,10 @@ namespace PlipSdl {
 
     void SdlWindow::SetConsoleEnabled(bool enabled) {
         m_drawConsole = enabled;
+    }
+
+    void SdlWindow::SetDrawPauseIcon(bool value) {
+        m_drawPauseIcon = value;
     }
 
     void SdlWindow::SetGameScale(int scale) {

@@ -31,6 +31,7 @@ namespace PlipSdl {
         [[nodiscard]] int GetGameScale() const;
         [[nodiscard]] SDL_Renderer *GetRenderer() const;
         void SetConsoleEnabled(bool enabled);
+        void SetDrawPauseIcon(bool value);
         void SetGameScale(int scale);
 
     private:
@@ -45,9 +46,16 @@ namespace PlipSdl {
         const int m_initWidth = 64;
         const int m_initHeight = 64;
 
+        const int m_pauseOffsetX = 8;
+        const int m_pauseOffsetY = 8;
+        const int m_pauseSizeX = 24;  // should be a multiple of 3
+        const int m_pauseSizeY = 24;
+
         int m_width = m_initWidth;
         int m_height = m_initHeight;
         int m_gameScale;
+
+        bool m_drawPauseIcon = false;
 
         void *m_texData = nullptr;
         int m_pitch = -1;
@@ -60,5 +68,6 @@ namespace PlipSdl {
         SDL_Texture *m_gameTex = nullptr;
 
         Plip::PlipVideoFormat m_format = Plip::PlipVideoFormat::Unknown;
+        Plip::PlipVideoFormatInfo m_fmtInfo {};
     };
 }

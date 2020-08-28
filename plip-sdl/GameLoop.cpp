@@ -13,6 +13,7 @@ namespace PlipSdl {
         m_plip = plip;
         m_event = event;
         m_timer = timer;
+        m_wnd = (SdlWindow*)plip->GetVideo();
 
         m_updateRate = updateRate;
         m_updateTime = 1000000000 / m_updateRate;
@@ -54,7 +55,6 @@ namespace PlipSdl {
         }
 
         auto addr = (uint32_t)input;
-
         if(addr >= mem->GetLength()) {
             ss << "specified address is out of range\n"
                << "maximum value: " << printHex(mem->GetLength() - 1, 8) << "\n";
@@ -67,7 +67,7 @@ namespace PlipSdl {
             val = mem->GetByte(addr);
         } else {
             if(!Console::ParseULong(args[2], &input)) {
-                console->WriteError("invalid value");
+                console->WriteError("unable to parse value");
                 return;
             }
 
@@ -93,8 +93,10 @@ namespace PlipSdl {
             m_timer->StopwatchStart();
 
             if(m_console->GetConsoleEnabled()) {
-                // Console is enabled. Don't run the core.
+                // Console is enabled. Don't run the core, but make sure that its
+                // video output remains current.
                 uiEvent = m_console->ProcessEvents();
+                core->Redraw();
                 m_console->Run();
             } else {
                 uiEvent = m_event->ProcessEvents();
@@ -105,6 +107,9 @@ namespace PlipSdl {
                     } else if(uiEvent == SdlUiEvent::FrameAdvance) {
                         m_plip->Run(m_updateTime);
                     }
+
+                    // Ensure that the screen stays updated.
+                    core->Redraw();
                 } else {
                     // As implemented, this will not be able to compensate for the host being
                     // unable to keep up with the emulation core.
@@ -116,6 +121,7 @@ namespace PlipSdl {
             switch(uiEvent) {
                 case SdlUiEvent::PlayPause:
                     core->SetPaused(!core->GetPaused());
+                    m_wnd->SetDrawPauseIcon(core->GetPaused());
                     break;
 
                 case SdlUiEvent::ToggleConsole:

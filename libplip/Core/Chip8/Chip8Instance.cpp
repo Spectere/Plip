@@ -150,6 +150,13 @@ namespace Plip::Core::Chip8 {
         return PlipError::Success;
     }
 
+    void Chip8Instance::Redraw() {
+        m_video->BeginDraw();
+        m_video->Draw(m_videoOutput);
+        m_video->EndDraw();
+        m_video->Render();
+    }
+
     void Chip8Instance::WriteCharacterSet(uint32_t address) {
         for(auto i = 0; i < m_charsetLength; i++)
             m_memory->SetByte(address + i, m_charset[i]);
