@@ -63,7 +63,8 @@ namespace Plip::Cpu {
         }
 
         // If HALT has been executed and the IME is disabled, the CPU is
-        // effectively stopped. Panic!
+        // effectively stopped.
+        // TODO: Work out the exact behavior. It seems like it may differ from the docs.
         if(m_halt && m_ime == ScheduledState::Disabled) {
             std::stringstream ex;
             ex << "HALT issued with interrupts disabled!\n\n" << DumpRegisters();

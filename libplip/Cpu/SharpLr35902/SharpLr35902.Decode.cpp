@@ -73,7 +73,7 @@ namespace Plip::Cpu {
                 OpFlipCarry(); break;
 
             // HALT
-            case 0b01110101:
+            case 0b01110110:
                 OpHalt(); break;
 
             // ADD A, n
@@ -209,7 +209,7 @@ namespace Plip::Cpu {
             case 0b01101000: case 0b01101001: case 0b01101010: case 0b01101011:
             case 0b01101100: case 0b01101101: case 0b01101110: case 0b01101111:
             case 0b01110000: case 0b01110001: case 0b01110010: case 0b01110011:
-            case 0b01110100: /* 0b01110101 */ case 0b01110110: case 0b01110111:
+            case 0b01110100: case 0b01110101: /* 0b01110110 */ case 0b01110111:
             case 0b01111000: case 0b01111001: case 0b01111010: case 0b01111011:
             case 0b01111100: case 0b01111101: case 0b01111110: case 0b01111111:
                 OpLdRegReg(); break;
