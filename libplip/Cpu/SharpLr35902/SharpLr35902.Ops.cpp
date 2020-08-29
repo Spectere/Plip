@@ -724,7 +724,7 @@ namespace Plip::Cpu {
             // LD r, (HL)
             FETCH_ADDR_CYCLE(2, IDX_HL);
             CYCLE(3) {
-                *(GetRegister8(dest)) = m_instr[1];
+                *(GetRegister8(dest)) = m_memory->GetByte(REG_HL);
             }
             NUM_MCYCLES(3);
         } else {

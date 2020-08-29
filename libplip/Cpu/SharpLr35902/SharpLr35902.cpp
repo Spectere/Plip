@@ -62,15 +62,6 @@ namespace Plip::Cpu {
             NUM_MCYCLES(3);
         }
 
-        // If HALT has been executed and the IME is disabled, the CPU is
-        // effectively stopped.
-        // TODO: Work out the exact behavior. It seems like it may differ from the docs.
-        if(m_halt && m_ime == ScheduledState::Disabled) {
-            std::stringstream ex;
-            ex << "HALT issued with interrupts disabled!\n\n" << DumpRegisters();
-            throw PlipEmulationException(ex.str().c_str());
-        }
-
         // The LR35902 allows the next instruction to be fetched when the
         // previous instruction finishes its last execute stage.
         if(m_allowFetch && !m_halt && !iFlag) {
