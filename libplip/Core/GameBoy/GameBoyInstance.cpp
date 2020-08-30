@@ -75,6 +75,10 @@ namespace Plip::Core::GameBoy {
         delete m_videoBuffer;
     }
 
+    void GameBoyInstance::ClearBreakpoint() {
+        m_bp = 0xFFFFFFFF;
+    }
+
     void GameBoyInstance::Delta(long ns) {
         PlipMemoryValue lastWrite {};
         m_cycleRemaining += ns;
@@ -189,6 +193,12 @@ namespace Plip::Core::GameBoy {
             m_videoLastLcdc = lcdc;
 
             m_cycleRemaining -= m_cycleTime;
+
+            if(m_cpu->GetPc() == m_bp) {
+                m_cycleRemaining = 0;
+                m_paused = true;
+                break;
+            }
         } while(m_cycleTime < m_cycleRemaining);
     }
 
@@ -387,5 +397,9 @@ namespace Plip::Core::GameBoy {
                                   PlipInputType::Digital,
                                   "Start"),
                           { .digital = false });
+    }
+
+    void GameBoyInstance::SetBreakpoint(uint32_t pc) {
+        m_bp = pc;
     }
 }

@@ -86,7 +86,8 @@ namespace Plip::Cpu {
              << util::DumpValue(" H", m_reg.h, 2) << '\n'
              << util::DumpValue(" L", m_reg.l, 2) << "\n\n"
              << util::DumpValue("PC", m_reg.pc, 4) << '\n'
-             << util::DumpValue("SP", m_reg.sp, 4) << "\n\n"
+             << util::DumpValue("SP", m_reg.sp, 4) << "\n"
+             << "IME: " << (m_ime == ScheduledState::Enabled ? '1' : '0') << "\n\n"
              << "Instruction Cache:";
 
         if(m_instr.empty()) {

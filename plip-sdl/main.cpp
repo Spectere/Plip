@@ -61,9 +61,13 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
                 ("V,version", "displays the version information and exits")
         ;
 
+        options.add_options("Debug")
+                ("p,pause", "start emulation in a paused state")
+        ;
+
         options.add_options("Video")
-                ( "f,fps", "sets the target frame rate", cxxopts::value<int>()->default_value("60"))
-                ( "s,scale", "sets the default window scaling", cxxopts::value<int>()->default_value("1"))
+                ("f,fps", "sets the target frame rate", cxxopts::value<int>()->default_value("60"))
+                ("s,scale", "sets the default window scaling", cxxopts::value<int>()->default_value("1"))
         ;
 
         options.parse_positional({"core", "filename", "positional"});
@@ -123,8 +127,8 @@ int main(int argc, char **argv) {
 
     auto config = new PlipSdl::Config();
 
-    for(auto opt : defaultConfig)
-        config->SetValue(opt[0], opt[1], opt[2]);
+    for(auto cfgSetting : defaultConfig)
+        config->SetValue(cfgSetting[0], cfgSetting[1], cfgSetting[2]);
 
     if(opts["config"].count()) {
         auto configFile = opts["config"].as<std::string>();
@@ -244,6 +248,9 @@ int main(int argc, char **argv) {
 #endif
 
     auto game = new PlipSdl::GameLoop(plip, console, event, timer, targetFps);
+
+    if(opts.count("pause"))
+        game->SetStep(true);
     game->Play();
 
     SDL_Quit();

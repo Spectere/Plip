@@ -19,6 +19,7 @@ namespace Plip::Cpu {
         void Cycle() override;
         void DelayTimer();
         std::string DumpRegisters();
+        [[nodiscard]] uint32_t GetPc() override { return m_pc; }
         uint64_t* GetVideo() { return m_videoBuffer; }
         [[nodiscard]] bool IsAudioPlaying() const { return m_timerAudio >= 2; }
         void Reset() override;

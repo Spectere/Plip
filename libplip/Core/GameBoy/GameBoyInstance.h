@@ -17,10 +17,12 @@ namespace Plip::Core::GameBoy {
         GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config);
         ~GameBoyInstance();
 
+        void ClearBreakpoint() override;
         void Delta(long ns) override;
         std::string DumpRegisters() override;
         PlipError Load(const std::string &path) override;
         void Redraw() override;
+        void SetBreakpoint(uint32_t pc) override;
 
         const int BaseClockRate = 4194304;
         const int InputRight = 0;
@@ -93,6 +95,7 @@ namespace Plip::Core::GameBoy {
 
         // Core
         bool m_bootRomFlag = false;
+        uint32_t m_bp = 0xFFFFFFFF;
         std::string m_bootRomPath;
         Plip::Cpu::SharpLr35902 *m_cpu;
         long m_cycleRemaining = 0;

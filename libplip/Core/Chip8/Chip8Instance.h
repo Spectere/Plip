@@ -22,10 +22,12 @@ namespace Plip::Core::Chip8 {
         Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipConfig *config);
         ~Chip8Instance();
 
+        void ClearBreakpoint() override;
         void Delta(long ns) override;
         std::string DumpRegisters() override;
         PlipError Load(const std::string &path) override;
         void Redraw() override;
+        void SetBreakpoint(uint32_t pc) override;
 
         static const uint32_t ClockRate = 500;
         static const uint32_t CharacterSet = 0x100;
@@ -42,6 +44,7 @@ namespace Plip::Core::Chip8 {
         int m_sampleCount;
         int m_sampleRate;
 
+        uint32_t m_bp = 0xFFFFFFFF;
         Cpu::Chip8 *m_cpu;
         long m_cycleRemaining = 0;
         long m_delayRemaining = DelayTimerTick;

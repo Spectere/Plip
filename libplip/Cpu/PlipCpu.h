@@ -17,6 +17,7 @@ namespace Plip::Cpu {
         void SetHz(long hz);
 
         virtual void Cycle() = 0;
+        [[nodiscard]] virtual uint32_t GetPc() = 0;
         virtual void Reset() = 0;
 
     protected:

@@ -3,9 +3,6 @@
  * The main emulation loop.
  */
 
-#include <iomanip>
-#include <sstream>
-
 #include "GameLoop.h"
 
 namespace PlipSdl {
@@ -20,6 +17,10 @@ namespace PlipSdl {
 
         m_console = console;
 
+        m_console->RegisterCommand("bp",
+                                   [this](auto &&console, auto &&args) { ConsoleSetBreak(console, args); });
+        m_console->RegisterCommand("clearbp",
+                                   [this](auto&&, auto&&) { m_plip->GetCore()->ClearBreakpoint(); });
         m_console->RegisterCommand("dump",
                                    [this](auto &&console, auto &&args) { ConsoleDump(console, args); });
         m_console->RegisterCommand("mem",
@@ -36,13 +37,6 @@ namespace PlipSdl {
         std::stringstream ss;
         auto mem = m_plip->GetCore()->GetMemoryMap();
 
-        auto printHex = [](uintmax_t val, int precision) {
-            std::stringstream fmt;
-            fmt << "0x" << std::uppercase << std::setfill('0') << std::setw(precision)
-                << std::hex << val;
-            return fmt.str();
-        };
-
         if(args.size() < 2) {
             console->WriteLine("usage: mem [address] ([value])");
             return;
@@ -57,7 +51,7 @@ namespace PlipSdl {
         auto addr = (uint32_t)input;
         if(addr >= mem->GetLength()) {
             ss << "specified address is out of range\n"
-               << "maximum value: " << printHex(mem->GetLength() - 1, 8) << "\n";
+               << "maximum value: " << PrintHex(mem->GetLength() - 1, 8) << "\n";
             console->WriteError(ss.str());
             return;
         }
@@ -78,9 +72,35 @@ namespace PlipSdl {
             mem->SetByte(addr, val);
         }
 
-        ss << "[" << printHex(addr, 8) << "] == " << std::to_string(val) << " ("
-           << printHex(val, 2) << ")";
+        ss << "[" << PrintHex(addr, 8) << "] == " << std::to_string(val) << " ("
+           << PrintHex(val, 2) << ")";
         console->WriteLine(ss.str());
+    }
+
+    void GameLoop::ConsoleSetBreak(Console *console, const std::vector<std::string> &args) {
+        std::stringstream ss;
+
+        if(args.size() < 2) {
+            console->WriteLine("usage: bp [addr]");
+            return;
+        }
+
+        unsigned long input;
+        if(!Console::ParseULong(args[1], &input)) {
+            console->WriteError("unable to parse address");
+            return;
+        }
+
+        auto core = m_plip->GetCore();
+        auto mem = core->GetMemoryMap();
+        if(input >= core->GetMemoryMap()->GetLength()) {
+            ss << "specified address is out of range\n"
+               << "maximum value: " << PrintHex(mem->GetLength() - 1, 8) << "\n";
+            console->WriteError(ss.str());
+            return;
+        }
+
+        core->SetBreakpoint((uint32_t)input);
     }
 
     void GameLoop::Play() {
@@ -91,6 +111,7 @@ namespace PlipSdl {
         SdlUiEvent uiEvent;
         while(m_running) {
             m_timer->StopwatchStart();
+            m_wnd->SetDrawPauseIcon(core->GetPaused());
 
             if(m_console->GetConsoleEnabled()) {
                 // Console is enabled. Don't run the core, but make sure that its
@@ -121,7 +142,6 @@ namespace PlipSdl {
             switch(uiEvent) {
                 case SdlUiEvent::PlayPause:
                     core->SetPaused(!core->GetPaused());
-                    m_wnd->SetDrawPauseIcon(core->GetPaused());
                     break;
 
                 case SdlUiEvent::ToggleConsole:
@@ -144,5 +164,9 @@ namespace PlipSdl {
         }
 
         audio->DequeueAll();
+    }
+
+    void GameLoop::SetStep(bool value) {
+        m_plip->GetCore()->SetPaused(value);
     }
 }

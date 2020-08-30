@@ -41,6 +41,7 @@ namespace Plip::Cpu {
         void Cycle() override;
         [[nodiscard]] std::string DumpRegisters() const;
         void Interrupt(uint8_t irq);
+        [[nodiscard]] uint32_t GetPc() override { return m_reg.pc; }
         Registers GetRegisters() { return m_reg; }
         void Reset() override;
 
@@ -153,6 +154,7 @@ namespace Plip::Cpu {
         const uint16_t m_interruptFlag = 0xFF0F;
 
         bool m_allowFetch = true;
+        bool m_executeInterrupt = false;
         bool m_halt = false;
         ScheduledState m_ime = ScheduledState::Disabled;
         std::vector<uint8_t> m_instr;

@@ -56,11 +56,19 @@ namespace Plip::Core::Chip8 {
         free(m_videoOutput);
     }
 
+    void Chip8Instance::ClearBreakpoint() {
+        m_bp = 0xFFFFFFFF;
+    }
+
     void Chip8Instance::Delta(long ns) {
         m_cycleRemaining += ns;
 
         do {
             m_cpu->Cycle();
+            if(m_cpu->GetPc() == m_bp) {
+                m_paused = true;
+                break;
+            }
             m_cycleRemaining -= m_cycleTime;
 
             if(m_audio->GetQueueSize() < 1024) {
@@ -155,6 +163,10 @@ namespace Plip::Core::Chip8 {
         m_video->Draw(m_videoOutput);
         m_video->EndDraw();
         m_video->Render();
+    }
+
+    void Chip8Instance::SetBreakpoint(uint32_t pc) {
+        m_bp = pc;
     }
 
     void Chip8Instance::WriteCharacterSet(uint32_t address) {
