@@ -87,6 +87,7 @@ namespace Plip::Core::GameBoy {
         void VideoModePostTransition();
         void VideoModePreTransition();
         bool VideoOamSearch();
+        void VideoSetMemoryPermissions();
         bool VideoVBlank();
         bool VideoVidGen();
 

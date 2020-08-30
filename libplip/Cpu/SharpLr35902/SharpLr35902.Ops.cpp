@@ -960,7 +960,7 @@ namespace Plip::Cpu {
         }
 
         // RES n, r
-        *(GetRegister8(reg)) &= (1 << idx);
+        *(GetRegister8(reg)) &= ~(1 << idx);
         NUM_MCYCLES(3);
     }
 

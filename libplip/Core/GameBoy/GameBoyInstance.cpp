@@ -161,24 +161,28 @@ namespace Plip::Core::GameBoy {
             auto lcdc = m_ioRegisters->GetByte(m_regLcdControl);
 
             // Run 4 dot clock cycles (4.19MHz) if the display is enabled.
-            if(BIT_TEST(lcdc, 7)) {
-                for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
-                    VideoCycle();
-                }
-            } else if(BIT_TEST(m_videoLastLcdc, 7)) {
-                // The LCD display was disabled in this CPU cycle. Clear the
-                // buffer, make sure the memory is accessible, and reset the PPU.
+            if(BIT_TEST(m_videoLastLcdc, 7) && !BIT_TEST(lcdc, 7)) {
+                // The LCD display was disabled during this CPU cycle. Flag all
+                // video memory as being writable.
                 m_oam->SetWritable(true);
                 m_videoRam->SetWritable(true);
 
-                m_videoLx = m_videoLy = 0;
-                m_videoMode = m_videoModeOamSearch;
-
+                // When the LCD is disabled, the screen should go blank.
                 memset(m_videoBuffer, 0xFF, m_videoBufferSize);
                 m_video->BeginDraw();
                 m_video->Draw(m_videoBuffer);
                 m_video->EndDraw();
                 m_video->Render();
+            } else if(!BIT_TEST(m_videoLastLcdc, 7) && BIT_TEST(lcdc, 7)) {
+                // The LCD display was enabled during this CPU cycle. Set the
+                // video memory accessibility appropriately.
+                VideoSetMemoryPermissions();
+            }
+
+            if(BIT_TEST(lcdc, 7)) {
+                for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
+                    VideoCycle();
+                }
             }
 
             m_ioRegisters->SetByte(m_regLy, m_videoLy);
