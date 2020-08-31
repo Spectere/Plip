@@ -953,7 +953,7 @@ namespace Plip::Cpu {
             // RES n, (HL)
             FETCH_ADDR_CYCLE(3, REG_HL);
             CYCLE(4) {
-                MEM_WRITE(REG_HL, m_instr[2] &= (1 << idx));
+                MEM_WRITE(REG_HL, m_instr[2] &= ~(1 << idx));
             }
             NUM_MCYCLES(5);
             return;

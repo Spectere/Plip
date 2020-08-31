@@ -154,7 +154,7 @@ namespace Plip::Cpu {
         const uint16_t m_interruptFlag = 0xFF0F;
 
         bool m_allowFetch = true;
-        bool m_executeInterrupt = false;
+        bool m_isr = false;
         bool m_halt = false;
         ScheduledState m_ime = ScheduledState::Disabled;
         std::vector<uint8_t> m_instr;

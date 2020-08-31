@@ -374,7 +374,7 @@ namespace Plip::Cpu {
             case 0b01111100: case 0b01111101: case 0b01111110: case 0b01111111:
                 OpBitTest(); break;
 
-            // SET n, r (mask: 0b11000000, op: 0b10000000)
+            // RES n, r (mask: 0b11000000, op: 0b10000000)
             case 0b10000000: case 0b10000001: case 0b10000010: case 0b10000011:
             case 0b10000100: case 0b10000101: case 0b10000110: case 0b10000111:
             case 0b10001000: case 0b10001001: case 0b10001010: case 0b10001011:
@@ -391,9 +391,9 @@ namespace Plip::Cpu {
             case 0b10110100: case 0b10110101: case 0b10110110: case 0b10110111:
             case 0b10111000: case 0b10111001: case 0b10111010: case 0b10111011:
             case 0b10111100: case 0b10111101: case 0b10111110: case 0b10111111:
-                OpBitSet(); break;
+                OpBitClear(); break;
 
-            // RES n, r (mask: 0b11000000, op: 0b11000000)
+            // SET n, r (mask: 0b11000000, op: 0b11000000)
             case 0b11000000: case 0b11000001: case 0b11000010: case 0b11000011:
             case 0b11000100: case 0b11000101: case 0b11000110: case 0b11000111:
             case 0b11001000: case 0b11001001: case 0b11001010: case 0b11001011:
@@ -410,7 +410,7 @@ namespace Plip::Cpu {
             case 0b11110100: case 0b11110101: case 0b11110110: case 0b11110111:
             case 0b11111000: case 0b11111001: case 0b11111010: case 0b11111011:
             case 0b11111100: case 0b11111101: case 0b11111110: case 0b11111111:
-                OpBitClear(); break;
+                OpBitSet(); break;
 
             default:
                 std::stringstream ex;

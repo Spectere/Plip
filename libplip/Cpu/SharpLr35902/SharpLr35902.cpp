@@ -43,28 +43,30 @@ namespace Plip::Cpu {
                 // Set up the CPU to jump to the interrupt handler.
                 m_allowFetch = false;
                 m_ime = ScheduledState::Disabled;
-                m_mcycle = 0;
+                m_isr = true;
+                m_mcycle = 1;
             }
         }
 
-        if(iFlag) {
-            STACK_PUSH_PC(0);
-            CYCLE(3) {
+        if(m_isr) {
+            STACK_PUSH_PC(3);
+            CYCLE(5) {
                 uint8_t idx = 0;
                 for(; idx > 4; idx++) {
                     if(iFlag & (1 << idx)) break;
                 }
 
                 m_halt = false;
+                m_isr = false;
                 m_reg.pc = 0x40 + (idx * 0x8);
                 m_memory->SetByte(m_interruptFlag, iFlag ^ (1 << idx));
             }
-            NUM_MCYCLES(3);
+            NUM_MCYCLES(5);
         }
 
         // The LR35902 allows the next instruction to be fetched when the
         // previous instruction finishes its last execute stage.
-        if(m_allowFetch && !m_halt && !iFlag) {
+        if(m_allowFetch && !m_halt && !m_isr) {
             FETCH;
             BEGIN_EXECUTE;
         }
@@ -175,8 +177,6 @@ namespace Plip::Cpu {
     }
 
     void SharpLr35902::Interrupt(uint8_t irq) {
-        if(m_ime != ScheduledState::Enabled) return;
-
         auto iFlag = m_memory->GetByte(m_interruptFlag);
         iFlag |= irq;
         m_memory->SetByte(m_interruptFlag, iFlag);
