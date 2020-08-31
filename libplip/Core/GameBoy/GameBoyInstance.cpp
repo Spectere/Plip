@@ -181,6 +181,7 @@ namespace Plip::Core::GameBoy {
                 // The LCD display was enabled during this CPU cycle. Set the
                 // video memory accessibility appropriately.
                 VideoSetMemoryPermissions();
+                m_lcdBlankFrame = true;
             }
 
             if(BIT_TEST(lcdc, 7)) {

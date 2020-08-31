@@ -36,6 +36,8 @@ namespace Plip::Core::GameBoy {
 
     private:
         inline void Plot(uint8_t color, int pos) {
+            if(m_lcdBlankFrame) color = 0b00;
+
             switch(color) {
                 case 0b00:
                     // White
@@ -218,6 +220,7 @@ namespace Plip::Core::GameBoy {
         };
 
         int m_dotCount = 0;
+        bool m_lcdBlankFrame = false;
         uint8_t *m_spriteList;
         uint8_t *m_spriteListSorted;
         uint8_t m_spriteListIdx = 0;

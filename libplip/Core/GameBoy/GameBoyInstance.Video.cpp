@@ -81,9 +81,9 @@ namespace Plip::Core::GameBoy {
 
     void GameBoyInstance::VideoModePostTransition() {
         uint8_t stat = m_ioRegisters->GetByte(m_regLcdcStatus);
+        VideoSetMemoryPermissions();
 
         // New mode.
-        VideoSetMemoryPermissions();
         switch(m_videoMode) {
             case m_videoModeHBlank:
                 if(BIT_TEST(stat, 3)) m_cpu->Interrupt(INTERRUPT_LCDSTAT);
@@ -97,6 +97,8 @@ namespace Plip::Core::GameBoy {
                 m_video->Draw(m_videoBuffer);
                 m_video->EndDraw();
                 m_video->Render();
+
+                m_lcdBlankFrame = false;
 
                 m_cpu->Interrupt(INTERRUPT_VBLANK);
                 if(BIT_TEST(stat, 4)) m_cpu->Interrupt(INTERRUPT_LCDSTAT);
@@ -219,8 +221,8 @@ namespace Plip::Core::GameBoy {
                 if(BIT_TEST(lcdc, 0)) { // BG/Window Display Enabled
                     tileDataAddr = m_vramTileBase + (BIT_TEST(lcdc, 4) ? 0 : m_vramTileBlockOffset);
                     tileMapAddr = m_vramBgBase + (BIT_TEST(lcdc, 3) ? m_vramBgBlockOffset : 0);
-                    tileX = (scx + m_videoLx) / 8;
-                    tileY = (scy + m_videoLy) / 8;
+                    tileX = ((scx + m_videoLx) / 8) % 32;
+                    tileY = ((scy + m_videoLy) / 8) % 32;
                     tilePX = (scx + m_videoLx) % 8;
                     tilePY = (scy + m_videoLy) % 8;
 
@@ -245,8 +247,8 @@ namespace Plip::Core::GameBoy {
 
                         if(!(wx > 166 || wy > 143) || m_videoLx >= wx || m_videoLy >= wy) {
                             tileMapAddr = m_vramBgBase + (BIT_TEST(lcdc, 6) ? m_vramBgBlockOffset : 0);
-                            tileX = (m_videoLx + wx) / 8;
-                            tileY = (m_videoLy + wy) / 8;
+                            tileX = ((m_videoLx + wx) / 8) % 32;
+                            tileY = ((m_videoLy + wy) / 8) % 32;
                             tilePX = (m_videoLx + wx) % 8;
                             tilePY = (m_videoLy + wy) % 8;
 
