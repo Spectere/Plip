@@ -112,11 +112,11 @@ namespace Plip::Cpu {
         void OpJumpRelCond();
         void OpJumpRelUnc();
         void OpLdAccumMem();
-        void OpLdAccumMemHigh();
+        void OpLdAccumMemHighImm();
         void OpLdAccumMemHighC();
         void OpLdHlSpOffset();
         void OpLdMemAccum();
-        void OpLdMemHighAccum();
+        void OpLdMemHighImmAccum();
         void OpLdMemHighCAccum();
         void OpLdMemReg();
         void OpLdMemSp();

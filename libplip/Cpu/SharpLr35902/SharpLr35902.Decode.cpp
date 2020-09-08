@@ -110,7 +110,7 @@ namespace Plip::Cpu {
 
             // LDH (n), A
             case 0b11100000:
-                OpLdMemHighAccum(); break;
+                OpLdMemHighImmAccum(); break;
 
             // LDH (C), A
             case 0b11100010:
@@ -138,7 +138,7 @@ namespace Plip::Cpu {
 
             // LDH A, (n)
             case 0b11110000:
-                OpLdAccumMemHigh(); break;
+                OpLdAccumMemHighImm(); break;
 
             // OR n
             case 0b11110110:

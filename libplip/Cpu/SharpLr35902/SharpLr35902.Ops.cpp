@@ -137,8 +137,10 @@ namespace Plip::Cpu {
 
     // RRCA
     void SharpLr35902::OpAccumRotateRight() {
-        CHECK_BIT_CARRY(m_reg.a & 0b00000001);
+        uint8_t lsb = m_reg.a & 0b00000001;
+        CHECK_BIT_CARRY(lsb);
         m_reg.a >>= 1;
+        m_reg.a |= lsb << 7;
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
         FLAG_CLEAR(ZERO);
@@ -566,7 +568,7 @@ namespace Plip::Cpu {
     // LD A, (nn)
     void SharpLr35902::OpLdAccumMem() {
         FETCH_CYCLE(2);
-        FETCH_CYCLE(2);
+        FETCH_CYCLE(3);
         CYCLE(4) {
             m_reg.a = MEM_READ(COMBINE16LE(m_instr[2], m_instr[1]));
         }
@@ -574,7 +576,7 @@ namespace Plip::Cpu {
     }
 
     // LDH A, (n)
-    void SharpLr35902::OpLdAccumMemHigh() {
+    void SharpLr35902::OpLdAccumMemHighImm() {
         FETCH_CYCLE(2);
         FETCH_ADDR_CYCLE(3, 0xFF00 | m_instr[1]);
         CYCLE(4) { m_reg.a = m_instr[2]; }
@@ -620,7 +622,7 @@ namespace Plip::Cpu {
     }
 
     // LDH (n), A
-    void SharpLr35902::OpLdMemHighAccum() {
+    void SharpLr35902::OpLdMemHighImmAccum() {
         FETCH_CYCLE(2);
         CYCLE(3) { MEM_WRITE(0xFF00 | m_instr[1], m_reg.a); }
         NUM_MCYCLES(4);
@@ -764,7 +766,7 @@ namespace Plip::Cpu {
             return;
         }
 
-        // OP r
+        // OR r
         m_reg.a |= *(GetRegister8(src));
         CHECK_ZERO(m_reg.a);
         FLAG_CLEAR(SUBTRACT);
