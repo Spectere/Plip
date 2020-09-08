@@ -402,6 +402,7 @@ namespace Plip::Cpu {
 
                 FLAG_SET(SUBTRACT);
                 CHECK_SUB_HALFCARRY(m_instr[1], 1);
+                res &= 0xFF;
                 CHECK_ZERO(res);
 
                 MEM_WRITE(REG_HL, res);
@@ -416,6 +417,7 @@ namespace Plip::Cpu {
 
         FLAG_SET(SUBTRACT);
         CHECK_SUB_HALFCARRY(*reg, 1);
+        res &= 0xFF;
         CHECK_ZERO(res);
         *reg = res;
 
@@ -479,6 +481,7 @@ namespace Plip::Cpu {
 
                 FLAG_CLEAR(SUBTRACT);
                 CHECK_ADD_HALFCARRY(m_instr[1], 1);
+                res &= 0xFF;
                 CHECK_ZERO(res);
 
                 MEM_WRITE(REG_HL, res);
@@ -493,6 +496,7 @@ namespace Plip::Cpu {
 
         FLAG_CLEAR(SUBTRACT);
         CHECK_ADD_HALFCARRY(*reg, 1);
+        res &= 0xFF;
         CHECK_ZERO(res);
         *reg = res;
 
