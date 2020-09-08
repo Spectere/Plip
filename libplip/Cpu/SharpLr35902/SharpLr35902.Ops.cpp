@@ -655,8 +655,8 @@ namespace Plip::Cpu {
         FETCH_CYCLE(2);
         FETCH_CYCLE(3);
         CYCLE(4) { MEM_WRITE(COMBINE16LE(m_instr[2], m_instr[1]),
-                             m_reg.sp &= 0xFF); }
-        CYCLE(5) { MEM_WRITE(COMBINE16LE(m_instr[2], m_instr[1]),
+                             m_reg.sp & 0xFF); }
+        CYCLE(5) { MEM_WRITE(COMBINE16LE(m_instr[2], m_instr[1]) + 1,
                              m_reg.sp >> 8); }
         NUM_MCYCLES(6);
     }
