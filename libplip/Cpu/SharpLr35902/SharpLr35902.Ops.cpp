@@ -539,9 +539,9 @@ namespace Plip::Cpu {
         NUM_MCYCLES(5);
     }
 
-    // JP HL
+    // JP (HL)
     void SharpLr35902::OpJumpRegUnc() {
-        m_reg.pc = GetRegister16Value(IDX_16_HL);
+        m_reg.pc = REG_HL;
         NUM_MCYCLES(2);
     }
 
@@ -651,7 +651,7 @@ namespace Plip::Cpu {
         } else {
             // LD (rr), A
             CYCLE(2) {
-                auto reg = GetRegister16Value(OP_REG16(0));
+                auto reg = GetRegister16Pointer(OP_REG16(0));
                 MEM_WRITE(reg, m_reg.a);
             }
         }
@@ -708,7 +708,7 @@ namespace Plip::Cpu {
 
     // LD A, (rr)
     void SharpLr35902::OpLdRegMem() {
-        FETCH_ADDR_CYCLE(2, GetRegister16Value(OP_REG16(0)));
+        FETCH_ADDR_CYCLE(2, GetRegister16Pointer(OP_REG16(0)));
         CYCLE(3) {
             m_reg.a = m_instr[1];
         }
@@ -803,7 +803,7 @@ namespace Plip::Cpu {
 
         if(reg == IDX_16_SP) {
             // AF shares an index with SP for PUSH/POP.
-            val = (m_reg.a << 8) + m_reg.f;
+            val = (m_reg.a << 8) | m_reg.f;
         } else {
             val = GetRegister16Value(OP_REG16(0));
         }

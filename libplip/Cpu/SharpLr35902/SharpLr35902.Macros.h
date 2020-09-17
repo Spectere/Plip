@@ -57,6 +57,8 @@
 #define OP_REG_X(idx) OP_IDX(idx)
 #define OP_REG_Y(idx) (m_instr[(idx)] & 0b00000111)
 
+#define REG_BC COMBINE16LE(m_reg.b, m_reg.c)
+#define REG_DE COMBINE16LE(m_reg.d, m_reg.e)
 #define REG_HL COMBINE16LE(m_reg.h, m_reg.l)
 
 #define SET_PC_IMM m_reg.pc = m_instr[2] << 8 | m_instr[1]

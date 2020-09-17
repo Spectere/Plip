@@ -103,7 +103,7 @@ namespace Plip::Cpu {
         return dump.str();
     }
 
-    uint16_t SharpLr35902::GetRegister16Value(uint8_t idx) {
+    uint16_t SharpLr35902::GetRegister16Pointer(uint8_t idx) {
         uint16_t val;
 
         switch(idx) {
@@ -123,6 +123,25 @@ namespace Plip::Cpu {
             default:
                 std::stringstream ex;
                 ex << "invalid address register pair index: "
+                   << PlipUtility::FormatHex(idx, 2)
+                   << "\n\n" << DumpRegisters();
+                throw PlipEmulationException(ex.str().c_str());
+        }
+    }
+
+    uint16_t SharpLr35902::GetRegister16Value(uint8_t idx) {
+        switch(idx) {
+            case IDX_16_BC:
+                return REG_BC;
+            case IDX_16_DE:
+                return REG_DE;
+            case IDX_16_HL:
+                return REG_HL;
+            case IDX_16_SP:
+                return m_reg.sp;
+            default:
+                std::stringstream ex;
+                ex << "invalid 16-bit register pair index: "
                    << PlipUtility::FormatHex(idx, 2)
                    << "\n\n" << DumpRegisters();
                 throw PlipEmulationException(ex.str().c_str());

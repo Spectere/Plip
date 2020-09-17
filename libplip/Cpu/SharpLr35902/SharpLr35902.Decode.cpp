@@ -124,7 +124,7 @@ namespace Plip::Cpu {
             case 0b11101000:
                 OpAddSpReg(); break;
 
-            // JP HP
+            // JP (HL)
             case 0b11101001:
                 OpJumpRegUnc(); break;
 

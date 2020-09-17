@@ -52,6 +52,7 @@ namespace Plip::Cpu {
         void DecodeCB();
         uint8_t* GetRegister8(uint8_t idx);
         std::tuple<uint8_t*, uint8_t*> GetRegisterPair(uint8_t idx);
+        uint16_t GetRegister16Pointer(uint8_t idx);
         uint16_t GetRegister16Value(uint8_t idx);
         [[nodiscard]] bool TestConditional(uint8_t idx) const;
 
