@@ -113,10 +113,12 @@ namespace Plip::Cpu {
 
     // RLCA
     void SharpLr35902::OpAccumRotateLeft() {
-        CHECK_BIT_CARRY(m_reg.a & 0b10000000);
-        m_reg.a <<= 1;
+        uint8_t msb = m_reg.a >> 7;
+        CHECK_BIT_CARRY(msb);
         FLAG_CLEAR(HALFCARRY);
         FLAG_CLEAR(SUBTRACT);
+        m_reg.a <<= 1;
+        m_reg.a |= msb;
         FLAG_CLEAR(ZERO);
 
         NUM_MCYCLES(2);
@@ -296,7 +298,7 @@ namespace Plip::Cpu {
 
         // ADC A, r
         auto val = *(GetRegister8(src));
-        res = m_reg.a + val + FLAG_TEST(CARRY) ? 1 : 0;
+        res = m_reg.a + val + (FLAG_TEST(CARRY) ? 1 : 0);
         CHECK_CARRY(res);
         CHECK_ADD_HALFCARRY(m_reg.a, val);
         m_reg.a = res & 0xFF;
@@ -907,7 +909,7 @@ namespace Plip::Cpu {
 
         // SBC A, r
         auto val = *(GetRegister8(src));
-        res = m_reg.a - val - FLAG_TEST(CARRY) ? 1 : 0;
+        res = m_reg.a - val - (FLAG_TEST(CARRY) ? 1 : 0);
         CHECK_CARRY(res);
         CHECK_SUB_HALFCARRY(m_reg.a, val);
         m_reg.a = res & 0xFF;
@@ -1026,7 +1028,7 @@ namespace Plip::Cpu {
             // SWAP (HL)
             FETCH_ADDR_CYCLE(3, REG_HL);
             CYCLE(4) {
-                uint8_t res = (m_instr[2] << 4) + (m_instr[2] & 0x0F);
+                uint8_t res = (m_instr[2] << 4) | (m_instr[2] >> 4);
                 MEM_WRITE(REG_HL, res);
                 CHECK_ZERO(res);
                 FLAG_CLEAR(CARRY);
@@ -1040,7 +1042,7 @@ namespace Plip::Cpu {
 
         // SWAP r
         auto r = GetRegister8(reg);
-        *r = (*r << 4) + (*r & 0x0F);
+        *r = (*r << 4) | (*r >> 4);
         CHECK_ZERO(*r);
         FLAG_CLEAR(CARRY);
         FLAG_CLEAR(HALFCARRY);
