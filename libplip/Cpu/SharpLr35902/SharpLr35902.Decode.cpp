@@ -122,7 +122,7 @@ namespace Plip::Cpu {
 
             // ADD SP, e
             case 0b11101000:
-                OpAddSpReg(); break;
+                OpAddSpOffset(); break;
 
             // JP (HL)
             case 0b11101001:

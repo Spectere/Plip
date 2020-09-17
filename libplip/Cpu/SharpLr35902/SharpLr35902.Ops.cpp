@@ -256,19 +256,17 @@ namespace Plip::Cpu {
     }
 
     // ADD SP, e
-    void SharpLr35902::OpAddSpReg() {
+    void SharpLr35902::OpAddSpOffset() {
         FETCH_CYCLE(2);
         CYCLE(5) {
             auto offset = (int8_t)m_instr[1];
-            uint32_t res = m_reg.sp + offset;
+            uint16_t res = m_reg.sp + offset;
 
-            if(offset >= 0)
-                CHECK_ADD_HALFCARRY16(m_reg.sp, m_instr[1]);
-            else
-                CHECK_SUB_HALFCARRY(m_reg.sp, m_instr[1]);
+            // Both carry flags are calculated from the low bit.
+            CHECK_CARRY((m_reg.sp & 0xFF) + m_instr[1]);
+            CHECK_ADD_HALFCARRY(m_reg.sp, m_instr[1]);
 
-            m_reg.sp = res & 0xFFFF;
-            CHECK_CARRY16(res);
+            m_reg.sp = res;
             FLAG_CLEAR(ZERO);
             FLAG_CLEAR(SUBTRACT);
         }
@@ -597,16 +595,13 @@ namespace Plip::Cpu {
         FETCH_CYCLE(2);
         CYCLE(4) {
             auto offset = (int8_t)m_instr[1];
-            uint32_t res = m_reg.sp + offset;
+            uint16_t res = m_reg.sp + offset;
 
-            if(offset >= 0)
-                CHECK_ADD_HALFCARRY16(m_reg.sp, m_instr[1]);
-            else
-                CHECK_SUB_HALFCARRY(m_reg.sp, m_instr[1]);
+            CHECK_CARRY((m_reg.sp & 0xFF) + m_instr[1]);
+            CHECK_ADD_HALFCARRY(m_reg.sp, m_instr[1]);
 
             m_reg.h = (res >> 8) & 0xFF;
             m_reg.l = res & 0xFF;
-            CHECK_CARRY16(res);
             FLAG_CLEAR(ZERO);
             FLAG_CLEAR(SUBTRACT);
         }
@@ -787,6 +782,7 @@ namespace Plip::Cpu {
             // AF shares an index with SP for PUSH/POP.
             high = &(m_reg.a);
             low = &(m_reg.f);
+            *low &= 0xF0;  // Ensure that only the flag bits are considered.
         } else {
             std::tie(high, low) = GetRegisterPair(reg);
         }
@@ -803,7 +799,8 @@ namespace Plip::Cpu {
 
         if(reg == IDX_16_SP) {
             // AF shares an index with SP for PUSH/POP.
-            val = (m_reg.a << 8) | m_reg.f;
+            // Additionally, only the top four bits of F can be written to.
+            val = (m_reg.a << 8) | (m_reg.f & 0xF0);
         } else {
             val = GetRegister16Value(OP_REG16(0));
         }

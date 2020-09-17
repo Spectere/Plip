@@ -93,7 +93,7 @@ namespace Plip::Cpu {
         void OpAdd();
         void OpAdd16();
         void OpAddCarry();
-        void OpAddSpReg();
+        void OpAddSpOffset();
         void OpAnd();
         void OpCallCond();
         void OpCallUnc();

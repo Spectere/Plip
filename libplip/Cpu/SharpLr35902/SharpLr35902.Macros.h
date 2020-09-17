@@ -93,4 +93,7 @@
 #define CHECK_ADD_HALFCARRY16(left, right) do { \
     if(((left) & 0x0FFF) + ((right) & 0x0FFF) > 0x0FFF) FLAG_SET(HALFCARRY); \
     else FLAG_CLEAR(HALFCARRY); } while(0)
+#define CHECK_SUB_HALFCARRY16(left, right) do { \
+    if(((left) & 0x0FFF) - ((right) & 0x0FFF) < 0x0000) FLAG_SET(HALFCARRY); \
+    else FLAG_CLEAR(HALFCARRY); } while(0)
 #define CHECK_ZERO(val) do { if((val)) FLAG_CLEAR(ZERO); else FLAG_SET(ZERO); } while(0)
