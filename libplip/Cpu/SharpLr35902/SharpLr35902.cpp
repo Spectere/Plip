@@ -26,7 +26,7 @@ namespace Plip::Cpu {
         // Handle interrupts here if (1) we're ready to fetch, (2) interrupts
         // are enabled, and (3) an interrupt request has been made.
         auto iFlag = m_memory->GetByte(m_interruptFlag) & 0b00011111;
-        if(m_allowFetch && m_ime == ScheduledState::Enabled && iFlag) {
+        if(m_allowFetch && m_ime == ScheduledState::Enabled && iFlag && !m_isr) {
             auto ie = m_memory->GetByte(m_interruptEnabled);
 
             // If no interrupts are enabled, and a HALT instruction has been
@@ -37,9 +37,16 @@ namespace Plip::Cpu {
                 throw PlipEmulationException(ex.str().c_str());
             }
 
-            // Check to see if the requested interrupt has been enabled.
-            iFlag &= ie;
-            if(iFlag) {
+            // Check for an enabled interrupt.
+            m_isr = false;
+            for(m_isrIdx = 0; m_isrIdx <= 4; m_isrIdx++) {
+                if(ie & (iFlag & (1 << m_isrIdx))) {
+                    m_isr = true;
+                    break;
+                }
+            }
+
+            if(m_isr) {
                 // Set up the CPU to jump to the interrupt handler.
                 m_allowFetch = false;
                 m_ime = ScheduledState::Disabled;
@@ -51,15 +58,10 @@ namespace Plip::Cpu {
         if(m_isr) {
             STACK_PUSH_PC(3);
             CYCLE(5) {
-                uint8_t idx = 0;
-                for(; idx > 4; idx++) {
-                    if(iFlag & (1 << idx)) break;
-                }
-
                 m_halt = false;
                 m_isr = false;
-                m_reg.pc = 0x40 + (idx * 0x8);
-                m_memory->SetByte(m_interruptFlag, iFlag ^ (1 << idx));
+                m_reg.pc = 0x40 + (m_isrIdx * 0x8);
+                m_memory->SetByte(m_interruptFlag, iFlag ^ (1 << m_isrIdx));
             }
             NUM_MCYCLES(5);
         }
