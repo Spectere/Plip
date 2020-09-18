@@ -33,7 +33,8 @@ std::unordered_map<std::string, SDL_Scancode> defaultFrontendKeys = {
         { "console", SDL_SCANCODE_GRAVE },
         { "frameadvance", SDL_SCANCODE_RIGHTBRACKET },
         { "pause", SDL_SCANCODE_BACKSLASH },
-        { "step", SDL_SCANCODE_LEFTBRACKET }
+        { "step", SDL_SCANCODE_LEFTBRACKET },
+        { "turbo", SDL_SCANCODE_TAB }
 };
 
 std::vector<std::vector<std::string>> intParamMapping = {

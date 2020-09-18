@@ -16,6 +16,8 @@ namespace PlipSdl {
         PlayPause,
         Step,
         ToggleConsole,
+        TurboOff,
+        TurboOn,
         Quit
     };
 
@@ -40,6 +42,7 @@ namespace PlipSdl {
         SDL_Scancode m_frameAdvanceKey {};
         SDL_Scancode m_pauseKey {};
         SDL_Scancode m_stepKey {};
+        SDL_Scancode m_turboKey {};
         std::unordered_map<SDL_Scancode, int> m_digitalBinding;
         Plip::PlipInput *m_input;
     };

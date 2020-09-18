@@ -106,6 +106,7 @@ namespace PlipSdl {
     void GameLoop::Play() {
         auto audio = m_plip->GetAudio();
         auto core = m_plip->GetCore();
+        auto turbo = false;
 
         m_running = true;
         SdlUiEvent uiEvent;
@@ -148,6 +149,14 @@ namespace PlipSdl {
                     m_console->ToggleConsole();
                     break;
 
+                case SdlUiEvent::TurboOff:
+                    turbo = false;
+                    break;
+
+                case SdlUiEvent::TurboOn:
+                    turbo = true;
+                    break;
+
                 case SdlUiEvent::Quit:
                     m_running = false;
                     break;
@@ -157,10 +166,13 @@ namespace PlipSdl {
 
             auto time = m_timer->StopwatchStop();
             auto delay = m_updateTime - time;
-            while(delay < 0)
-                delay += m_updateTime;
 
-            m_timer->Nanosleep(delay);
+            if(!turbo) {
+                while(delay < 0)
+                    delay += m_updateTime;
+
+                m_timer->Nanosleep(delay);
+            }
         }
 
         audio->DequeueAll();

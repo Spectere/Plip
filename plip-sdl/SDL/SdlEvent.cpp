@@ -32,12 +32,17 @@ namespace PlipSdl {
                         uiEvent = SdlUiEvent::PlayPause;
                     else if(ev.key.keysym.scancode == m_stepKey)
                         uiEvent = SdlUiEvent::Step;
+                    else if(ev.key.keysym.scancode == m_turboKey)
+                        uiEvent = SdlUiEvent::TurboOn;
                     else
                         UpdateDigitalInput(ev.key.keysym.scancode, true);
                     break;
 
                 case SDL_KEYUP:
-                    UpdateDigitalInput(ev.key.keysym.scancode, false);
+                    if(ev.key.keysym.scancode == m_turboKey)
+                        uiEvent = SdlUiEvent::TurboOff;
+                    else
+                        UpdateDigitalInput(ev.key.keysym.scancode, false);
                     break;
 
                 case SDL_QUIT:
@@ -50,6 +55,7 @@ namespace PlipSdl {
     }
 
     void SdlEvent::SetKey(const std::string &action, SDL_Scancode scancode) {
+        // TODO: Oof, this is nasty. Kindly revamp this. :)
         switch(Hash(action.c_str())) {
             case Hash("console"):
                 m_consoleKey = scancode;
@@ -65,6 +71,10 @@ namespace PlipSdl {
 
             case Hash("step"):
                 m_stepKey = scancode;
+                break;
+
+            case Hash("turbo"):
+                m_turboKey = scancode;
                 break;
         }
     }
