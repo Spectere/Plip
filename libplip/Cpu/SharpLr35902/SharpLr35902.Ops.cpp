@@ -1241,7 +1241,7 @@ namespace Plip::Cpu {
             FETCH_ADDR_CYCLE(3, REG_HL);
             CYCLE(4) {
                 auto res = m_instr[2];
-                uint8_t msb = reg & 0b10000000;
+                uint8_t msb = res & 0b10000000;
                 uint8_t lsb = res & 0b00000001;
                 CHECK_BIT_CARRY(lsb);
                 FLAG_CLEAR(HALFCARRY);
