@@ -29,14 +29,6 @@ namespace Plip::Cpu {
         if(m_allowFetch && m_ime == ScheduledState::Enabled && iFlag && !m_isr) {
             auto ie = m_memory->GetByte(m_interruptEnabled);
 
-            // If no interrupts are enabled, and a HALT instruction has been
-            // executed, the CPU is effectively stopped. Panic!
-            if((ie & 0b00011111) == 0 && m_halt) {
-                std::stringstream ex;
-                ex << "HALT issued with no interrupts enabled!\n\n" << DumpRegisters();
-                throw PlipEmulationException(ex.str().c_str());
-            }
-
             // Check for an enabled interrupt.
             m_isr = false;
             for(m_isrIdx = 0; m_isrIdx <= 4; m_isrIdx++) {
@@ -201,6 +193,7 @@ namespace Plip::Cpu {
         auto iFlag = m_memory->GetByte(m_interruptFlag);
         iFlag |= irq;
         m_memory->SetByte(m_interruptFlag, iFlag);
+        m_halt = false;
     }
 
     void SharpLr35902::PerformReset() {

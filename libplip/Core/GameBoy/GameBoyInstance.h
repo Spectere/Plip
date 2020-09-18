@@ -63,15 +63,16 @@ namespace Plip::Core::GameBoy {
         }
 
         inline void IncrementTimer() {
+            // TIMA was written to before the interrupt could be fired.
+            if(m_timerIntBlocked) return;
+
             m_timer = m_ioRegisters->GetByte(m_regTima);
 
             if(++m_timer == 0) {
-                // Timer overflowed. Reset TIMA to TMA and schedule an interrupt.
+                // Timer overflowed. Schedule an interrupt.
                 m_timerIntScheduled = true;
-                m_timer = m_ioRegisters->GetByte(m_regTma);
+                m_ioRegisters->SetByte(m_addrRegisters + m_regTima, m_timer);
             }
-
-            m_ioRegisters->SetByte(m_regTima, m_timer);
         }
 
         uint16_t GetRomBankCount();
@@ -176,9 +177,11 @@ namespace Plip::Core::GameBoy {
 
         uint8_t m_divider = 0;
         uint8_t m_dividerTick = 0;
+        uint8_t m_tac = 0;
         uint8_t m_timer = 0;
         uint8_t m_timerTick;
         bool m_timerIntScheduled = false;
+        bool m_timerIntBlocked = false;
 
         // Video
         static const uint32_t m_regLcdControl = 0xFF40 - m_addrRegisters;

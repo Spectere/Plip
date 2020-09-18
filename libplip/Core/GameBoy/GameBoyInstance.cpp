@@ -95,8 +95,12 @@ namespace Plip::Core::GameBoy {
             if(m_mbc != None) MbcCycle(lastWrite);
 
             // Divider
-            if(lastWrite.address == 0xFF04) {
-                // Reset divider.
+            auto divFallingEdge = false;
+            if(lastWrite.address == m_addrRegisters + m_regDivider) {
+                // Falling edge detector quirk.
+                divFallingEdge = BIT_TEST(m_divider, 0);
+
+                // Reset timer.
                 m_divider = m_dividerTick = 0;
                 m_ioRegisters->SetByte(m_regDivider, m_divider);
             } else {
@@ -110,32 +114,49 @@ namespace Plip::Core::GameBoy {
             }
 
             // Timer
-            auto tac = m_ioRegisters->GetByte(m_regTac);
-            if(BIT_TEST(tac, 2)) {
+            auto oldTac = m_tac;
+            m_tac = m_ioRegisters->GetByte(m_regTac);
+            if(BIT_TEST(m_tac, 2)) {
+                m_timerIntBlocked = false;
+
                 // Check for a scheduled interrupt.
                 if(m_timerIntScheduled) {
-                    // Do not interrupt if TIMA has been written to.
-                    if(lastWrite.address != m_regTima) m_cpu->Interrupt(INTERRUPT_TIMER);
+                    auto tma = m_ioRegisters->GetByte(m_regTma);
+                    m_timer = tma;
+                    m_ioRegisters->SetByte(m_regTima, m_timer);
+                    m_cpu->Interrupt(INTERRUPT_TIMER);
                     m_timerIntScheduled = false;
+                }
+
+                // If the falling edge detector triggered on DIV, increment TIMA.
+                if(divFallingEdge) IncrementTimer();
+
+                if(lastWrite.address == m_addrRegisters + m_regTima)
+                    m_timerIntBlocked = true;
+
+                if(lastWrite.address == m_addrRegisters + m_regTac) {
+                    // If the falling edge detector triggered on TAC, increment TIMA.
+                    if(((oldTac & 0b11) == 0b01) && ((m_tac & 0b11) == 0b00))
+                        IncrementTimer();
                 }
 
                 // Increment internal timer and increment TIMA if necessary.
                 ++m_timerTick;
-                switch(tac & 0b11) {
+                switch(m_tac & 0b11) {
                     case 0b00:  // 4096hz / 1024 clocks / 256 mcycles
                         if(m_timerTick == 0)
                             IncrementTimer();
                         break;
                     case 0b01:  // 262144hz / 16 clocks / 4 mcycles
-                        if(m_timerTick >= 4)
+                        if(m_timerTick % 4 == 0)
                             IncrementTimer();
                         break;
                     case 0b10:  // 65536hz / 64 clocks / 16 mcycles
-                        if(m_timerTick >= 16)
+                        if(m_timerTick % 16 == 0)
                             IncrementTimer();
                         break;
                     case 0b11:  // 16384hz / 256 clocks / 64 mcycles
-                        if(m_timerTick >= 64)
+                        if(m_timerTick % 64 == 0)
                             IncrementTimer();
                         break;
                 }
