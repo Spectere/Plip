@@ -32,9 +32,17 @@ namespace Plip::Cpu {
     void SharpLr35902::OpAccumAddCarryImm() {
         FETCH_IMM_CYCLE(2);
         CYCLE(3) {
-            uint16_t res = m_reg.a + m_instr[1] + (FLAG_TEST(CARRY) ? 1 : 0);
+            uint8_t cf = (FLAG_TEST(CARRY) ? 1 : 0);
+            uint16_t res = m_reg.a + m_instr[1] + cf;
             CHECK_CARRY(res);
-            CHECK_ADD_HALFCARRY(m_reg.a, m_instr[1]);
+
+            // CHECK_ADD_HALFCARRY won't work here, since the carry flag needs
+            // to be accounted for.
+            if(((m_reg.a & 0xF) + (m_instr[1] & 0xF) + cf) > 0xF)
+                FLAG_SET(HALFCARRY);
+            else
+                FLAG_CLEAR(HALFCARRY);
+
             m_reg.a = res & 0xFF;
             CHECK_ZERO(m_reg.a);
             FLAG_CLEAR(SUBTRACT);
@@ -181,9 +189,18 @@ namespace Plip::Cpu {
     void SharpLr35902::OpAccumSubBorrowImm() {
         FETCH_IMM_CYCLE(2);
         CYCLE(3) {
-            uint16_t res = m_reg.a - m_instr[1] - (FLAG_TEST(CARRY) ? 1 : 0);
+            uint8_t cf = (FLAG_TEST(CARRY) ? 1 : 0);
+            uint16_t res = m_reg.a - m_instr[1] - cf;
+
             CHECK_CARRY(res);
-            CHECK_SUB_HALFCARRY(m_reg.a, m_instr[1]);
+
+            // CHECK_SUB_HALFCARRY won't work here, since the borrow flag needs
+            // to be accounted for.
+            if(((m_reg.a & 0xF) - (m_instr[1] & 0xF) - cf) < 0x00)
+                FLAG_SET(HALFCARRY);
+            else
+                FLAG_CLEAR(HALFCARRY);
+
             m_reg.a = res & 0xFF;
             CHECK_ZERO(m_reg.a);
             FLAG_SET(SUBTRACT);
@@ -278,6 +295,7 @@ namespace Plip::Cpu {
     void SharpLr35902::OpAddCarry() {
         auto src = OP_REG_Y(0);
         uint16_t res;
+        uint8_t cf = (FLAG_TEST(CARRY) ? 1 : 0);
 
         if(src == IDX_HL) {
             // ADC A, (HL)
@@ -285,7 +303,12 @@ namespace Plip::Cpu {
             CYCLE(3) {
                 res = m_reg.a + m_instr[1] + (FLAG_TEST(CARRY) ? 1 : 0);
                 CHECK_CARRY(res);
-                CHECK_ADD_HALFCARRY(m_reg.a, m_instr[1]);
+
+                if(((m_reg.a & 0xF) + (m_instr[1] & 0xF) + cf) > 0xF)
+                    FLAG_SET(HALFCARRY);
+                else
+                    FLAG_CLEAR(HALFCARRY);
+
                 m_reg.a = res & 0xFF;
                 CHECK_ZERO(m_reg.a);
                 FLAG_CLEAR(SUBTRACT);
@@ -298,7 +321,12 @@ namespace Plip::Cpu {
         auto val = *(GetRegister8(src));
         res = m_reg.a + val + (FLAG_TEST(CARRY) ? 1 : 0);
         CHECK_CARRY(res);
-        CHECK_ADD_HALFCARRY(m_reg.a, val);
+
+        if(((m_reg.a & 0xF) + (m_instr[1] & 0xF) + cf) > 0xF)
+            FLAG_SET(HALFCARRY);
+        else
+            FLAG_CLEAR(HALFCARRY);
+
         m_reg.a = res & 0xFF;
         CHECK_ZERO(m_reg.a);
         FLAG_CLEAR(SUBTRACT);
@@ -888,6 +916,7 @@ namespace Plip::Cpu {
     void SharpLr35902::OpSubBorrow() {
         auto src = OP_REG_Y(0);
         uint16_t res;
+        uint8_t cf = (FLAG_TEST(CARRY) ? 1 : 0);
 
         if(src == IDX_HL) {
             // SBC A, (HL)
@@ -895,7 +924,14 @@ namespace Plip::Cpu {
             CYCLE(3) {
                 res = m_reg.a - m_instr[1] - (FLAG_TEST(CARRY) ? 1 : 0);
                 CHECK_CARRY(res);
-                CHECK_SUB_HALFCARRY(m_reg.a, m_instr[1]);
+
+                // CHECK_SUB_HALFCARRY won't work here, since the borrow flag needs
+                // to be accounted for.
+                if(((m_reg.a & 0xF) - (m_instr[1] & 0xF) - cf) < 0x00)
+                    FLAG_SET(HALFCARRY);
+                else
+                    FLAG_CLEAR(HALFCARRY);
+
                 m_reg.a = res & 0xFF;
                 CHECK_ZERO(m_reg.a);
                 FLAG_SET(SUBTRACT);
@@ -908,7 +944,12 @@ namespace Plip::Cpu {
         auto val = *(GetRegister8(src));
         res = m_reg.a - val - (FLAG_TEST(CARRY) ? 1 : 0);
         CHECK_CARRY(res);
-        CHECK_SUB_HALFCARRY(m_reg.a, val);
+
+        if(((m_reg.a & 0xF) - (m_instr[1] & 0xF) - cf) < 0x00)
+            FLAG_SET(HALFCARRY);
+        else
+            FLAG_CLEAR(HALFCARRY);
+
         m_reg.a = res & 0xFF;
         CHECK_ZERO(m_reg.a);
         FLAG_SET(SUBTRACT);
