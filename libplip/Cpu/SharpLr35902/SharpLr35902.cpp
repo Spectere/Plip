@@ -25,9 +25,9 @@ namespace Plip::Cpu {
 
         // Handle interrupts here if (1) we're ready to fetch, (2) interrupts
         // are enabled, and (3) an interrupt request has been made.
-        auto iFlag = m_memory->GetByte(m_interruptFlag) & 0b00011111;
+        auto iFlag = m_memory->GetByte(MemInterruptFlag) & 0b00011111;
         if(m_allowFetch && m_ime == ScheduledState::Enabled && iFlag && !m_isr) {
-            auto ie = m_memory->GetByte(m_interruptEnabled);
+            auto ie = m_memory->GetByte(MemInterruptEnabled);
 
             // Check for an enabled interrupt.
             m_isr = false;
@@ -53,7 +53,7 @@ namespace Plip::Cpu {
                 m_halt = false;
                 m_isr = false;
                 m_reg.pc = 0x40 + (m_isrIdx * 0x8);
-                m_memory->SetByte(m_interruptFlag, iFlag ^ (1 << m_isrIdx));
+                m_memory->SetByte(MemInterruptFlag, iFlag ^ (1 << m_isrIdx));
             }
             NUM_MCYCLES(5);
         }
@@ -190,9 +190,9 @@ namespace Plip::Cpu {
     }
 
     void SharpLr35902::Interrupt(uint8_t irq) {
-        auto iFlag = m_memory->GetByte(m_interruptFlag);
+        auto iFlag = m_memory->GetByte(MemInterruptFlag);
         iFlag |= irq;
-        m_memory->SetByte(m_interruptFlag, iFlag);
+        m_memory->SetByte(MemInterruptFlag, iFlag);
         m_halt = false;
     }
 

@@ -77,9 +77,10 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance.timer.cpp
         void TimerExecute();
-        void TimerDividerTick();
-        void TimerTimaCycle();
-        void TimerTimaIncrement();
+        [[nodiscard]] static uint8_t TimerFallingEdgeBit(uint8_t tac);
+        [[nodiscard]] bool TimerFallingEdgeDetection(uint8_t bit) const;
+        void TimerIncreaseTima();
+        void TimerTima();
 
         // GameBoyInstance.Video.cpp
         void VideoCycle();
@@ -87,10 +88,10 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] bool VideoHBlank() const;
         void VideoModePostTransition();
         void VideoModePreTransition();
-        bool VideoOamSearch();
+        [[nodiscard]] bool VideoOamSearch();
         void VideoSetMemoryPermissions();
-        bool VideoVBlank();
-        bool VideoVidGen();
+        [[nodiscard]] bool VideoVBlank();
+        [[nodiscard]] bool VideoVidGen();
 
         // Core
         bool m_bootRomFlag = false;
@@ -175,15 +176,10 @@ namespace Plip::Core::GameBoy {
         static const uint32_t m_regTma = 0xFF06 - m_addrRegisters;
         static const uint32_t m_regTac = 0xFF07 - m_addrRegisters;
 
-        bool m_divFallingEdge = false;
-        uint8_t m_divider = 0;
-        uint8_t m_dividerTick = 0;
-        uint8_t m_tac = 0;
-        uint8_t m_tacLast = 0;
-        uint8_t m_timer = 0;
-        uint8_t m_timerTick = 0;
-        bool m_timerIntScheduled = false;
-        bool m_timerIntBlocked = false;
+        uint16_t m_timer = 0;
+        uint16_t m_timerLast = 0;
+        uint8_t m_timerTacLast = 0;
+        bool m_timerTimaOverflow = false;
 
         // Video
         static const uint32_t m_regLcdControl = 0xFF40 - m_addrRegisters;

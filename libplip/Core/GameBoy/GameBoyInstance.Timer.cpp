@@ -5,97 +5,97 @@
 
 #include "GameBoyInstance.h"
 
+#include "../../Cpu/SharpLr35902/SharpLr35902.h"
+#include "../../PlipEmulationException.h"
+#include "../../PlipUtility.h"
+
 namespace Plip::Core::GameBoy {
-    void GameBoyInstance::TimerDividerTick() {
-        if(m_lastWrite.address == m_addrRegisters + m_regDivider) {
-            // Falling edge detector quirk.
-            m_divFallingEdge = BIT_TEST(m_divider, 0);
-
-            // Reset timer.
-            m_divider = m_dividerTick = 0;
-            m_ioRegisters->SetByte(m_regDivider, m_divider);
-        } else {
-            m_dividerTick += 4;
-            if(m_dividerTick == 0) {
-                // Increment divider when the divider tick wraps around
-                // (4194304 / 16384 == 256).
-                m_divider++;
-                m_ioRegisters->SetByte(m_regDivider, m_divider);
-            }
-        }
-    }
-
     void GameBoyInstance::TimerExecute() {
-        // Per-Cycle Initialization
-        m_divFallingEdge = false;
-
-        // Divider
-        TimerDividerTick();
-
-        // TIMA
-        m_tacLast = m_tac;
-        m_tac = m_ioRegisters->GetByte(m_regTac);
-        if(BIT_TEST(m_tac, 2)) {
-            TimerTimaCycle();
+        if(m_lastWrite.address == m_addrRegisters + m_regDivider) {
+            // Reset the timer variable if DIV is written to.
+            m_timer = 0;
+        } else {
+            // The timer increases by 4 every cycle.
+            m_timerLast = m_timer;
+            m_timer += 4;
         }
-    }
 
-    void GameBoyInstance::TimerTimaCycle() {
-        m_timerIntBlocked = false;
-
-        // Check for a scheduled interrupt.
-        if(m_timerIntScheduled) {
+        if(m_timerTimaOverflow) {
+            // Reload TIMA and raise an interrupt (if applicable).
             auto tma = m_ioRegisters->GetByte(m_regTma);
-            m_timer = tma;
-            m_ioRegisters->SetByte(m_regTima, m_timer);
-            m_cpu->Interrupt(INTERRUPT_TIMER);
-            m_timerIntScheduled = false;
+            m_ioRegisters->SetByte(m_regTima, tma);
+
+            // Quirk: If IF is written during the interrupt cycle, the
+            // written value will override this.
+            if(m_lastWrite.address == Plip::Cpu::SharpLr35902::MemInterruptFlag)
+                m_cpu->Interrupt(INTERRUPT_TIMER);
         }
 
-        // If the falling edge detector triggered on DIV, increment TIMA.
-        if(m_divFallingEdge) TimerTimaIncrement();
+        // Handle TIMA.
+        TimerTima();
 
-        if(m_lastWrite.address == m_addrRegisters + m_regTima)
-            m_timerIntBlocked = true;
+        // Update the divider register.
+        m_ioRegisters->SetByte(m_regDivider, m_timer >> 8);
+    }
 
-        if(m_lastWrite.address == m_addrRegisters + m_regTac) {
-            // If the falling edge detector triggered on TAC, increment TIMA.
-            if(((m_tacLast & 0b11) == 0b01) && ((m_tac & 0b11) == 0b00))
-                TimerTimaIncrement();
+    inline uint8_t GameBoyInstance::TimerFallingEdgeBit(uint8_t tac) {
+        switch(tac & 0b11) {
+            case 0b00:
+                return 9;
+            case 0b01:
+                return 3;
+            case 0b10:
+                return 5;
+            case 0b11:
+                return 7;
         }
 
-        // Increment internal timer and increment TIMA if necessary.
-        ++m_timerTick;
-        switch(m_tac & 0b11) {
-            case 0b00:  // 4096hz / 1024 clocks / 256 mcycles
-                if(m_timerTick == 0)
-                    TimerTimaIncrement();
-                break;
-            case 0b01:  // 262144hz / 16 clocks / 4 mcycles
-                if(m_timerTick % 4 == 0)
-                    TimerTimaIncrement();
-                break;
-            case 0b10:  // 65536hz / 64 clocks / 16 mcycles
-                if(m_timerTick % 16 == 0)
-                    TimerTimaIncrement();
-                break;
-            case 0b11:  // 16384hz / 256 clocks / 64 mcycles
-                if(m_timerTick % 64 == 0)
-                    TimerTimaIncrement();
-                break;
+        return 0;  // Compiler appeasement. :)
+    }
+
+    inline bool GameBoyInstance::TimerFallingEdgeDetection(uint8_t bit) const {
+        return BIT_TEST(m_timerLast, bit) && !BIT_TEST(m_timer, bit);
+    }
+
+    inline void GameBoyInstance::TimerIncreaseTima() {
+        uint8_t tima = m_ioRegisters->GetByte(m_regTima) + 1;
+        m_ioRegisters->SetByte(m_regTima, tima);
+
+        if(tima == 0) {
+            // TIMA overflow.
+            m_timerTimaOverflow = true;
         }
     }
 
-    inline void GameBoyInstance::TimerTimaIncrement() {
-        // TIMA was written to before the interrupt could be fired.
-        if(m_timerIntBlocked) return;
+    void GameBoyInstance::TimerTima() {
+        auto tac = m_ioRegisters->GetByte(m_regTac) & 0b111;
+        auto freqBit = TimerFallingEdgeBit(tac);
+        m_timerTimaOverflow = false;
 
-        m_timer = m_ioRegisters->GetByte(m_regTima);
-
-        if(++m_timer == 0) {
-            // Timer overflowed. Schedule an interrupt.
-            m_timerIntScheduled = true;
-            m_ioRegisters->SetByte(m_addrRegisters + m_regTima, m_timer);
+        if(TimerFallingEdgeDetection(freqBit) && BIT_TEST(tac, 2)) {
+            TimerIncreaseTima();
+        } if(BIT_TEST(m_timer, freqBit) && BIT_TEST(m_timerTacLast, 2) && !BIT_TEST(tac, 2)) {
+            // Quirk: Increase TIMA if the corresponding bit is set when disabling
+            // the timer.
+            TimerIncreaseTima();
+        } else if(m_lastWrite.address == m_addrRegisters + m_regTac
+            && !BIT_TEST(m_timerTacLast, 2) && BIT_TEST(tac, 2)
+            && (m_timerTacLast & 0b11) == 0 && (tac & 0b11) == 1) {
+            // Quirk: Increase TIMA if the timer goes from disabled to enabled, and
+            // the multiplexer bit goes from 0 to 1 (agh).
+            TimerIncreaseTima();
         }
+
+        if(m_lastWrite.address == m_addrRegisters + m_regTima && m_timerTimaOverflow) {
+            // Quirk: If TIMA is written to during the cycle that causes it to
+            // overflow, the pending reset and interrupt are cancelled.
+            m_timerTimaOverflow = false;
+            m_ioRegisters->SetByte(m_regTima, m_lastWrite.value);
+        }
+
+        m_timerTacLast = tac;
+
+        // Write TAC back into memory to ensure that only the low 3 bits are set.
+        m_ioRegisters->SetByte(m_regTac, tac);
     }
 }

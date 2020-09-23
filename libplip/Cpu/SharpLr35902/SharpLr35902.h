@@ -45,6 +45,9 @@ namespace Plip::Cpu {
         Registers GetRegisters() { return m_reg; }
         void Reset() override;
 
+        static const uint16_t MemInterruptEnabled = 0xFFFF;
+        static const uint16_t MemInterruptFlag = 0xFF0F;
+
     private:
         void PerformReset();
 
@@ -150,9 +153,6 @@ namespace Plip::Cpu {
         void OpShiftLeftArithmetic();
         void OpShiftRightArithmetic();
         void OpShiftRightLogical();
-
-        const uint16_t m_interruptEnabled = 0xFFFF;
-        const uint16_t m_interruptFlag = 0xFF0F;
 
         bool m_allowFetch = true;
         bool m_isr = false;
