@@ -181,7 +181,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_tac = 0;
         uint8_t m_tacLast = 0;
         uint8_t m_timer = 0;
-        uint8_t m_timerTick;
+        uint8_t m_timerTick = 0;
         bool m_timerIntScheduled = false;
         bool m_timerIntBlocked = false;
 

@@ -143,7 +143,7 @@ namespace Plip::Core::GameBoy {
             case 0x01: return 4;   // 64KB
             case 0x02: return 8;   // 128KB
             case 0x03: return 16;  // 256KB
-            case 0x04: return 32;  // 512 KB
+            case 0x04: return 32;  // 512KB
             case 0x05: return 64;  // 1024KB
             case 0x06: return 128; // 2048KB
             case 0x07: return 256; // 4096KB
