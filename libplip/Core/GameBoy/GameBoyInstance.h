@@ -62,32 +62,28 @@ namespace Plip::Core::GameBoy {
             }
         }
 
-        inline void IncrementTimer() {
-            // TIMA was written to before the interrupt could be fired.
-            if(m_timerIntBlocked) return;
-
-            m_timer = m_ioRegisters->GetByte(m_regTima);
-
-            if(++m_timer == 0) {
-                // Timer overflowed. Schedule an interrupt.
-                m_timerIntScheduled = true;
-                m_ioRegisters->SetByte(m_addrRegisters + m_regTima, m_timer);
-            }
-        }
-
+        void BootRomFlagHandler();
         uint16_t GetRomBankCount();
         void InitCartRam();
+        void InputRegisterHandler();
         void ReadCartFeatures();
         void ReadInput();
         void RegisterInput();
 
-        // GameBoyInstance.mbc.cpp
+        // GameBoyInstance.Mbc.cpp
         void MbcInit();
         void MbcCycle(PlipMemoryValue lastWrite);
         void Mbc1Cycle(PlipMemoryValue lastWrite);
 
-        // GameBoyInstance.video.cpp
+        // GameBoyInstance.timer.cpp
+        void TimerExecute();
+        void TimerDividerTick();
+        void TimerTimaCycle();
+        void TimerTimaIncrement();
+
+        // GameBoyInstance.Video.cpp
         void VideoCycle();
+        void VideoExecute();
         [[nodiscard]] bool VideoHBlank() const;
         void VideoModePostTransition();
         void VideoModePreTransition();
@@ -104,6 +100,7 @@ namespace Plip::Core::GameBoy {
         long m_cycleRemaining = 0;
         int m_dotCyclesRemaining = 0;
         const int m_dotsPerCycle = 4;
+        PlipMemoryValue m_lastWrite {};
         uint8_t *m_videoBuffer;
         size_t m_videoBufferSize;
         PlipVideoFormatInfo m_videoFmt {};
@@ -164,6 +161,9 @@ namespace Plip::Core::GameBoy {
         static const uint32_t m_addrRegisters = 0xFF00;
         static const uint32_t m_addrHighRam = 0xFF80;
 
+        // Boot
+        static const uint32_t m_addrBootRomDisable = 0xFF50 - m_addrRegisters;
+
         // Input
         uint8_t m_keypad = 0;
 
@@ -175,9 +175,11 @@ namespace Plip::Core::GameBoy {
         static const uint32_t m_regTma = 0xFF06 - m_addrRegisters;
         static const uint32_t m_regTac = 0xFF07 - m_addrRegisters;
 
+        bool m_divFallingEdge = false;
         uint8_t m_divider = 0;
         uint8_t m_dividerTick = 0;
         uint8_t m_tac = 0;
+        uint8_t m_tacLast = 0;
         uint8_t m_timer = 0;
         uint8_t m_timerTick;
         bool m_timerIntScheduled = false;

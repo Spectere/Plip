@@ -60,6 +60,7 @@ add_library(${lib_name}
         # GameBoy
         libplip/Core/GameBoy/GameBoyInstance.cpp
         libplip/Core/GameBoy/GameBoyInstance.Mbc.cpp
+        libplip/Core/GameBoy/GameBoyInstance.Timer.cpp
         libplip/Core/GameBoy/GameBoyInstance.Video.cpp
 
         ########

@@ -75,12 +75,21 @@ namespace Plip::Core::GameBoy {
         delete m_videoBuffer;
     }
 
+    inline void GameBoyInstance::BootRomFlagHandler() {
+        if(m_lastWrite.address != m_addrRegisters + m_addrBootRomDisable) return;
+        if(m_lastWrite.value == 0) return;
+
+        // Swap the boot ROM out for the cartridge ROM, then update the register.
+        m_bootRomFlag = true;
+        m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
+        m_ioRegisters->SetByte(m_addrBootRomDisable, 1);
+    }
+
     void GameBoyInstance::ClearBreakpoint() {
         m_bp = 0xFFFFFFFF;
     }
 
     void GameBoyInstance::Delta(long ns) {
-        PlipMemoryValue lastWrite {};
         m_cycleRemaining += ns;
         m_dotCyclesRemaining += m_dotsPerCycle;
         ReadInput();
@@ -89,133 +98,31 @@ namespace Plip::Core::GameBoy {
             // Run a single CPU cycle.
             m_memory->ClearLastWrite();
             m_cpu->Cycle();
-            lastWrite = m_memory->GetLastWrite();
+            m_lastWrite = m_memory->GetLastWrite();
 
             // Emulate MBC functionality.
-            if(m_mbc != None) MbcCycle(lastWrite);
+            if(m_mbc != None) MbcCycle(m_lastWrite);
 
-            // Divider
-            auto divFallingEdge = false;
-            if(lastWrite.address == m_addrRegisters + m_regDivider) {
-                // Falling edge detector quirk.
-                divFallingEdge = BIT_TEST(m_divider, 0);
+            // Divider/Timer
+            TimerExecute();
 
-                // Reset timer.
-                m_divider = m_dividerTick = 0;
-                m_ioRegisters->SetByte(m_regDivider, m_divider);
+            // Input
+            InputRegisterHandler();
+
+            // Boot ROM
+            if(!m_bootRomFlag) {
+                BootRomFlagHandler();
             } else {
-                m_dividerTick += 4;
-                if(m_dividerTick == 0) {
-                    // Increment divider when the divider tick wraps around
-                    // (4194304 / 16384 == 256).
-                    m_divider++;
-                    m_ioRegisters->SetByte(m_regDivider, m_divider);
-                }
+                m_ioRegisters->SetByte(m_addrBootRomDisable, 1);
             }
 
-            // Timer
-            auto oldTac = m_tac;
-            m_tac = m_ioRegisters->GetByte(m_regTac);
-            if(BIT_TEST(m_tac, 2)) {
-                m_timerIntBlocked = false;
+            // PPU
+            VideoExecute();
 
-                // Check for a scheduled interrupt.
-                if(m_timerIntScheduled) {
-                    auto tma = m_ioRegisters->GetByte(m_regTma);
-                    m_timer = tma;
-                    m_ioRegisters->SetByte(m_regTima, m_timer);
-                    m_cpu->Interrupt(INTERRUPT_TIMER);
-                    m_timerIntScheduled = false;
-                }
-
-                // If the falling edge detector triggered on DIV, increment TIMA.
-                if(divFallingEdge) IncrementTimer();
-
-                if(lastWrite.address == m_addrRegisters + m_regTima)
-                    m_timerIntBlocked = true;
-
-                if(lastWrite.address == m_addrRegisters + m_regTac) {
-                    // If the falling edge detector triggered on TAC, increment TIMA.
-                    if(((oldTac & 0b11) == 0b01) && ((m_tac & 0b11) == 0b00))
-                        IncrementTimer();
-                }
-
-                // Increment internal timer and increment TIMA if necessary.
-                ++m_timerTick;
-                switch(m_tac & 0b11) {
-                    case 0b00:  // 4096hz / 1024 clocks / 256 mcycles
-                        if(m_timerTick == 0)
-                            IncrementTimer();
-                        break;
-                    case 0b01:  // 262144hz / 16 clocks / 4 mcycles
-                        if(m_timerTick % 4 == 0)
-                            IncrementTimer();
-                        break;
-                    case 0b10:  // 65536hz / 64 clocks / 16 mcycles
-                        if(m_timerTick % 16 == 0)
-                            IncrementTimer();
-                        break;
-                    case 0b11:  // 16384hz / 256 clocks / 64 mcycles
-                        if(m_timerTick % 64 == 0)
-                            IncrementTimer();
-                        break;
-                }
-            }
-
-            // Check the input register.
-            // TODO: Simulate DMG/SGB propagation delay.
-            auto inputReg = m_ioRegisters->GetByte(m_regJoypad);
-            if(!BIT_TEST(inputReg, 5)) {
-                // Button keys selected.
-                BIT_SET(inputReg, 4);
-                inputReg &= ~(m_keypad >> 4);  // Pull the inputs low.
-            } else if(!BIT_TEST(inputReg, 4)) {
-                // Direction keys selected.
-                BIT_SET(inputReg, 5);
-                inputReg &= ~(m_keypad & 0b00001111);
-            }
-            m_ioRegisters->SetByte(m_regJoypad, inputReg);
-
-            if(!m_bootRomFlag && m_cpu->GetRegisters().pc >= 0x100) {
-                m_bootRomFlag = true;
-
-                // Swap the boot ROM out for the cartridge ROM.
-                m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
-            }
-
-            auto lcdc = m_ioRegisters->GetByte(m_regLcdControl);
-
-            // Run 4 dot clock cycles (4.19MHz) if the display is enabled.
-            if(BIT_TEST(m_videoLastLcdc, 7) && !BIT_TEST(lcdc, 7)) {
-                // The LCD display was disabled during this CPU cycle. Flag all
-                // video memory as being writable.
-                m_oam->SetWritable(true);
-                m_videoRam->SetWritable(true);
-
-                // When the LCD is disabled, the screen should go blank.
-                memset(m_videoBuffer, 0xFF, m_videoBufferSize);
-                m_video->BeginDraw();
-                m_video->Draw(m_videoBuffer);
-                m_video->EndDraw();
-                m_video->Render();
-            } else if(!BIT_TEST(m_videoLastLcdc, 7) && BIT_TEST(lcdc, 7)) {
-                // The LCD display was enabled during this CPU cycle. Set the
-                // video memory accessibility appropriately.
-                VideoSetMemoryPermissions();
-                m_lcdBlankFrame = true;
-            }
-
-            if(BIT_TEST(lcdc, 7)) {
-                for(auto dotCycle = 0; dotCycle < m_dotsPerCycle; dotCycle++) {
-                    VideoCycle();
-                }
-            }
-
-            m_ioRegisters->SetByte(m_regLy, m_videoLy);
-            m_videoLastLcdc = lcdc;
-
+            // Cycle Timing
             m_cycleRemaining -= m_cycleTime;
 
+            // Breakpoint
             if(m_cpu->GetPc() == m_bp) {
                 m_cycleRemaining = 0;
                 m_paused = true;
@@ -250,6 +157,21 @@ namespace Plip::Core::GameBoy {
                    << PlipUtility::FormatHex(romSizeByte, 2);
                 throw Plip::PlipEmulationException(ex.str().c_str());
         }
+    }
+
+    inline void GameBoyInstance::InputRegisterHandler() {
+        // TODO: Simulate DMG/SGB propagation delay.
+        auto inputReg = m_ioRegisters->GetByte(m_regJoypad);
+        if(!BIT_TEST(inputReg, 5)) {
+            // Button keys selected.
+            BIT_SET(inputReg, 4);
+            inputReg &= ~(m_keypad >> 4);  // Pull the inputs low.
+        } else if(!BIT_TEST(inputReg, 4)) {
+            // Direction keys selected.
+            BIT_SET(inputReg, 5);
+            inputReg &= ~(m_keypad & 0b00001111);
+        }
+        m_ioRegisters->SetByte(m_regJoypad, inputReg);
     }
 
     PlipError GameBoyInstance::Load(const std::string &path) {
