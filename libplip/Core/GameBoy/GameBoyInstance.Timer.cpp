@@ -11,14 +11,14 @@
 
 namespace Plip::Core::GameBoy {
     void GameBoyInstance::TimerExecute() {
+        m_timerLast = m_timer;
         if(m_lastWrite.address == m_addrRegisters + m_regDivider) {
             // Reset the timer variable if DIV is written to.
             m_timer = 0;
-        } else {
-            // The timer increases by 4 every cycle.
-            m_timerLast = m_timer;
-            m_timer += 4;
         }
+
+        // The timer increases by 4 every cycle.
+        m_timer += 4;
 
         if(m_timerTimaOverflow) {
             // Reload TIMA and raise an interrupt (if applicable).
@@ -74,7 +74,7 @@ namespace Plip::Core::GameBoy {
 
         if(TimerFallingEdgeDetection(freqBit) && BIT_TEST(tac, 2)) {
             TimerIncreaseTima();
-        } if(BIT_TEST(m_timer, freqBit) && BIT_TEST(m_timerTacLast, 2) && !BIT_TEST(tac, 2)) {
+        } else if(BIT_TEST(m_timer, freqBit) && BIT_TEST(m_timerTacLast, 2) && !BIT_TEST(tac, 2)) {
             // Quirk: Increase TIMA if the corresponding bit is set when disabling
             // the timer.
             TimerIncreaseTima();
@@ -82,7 +82,7 @@ namespace Plip::Core::GameBoy {
             && !BIT_TEST(m_timerTacLast, 2) && BIT_TEST(tac, 2)
             && (m_timerTacLast & 0b11) == 0 && (tac & 0b11) == 1) {
             // Quirk: Increase TIMA if the timer goes from disabled to enabled, and
-            // the multiplexer bit goes from 0 to 1 (agh).
+            // the multiplexer goes from 0 to 1 (agh).
             TimerIncreaseTima();
         }
 
