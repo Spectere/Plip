@@ -50,7 +50,6 @@ namespace Plip::Cpu {
         if(m_isr) {
             STACK_PUSH_PC(3);
             CYCLE(5) {
-                m_halt = false;
                 m_isr = false;
                 m_reg.pc = 0x40 + (m_isrIdx * 0x8);
                 m_memory->SetByte(MemInterruptFlag, iFlag ^ (1 << m_isrIdx));
@@ -193,7 +192,12 @@ namespace Plip::Cpu {
         auto iFlag = m_memory->GetByte(MemInterruptFlag);
         iFlag |= irq;
         m_memory->SetByte(MemInterruptFlag, iFlag);
-        m_halt = false;
+
+        // Take the CPU out of halt mode if this particular interrupt is
+        // enabled, even if the IME is disabled.
+        auto iEnabled = m_memory->GetByte(MemInterruptEnabled);
+        if(iEnabled & iFlag)
+            m_halt = false;
     }
 
     void SharpLr35902::PerformReset() {

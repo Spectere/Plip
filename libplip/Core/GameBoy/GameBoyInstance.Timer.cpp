@@ -27,7 +27,7 @@ namespace Plip::Core::GameBoy {
 
             // Quirk: If IF is written during the interrupt cycle, the
             // written value will override this.
-            if(m_lastWrite.address == Plip::Cpu::SharpLr35902::MemInterruptFlag)
+            if(m_lastWrite.address != Plip::Cpu::SharpLr35902::MemInterruptFlag)
                 m_cpu->Interrupt(INTERRUPT_TIMER);
         }
 
