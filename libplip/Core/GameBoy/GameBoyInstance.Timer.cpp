@@ -59,12 +59,19 @@ namespace Plip::Core::GameBoy {
 
     inline void GameBoyInstance::TimerIncreaseTima() {
         uint8_t tima = m_ioRegisters->GetByte(m_regTima) + 1;
-        m_ioRegisters->SetByte(m_regTima, tima);
 
         if(tima == 0) {
-            // TIMA overflow.
-            m_timerTimaOverflow = true;
+            if(m_lastWrite.address == m_addrRegisters + m_regTima) {
+                // Quirk: If TIMA is written to during the cycle that causes it to
+                // overflow, the pending reset and interrupt are cancelled.
+                tima = m_lastWrite.value;
+            } else {
+                // TIMA overflow.
+                m_timerTimaOverflow = true;
+            }
         }
+
+        m_ioRegisters->SetByte(m_regTima, tima);
     }
 
     void GameBoyInstance::TimerTima() {
@@ -84,13 +91,6 @@ namespace Plip::Core::GameBoy {
             // Quirk: Increase TIMA if the timer goes from disabled to enabled, and
             // the multiplexer goes from 0 to 1 (agh).
             TimerIncreaseTima();
-        }
-
-        if(m_lastWrite.address == m_addrRegisters + m_regTima && m_timerTimaOverflow) {
-            // Quirk: If TIMA is written to during the cycle that causes it to
-            // overflow, the pending reset and interrupt are cancelled.
-            m_timerTimaOverflow = false;
-            m_ioRegisters->SetByte(m_regTima, m_lastWrite.value);
         }
 
         m_timerTacLast = tac;
