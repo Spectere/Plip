@@ -155,6 +155,7 @@ namespace Plip::Cpu {
         void OpShiftRightLogical();
 
         bool m_allowFetch = true;
+        bool m_cancelInterrupt = false;
         bool m_isr = false;
         uint8_t m_isrIdx = 0;
         bool m_halt = false;

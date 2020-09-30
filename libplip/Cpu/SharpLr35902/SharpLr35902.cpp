@@ -48,11 +48,27 @@ namespace Plip::Cpu {
         }
 
         if(m_isr) {
-            STACK_PUSH_PC(3);
+            CYCLE(3) {
+                // Do one last check on IE. If this interrupt is no longer
+                // enabled, cancel the interrupt request.
+                auto ie = m_memory->GetByte(MemInterruptEnabled);
+                m_cancelInterrupt = !(ie & (1 << m_isrIdx));
+                STACK_PUSH(m_reg.pc >> 8);
+            }
+            CYCLE(4) {
+                STACK_PUSH(m_reg.pc & 0xFF);
+            }
             CYCLE(5) {
+                // If the interrupt was cancelled, set PC to 0x0000 instead
+                // of the interrupt vector and skip updating IF.
+                if(m_cancelInterrupt) {
+                    m_reg.pc = 0x40 + (m_isrIdx * 0x8);
+                    m_memory->SetByte(MemInterruptFlag, iFlag ^ (1 << m_isrIdx));
+                } else {
+                    m_reg.pc = 0;
+                }
+
                 m_isr = false;
-                m_reg.pc = 0x40 + (m_isrIdx * 0x8);
-                m_memory->SetByte(MemInterruptFlag, iFlag ^ (1 << m_isrIdx));
             }
             NUM_MCYCLES(5);
         }
