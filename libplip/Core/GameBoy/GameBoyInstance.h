@@ -92,6 +92,7 @@ namespace Plip::Core::GameBoy {
         void VideoSetMemoryPermissions();
         [[nodiscard]] bool VideoVBlank();
         [[nodiscard]] bool VideoVidGen();
+        void VideoVidGenDraw();
 
         // Core
         bool m_bootRomFlag = false;

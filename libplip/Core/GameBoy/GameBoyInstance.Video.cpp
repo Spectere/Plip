@@ -96,6 +96,7 @@ namespace Plip::Core::GameBoy {
 
         // Just do everything at once since the OAM will be locked at this point.
         m_spriteListIdx = 0;
+        memset(m_spriteList, 0xFF, m_maxSpritesPerScanline);
         for(auto sprIdx = 0; sprIdx < 0; sprIdx++) {
             auto sprAddr = 4 * sprIdx;
             auto sprY = m_oam->GetByte(sprAddr);
@@ -219,16 +220,7 @@ namespace Plip::Core::GameBoy {
     }
 
     bool GameBoyInstance::VideoVidGen() {
-        uint8_t scx, scy;
-        uint8_t wx, wy;
-        uint8_t bgp, obp0, obp1;
-        uint8_t lcdc, stat;
-        uint8_t tileX, tileY, tilePX, tilePY, pixelColor;
-        uint16_t mapIdx, tileIdx;
-        uint8_t pixelDataLow, pixelDataHigh, pixelDataCombined, lineOffset, tileShift;
-        uint16_t tileDataAddr, tileMapAddr;
-        bool lcdEnabled;
-        auto pos = (m_videoLy * m_screenWidth) + m_videoLx;
+        uint8_t scx;
 
         switch(m_vidGenStage) {
             case BackgroundScrolling:
@@ -241,70 +233,7 @@ namespace Plip::Core::GameBoy {
                 break;
 
             case Drawing:
-                // TODO: Add timing routine.
-                scx = m_ioRegisters->GetByte(m_regScx);
-                scy = m_ioRegisters->GetByte(m_regScy);
-                bgp = m_ioRegisters->GetByte(m_regBgp);
-                obp0 = m_ioRegisters->GetByte(m_regObp0);
-                obp1 = m_ioRegisters->GetByte(m_regObp1);
-
-                lcdc = m_ioRegisters->GetByte(m_regLcdControl);
-                lcdEnabled = BIT_TEST(lcdc, 7);
-
-                if(BIT_TEST(lcdc, 0)) { // BG/Window Display Enabled
-                    tileDataAddr = m_vramTileBase + (BIT_TEST(lcdc, 4) ? 0 : m_vramTileBlockOffset);
-                    tileMapAddr = m_vramBgBase + (BIT_TEST(lcdc, 3) ? m_vramBgBlockOffset : 0);
-                    tileX = ((scx + m_videoLx) / 8) % 32;
-                    tileY = ((scy + m_videoLy) / 8) % 32;
-                    tilePX = (scx + m_videoLx) % 8;
-                    tilePY = (scy + m_videoLy) % 8;
-
-                    mapIdx = (tileY * 32) + tileX;
-                    tileIdx = m_videoRam->GetByte(tileMapAddr + mapIdx);
-
-                    lineOffset = tilePY * 2;
-
-                    pixelDataLow = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset);
-                    pixelDataHigh = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
-                    tileShift = 7 - tilePX;
-                    pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
-                                      | ((pixelDataLow >> tileShift) & 0b1);
-
-                    pixelColor = (bgp >> (pixelDataCombined * 2)) & 0b11;
-                    if(lcdEnabled) Plot(pixelColor, pos);
-                    else Plot(255, pos);
-
-                    if(BIT_TEST(lcdc, 5)) {
-                        wx = m_ioRegisters->GetByte(m_regWx) - 7;
-                        wy = m_ioRegisters->GetByte(m_regWy);
-
-                        if(!(wx > 166 || wy > 143) || m_videoLx >= wx || m_videoLy >= wy) {
-                            tileMapAddr = m_vramBgBase + (BIT_TEST(lcdc, 6) ? m_vramBgBlockOffset : 0);
-                            tileX = ((m_videoLx + wx) / 8) % 32;
-                            tileY = ((m_videoLy + wy) / 8) % 32;
-                            tilePX = (m_videoLx + wx) % 8;
-                            tilePY = (m_videoLy + wy) % 8;
-
-                            mapIdx = (tileY * 32) + tileX;
-                            tileIdx = m_videoRam->GetBytePrivileged(tileMapAddr + mapIdx);
-
-                            lineOffset = tilePY * 2;
-
-                            pixelDataLow = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset);
-                            pixelDataHigh = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
-                            tileShift = 7 - tilePX;
-                            pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
-                                                | ((pixelDataLow >> tileShift) & 0b1);
-
-                            pixelColor = (bgp >> (pixelDataCombined * 2)) & 0b11;
-                            if(lcdEnabled) Plot(pixelColor, pos);
-                        }
-                    }
-                } else {
-                    // BG/Window display disabled. Draw a white pixel.
-                    if(lcdEnabled) Plot(0b00, pos);
-                }
-
+                VideoVidGenDraw();
                 m_videoLx++;
 
                 break;
@@ -319,4 +248,132 @@ namespace Plip::Core::GameBoy {
 
         return m_videoLx < m_screenWidth;
     }
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-function-cognitive-complexity"
+    inline void GameBoyInstance::VideoVidGenDraw() {
+        // TODO: Add timing routine.
+        uint8_t pixelColor, pixelDataLow, pixelDataHigh, pixelDataCombined;
+        uint8_t tileIdx, tilePX, tilePY, tileShift;
+        uint8_t lineOffset;
+
+        auto pos = (m_videoLy * m_screenWidth) + m_videoLx;
+
+        auto lcdc = m_ioRegisters->GetByte(m_regLcdControl);
+        bool lcdEnabled = BIT_TEST(lcdc, 7);
+        if(!lcdEnabled) {
+            Plot(255, pos);
+            return;
+        }
+
+        auto scx = m_ioRegisters->GetByte(m_regScx);
+        auto scy = m_ioRegisters->GetByte(m_regScy);
+        auto bgp = m_ioRegisters->GetByte(m_regBgp);
+
+        if(BIT_TEST(lcdc, 0)) { // BG/Window Display Enabled
+            auto tileDataAddr = m_vramTileBase + (BIT_TEST(lcdc, 4) ? 0 : m_vramTileBlockOffset);
+            auto tileMapAddr = m_vramBgBase + (BIT_TEST(lcdc, 3) ? m_vramBgBlockOffset : 0);
+            auto tileX = ((scx + m_videoLx) / 8) % 32;
+            auto tileY = ((scy + m_videoLy) / 8) % 32;
+            tilePX = (scx + m_videoLx) % 8;
+            tilePY = (scy + m_videoLy) % 8;
+
+            auto mapIdx = (tileY * 32) + tileX;
+            tileIdx = m_videoRam->GetByte(tileMapAddr + mapIdx);
+
+            lineOffset = tilePY * 2;
+
+            pixelDataLow = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset);
+            pixelDataHigh = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
+            tileShift = 7 - tilePX;
+            pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
+                              | ((pixelDataLow >> tileShift) & 0b1);
+
+            pixelColor = (bgp >> (pixelDataCombined * 2)) & 0b11;
+            Plot(pixelColor, pos);
+
+            if(BIT_TEST(lcdc, 5)) { // Window Display Enabled
+                auto wx = m_ioRegisters->GetByte(m_regWx) - 7;
+                auto wy = m_ioRegisters->GetByte(m_regWy);
+
+                if(!(wx > 166 || wy > 143) || m_videoLx >= wx || m_videoLy >= wy) {
+                    tileMapAddr = m_vramBgBase + (BIT_TEST(lcdc, 6) ? m_vramBgBlockOffset : 0);
+                    tileX = ((m_videoLx + wx) / 8) % 32;
+                    tileY = ((m_videoLy + wy) / 8) % 32;
+                    tilePX = (m_videoLx + wx) % 8;
+                    tilePY = (m_videoLy + wy) % 8;
+
+                    mapIdx = (tileY * 32) + tileX;
+                    tileIdx = m_videoRam->GetBytePrivileged(tileMapAddr + mapIdx);
+
+                    lineOffset = tilePY * 2;
+
+                    pixelDataLow = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset);
+                    pixelDataHigh = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
+                    tileShift = 7 - tilePX;
+                    pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
+                                        | ((pixelDataLow >> tileShift) & 0b1);
+
+                    pixelColor = (bgp >> (pixelDataCombined * 2)) & 0b11;
+                    Plot(pixelColor, pos);
+                }
+            }
+        } else {
+            // BG/Window display disabled. Draw a white pixel.
+            Plot(0b00, pos);
+        }
+
+        if(!BIT_TEST(lcdc, 1)) return;
+
+        // OBJ Display Enabled
+        auto obp0 = m_ioRegisters->GetByte(m_regObp0);
+        auto obp1 = m_ioRegisters->GetByte(m_regObp1);
+        bool doubleHeight = BIT_TEST(lcdc, 2);
+
+        for(auto i = 0; i < m_maxSpritesPerScanline; i++) {
+            if(m_spriteList[i] == 0xFF) break;
+
+            auto base = 4 * m_spriteList[i];
+
+            // Fetch the sprite attributes from the OAM.
+            auto sprAttr = m_oam->GetBytePrivileged(base + 3);
+            bool sprFlipX = BIT_TEST(sprAttr, 5);
+            bool sprFlipY = BIT_TEST(sprAttr, 6);
+            bool sprPriority = !BIT_TEST(sprAttr, 7);
+            auto sprPalette = BIT_TEST(sprAttr, 4) ? obp1 : obp0;
+
+            // Position and tile number.
+            auto sprX = m_oam->GetBytePrivileged(base);
+            auto sprY = m_oam->GetBytePrivileged(base + 1);
+            tileIdx = m_oam->GetBytePrivileged(base + 2);
+            if(doubleHeight) tileIdx &= 0b11111110; // LSB is ignored for 8x16 sprites.
+
+            // Check to see if the sprite should even be drawn.
+            if(sprX - 8 < scx || sprX + 8 > scx) continue; // X value out of range.
+            if(!sprPriority && pixelColor > 0) continue; // Background/window overlaps sprite.
+
+            // Figure out which pixel should be considered.
+            auto sprHeight = doubleHeight ? 16 : 8;
+            tilePX = (sprFlipX ? 8 : 0) - scx - (sprX - 8);
+            tilePY = (sprFlipY ? sprHeight : 0) - scy - (sprY - 16);
+            if(doubleHeight && tilePY >= 8) {
+                // Move to the second tile of the 8x16 sprite.
+                tilePY %= 8;
+                tileIdx |= 0b1;
+            }
+            lineOffset = tilePY * 2;
+
+            pixelDataLow = m_videoRam->GetBytePrivileged(m_vramTileBase + (tileIdx * 16) + lineOffset);
+            pixelDataHigh = m_videoRam->GetBytePrivileged(m_vramTileBase + (tileIdx * 16) + lineOffset + 1);
+            tileShift = 7 - tilePX;
+            pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
+                              | ((pixelDataLow >> tileShift) & 0b1);
+
+            if(pixelDataCombined == 0) continue; // Transparent pixel.
+
+            pixelColor = (sprPalette >> (pixelDataCombined * 2)) & 0b11;
+            Plot(pixelColor, pos);
+        }
+    }
+#pragma clang diagnostic pop
 }
