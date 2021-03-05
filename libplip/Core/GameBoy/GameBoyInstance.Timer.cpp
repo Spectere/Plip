@@ -5,7 +5,6 @@
 
 #include "GameBoyInstance.h"
 
-#include "../../Cpu/SharpLr35902/SharpLr35902.h"
 #include "../../PlipEmulationException.h"
 #include "../../PlipUtility.h"
 

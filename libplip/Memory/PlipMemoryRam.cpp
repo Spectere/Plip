@@ -15,36 +15,36 @@ namespace Plip {
         delete m_data;
     }
 
-    uint8_t PlipMemoryRam::GetByte(uint32_t address) {
-        return m_readable ? m_data[address] : 0;
-    }
-
-    uint8_t PlipMemoryRam::GetBytePrivileged(uint32_t address) {
-        return m_data[address];
+    uint8_t PlipMemoryRam::GetByte(uint32_t address, bool privileged) {
+        return m_readable || privileged ? m_data[address] : m_unprivileged;
     }
 
     uint32_t PlipMemoryRam::GetLength() {
         return m_length;
     }
 
-    bool PlipMemoryRam::GetReadable(bool value) const {
+    bool PlipMemoryRam::GetReadable() const {
         return m_readable;
     }
 
-    bool PlipMemoryRam::GetWritable(bool value) const {
+    uint8_t PlipMemoryRam::GetUnprivilegedValue() const {
+        return m_unprivileged;
+    }
+
+    bool PlipMemoryRam::GetWritable() const {
         return m_writable;
     }
 
-    void PlipMemoryRam::SetByte(uint32_t address, uint8_t value) {
-        if(m_writable) m_data[address] = value;
-    }
-
-    void PlipMemoryRam::SetBytePrivileged(uint32_t address, uint8_t value) {
-        m_data[address] = value;
+    void PlipMemoryRam::SetByte(uint32_t address, uint8_t value, bool privileged) {
+        if(m_writable || privileged) m_data[address] = value;
     }
 
     void PlipMemoryRam::SetReadable(bool value) {
         m_readable = value;
+    }
+
+    void PlipMemoryRam::SetUnprivilegedValue(uint8_t value) {
+        m_unprivileged = value;
     }
 
     void PlipMemoryRam::SetWritable(bool value) {

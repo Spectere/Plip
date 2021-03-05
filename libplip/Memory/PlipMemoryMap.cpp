@@ -68,13 +68,13 @@ namespace Plip {
         m_lastWritten.value = 0;
     }
 
-    uint8_t PlipMemoryMap::GetByte(uint32_t address) {
+    uint8_t PlipMemoryMap::GetByte(uint32_t address, bool privileged) {
         auto block = FindAddress(address);
 
         if(block.memory == nullptr) return 0;
 
         m_lastRead.address = address;
-        m_lastRead.value = block.memory->GetByte(block.offset);
+        m_lastRead.value = block.memory->GetByte(block.offset, privileged);
         return m_lastRead.value;
     }
 
@@ -102,13 +102,18 @@ namespace Plip {
         return PartiallyInRange;
     }
 
-    void PlipMemoryMap::SetByte(uint32_t address, uint8_t value) {
+    void PlipMemoryMap::SetByte(uint32_t address, uint8_t value, bool privileged) {
         auto block = FindAddress(address);
 
         if(block.memory == nullptr) return;
-        block.memory->SetByte(block.offset, value);
+        block.memory->SetByte(block.offset, value, privileged);
         m_lastWritten.address = address;
         m_lastWritten.value = value;
+    }
+
+    void PlipMemoryMap::SetUnprivilegedValue(uint8_t value) {
+        for(auto block : m_range)
+            block.memory->SetUnprivilegedValue(value);
     }
 
     void PlipMemoryMap::UnassignBlock(uint32_t address, uint32_t length) {

@@ -36,11 +36,12 @@ namespace Plip {
         void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
         void ClearLastRead();
         void ClearLastWrite();
-        uint8_t GetByte(uint32_t address);
+        uint8_t GetByte(uint32_t address, bool privileged = false);
         PlipMemoryValue GetLastRead();
         PlipMemoryValue GetLastWrite();
         uint32_t GetLength();
-        void SetByte(uint32_t address, uint8_t value);
+        void SetByte(uint32_t address, uint8_t value, bool privileged = false);
+        void SetUnprivilegedValue(uint8_t value);
         void UnassignBlock(uint32_t address, uint32_t length);
 
     private:

@@ -61,18 +61,18 @@
 #define REG_DE COMBINE16LE(m_reg.d, m_reg.e)
 #define REG_HL COMBINE16LE(m_reg.h, m_reg.l)
 
-#define SET_PC_IMM m_reg.pc = m_instr[2] << 8 | m_instr[1]
+#define SET_PC_IMM m_reg.pc = (m_instr[2] << 8 | m_instr[1])
 #define SET_PC_STACK(cycle) \
     do { \
-        CYCLE(cycle)     { m_reg.pc &= 0xFF00; m_reg.pc |= STACK_POP;      } \
-        CYCLE(cycle + 1) { m_reg.pc &= 0x00FF; m_reg.pc |= STACK_POP << 8; } \
+        CYCLE(cycle)       { m_reg.pc &= 0xFF00; m_reg.pc |= STACK_POP;      } \
+        CYCLE((cycle) + 1) { m_reg.pc &= 0x00FF; m_reg.pc |= STACK_POP << 8; } \
     } while(0)
 
 #define STACK_PUSH(val) m_memory->SetByte(--m_reg.sp, (val))
 #define STACK_PUSH_PC(cycle) \
     do { \
-        CYCLE(cycle)     { STACK_PUSH(m_reg.pc >> 8);   } \
-        CYCLE(cycle + 1) { STACK_PUSH(m_reg.pc & 0xFF); } \
+        CYCLE(cycle)       { STACK_PUSH(m_reg.pc >> 8);   } \
+        CYCLE((cycle) + 1) { STACK_PUSH(m_reg.pc & 0xFF); } \
     } while(0)
 #define STACK_POP m_memory->GetByte(m_reg.sp++)
 

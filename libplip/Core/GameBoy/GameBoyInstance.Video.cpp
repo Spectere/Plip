@@ -187,6 +187,60 @@ namespace Plip::Core::GameBoy {
         }
     }
 
+    void GameBoyInstance::VideoOamDmaTransfer() {
+        auto srcAddr = (m_ioRegisters->GetByte(m_regOamDmaTransfer, true) << 8) | m_videoOamDmaTransferIdx;
+        m_oam->SetByte(m_videoOamDmaTransferIdx++, m_memory->GetByte(srcAddr, true), true);
+    }
+
+    void GameBoyInstance::VideoOamDmaTransferEnd() {
+        // The DMA transfer is finished. Set the RAM accessibility back
+        // to a normal state.
+        m_videoOamDmaTransferIdx = -1;
+
+        if(m_cartRam != nullptr) {
+            m_cartRam->SetReadable(true);
+            m_cartRam->SetWritable(true);
+        }
+
+        m_rom->SetReadable(true);
+
+        m_workRam->SetReadable(true);
+        m_workRam->SetWritable(true);
+
+        m_videoRam->SetReadable(true);
+        m_videoRam->SetWritable(true);
+
+        m_oam->SetReadable(true);
+        m_oam->SetWritable(true);
+
+        m_ioRegisters->SetReadable(true);
+        m_ioRegisters->SetWritable(true);
+    }
+
+    void GameBoyInstance::VideoOamDmaTransferStart() {
+        // Set up the system for the DMA transfer.
+        m_videoOamDmaTransferIdx = 0;
+
+        if(m_cartRam != nullptr) {
+            m_cartRam->SetReadable(false);
+            m_cartRam->SetWritable(false);
+        }
+
+        m_rom->SetReadable(false);
+
+        m_workRam->SetReadable(false);
+        m_workRam->SetWritable(false);
+
+        m_videoRam->SetReadable(false);
+        m_videoRam->SetWritable(false);
+
+        m_oam->SetReadable(false);
+        m_oam->SetWritable(false);
+
+        m_ioRegisters->SetReadable(false);
+        m_ioRegisters->SetWritable(false);
+    }
+
     void GameBoyInstance::VideoSetMemoryPermissions() {
         switch(m_videoMode) {
             case m_videoModeHBlank:
@@ -283,8 +337,8 @@ namespace Plip::Core::GameBoy {
 
             lineOffset = tilePY * 2;
 
-            pixelDataLow = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset);
-            pixelDataHigh = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
+            pixelDataLow = m_videoRam->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset, true);
+            pixelDataHigh = m_videoRam->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset + 1, true);
             tileShift = 7 - tilePX;
             pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
                               | ((pixelDataLow >> tileShift) & 0b1);
@@ -304,12 +358,12 @@ namespace Plip::Core::GameBoy {
                     tilePY = (m_videoLy + wy) % 8;
 
                     mapIdx = (tileY * 32) + tileX;
-                    tileIdx = m_videoRam->GetBytePrivileged(tileMapAddr + mapIdx);
+                    tileIdx = m_videoRam->GetByte(tileMapAddr + mapIdx, true);
 
                     lineOffset = tilePY * 2;
 
-                    pixelDataLow = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset);
-                    pixelDataHigh = m_videoRam->GetBytePrivileged(tileDataAddr + (tileIdx * 16) + lineOffset + 1);
+                    pixelDataLow = m_videoRam->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset, true);
+                    pixelDataHigh = m_videoRam->GetByte(tileDataAddr + (tileIdx * 16) + lineOffset + 1, true);
                     tileShift = 7 - tilePX;
                     pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
                                         | ((pixelDataLow >> tileShift) & 0b1);
@@ -336,16 +390,16 @@ namespace Plip::Core::GameBoy {
             auto base = 4 * m_spriteList[i];
 
             // Fetch the sprite attributes from the OAM.
-            auto sprAttr = m_oam->GetBytePrivileged(base + 3);
+            auto sprAttr = m_oam->GetByte(base + 3, true);
             bool sprFlipX = BIT_TEST(sprAttr, 5);
             bool sprFlipY = BIT_TEST(sprAttr, 6);
             bool sprPriority = !BIT_TEST(sprAttr, 7);
             auto sprPalette = BIT_TEST(sprAttr, 4) ? obp1 : obp0;
 
             // Position and tile number.
-            auto sprX = m_oam->GetBytePrivileged(base);
-            auto sprY = m_oam->GetBytePrivileged(base + 1);
-            tileIdx = m_oam->GetBytePrivileged(base + 2);
+            auto sprX = m_oam->GetByte(base, true);
+            auto sprY = m_oam->GetByte(base + 1, true);
+            tileIdx = m_oam->GetByte(base + 2, true);
             if(doubleHeight) tileIdx &= 0b11111110; // LSB is ignored for 8x16 sprites.
 
             // Check to see if the sprite should even be drawn.
@@ -363,8 +417,8 @@ namespace Plip::Core::GameBoy {
             }
             lineOffset = tilePY * 2;
 
-            pixelDataLow = m_videoRam->GetBytePrivileged(m_vramTileBase + (tileIdx * 16) + lineOffset);
-            pixelDataHigh = m_videoRam->GetBytePrivileged(m_vramTileBase + (tileIdx * 16) + lineOffset + 1);
+            pixelDataLow = m_videoRam->GetByte(m_vramTileBase + (tileIdx * 16) + lineOffset, true);
+            pixelDataHigh = m_videoRam->GetByte(m_vramTileBase + (tileIdx * 16) + lineOffset + 1, true);
             tileShift = 7 - tilePX;
             pixelDataCombined = (((pixelDataHigh >> tileShift) & 0b1) << 1)
                               | ((pixelDataLow >> tileShift) & 0b1);

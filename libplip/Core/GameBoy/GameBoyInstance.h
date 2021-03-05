@@ -88,6 +88,9 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] bool VideoHBlank() const;
         void VideoModePostTransition();
         void VideoModePreTransition();
+        void VideoOamDmaTransfer();
+        void VideoOamDmaTransferEnd();
+        void VideoOamDmaTransferStart();
         [[nodiscard]] bool VideoOamSearch();
         void VideoSetMemoryPermissions();
         [[nodiscard]] bool VideoVBlank();
@@ -227,6 +230,7 @@ namespace Plip::Core::GameBoy {
         uint8_t *m_spriteListSorted;
         uint8_t m_spriteListIdx = 0;
         int m_videoCoincidence = 0;
+        int m_videoOamDmaTransferIdx = -1;
         int m_videoMode = 0;
         uint8_t m_videoLastLcdc = 0;
         int m_videoLx = 0;

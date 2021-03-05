@@ -63,6 +63,7 @@ namespace Plip::Core::GameBoy {
         m_memory->AssignBlock(m_unusable, m_addrUnusable);
         m_memory->AssignBlock(m_ioRegisters, m_addrRegisters);
         m_memory->AssignBlock(m_highRam, m_addrHighRam);
+        m_memory->SetUnprivilegedValue(0xFF);
 
         // Initialize CPU.
         m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory);
@@ -99,6 +100,14 @@ namespace Plip::Core::GameBoy {
             m_memory->ClearLastWrite();
             m_cpu->Cycle();
             m_lastWrite = m_memory->GetLastWrite();
+
+            // Perform DMA transfer (if applicable).
+            if(m_lastWrite.address == m_addrRegisters + m_regOamDmaTransfer && m_videoOamDmaTransferIdx < 0)
+                VideoOamDmaTransferStart();
+            if(m_videoOamDmaTransferIdx >= 0)
+                VideoOamDmaTransfer();
+            if(m_videoOamDmaTransferIdx > 0x9F)
+                VideoOamDmaTransferEnd();
 
             // Emulate MBC functionality.
             if(m_mbc != None) MbcCycle(m_lastWrite);

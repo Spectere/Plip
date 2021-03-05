@@ -21,8 +21,20 @@ namespace Plip {
         delete m_writtenData;
     }
 
-    uint8_t PlipMemoryRom::GetByte(uint32_t address) {
-        return m_data[address];
+    uint8_t PlipMemoryRom::GetByte(uint32_t address, bool privileged) {
+        return m_readable || privileged ? m_data[address] : m_unprivileged;
+    }
+
+    bool PlipMemoryRom::GetReadable() const {
+        return m_readable;
+    }
+
+    uint8_t PlipMemoryRom::GetUnprivilegedValue() const {
+        return m_unprivileged;
+    }
+
+    bool PlipMemoryRom::GetWritable() const {
+        return false;
     }
 
     uint8_t PlipMemoryRom::GetWrittenByte(uint32_t address) {
@@ -33,7 +45,17 @@ namespace Plip {
         return m_length;
     }
 
-    void PlipMemoryRom::SetByte(uint32_t address, uint8_t value) {
+    void PlipMemoryRom::SetByte(uint32_t address, uint8_t value, bool privileged) {
         m_writtenData[address] = value;
     }
+
+    void PlipMemoryRom::SetReadable(bool value) {
+        m_readable = value;
+    }
+
+    void PlipMemoryRom::SetUnprivilegedValue(uint8_t value) {
+        m_unprivileged = value;
+    }
+
+    void PlipMemoryRom::SetWritable(bool value) {}
 }
