@@ -97,16 +97,16 @@ namespace Plip::Core::GameBoy {
         // Just do everything at once since the OAM will be locked at this point.
         m_spriteListIdx = 0;
         memset(m_spriteList, 0xFF, m_maxSpritesPerScanline);
-        for(auto sprIdx = 0; sprIdx < 0; sprIdx++) {
+        for(auto sprIdx = 0; sprIdx < m_maxSpritesInOam; sprIdx++) {
             auto sprAddr = 4 * sprIdx;
             auto sprY = m_oam->GetByte(sprAddr);
             auto sprX = m_oam->GetByte(sprAddr + 1);
 
             if(sprX == 0 || sprX >= m_screenWidth + 8) continue;
-            if(m_videoLy >= sprY - spriteHeight || m_videoLy < sprY - (16 - spriteHeight)) {
-                m_spriteList[m_spriteListIdx++] = sprIdx;
-            }
+            if(m_videoLy < sprY - 16 || m_videoLy >= sprY - (16 - spriteHeight))
+                continue;
 
+            m_spriteList[m_spriteListIdx++] = sprIdx;
             if(m_spriteListIdx == m_maxSpritesPerScanline) break;
         }
 
@@ -397,23 +397,29 @@ namespace Plip::Core::GameBoy {
             auto sprPalette = BIT_TEST(sprAttr, 4) ? obp1 : obp0;
 
             // Position and tile number.
-            auto sprX = m_oam->GetByte(base, true);
-            auto sprY = m_oam->GetByte(base + 1, true);
+            auto sprY = m_oam->GetByte(base, true);
+            auto sprX = m_oam->GetByte(base + 1, true);
             tileIdx = m_oam->GetByte(base + 2, true);
             if(doubleHeight) tileIdx &= 0b11111110; // LSB is ignored for 8x16 sprites.
 
             // Check to see if the sprite should even be drawn.
-            if(sprX - 8 < scx || sprX + 8 > scx) continue; // X value out of range.
+            if(m_videoLx < sprX - 8 || m_videoLx >= sprX) continue; // X value out of range.
             if(!sprPriority && pixelColor > 0) continue; // Background/window overlaps sprite.
 
             // Figure out which pixel should be considered.
             auto sprHeight = doubleHeight ? 16 : 8;
-            tilePX = (sprFlipX ? 8 : 0) - scx - (sprX - 8);
-            tilePY = (sprFlipY ? sprHeight : 0) - scy - (sprY - 16);
+            tilePX = m_videoLx - (sprX - 8);
+            if(sprFlipX) tilePX += -7;
+            if(sprFlipY) tilePY += -(doubleHeight ? 15 : 7);
+            tilePY = m_videoLy - (sprY - 16);
             if(doubleHeight && tilePY >= 8) {
                 // Move to the second tile of the 8x16 sprite.
                 tilePY %= 8;
                 tileIdx |= 0b1;
+            } else if(doubleHeight && tilePY < 8) {
+                // Move to the first tile (this will likely only be used if the sprite
+                // is flipped).
+                tileIdx &= 0b11111110;
             }
             lineOffset = tilePY * 2;
 

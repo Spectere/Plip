@@ -1,3 +1,6 @@
+* Sprites
+    - Sprite priority and conflict resolution is NYI.
+
 * Various timing issues.
     - Check over the DMG timer routines.
     - OAM DMA transfer seems to end early.

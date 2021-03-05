@@ -205,6 +205,7 @@ namespace Plip::Core::GameBoy {
         static const uint32_t m_vramBgBlockOffset = 0x0400;
 
         static const uint8_t m_maxSpritesPerScanline = 10;
+        static const uint8_t m_maxSpritesInOam = 40;
 
         static const uint32_t m_videoHBlankTime = 0;
         static const uint32_t m_videoOamScanTime = 80;
