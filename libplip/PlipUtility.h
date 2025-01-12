@@ -3,6 +3,9 @@
  * Miscellaneous helper functions.
  */
 
+#pragma once
+
+#include <cstdint>
 #include <string>
 
 namespace Plip {

@@ -1,4 +1,5 @@
 .idea
+build*/
 cmake-build-*/
 libplip/PlipVersion.h
 
