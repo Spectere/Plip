@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "Audio/PlipAudio.h"
 
@@ -17,18 +17,12 @@ namespace PlipSdl {
 
         void DequeueAll() override;
         void Enqueue(std::vector<float> buffer) override;
-        int GetBufferSize() override;
         uintmax_t GetQueueSize() override;
 
         static const int SampleLength = 4096;
 
     private:
-        void ConvertQueue(void *data, int size);
-        void DirectQueue(void *data, int size);
-
-        SDL_AudioCVT m_cvt {};
-        SDL_AudioDeviceID m_device = 0;
-        SDL_AudioSpec m_spec {};
-        void (SdlAudio::*m_playFunc)(void*, int);
+        size_t m_bufferSize = {};
+        SDL_AudioStream* m_device = nullptr;
     };
 }

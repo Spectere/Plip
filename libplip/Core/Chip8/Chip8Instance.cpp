@@ -46,7 +46,6 @@ namespace Plip::Core::Chip8 {
 
         m_channels = pa::Channels;
         m_sampleRate = pa::SampleRate;
-        m_sampleCount = m_audio->GetBufferSize();
 
         auto cycles = (double)SineHz / (double)m_sampleRate;
         m_delta = cycles * 2.0 * M_PI;
@@ -104,8 +103,8 @@ namespace Plip::Core::Chip8 {
     std::vector<float> Chip8Instance::GenerateSilence() {
         using pa = Plip::PlipAudio;
 
-        std::vector<float> res;
-        for(auto i = 0; i < m_sampleCount; i++) {
+        std::vector<float> res(pa::BufferLength);
+        for(auto i = 0; i < pa::BufferLength; i++) {
             for(auto c = 0; c < m_channels; c++)
                 res.push_back(0);
             m_angle += m_delta;  // Keep the wave generator going to prevent clicks.
@@ -117,8 +116,8 @@ namespace Plip::Core::Chip8 {
     std::vector<float> Chip8Instance::GenerateSine() {
         using pa = Plip::PlipAudio;
 
-        std::vector<float> res;
-        for(auto i = 0; i < m_sampleCount; i++) {
+        std::vector<float> res(pa::BufferLength);
+        for(auto i = 0; i < pa::BufferLength; i++) {
             for(auto c = 0; c < m_channels; c++)
                 res.push_back(SineVolume * std::sin(m_angle));
             m_angle += m_delta;

@@ -3,6 +3,7 @@
  * Implements a SDL2 rendering window.
  */
 
+#include <SDL3/SDL_hints.h>
 #include <sstream>
 
 #include "Video/PlipVideoException.h"
@@ -19,7 +20,6 @@ namespace PlipSdl {
 
         // Try to create a window.
         m_window = SDL_CreateWindow(title.c_str(),
-                SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                 m_width * m_scale, m_height * m_scale, 0);
 
         if(m_window == nullptr) {
@@ -28,22 +28,29 @@ namespace PlipSdl {
         }
 
         // Try to create a renderer.
-        m_renderer = SDL_CreateRenderer(m_window, -1, 0);
+        m_renderer = SDL_CreateRenderer(m_window, nullptr);
 
         if(m_renderer == nullptr) {
             error << "Unable to create SDL renderer: " << SDL_GetError();
             throw Plip::PlipVideoException(error.str().c_str());
         }
 
-        SDL_RendererInfo rendererInfo;
-        if(SDL_GetRendererInfo(m_renderer, &rendererInfo)) {
-            error << "Unable to retrieve SDL renderer info: " << SDL_GetError();
+        // Fetch supported texture formats
+        auto textureFormats = static_cast<const SDL_PixelFormat *>(SDL_GetPointerProperty(
+            SDL_GetRendererProperties(m_renderer),
+            SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER,
+            nullptr
+        ));
+
+        if(textureFormats == nullptr) {
+            error << "Unable to retrieve supported texture formats: " << SDL_GetError();
             throw Plip::PlipVideoException(error.str().c_str());
         }
 
+        // Look for whichever 24/32-bit format is supported by this system.
         auto found = false;
-        for(auto i = 0; i < rendererInfo.num_texture_formats; i++) {
-            if(SelectFormat(rendererInfo.texture_formats[i])) {
+        for(auto i = 0; textureFormats[i] != SDL_PIXELFORMAT_UNKNOWN; i++) {
+            if(SelectFormat(textureFormats[i])) {
                 found = true;
                 break;
             }
@@ -77,7 +84,7 @@ namespace PlipSdl {
     void SdlWindow::CreateTexture() {
         if(m_texture != nullptr) SDL_DestroyTexture(m_texture);
 
-        uint32_t pixelFormat = SelectSdlFormat(m_format);
+        SDL_PixelFormat pixelFormat = SelectSdlFormat(m_format);
 
         m_texture = nullptr;
         m_texture = SDL_CreateTexture(m_renderer,
@@ -89,6 +96,8 @@ namespace PlipSdl {
             error << "Unable to create SDL texture: " << SDL_GetError();
             throw Plip::PlipVideoException(error.str().c_str());
         }
+
+        SDL_SetTextureScaleMode(m_texture, SDL_SCALEMODE_NEAREST);
     }
 
     void SdlWindow::Draw(void *data) {
@@ -113,7 +122,7 @@ namespace PlipSdl {
     }
 
     void SdlWindow::Render() {
-        SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
+        SDL_RenderTexture(m_renderer, m_texture, nullptr, nullptr);
         SDL_RenderPresent(m_renderer);
     }
 
@@ -138,11 +147,11 @@ namespace PlipSdl {
                 m_format = Plip::PlipVideoFormat::BGR888;
                 return true;
 
-            case SDL_PIXELFORMAT_RGB888:
+            case SDL_PIXELFORMAT_XRGB8888:
                 m_format = Plip::PlipVideoFormat::XRGB8888;
                 return true;
 
-            case SDL_PIXELFORMAT_BGR888:
+            case SDL_PIXELFORMAT_XBGR8888:
                 m_format = Plip::PlipVideoFormat::XBGR8888;
                 return true;
 
@@ -175,7 +184,7 @@ namespace PlipSdl {
         }
     }
 
-    uint32_t SdlWindow::SelectSdlFormat(Plip::PlipVideoFormat format) {
+    SDL_PixelFormat SdlWindow::SelectSdlFormat(Plip::PlipVideoFormat format) {
         switch(format) {
             case Plip::PlipVideoFormat::RGB888:
                 return SDL_PIXELFORMAT_RGB24;

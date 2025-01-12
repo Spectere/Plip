@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "Video/PlipVideo.h"
 
@@ -31,7 +31,7 @@ namespace PlipSdl {
     private:
         void CreateTexture();
         bool SelectFormat(uint32_t format);
-        static uint32_t SelectSdlFormat(Plip::PlipVideoFormat format);
+        static SDL_PixelFormat SelectSdlFormat(Plip::PlipVideoFormat format);
 
         const int m_initWidth = 64;
         const int m_initHeight = 64;

@@ -3,6 +3,10 @@
  * The big, magical entry point.
  */
 
+// ReSharper disable once CppUnusedIncludeDirective
+// NOTE: Don't remove this. It may be required for some platforms.
+#include <SDL3/SDL_main.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -31,7 +35,7 @@ std::vector<std::vector<std::string>> intParamMapping = {
         { "fps"  , "video", "targetFps" }
 };
 
-void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
+void GameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
     auto audio = plip->GetAudio();
     auto video = plip->GetVideo();
 
@@ -61,7 +65,7 @@ void gameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEve
     audio->DequeueAll();
 }
 
-cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
+cxxopts::ParseResult ParseCmdLine(int argc, char **argv) {
     try {
         cxxopts::Options options(argv[0]);
 
@@ -108,8 +112,9 @@ cxxopts::ParseResult parseCmdLine(int argc, char **argv) {
     }
 }
 
+extern "C"
 int main(int argc, char **argv) {
-    auto opts = parseCmdLine(argc, argv);
+    auto opts = ParseCmdLine(argc, argv);
     auto version = Plip::PlipInstance::GetVersion();
 
     if(opts.count("version")) {
@@ -216,7 +221,7 @@ int main(int argc, char **argv) {
         event->AddDigitalBinding(coreInput.first, key);
     }
 
-    gameLoop(plip, config, event, timer);
+    GameLoop(plip, config, event, timer);
 
     SDL_Quit();
     return 0;

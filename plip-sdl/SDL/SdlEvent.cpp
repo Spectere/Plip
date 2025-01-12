@@ -3,7 +3,7 @@
  * An SDL2 event handler.
  */
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "SdlEvent.h"
 
@@ -23,15 +23,15 @@ namespace PlipSdl {
 
         while(SDL_PollEvent(&ev)) {
             switch(ev.type) {
-                case SDL_KEYDOWN:
-                    UpdateDigitalInput(ev.key.keysym.scancode, true);
+                case SDL_EVENT_KEY_DOWN:
+                    UpdateDigitalInput(ev.key.scancode, true);
                     break;
 
-                case SDL_KEYUP:
-                    UpdateDigitalInput(ev.key.keysym.scancode, false);
+                case SDL_EVENT_KEY_UP:
+                    UpdateDigitalInput(ev.key.scancode, false);
                     break;
 
-                case SDL_QUIT:
+                case SDL_EVENT_QUIT:
                     uiEvent = SdlUiEvent::Quit;
                     break;
             }
