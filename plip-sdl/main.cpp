@@ -68,13 +68,12 @@ cxxopts::ParseResult ParseCmdLine(int argc, char **argv) {
         options.positional_help("CORE FILENAME")
                 .show_positional_help();
 
-        options.add_options(cxxopts::hidden_group)
+        options.add_options()
                 ("core", "the core that should be used", cxxopts::value<std::string>())
                 ("filename", "the path to the ROM", cxxopts::value<std::string>())
-                ("positional", "", cxxopts::value<std::vector<std::string>>())
         ;
 
-        options.add_options()
+        options.add_options("General")
                 ("h,help", "shows this help screen and exits")
                 ("c,config", "specifies a config file", cxxopts::value<std::string>())
                 ("l,list-cores", "shows a list of all supported cores and exits")
@@ -86,7 +85,7 @@ cxxopts::ParseResult ParseCmdLine(int argc, char **argv) {
                 ( "s,scale", "sets the default window scaling", cxxopts::value<int>()->default_value("1"))
         ;
 
-        options.parse_positional({"core", "filename", "positional"});
+        options.parse_positional({"core", "filename" });
 
         auto result = options.parse(argc, argv);
 
@@ -96,14 +95,14 @@ cxxopts::ParseResult ParseCmdLine(int argc, char **argv) {
         }
 
         return result;
-    } catch(cxxopts::argument_incorrect_type &ex) {
+    } catch(cxxopts::exceptions::incorrect_argument_type &ex) {
         std::cerr << "Invalid argument type (" << ex.what() << ")" << std::endl;
         exit(1);
-    } catch(cxxopts::missing_argument_exception &ex) {
+    } catch(cxxopts::exceptions::missing_argument &ex) {
         std::cerr << ex.what() << std::endl;
         exit(1);
-    } catch(cxxopts::OptionException &ex) {
-        std::cerr << "Error parsing arguments (" << ex.what() << ")" << std::endl;
+    } catch(cxxopts::exceptions::option_requires_argument &ex) {
+        std::cerr << "Option requires argument (" << ex.what() << ")" << std::endl;
         exit(1);
     }
 }

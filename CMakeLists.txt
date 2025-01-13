@@ -28,14 +28,24 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(catch2)
 
+# cxxopts
+set(CXXOPTS_DIR ${CMAKE_BINARY_DIR}/lib/cxxopts)
+
+FetchContent_Populate(
+    cxxopts
+    GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+    GIT_TAG        4bf61f08697b110d9e3991864650a405b3dd515d  # v3.2.1
+    SOURCE_DIR     ${CXXOPTS_DIR}
+)
+
 # SDL3
 FetchContent_Declare(
-    SDL
+    SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
     GIT_TAG        22422f7748d5128135995ed34c8f8012861c7332  # preview-3.1.8
     GIT_SHALLOW    TRUE
 )
-FetchContent_MakeAvailable(SDL)
+FetchContent_MakeAvailable(SDL3)
 
 
 ###########
@@ -104,6 +114,7 @@ add_executable(${gui_name}
 target_include_directories(${gui_name}
     PRIVATE
         ${CMAKE_SOURCE_DIR}/libplip
+        ${CXXOPTS_DIR}/include
 
     PUBLIC
         SDL3::SDL3
