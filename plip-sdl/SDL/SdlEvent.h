@@ -17,7 +17,7 @@ namespace PlipSdl {
 
     class SdlEvent {
     public:
-        explicit SdlEvent(Plip::PlipInput *input) : m_input(input) {};
+        explicit SdlEvent(Plip::PlipInput *input) : m_input(input) {}
 
         void AddDigitalBinding(int id, SDL_Scancode scancode);
         void AddDigitalBinding(int id, const std::string &binding);

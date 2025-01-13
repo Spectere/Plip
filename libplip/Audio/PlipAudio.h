@@ -16,13 +16,14 @@ namespace Plip {
         virtual uintmax_t GetQueueSize() = 0;
         virtual bool IsActive() final { return m_active; }
 
-        static const int BitRate = 32;
-        static const int Channels = 2;
-        static const int SampleRate = 48000;
-        static const int BufferLength = 4096;
+        static constexpr int BitRate = 32;
+        static constexpr int Channels = 2;
+        static constexpr int SampleRate = 48000;
+        static constexpr int BufferLength = 4096;
 
     protected:
         PlipAudio() = default;
+        ~PlipAudio() = default;
 
         bool m_active = false;
     };

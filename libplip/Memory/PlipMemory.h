@@ -20,5 +20,6 @@ namespace Plip {
 
     protected:
         PlipMemory() = default;
+        ~PlipMemory() = default;
     };
 }

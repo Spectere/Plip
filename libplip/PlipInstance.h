@@ -21,12 +21,12 @@ namespace Plip {
         static std::string GetVersion();
         static std::vector<PlipCoreDescription> GetSupportedCores();
 
-        PlipAudio* GetAudio();
-        PlipCore* GetCore();
-        PlipInput* GetInput();
-        PlipVideo* GetVideo();
+        [[nodiscard]] PlipAudio* GetAudio() const;
+        [[nodiscard]] PlipCore* GetCore() const;
+        [[nodiscard]] PlipInput* GetInput() const;
+        [[nodiscard]] PlipVideo* GetVideo() const;
         PlipError Load(PlipValidCore core, const std::string &path);
-        void Run(long ns);
+        void Run(long ns) const;
 
     private:
         PlipAudio *m_audio;

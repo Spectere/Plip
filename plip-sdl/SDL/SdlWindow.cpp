@@ -11,7 +11,7 @@
 #include "SdlWindow.h"
 
 namespace PlipSdl {
-    SdlWindow::SdlWindow(int scale, const std::string &title) {
+    SdlWindow::SdlWindow(const int scale, const std::string &title) {
         std::stringstream error;
 
         m_scale = scale;
@@ -36,7 +36,7 @@ namespace PlipSdl {
         }
 
         // Fetch supported texture formats
-        auto textureFormats = static_cast<const SDL_PixelFormat *>(SDL_GetPointerProperty(
+        const auto textureFormats = static_cast<const SDL_PixelFormat *>(SDL_GetPointerProperty(
             SDL_GetRendererProperties(m_renderer),
             SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER,
             nullptr
@@ -84,7 +84,7 @@ namespace PlipSdl {
     void SdlWindow::CreateTexture() {
         if(m_texture != nullptr) SDL_DestroyTexture(m_texture);
 
-        SDL_PixelFormat pixelFormat = SelectSdlFormat(m_format);
+        const SDL_PixelFormat pixelFormat = SelectSdlFormat(m_format);
 
         m_texture = nullptr;
         m_texture = SDL_CreateTexture(m_renderer,
@@ -126,7 +126,7 @@ namespace PlipSdl {
         SDL_RenderPresent(m_renderer);
     }
 
-    void SdlWindow::Resize(int width, int height) {
+    void SdlWindow::Resize(const int width, const int height) {
         m_width = width;
         m_height = height;
 
@@ -137,7 +137,7 @@ namespace PlipSdl {
         CreateTexture();
     }
 
-    bool SdlWindow::SelectFormat(uint32_t format) {
+    bool SdlWindow::SelectFormat(const uint32_t format) {
         switch(format) {
             case SDL_PIXELFORMAT_RGB24:
                 m_format = Plip::PlipVideoFormat::RGB888;
@@ -184,7 +184,7 @@ namespace PlipSdl {
         }
     }
 
-    SDL_PixelFormat SdlWindow::SelectSdlFormat(Plip::PlipVideoFormat format) {
+    SDL_PixelFormat SdlWindow::SelectSdlFormat(const Plip::PlipVideoFormat format) {
         switch(format) {
             case Plip::PlipVideoFormat::RGB888:
                 return SDL_PIXELFORMAT_RGB24;
@@ -213,12 +213,12 @@ namespace PlipSdl {
         }
     }
 
-    void SdlWindow::SetScale(int scale) {
+    void SdlWindow::SetScale(const int scale) {
         m_scale = scale;
         SDL_SetWindowSize(m_window, m_width * m_scale, m_height * m_scale);
     }
 
-    void SdlWindow::SetTitle(std::string title) {
+    void SdlWindow::SetTitle(const std::string title) {
         SDL_SetWindowTitle(m_window, title.c_str());
     }
 }

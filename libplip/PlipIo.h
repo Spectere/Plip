@@ -6,11 +6,8 @@
 #pragma once
 
 #include <fstream>
-#include <istream>
 #include <vector>
 
-#include "Input/PlipInput.h"
-#include "Memory/PlipMemoryRam.h"
 #include "Memory/PlipMemoryRom.h"
 
 namespace Plip {

@@ -8,7 +8,7 @@
 #include "PlipMemory.h"
 
 namespace Plip {
-    class PlipMemoryRam : public PlipMemory {
+    class PlipMemoryRam final : public PlipMemory {
     public:
         explicit PlipMemoryRam(uint32_t amount);
         ~PlipMemoryRam();

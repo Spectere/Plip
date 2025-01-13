@@ -14,15 +14,15 @@ namespace Plip {
         m_video = video;
     }
 
-    PlipAudio* PlipInstance::GetAudio() {
+    PlipAudio* PlipInstance::GetAudio() const {
         return m_audio;
     }
 
-    PlipCore* PlipInstance::GetCore() {
+    PlipCore* PlipInstance::GetCore() const {
         return m_core;
     }
 
-    PlipInput* PlipInstance::GetInput() {
+    PlipInput* PlipInstance::GetInput() const {
         return m_input;
     }
 
@@ -42,11 +42,11 @@ namespace Plip {
         #endif // GIT_FOUND
     }
 
-    PlipVideo* PlipInstance::GetVideo() {
+    PlipVideo* PlipInstance::GetVideo() const {
         return m_video;
     }
 
-    PlipError PlipInstance::Load(PlipValidCore core, const std::string &path) {
+    PlipError PlipInstance::Load(const PlipValidCore core, const std::string &path) {
         switch(core) {
             case PlipValidCore::Chip8:
                 m_core = new Core::Chip8::Chip8Instance(m_audio, m_input, m_video);
@@ -58,7 +58,7 @@ namespace Plip {
         return m_core->Load(path);
     }
 
-    void PlipInstance::Run(long ns) {
+    void PlipInstance::Run(const long ns) const {
         m_core->Delta(ns);
     }
 }

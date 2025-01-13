@@ -10,7 +10,7 @@
 #include "Audio/PlipAudio.h"
 
 namespace PlipSdl {
-    class SdlAudio : public Plip::PlipAudio {
+    class SdlAudio final : public Plip::PlipAudio {
     public:
         SdlAudio();
         ~SdlAudio();
@@ -19,7 +19,7 @@ namespace PlipSdl {
         void Enqueue(std::vector<float> buffer) override;
         uintmax_t GetQueueSize() override;
 
-        static const int SampleLength = 4096;
+        static constexpr int SampleLength = 4096;
 
     private:
         size_t m_bufferSize = {};

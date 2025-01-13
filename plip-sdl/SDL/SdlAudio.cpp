@@ -12,7 +12,7 @@ namespace PlipSdl {
         SDL_InitSubSystem(SDL_INIT_AUDIO);
 
         // Open audio device.
-        SDL_AudioSpec want { SDL_AUDIO_F32, Plip::PlipAudio::Channels, Plip::PlipAudio::SampleRate };
+        constexpr SDL_AudioSpec want { SDL_AUDIO_F32, Channels, SampleRate };
 
         m_device = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &want, nullptr, nullptr);
         if(m_device == nullptr) {
@@ -20,8 +20,11 @@ namespace PlipSdl {
             return;
         }
 
-        m_active = true;
-        SDL_ResumeAudioStreamDevice(m_device);
+        if(SDL_ResumeAudioStreamDevice(m_device)) {
+            m_active = true;
+        } else {
+            std::cerr << "Error starting audio stream: " << SDL_GetError() << std::endl;
+        }
     }
 
     SdlAudio::~SdlAudio() {
@@ -37,12 +40,12 @@ namespace PlipSdl {
         SDL_ClearAudioStream(m_device);
     }
 
-    void SdlAudio::Enqueue(std::vector<float> buffer) {
+    void SdlAudio::Enqueue(const std::vector<float> buffer) {
         if(!IsActive()) return;
         SDL_PutAudioStreamData(m_device, buffer.data(), static_cast<int>(buffer.size()));
     }
 
     uintmax_t SdlAudio::GetQueueSize() {
-        return SDL_GetAudioStreamQueued(m_device);
+        return SDL_GetAudioStreamAvailable(m_device);
     }
 }

@@ -6,12 +6,10 @@
 #pragma once
 
 #include <stdexcept>
-#include <string>
 #include <utility>
 
 namespace Plip {
-    struct PlipVideoException : std::runtime_error {
-        explicit PlipVideoException(const char *message)
-            : std::runtime_error(message) {}
+    struct PlipVideoException final : std::runtime_error {
+        explicit PlipVideoException(const char *message) : std::runtime_error(message) {}
     };
 }

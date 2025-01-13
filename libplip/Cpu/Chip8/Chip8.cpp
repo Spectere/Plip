@@ -7,22 +7,26 @@
 #include <sstream>
 
 #include "Chip8.h"
+
+#include "../../PlipEmulationException.h"
 #include "../../PlipUtility.h"
 
 namespace Plip::Cpu {
-    Chip8::Chip8(long hz, PlipMemoryMap *memoryMap, uint16_t charset, Plip::PlipInput *input)
+    Chip8::Chip8(const long hz, PlipMemoryMap *memoryMap, const uint16_t charset, PlipInput *input) // NOLINT(*-msc51-cpp)
     : PlipCpu(hz, memoryMap) {
         m_charsetAddress = charset;
         m_input = input;
         m_videoBuffer = new uint64_t[VideoSize] {};
+
+        m_rng = std::mt19937((std::chrono::high_resolution_clock::now().time_since_epoch().count()));
     }
 
     void Chip8::Cycle() {
-        auto inst = Fetch();
-        auto left = GetReg1(inst);
-        auto right = GetReg2(inst);
-        auto val = GetValue(inst);
-        auto addr = GetAddress(inst);
+        const auto inst = Fetch();
+        const auto left = GetReg1(inst);
+        const auto right = GetReg2(inst);
+        const auto val = GetValue(inst);
+        const auto addr = GetAddress(inst);
 
         if(m_waitForKey) {
             for(uint8_t i = 0; i < 0x10; i++) {
@@ -61,6 +65,7 @@ namespace Plip::Cpu {
             case 0xD000: OpDXYN(left, right, inst & 0xF); break;
             case 0xE000: OpEXOO(left, val); break;
             case 0xF000: OpFXOO(left, val); break;
+            default: throw PlipEmulationException("unexpected opcode");
         }
     }
 
@@ -69,9 +74,8 @@ namespace Plip::Cpu {
         if(m_timerDelay > 0) m_timerDelay--;
     }
 
-    std::string Chip8::DumpRegisters() {
-        using util = Plip::PlipUtility;
-        const char *regLabel = "0123456789ABCDEF";
+    std::string Chip8::DumpRegisters() const {
+        using util = PlipUtility;
         std::stringstream dump;
 
         dump << util::DumpValue("   PC", m_pc, 3) << '\n'
@@ -81,6 +85,8 @@ namespace Plip::Cpu {
              << util::DumpValue("    I", m_i, 4) << '\n';
 
         for(auto i = 0; i < 16; i++) {
+            const auto regLabel = "0123456789ABCDEF";
+
             std::stringstream label;
             label << "   V" << regLabel[i];
             dump << util::DumpValue(label.str(), m_reg[i], 2) << '\n';
@@ -97,7 +103,7 @@ namespace Plip::Cpu {
         return dump.str();
     }
 
-    void Chip8::Reset(uint32_t pc) {
+    void Chip8::Reset(const uint32_t pc) {
         m_timerAudio = 0;
         m_timerDelay = 0;
         m_sp = 0;

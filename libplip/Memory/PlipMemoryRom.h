@@ -8,9 +8,9 @@
 #include "PlipMemory.h"
 
 namespace Plip {
-    class PlipMemoryRom : public PlipMemory {
+    class PlipMemoryRom final : public PlipMemory {
     public:
-        explicit PlipMemoryRom(void *data, uint32_t length);
+        explicit PlipMemoryRom(const void *data, uint32_t length);
         ~PlipMemoryRom();
 
         uint8_t GetByte(uint32_t address) override;

@@ -23,9 +23,9 @@ namespace Plip {
         void AddBlock(PlipMemory *memory, uint32_t offset = 0);
         void AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length);
         void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
-        uint8_t GetByte(uint32_t address);
+        uint8_t GetByte(uint32_t address) const;
         uint32_t GetLength();
-        void SetByte(uint32_t address, uint8_t value);
+        void SetByte(uint32_t address, uint8_t value) const;
         void UnassignBlock(uint32_t address, uint32_t length);
 
     private:
@@ -36,7 +36,7 @@ namespace Plip {
         };
 
         void AssignBlockDirect(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
-        std::tuple<PlipMemory*, uint32_t> FindAddress(uint32_t address);
+        std::tuple<PlipMemory*, uint32_t> FindAddress(uint32_t address) const;
         static inline BlockRangeResult IsBlockInRange(const PlipMemoryMapRange &block, uint32_t startAddress, uint32_t endAddress);
 
         std::list<PlipMemoryMapRange> m_range;

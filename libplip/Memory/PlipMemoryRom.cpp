@@ -8,7 +8,7 @@
 #include "PlipMemoryRom.h"
 
 namespace Plip {
-    PlipMemoryRom::PlipMemoryRom(void *data, uint32_t length) {
+    PlipMemoryRom::PlipMemoryRom(const void *data, const uint32_t length) {
         m_length = length;
         m_data = new uint8_t[m_length];
 
@@ -19,7 +19,7 @@ namespace Plip {
         delete m_data;
     }
 
-    uint8_t PlipMemoryRom::GetByte(uint32_t address) {
+    uint8_t PlipMemoryRom::GetByte(const uint32_t address) {
         return m_data[address];
     }
 

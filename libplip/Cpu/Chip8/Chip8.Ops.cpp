@@ -15,7 +15,7 @@ namespace Plip::Cpu {
         // RCA 1802 routine. Not implemented.
     }
 
-    void Chip8::Op00E0() {
+    void Chip8::Op00E0() const {
         // Clears the screen.
         for(auto i = 0; i < VideoSize; i++)
             m_videoBuffer[i] = 0;
@@ -32,12 +32,12 @@ namespace Plip::Cpu {
         m_pc = m_stack[--m_sp];
     }
 
-    void Chip8::Op1NNN(uint16_t address) {
+    void Chip8::Op1NNN(const uint16_t address) {
         // Jumps to an address.
         m_pc = address;
     }
 
-    void Chip8::Op2NNN(uint16_t address) {
+    void Chip8::Op2NNN(const uint16_t address) {
         // Calls a subroutine.
         if(m_sp >= StackSize) {
             std::stringstream ex;
@@ -49,32 +49,32 @@ namespace Plip::Cpu {
         m_pc = address;
     }
 
-    void Chip8::Op3XNN(uint8_t reg, uint8_t value) {
+    void Chip8::Op3XNN(const uint8_t reg, const uint8_t value) {
         // Skips the next instruction if reg == value.
         if(m_reg[reg] == value) m_pc += 2;
     }
 
-    void Chip8::Op4XNN(uint8_t reg, uint8_t value) {
+    void Chip8::Op4XNN(const uint8_t reg, const uint8_t value) {
         // Skips the next instruction if reg != value.
         if(m_reg[reg] != value) m_pc += 2;
     }
 
-    void Chip8::Op5XY0(uint8_t left, uint8_t right) {
+    void Chip8::Op5XY0(const uint8_t left, const uint8_t right) {
         // Skips the next instruction if left == right.
         if(m_reg[left] == m_reg[right]) m_pc += 2;
     }
 
-    void Chip8::Op6XNN(uint8_t reg, uint8_t value) {
+    void Chip8::Op6XNN(const uint8_t reg, const uint8_t value) {
         // Sets reg to value.
         m_reg[reg] = value;
     }
 
-    void Chip8::Op7XNN(uint8_t reg, uint8_t value) {
+    void Chip8::Op7XNN(const uint8_t reg, const uint8_t value) {
         // Adds value to reg.
         m_reg[reg] += value;
     }
 
-    void Chip8::Op8XYO(uint8_t left, uint8_t right, uint8_t op) {
+    void Chip8::Op8XYO(const uint8_t left, const uint8_t right, const uint8_t op) {
         uint8_t old;
 
         // Various bitwise and math operations.
@@ -135,37 +135,37 @@ namespace Plip::Cpu {
         }
     }
 
-    void Chip8::Op9XY0(uint8_t left, uint8_t right) {
+    void Chip8::Op9XY0(const uint8_t left, const uint8_t right) {
         // Skips the next instruction if left != right.
         if(m_reg[left] != m_reg[right]) m_pc += 2;
     }
 
-    void Chip8::OpANNN(uint16_t address) {
+    void Chip8::OpANNN(const uint16_t address) {
         // Sets i to address.
         m_i = address;
     }
 
-    void Chip8::OpBNNN(uint16_t address) {
+    void Chip8::OpBNNN(const uint16_t address) {
         // Jumps to address + V0.
         m_pc = address + m_reg[0];
     }
 
-    void Chip8::OpCXNN(uint8_t reg, uint8_t value) {
+    void Chip8::OpCXNN(const uint8_t reg, const uint8_t value) {
         // Sets reg to random(0-255) & value.
-        std::uniform_int_distribution<int> num(0, 255);
+        std::uniform_int_distribution num(0, 255);
         m_reg[reg] = num(m_rng) & value;
     }
 
-    void Chip8::OpDXYN(uint8_t xReg, uint8_t yReg, uint8_t size) {
+    void Chip8::OpDXYN(const uint8_t xReg, const uint8_t yReg, const uint8_t size) {
         // Draws an (8 x size) sprite at address I to (xReg, yReg).
-        auto sprite = new uint64_t[size];
-        auto x = m_reg[xReg];
-        auto y = m_reg[yReg];
+        const auto sprite = new uint64_t[size];
+        const auto x = m_reg[xReg];
+        const auto y = m_reg[yReg];
 
         for(auto i = 0; i < size; i++) {
             // Push sprites all the way to the highest bits, then
             // bump them to the right as much as necessary.
-            sprite[i] = ((uint64_t)m_memory->GetByte(m_i + i) << 56) >> x;
+            sprite[i] = (static_cast<uint64_t>(m_memory->GetByte(m_i + i)) << 56) >> x;
         }
 
         m_reg[0xF] = 0;
@@ -183,7 +183,7 @@ namespace Plip::Cpu {
         }
     }
 
-    void Chip8::OpEXOO(uint8_t reg, uint8_t op) {
+    void Chip8::OpEXOO(const uint8_t reg, const uint8_t op) {
         // Input functions.
         switch(op) {
             case 0x9E:
@@ -200,7 +200,7 @@ namespace Plip::Cpu {
         }
     }
 
-    void Chip8::OpFXOO(uint8_t reg, uint8_t op) {
+    void Chip8::OpFXOO(const uint8_t reg, const uint8_t op) {
         std::stringstream ss;
         std::string str;
 

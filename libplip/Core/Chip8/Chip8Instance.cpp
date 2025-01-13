@@ -8,12 +8,13 @@
 #include <cmath>
 
 #include "Chip8Instance.h"
+
 #include "../../PlipIo.h"
 
 namespace Plip::Core::Chip8 {
     Chip8Instance::Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video)
-    : Plip::PlipCore(audio, input, video) {
-        using pa = Plip::PlipAudio;
+    : PlipCore(audio, input, video) {
+        using pa = PlipAudio;
 
         m_ram = new PlipMemoryRam(RamSize);
         m_memory->AddBlock(m_ram);
@@ -36,7 +37,7 @@ namespace Plip::Core::Chip8 {
         m_input->AddInput(0xF, PlipInputDefinition(PlipInputType::Digital, "F"), { .digital = false });
 
         m_video->Resize(ScreenWidth, ScreenHeight);
-        m_videoFormat = Plip::PlipVideo::GetFormatInfo(m_video->GetFormat());
+        m_videoFormat = PlipVideo::GetFormatInfo(m_video->GetFormat());
         m_videoOutput = malloc(ScreenWidth * ScreenHeight * m_videoFormat.pixelWidth);
 
         m_cpu = new Cpu::Chip8(ClockRate, m_memory, CharacterSet, m_input);
@@ -46,8 +47,9 @@ namespace Plip::Core::Chip8 {
 
         m_channels = pa::Channels;
         m_sampleRate = pa::SampleRate;
+        m_audioBuffer = std::vector<float>(pa::BufferLength * m_channels);
 
-        auto cycles = (double)SineHz / (double)m_sampleRate;
+        const auto cycles = SineHz / static_cast<double>(m_sampleRate);
         m_delta = cycles * 2.0 * M_PI;
     }
 
@@ -55,14 +57,14 @@ namespace Plip::Core::Chip8 {
         free(m_videoOutput);
     }
 
-    void Chip8Instance::Delta(long ns) {
+    void Chip8Instance::Delta(const long ns) {
         m_cycleRemaining += ns;
 
         do {
             m_cpu->Cycle();
             m_cycleRemaining -= m_cycleTime;
 
-            if(m_audio->GetQueueSize() < 1024) {
+            if(m_audio->GetQueueSize() < PlipAudio::BufferLength) {
                 // This is a pretty lame implementation, but it should be good
                 // enough for this.
                 if(m_cpu->IsAudioPlaying()) {
@@ -82,56 +84,52 @@ namespace Plip::Core::Chip8 {
         Draw();
     }
 
-    void Chip8Instance::Draw() {
-        auto buffer = m_cpu->GetVideo();
+    void Chip8Instance::Draw() const {
+        const auto buffer = m_cpu->GetVideo();
 
         for(auto y = 0; y < ScreenHeight; y++) {
-            auto row = buffer[y];
+            const auto row = buffer[y];
             for(auto x = 0; x < ScreenWidth; x++) {
-                auto bit = row >> (63 - x) & 0x1;
+                const auto bit = row >> (63 - x) & 0x1;
                 m_videoFormat.plot(m_videoOutput, y * ScreenWidth + x,
                         bit * 255, bit * 255, bit * 255);
             }
         }
 
         m_video->BeginDraw();
-        m_video->EndDraw();
         m_video->Draw(m_videoOutput);
+        m_video->EndDraw();
         m_video->Render();
     }
 
     std::vector<float> Chip8Instance::GenerateSilence() {
-        using pa = Plip::PlipAudio;
-
-        std::vector<float> res(pa::BufferLength);
-        for(auto i = 0; i < pa::BufferLength; i++) {
-            for(auto c = 0; c < m_channels; c++)
-                res.push_back(0);
+        for(auto i = 0; i < PlipAudio::BufferLength; i++) {
+            for(auto c = 0; c < m_channels; c++) {
+                m_audioBuffer[i * m_channels + c] = 0;
+            }
             m_angle += m_delta;  // Keep the wave generator going to prevent clicks.
         }
 
-        return res;
+        return m_audioBuffer;
     }
 
     std::vector<float> Chip8Instance::GenerateSine() {
-        using pa = Plip::PlipAudio;
-
-        std::vector<float> res(pa::BufferLength);
-        for(auto i = 0; i < pa::BufferLength; i++) {
-            for(auto c = 0; c < m_channels; c++)
-                res.push_back(SineVolume * std::sin(m_angle));
+        for(auto i = 0; i < PlipAudio::BufferLength; i++) {
+            for(auto c = 0; c < m_channels; c++) {
+                m_audioBuffer[i * m_channels + c] = static_cast<float>(SineVolume * std::sin(m_angle));
+            }
             m_angle += m_delta;
         }
 
-        return res;
+        return m_audioBuffer;
     }
 
     PlipError Chip8Instance::Load(const std::string &path) {
-        using io = Plip::PlipIo;
+        using io = PlipIo;
         if(!io::FileExists(path)) return PlipError::FileNotFound;
 
-        auto size = io::GetSize(path);
-        auto data = io::ReadFile(path, size);
+        const auto size = io::GetSize(path);
+        const auto data = io::ReadFile(path, size);
 
         // Zero RAM.
         for(auto i = 0; i < RamSize; i++)
@@ -149,7 +147,7 @@ namespace Plip::Core::Chip8 {
         return PlipError::Success;
     }
 
-    void Chip8Instance::WriteCharacterSet(uint32_t address) {
+    void Chip8Instance::WriteCharacterSet(const uint32_t address) const {
         for(auto i = 0; i < m_charsetLength; i++)
             m_memory->SetByte(address + i, m_charset[i]);
     }

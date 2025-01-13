@@ -10,14 +10,14 @@
 namespace Plip {
     bool PlipIo::FileExists(const std::string &path) {
         std::ifstream file(path.c_str());
-        bool success = file.good();
+        const bool success = file.good();
         if(success) file.close();
         return success;
     }
 
     uintmax_t PlipIo::GetSize(const std::string &path) {
         namespace fs = std::filesystem;
-        return fs::file_size(fs::path(path));
+        return file_size(fs::path(path));
     }
 
     std::ifstream PlipIo::LoadFile(const std::string &path) {

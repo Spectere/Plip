@@ -44,35 +44,36 @@ namespace Plip {
         static PlipVideoFormatInfo GetFormatInfo(PlipVideoFormat format);
 
         // Pixel format functions.
-        static void PlotRgb888(void *data, int offset, uint8_t r, uint8_t g, uint8_t b) {
-            ((uint8_t*)data)[offset * 3] = r;
-            ((uint8_t*)data)[offset * 3 + 1] = g;
-            ((uint8_t*)data)[offset * 3 + 2] = b;
+        static void PlotXrgb888(void *data, const int offset, const uint8_t r, const uint8_t g, const uint8_t b) {
+            static_cast<uint8_t*>(data)[offset * 3] = r;
+            static_cast<uint8_t*>(data)[offset * 3 + 1] = g;
+            static_cast<uint8_t*>(data)[offset * 3 + 2] = b;
         }
 
-        static void PlotBgr888(void *data, int offset, uint8_t r, uint8_t g, uint8_t b) {
-            ((uint8_t*)data)[offset * 3] = b;
-            ((uint8_t*)data)[offset * 3 + 1] = g;
-            ((uint8_t*)data)[offset * 3 + 2] = r;
+        static void PlotXbgr888(void *data, const int offset, const uint8_t r, const uint8_t g, const uint8_t b) {
+            static_cast<uint8_t*>(data)[offset * 3] = b;
+            static_cast<uint8_t*>(data)[offset * 3 + 1] = g;
+            static_cast<uint8_t*>(data)[offset * 3 + 2] = r;
         }
 
-        static void PlotArgb8888(void *data, int offset, uint8_t r, uint8_t g, uint8_t b) {
-            ((uint32_t*)data)[offset] = (0xFF << 24) + (r << 16) + (g << 8) + b;
+        static void PlotArgb8888(void *data, const int offset, const uint8_t r, const uint8_t g, const uint8_t b) {
+            static_cast<uint32_t*>(data)[offset] = (0xFF << 24) + (r << 16) + (g << 8) + b;
         }
 
-        static void PlotAbgr8888(void *data, int offset, uint8_t r, uint8_t g, uint8_t b) {
-            ((uint32_t*)data)[offset] = (0xFF << 24) + (b << 16) + (g << 8) + r;
+        static void PlotAbgr8888(void *data, const int offset, const uint8_t r, const uint8_t g, const uint8_t b) {
+            static_cast<uint32_t*>(data)[offset] = (0xFF << 24) + (b << 16) + (g << 8) + r;
         }
 
-        static void PlotRgba8888(void *data, int offset, uint8_t r, uint8_t g, uint8_t b) {
-            ((uint32_t*)data)[offset] = (r << 24) + (g << 16) + (b << 8) + 0xFF;
+        static void PlotRgba8888(void *data, const int offset, const uint8_t r, const uint8_t g, const uint8_t b) {
+            static_cast<uint32_t*>(data)[offset] = (r << 24) + (g << 16) + (b << 8) + 0xFF;
         }
 
-        static void PlotBgra8888(void *data, int offset, uint8_t r, uint8_t g, uint8_t b) {
-            ((uint32_t*)data)[offset] = (b << 24) + (g << 16) + (r << 8) + 0xFF;
+        static void PlotBgra8888(void *data, const int offset, const uint8_t r, const uint8_t g, const uint8_t b) {
+            static_cast<uint32_t*>(data)[offset] = (b << 24) + (g << 16) + (r << 8) + 0xFF;
         }
 
     protected:
         PlipVideo() = default;
+        ~PlipVideo() = default;
     };
 }

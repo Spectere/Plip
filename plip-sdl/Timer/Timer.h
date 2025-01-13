@@ -14,5 +14,6 @@ namespace PlipSdl {
 
     protected:
         Timer() = default;
+        ~Timer() = default;
     };
 }

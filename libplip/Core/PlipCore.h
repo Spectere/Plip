@@ -6,7 +6,6 @@
 #pragma once
 
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include "../PlipError.h"
@@ -28,6 +27,8 @@ namespace Plip {
 
     class PlipCore {
     public:
+        virtual ~PlipCore() = default;
+
         static std::vector<PlipCoreDescription> GetSupportedCores();
 
         virtual void Delta(long ns) = 0;

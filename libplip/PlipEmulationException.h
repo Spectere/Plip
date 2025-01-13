@@ -6,12 +6,10 @@
 #pragma once
 
 #include <stdexcept>
-#include <string>
 #include <utility>
 
 namespace Plip {
-    struct PlipEmulationException : std::runtime_error {
-        explicit PlipEmulationException(const char *message)
-                : std::runtime_error(message) {}
+    struct PlipEmulationException final : std::runtime_error {
+        explicit PlipEmulationException(const char *message) : std::runtime_error(message) {}
     };
 }

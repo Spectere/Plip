@@ -7,7 +7,7 @@
 
 namespace Plip {
     void PlipInput::AddInput(int id, const PlipInputDefinition &input, const PlipInputData &initialData) {
-        m_coreInput.insert(std::pair<int, PlipInputDefinition>(id, input));
+        m_coreInput.insert(std::pair(id, input));
         UpdateInput(id, initialData);
     }
 
@@ -19,12 +19,12 @@ namespace Plip {
         m_coreInput.clear();
     }
 
-    PlipInputData PlipInput::GetInput(int id) {
+    PlipInputData PlipInput::GetInput(const int id) {
         return m_coreInput.find(id)->second.GetData();
     }
 
-    void PlipInput::UpdateInput(int id, PlipInputData data) {
-        auto it = m_coreInput.find(id);
+    void PlipInput::UpdateInput(const int id, const PlipInputData data) {
+        const auto it = m_coreInput.find(id);
         if(it == m_coreInput.end()) return;
         it->second.SetData(data);
     }

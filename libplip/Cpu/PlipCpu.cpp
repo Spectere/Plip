@@ -15,11 +15,11 @@ namespace Plip::Cpu {
         return m_cycle;
     }
 
-    long PlipCpu::GetHz(long hz) const {
+    long PlipCpu::GetHz(const long hz) const {
         return m_hz;
     }
 
-    void PlipCpu::SetHz(long hz) {
+    void PlipCpu::SetHz(const long hz) {
         m_hz = hz;
         m_cycle = 1000000000 / hz;
     }

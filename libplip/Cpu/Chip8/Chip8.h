@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <random>
 
 #include "../PlipCpu.h"
@@ -12,34 +13,34 @@
 #include "../../Video/PlipVideo.h"
 
 namespace Plip::Cpu {
-    class Chip8 : public PlipCpu {
+    class Chip8 final : public PlipCpu {
     public:
-        Chip8(long hz, PlipMemoryMap* memoryMap, uint16_t charset, Plip::PlipInput *input);
+        Chip8(long hz, PlipMemoryMap* memoryMap, uint16_t charset, PlipInput *input);
 
         void Cycle() override;
         void DelayTimer();
-        uint64_t* GetVideo() { return m_videoBuffer; }
+        [[nodiscard]] uint64_t* GetVideo() const { return m_videoBuffer; }
         [[nodiscard]] bool IsAudioPlaying() const { return m_timerAudio >= 2; }
         void Reset(uint32_t pc) override;
 
-        static const int VideoSize = 32;  // 64 x 32
+        static constexpr int VideoSize = 32;  // 64 x 32
 
     private:
-        std::string DumpRegisters();
+        [[nodiscard]] std::string DumpRegisters() const;
 
-        inline uint16_t Fetch() {
-            uint8_t high = m_memory->GetByte(m_pc++);
-            uint8_t low = m_memory->GetByte(m_pc++);
+        uint16_t Fetch() {
+            const uint8_t high = m_memory->GetByte(m_pc++);
+            const uint8_t low = m_memory->GetByte(m_pc++);
             return (high << 8) + low;
         }
 
-        static inline uint16_t GetAddress(uint16_t b) { return b & 0xFFF; }
-        static inline uint8_t GetReg1(uint16_t b) { return (b >> 8) & 0xF; }
-        static inline uint8_t GetReg2(uint16_t b) { return (b >> 4) & 0xF; }
-        static inline uint8_t GetValue(uint16_t b) { return b & 0xFF; }
+        static uint16_t GetAddress(const uint16_t b) { return b & 0xFFF; }
+        static uint8_t GetReg1(const uint16_t b) { return (b >> 8) & 0xF; }
+        static uint8_t GetReg2(const uint16_t b) { return (b >> 4) & 0xF; }
+        static uint8_t GetValue(const uint16_t b) { return b & 0xFF; }
 
-        void Op0NNN(uint16_t address);
-        void Op00E0();
+        static void Op0NNN(uint16_t address);
+        void Op00E0() const;
         void Op00EE();
         void Op1NNN(uint16_t address);
         void Op2NNN(uint16_t address);
@@ -57,11 +58,11 @@ namespace Plip::Cpu {
         void OpEXOO(uint8_t reg, uint8_t op);
         void OpFXOO(uint8_t reg, uint8_t op);
 
-        static const int StackSize = 12;
+        static constexpr int StackSize = 12;
 
-        std::default_random_engine m_rng;
+        std::mt19937 m_rng;
 
-        Plip::PlipInput *m_input;
+        PlipInput *m_input;
         uint64_t *m_videoBuffer;
 
         uint16_t m_charsetAddress;

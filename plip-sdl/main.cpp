@@ -19,11 +19,7 @@
 #include "SDL/SdlEvent.h"
 #include "SDL/SdlWindow.h"
 
-#ifdef UNIX
-#include "Timer/TimerPosix.h"
-#else
 #include "Timer/TimerSdl.h"
-#endif
 
 std::vector<std::vector<std::string>> defaultConfig = {
         { "video", "scale"    , "1"  },
@@ -37,10 +33,10 @@ std::vector<std::vector<std::string>> intParamMapping = {
 
 void GameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
     auto audio = plip->GetAudio();
-    auto video = plip->GetVideo();
+    //auto video = plip->GetVideo();
 
-    auto targetFps = config->GetValue<int>("video", "targetFps");
-    auto frameTime = 1000000000 / targetFps;
+    const auto targetFps = config->GetValue<int>("video", "targetFps");
+    const auto frameTime = 1000000000 / targetFps;
 
     auto running = true;
     while(running) {
@@ -190,12 +186,7 @@ int main(int argc, char **argv) {
     auto wnd = new PlipSdl::SdlWindow(videoScale, version);
     auto audio = new PlipSdl::SdlAudio();
     auto plip = new Plip::PlipInstance(wnd, audio);
-
-#ifdef UNIX
-    auto timer = new PlipSdl::TimerPosix();
-#else
     auto timer = new PlipSdl::TimerSdl();
-#endif
 
     auto result = plip->Load(coreTag, filename);
     switch(result) {

@@ -10,22 +10,22 @@
 #include "Config.h"
 
 namespace PlipSdl {
-    static inline std::string Trim(std::string str) {
+    static std::string Trim(std::string str) {
         // Trim front.
-        str.erase(str.cbegin(), std::find_if(str.cbegin(), str.cend(), [](unsigned char c) {
+        str.erase(str.cbegin(), std::find_if(str.cbegin(), str.cend(), [](const unsigned char c) {
             return !std::isspace(c);
         }));
 
         // Trim back.
-        str.erase(std::find_if(str.crbegin(), str.crend(), [](unsigned char c) {
+        str.erase(std::find_if(str.crbegin(), str.crend(), [](const unsigned char c) {
             return !std::isspace(c);
         }).base(), str.cend());
 
         return str;
     }
 
-    static inline std::string ToLower(std::string str) {
-        std::transform(str.cbegin(), str.cend(), str.begin(), [](unsigned char c) {
+    static std::string ToLower(std::string str) {
+        std::transform(str.cbegin(), str.cend(), str.begin(), [](const unsigned char c) {
             return std::tolower(c);
         });
 
@@ -37,13 +37,13 @@ namespace PlipSdl {
     }
 
     const std::string &Config::GetValue(const std::string &section, const std::string &key) {
-        auto secLower = ToLower(section);
-        auto keyLower = ToLower(key);
+        const auto secLower = ToLower(section);
+        const auto keyLower = ToLower(key);
 
-        auto itSection = m_section.find(secLower);
+        const auto itSection = m_section.find(secLower);
         if(itSection == m_section.end()) return empty;
 
-        auto itKey = itSection->second.find(keyLower);
+        const auto itKey = itSection->second.find(keyLower);
         if(itKey == itSection->second.end()) return empty;
 
         return itKey->second;
@@ -100,19 +100,18 @@ namespace PlipSdl {
         auto secLower = ToLower(section);
         auto keyLower = ToLower(key);
 
-        auto itSection = m_section.find(secLower);
+        const auto itSection = m_section.find(secLower);
         if(itSection == m_section.end()) {
             // O.o
-            auto newSection = std::pair<std::string, std::unordered_map<std::string, std::string>>
-                    (secLower, std::unordered_map<std::string, std::string>());
-            newSection.second.insert(std::pair<std::string, std::string>(keyLower, value));
+            auto newSection = std::pair(secLower, std::unordered_map<std::string, std::string>());
+            newSection.second.insert(std::pair(keyLower, value));
             m_section.insert(newSection);
             return;
         }
 
-        auto itKey = itSection->second.find(keyLower);
+        const auto itKey = itSection->second.find(keyLower);
         if(itKey == itSection->second.end()) {
-            itSection->second.insert(std::pair<std::string, std::string>(keyLower, value));
+            itSection->second.insert(std::pair(keyLower, value));
             return;
         }
 

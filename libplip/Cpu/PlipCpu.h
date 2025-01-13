@@ -21,9 +21,10 @@ namespace Plip::Cpu {
 
     protected:
         PlipCpu(long hz, PlipMemoryMap* memoryMap);
+        ~PlipCpu() = default;
 
         long m_hz {};
-        Plip::PlipMemoryMap *m_memory;
+        PlipMemoryMap *m_memory;
 
     private:
         long m_cycle {};

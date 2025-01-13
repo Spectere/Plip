@@ -6,7 +6,7 @@
 #include "PlipInputDefinition.h"
 
 namespace Plip {
-    PlipInputDefinition::PlipInputDefinition(PlipInputType type, const std::string &description) {
+    PlipInputDefinition::PlipInputDefinition(const PlipInputType type, const std::string &description) {
         m_type = type;
         m_description = description;
     }
@@ -23,7 +23,7 @@ namespace Plip {
         return m_type;
     }
 
-    void PlipInputDefinition::SetData(PlipInputData data) {
+    void PlipInputDefinition::SetData(const PlipInputData data) {
         m_data = data;
     }
 }

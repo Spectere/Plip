@@ -17,28 +17,28 @@
 #include "../../Memory/PlipMemoryRam.h"
 
 namespace Plip::Core::Chip8 {
-    class Chip8Instance : public PlipCore {
+    class Chip8Instance final : public PlipCore {
     public:
         Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video);
-        ~Chip8Instance();
+        ~Chip8Instance() override;
 
         void Delta(long ns) override;
         PlipError Load(const std::string &path) override;
 
-        static const uint32_t ClockRate = 500;
-        static const uint32_t CharacterSet = 0x100;
-        static const long DelayTimerTick = 16666666;
-        static const uint32_t ProgramOffset = 0x200;
-        static const uint32_t RamSize = 0x1000;
-        static const int SineHz = 440;
+        static constexpr uint32_t ClockRate = 500;
+        static constexpr uint32_t CharacterSet = 0x100;
+        static constexpr long DelayTimerTick = 16666666;
+        static constexpr uint32_t ProgramOffset = 0x200;
+        static constexpr uint32_t RamSize = 0x1000;
+        static constexpr double SineHz = 440.0;
         static constexpr double SineVolume = 0.25;
 
     private:
         double m_angle = 0.0;
         double m_delta;
         int m_channels;
-        int m_sampleCount;
         int m_sampleRate;
+        std::vector<float> m_audioBuffer;
 
         Cpu::Chip8 *m_cpu;
         long m_cycleRemaining = 0;
@@ -46,16 +46,16 @@ namespace Plip::Core::Chip8 {
         long m_cycleTime = 0;
         PlipMemoryRam *m_ram;
         std::unordered_map<int, PlipInputDefinition> m_inputList;
-        Plip::PlipVideoFormatInfo m_videoFormat {};
+        PlipVideoFormatInfo m_videoFormat {};
         void *m_videoOutput;
 
-        void Draw();
+        void Draw() const;
         std::vector<float> GenerateSilence();
         std::vector<float> GenerateSine();
-        void WriteCharacterSet(uint32_t address);
+        void WriteCharacterSet(uint32_t address) const;
 
-        static const int ScreenWidth = 64;
-        static const int ScreenHeight = 32;
+        static constexpr int ScreenWidth = 64;
+        static constexpr int ScreenHeight = 32;
 
         static constexpr uint8_t m_charset[] {
                 0xF0, 0x90, 0x90, 0x90, 0xF0, // 0

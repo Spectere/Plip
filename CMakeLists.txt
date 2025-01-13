@@ -96,17 +96,10 @@ add_executable(${gui_name}
     plip-sdl/SDL/SdlAudio.cpp           plip-sdl/SDL/SdlAudio.h
     plip-sdl/SDL/SdlEvent.cpp           plip-sdl/SDL/SdlEvent.h
     plip-sdl/SDL/SdlWindow.cpp          plip-sdl/SDL/SdlWindow.h
-)
 
-if(UNIX)
-    target_sources(${gui_name} PRIVATE
-        plip-sdl/Timer/TimerPosix.cpp
-    )
-else()
-    target_sources(${gui_name} PRIVATE
-        plip-sdl/Timer/TimerSdl.cpp
-    )
-endif()
+                                        plip-sdl/Timer/Timer.h
+    plip-sdl/Timer/TimerSdl.cpp         plip-sdl/Timer/TimerSdl.h
+)
 
 target_include_directories(${gui_name}
     PRIVATE

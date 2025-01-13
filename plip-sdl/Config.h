@@ -25,7 +25,7 @@ namespace PlipSdl {
 
         template<typename T>
         T GetValue(const std::string &section, const std::string &key) {
-            auto val = GetValue(section, key);
+            const auto val = GetValue(section, key);
             T output;
 
             std::stringstream conversion(val);
