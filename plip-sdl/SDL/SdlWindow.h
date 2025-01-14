@@ -12,10 +12,11 @@
 namespace PlipSdl {
     class SdlWindow final : public Plip::PlipVideo {
     public:
-        explicit SdlWindow(int scale = 1, const std::string &title = "");
+        explicit SdlWindow(const std::string &title = "", bool integerScaling = false);
         ~SdlWindow();
 
         bool BeginDraw() override;
+        void CalculateDestinationRectangle();
         void Clear() override;
         void Draw(void *data) override;
         bool EndDraw() override;
@@ -23,22 +24,30 @@ namespace PlipSdl {
         int GetHeight() override;
         int GetWidth() override;
         void Render() override;
-        void Resize(int width, int height) override;
+        void ResizeOutput(int width, int height, double pixelAspectX, double pixelAspectY) override;
         void SetTitle(std::string title) override;
-
         void SetScale(int scale);
 
     private:
-        void CreateTexture();
+        void CalculateDestinationRectangle(int windowWidth, int windowHeight);
+        void CreateTexture(int textureWidth, int textureHeight, double pixelAspectX, double pixelAspectY);
         bool SelectFormat(uint32_t format);
         static SDL_PixelFormat SelectSdlFormat(Plip::PlipVideoFormat format);
 
-        const int m_initWidth = 64;
-        const int m_initHeight = 64;
+        const int m_initWidth = 32;
+        const int m_initHeight = 32;
 
-        int m_width = m_initWidth;
-        int m_height = m_initHeight;
-        int m_scale;
+        int m_windowWidth = m_initWidth;
+        int m_windowHeight = m_initHeight;
+        bool m_integerScaling = false;
+
+        int m_textureWidth = m_initWidth;
+        int m_textureHeight = m_initHeight;
+        int m_textureDisplayWidth = m_initWidth;
+        int m_textureDisplayHeight = m_initHeight;
+        double m_texturePixelAspectX = 1.0;
+        double m_texturePixelAspectY = 1.0;
+        SDL_FRect m_destRect = {};
 
         void *m_texData = nullptr;
         int m_pitch = -1;

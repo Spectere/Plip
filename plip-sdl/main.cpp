@@ -7,6 +7,7 @@
 // NOTE: Don't remove this. It may be required for some platforms.
 #include <SDL3/SDL_main.h>
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -31,9 +32,9 @@ std::vector<std::vector<std::string>> intParamMapping = {
         { "fps"  , "video", "targetFps" }
 };
 
-void GameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
-    auto audio = plip->GetAudio();
-    //auto video = plip->GetVideo();
+void GameLoop(const Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
+    const auto audio = plip->GetAudio();
+    const auto video = plip->GetVideo();
 
     const auto targetFps = config->GetValue<int>("video", "targetFps");
     const auto frameTime = 1000000000 / targetFps;
@@ -42,15 +43,25 @@ void GameLoop(Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEve
     while(running) {
         timer->StopwatchStart();
 
-        if(event->ProcessEvents() == PlipSdl::SdlUiEvent::Quit)
-            running = false;
+        switch(event->ProcessEvents()) {
+            case PlipSdl::SdlUiEvent::Quit:
+                running = false;
+                break;
+
+            case PlipSdl::SdlUiEvent::WindowResized:
+                dynamic_cast<PlipSdl::SdlWindow*>(video)->CalculateDestinationRectangle();
+                break;
+
+            default:
+                break;
+        }
 
         // As implemented, this will not be able to compensate for the host being
         // unable to keep up with the emulation core.
         // TODO: Fix this so that it will skip frames where appropriate.
         plip->Run(frameTime);
 
-        auto time = timer->StopwatchStop();
+        const auto time = timer->StopwatchStop();
         auto delay = frameTime - time;
         while(delay < 0)
             delay += frameTime;
@@ -65,8 +76,7 @@ cxxopts::ParseResult ParseCmdLine(int argc, char **argv) {
     try {
         cxxopts::Options options(argv[0]);
 
-        options.positional_help("CORE FILENAME")
-                .show_positional_help();
+        options.positional_help("CORE FILENAME");
 
         options.add_options()
                 ("core", "the core that should be used", cxxopts::value<std::string>())
@@ -82,7 +92,8 @@ cxxopts::ParseResult ParseCmdLine(int argc, char **argv) {
 
         options.add_options("Video")
                 ( "f,fps", "sets the target frame rate", cxxopts::value<int>()->default_value("60"))
-                ( "s,scale", "sets the default window scaling", cxxopts::value<int>()->default_value("1"))
+                ( "i,integer-scaling", "disallows fractional scaling during window resizes")
+                ( "s,scale", "sets the initial window scaling", cxxopts::value<int>()->default_value("1"))
         ;
 
         options.parse_positional({"core", "filename" });
@@ -143,19 +154,26 @@ int main(int argc, char **argv) {
 
     auto config = new PlipSdl::Config();
 
-    for(auto opt : defaultConfig)
+    for(auto opt : defaultConfig) {
         config->SetValue(opt[0], opt[1], opt[2]);
+    }
 
     if(opts["config"].count()) {
-        auto configFile = opts["config"].as<std::string>();
-        if(!config->LoadFile(configFile))
+        const auto configFile = opts["config"].as<std::string>();
+        if(!config->LoadFile(configFile)) {
             std::cerr << "Error opening config file: " << configFile << std::endl;
+        }
+    } else {
+        if(std::filesystem::exists("plip.conf")) {
+            config->LoadFile("plip.conf");
+        }
     }
 
     // Check for core name validity.
     auto found = false;
     auto coreName = opts["core"].as<std::string>();
     auto filename = opts["filename"].as<std::string>();
+
     Plip::PlipValidCore coreTag;
     for(auto core : coreList) {
         if(core.name != coreName) continue;
@@ -181,14 +199,19 @@ int main(int argc, char **argv) {
     }
 
     auto videoScale = config->GetValue<int>("video", "scale");
+    auto integerScaling = config->GetValue<bool>("video", "integer-scaling");
 
-    auto wnd = new PlipSdl::SdlWindow(videoScale, version);
+    if(opts["integer-scaling"].count() > 0) {
+        config->SetValue("video", "integer-scaling", "true");
+        integerScaling = true;
+    }
+
+    auto window = new PlipSdl::SdlWindow(version, integerScaling);
     auto audio = new PlipSdl::SdlAudio();
-    auto plip = new Plip::PlipInstance(wnd, audio);
+    auto plip = new Plip::PlipInstance(window, audio);
     auto timer = new PlipSdl::TimerSdl();
 
-    auto result = plip->Load(coreTag, filename);
-    switch(result) {
+    switch(plip->Load(coreTag, filename)) {
         case Plip::PlipError::FileNotFound:
             std::cout << "File not found (" << filename << ")!\n" << std::endl;
             return 1;
@@ -204,13 +227,15 @@ int main(int argc, char **argv) {
 
     // Load inputs for the active core.
     std::string section = "input." + coreName;
-    for(const auto& coreInput : input->GetInputList()) {
-        auto key = config->GetValue(section, coreInput.second.GetDescription());
+    for(const auto&[id, definition] : input->GetInputList()) {
+        auto key = config->GetValue(section, definition.GetDescription());
         if(key == config->empty) continue;
 
-        event->AddDigitalBinding(coreInput.first, key);
+        event->AddDigitalBinding(id, key);
     }
 
+    // Set the initial window scaling, then go into the game loop.
+    window->SetScale(videoScale);
     GameLoop(plip, config, event, timer);
 
     SDL_Quit();

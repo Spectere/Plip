@@ -12,7 +12,8 @@
 namespace PlipSdl {
     enum class SdlUiEvent {
         None,
-        Quit
+        Quit,
+        WindowResized,
     };
 
     class SdlEvent {

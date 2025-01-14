@@ -36,7 +36,7 @@ namespace Plip::Core::Chip8 {
         m_input->AddInput(0xE, PlipInputDefinition(PlipInputType::Digital, "E"), { .digital = false });
         m_input->AddInput(0xF, PlipInputDefinition(PlipInputType::Digital, "F"), { .digital = false });
 
-        m_video->Resize(ScreenWidth, ScreenHeight);
+        m_video->ResizeOutput(ScreenWidth, ScreenHeight, 1.0, 1.0);
         m_videoFormat = PlipVideo::GetFormatInfo(m_video->GetFormat());
         m_videoOutput = malloc(ScreenWidth * ScreenHeight * m_videoFormat.pixelWidth);
 

@@ -10,17 +10,19 @@
 
 #include "SdlWindow.h"
 
-namespace PlipSdl {
-    SdlWindow::SdlWindow(const int scale, const std::string &title) {
-        std::stringstream error;
+#include <cmath>
 
-        m_scale = scale;
+namespace PlipSdl {
+    SdlWindow::SdlWindow(const std::string &title, const bool integerScaling)
+    : m_integerScaling(integerScaling) {
+        std::stringstream error;
 
         SDL_InitSubSystem(SDL_INIT_VIDEO);
 
         // Try to create a window.
         m_window = SDL_CreateWindow(title.c_str(),
-                m_width * m_scale, m_height * m_scale, 0);
+                m_windowWidth, m_windowHeight,
+                SDL_WINDOW_RESIZABLE);
 
         if(m_window == nullptr) {
             error << "Unable to create SDL window: " << SDL_GetError();
@@ -64,24 +66,59 @@ namespace PlipSdl {
         // Try to create a small starting texture. This will be removed and
         // recreated later, but we want to ensure that we can make one in the
         // first place.
-        CreateTexture();
+        CreateTexture(m_windowWidth, m_windowHeight, m_texturePixelAspectX, m_texturePixelAspectY);
+        CalculateDestinationRectangle();
     }
 
     SdlWindow::~SdlWindow() {
         if(m_texture != nullptr) SDL_DestroyTexture(m_texture);
-        if(m_renderer != nullptr) SDL_DestroyRenderer(m_renderer);
-        if(m_window != nullptr) SDL_DestroyWindow(m_window);
+        SDL_DestroyRenderer(m_renderer);
+        SDL_DestroyWindow(m_window);
     }
 
     bool SdlWindow::BeginDraw() {
         return SDL_LockTexture(m_texture, nullptr, &m_texData, &m_pitch) == 0;
     }
 
+    void SdlWindow::CalculateDestinationRectangle() {
+        SDL_GetWindowSize(m_window, &m_windowWidth, &m_windowHeight);
+        CalculateDestinationRectangle(m_windowWidth, m_windowHeight);
+    }
+
+    void SdlWindow::CalculateDestinationRectangle(const int windowWidth, const int windowHeight) {
+        // Update output size/position, based on the various aspect ratios and scaling options.
+        const auto xMaxScale = static_cast<double>(windowWidth) / m_textureDisplayWidth;
+        const auto yMaxScale = static_cast<double>(windowHeight) / m_textureDisplayHeight;
+        auto scale = xMaxScale < yMaxScale ? xMaxScale : yMaxScale;
+
+        if(m_integerScaling && scale >= 1.0f) {
+            scale = std::floor(scale);
+        }
+
+        const int targetWidth = static_cast<int>(m_textureDisplayWidth * scale);
+        const int targetHeight = static_cast<int>(m_textureDisplayHeight * scale);
+        const int xOffset = (windowWidth - targetWidth) / 2;
+        const int yOffset = (windowHeight - targetHeight) / 2;
+
+        m_destRect.x = static_cast<float>(xOffset);
+        m_destRect.y = static_cast<float>(yOffset);
+        m_destRect.w = static_cast<float>(targetWidth);
+        m_destRect.h = static_cast<float>(targetHeight);
+    }
+
     void SdlWindow::Clear() {
         SDL_RenderClear(m_renderer);
     }
 
-    void SdlWindow::CreateTexture() {
+    void SdlWindow::CreateTexture(const int textureWidth, const int textureHeight, const double pixelAspectX, const double pixelAspectY) {
+        m_textureWidth = textureWidth;
+        m_textureHeight = textureHeight;
+        m_texturePixelAspectX = pixelAspectX;
+        m_texturePixelAspectY = pixelAspectY;
+
+        m_textureDisplayWidth = static_cast<int>(m_textureWidth * m_texturePixelAspectX);
+        m_textureDisplayHeight = static_cast<int>(m_textureHeight * m_texturePixelAspectY);
+
         if(m_texture != nullptr) SDL_DestroyTexture(m_texture);
 
         const SDL_PixelFormat pixelFormat = SelectSdlFormat(m_format);
@@ -89,7 +126,7 @@ namespace PlipSdl {
         m_texture = nullptr;
         m_texture = SDL_CreateTexture(m_renderer,
                 pixelFormat, SDL_TEXTUREACCESS_STREAMING,
-                m_width, m_height);
+                m_textureWidth, m_textureHeight);
 
         if(m_texture == nullptr) {
             std::stringstream error;
@@ -101,7 +138,7 @@ namespace PlipSdl {
     }
 
     void SdlWindow::Draw(void *data) {
-        memcpy(m_texData, data, m_pitch * m_height);
+        memcpy(m_texData, data, m_pitch * m_textureHeight);
     }
 
     bool SdlWindow::EndDraw() {
@@ -114,27 +151,41 @@ namespace PlipSdl {
     }
 
     int SdlWindow::GetHeight() {
-        return m_height;
+        return m_textureHeight;
     }
 
     int SdlWindow::GetWidth() {
-        return m_width;
+        return m_textureWidth;
     }
 
     void SdlWindow::Render() {
-        SDL_RenderTexture(m_renderer, m_texture, nullptr, nullptr);
+        SDL_RenderTexture(m_renderer, m_texture, nullptr, &m_destRect);
         SDL_RenderPresent(m_renderer);
     }
 
-    void SdlWindow::Resize(const int width, const int height) {
-        m_width = width;
-        m_height = height;
-
-        // Resize the window.
-        SDL_SetWindowSize(m_window, m_width * m_scale, m_height * m_scale);
-
+    void SdlWindow::ResizeOutput(const int width, const int height, const double pixelAspectX, const double pixelAspectY) {
         // Destroy and recreate the texture.
-        CreateTexture();
+        CreateTexture(width, height, pixelAspectX, pixelAspectY);
+
+        // Resize the window if it's too small to contain the new texture.
+        auto doResize = false;
+        if(m_windowWidth < m_textureDisplayWidth) {
+            m_windowWidth = m_textureDisplayWidth;
+            doResize = true;
+        }
+
+        if(m_windowHeight < m_textureDisplayHeight) {
+            m_windowHeight = m_textureDisplayHeight;
+            doResize = true;
+        }
+
+        if(doResize) {
+            SDL_SetWindowSize(m_window, m_windowWidth, m_windowHeight);
+        }
+
+        // Recalculate the destination rectangle. Use the overload that accepts the window dimensions,
+        // since calling SDL_GetWindowSize at this point will likely return the wrong value.
+        CalculateDestinationRectangle(m_windowWidth, m_windowHeight);
     }
 
     bool SdlWindow::SelectFormat(const uint32_t format) {
@@ -214,8 +265,11 @@ namespace PlipSdl {
     }
 
     void SdlWindow::SetScale(const int scale) {
-        m_scale = scale;
-        SDL_SetWindowSize(m_window, m_width * m_scale, m_height * m_scale);
+        const auto newWidth = m_textureDisplayWidth * scale;
+        const auto newHeight = m_textureDisplayHeight * scale;
+
+        SDL_SetWindowSize(m_window, newWidth, newHeight);
+        CalculateDestinationRectangle(newWidth, newHeight);
     }
 
     void SdlWindow::SetTitle(const std::string title) {

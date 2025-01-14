@@ -37,7 +37,7 @@ namespace Plip {
         virtual PlipVideoFormat GetFormat() = 0;
         virtual int GetHeight() = 0;
         virtual int GetWidth() = 0;
-        virtual void Resize(int width, int height) = 0;
+        virtual void ResizeOutput(int width, int height, double pixelAspectX, double pixelAspectY) = 0;
         virtual void SetTitle(std::string title) = 0;
         virtual void Render() = 0;
 

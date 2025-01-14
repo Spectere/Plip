@@ -35,6 +35,10 @@ namespace PlipSdl {
                     uiEvent = SdlUiEvent::Quit;
                     break;
 
+                case SDL_EVENT_WINDOW_RESIZED:
+                    uiEvent = SdlUiEvent::WindowResized;
+                    break;
+
                 default:
                     break;
             }
