@@ -38,6 +38,7 @@ namespace Plip::Core::Chip8 {
         double m_delta;
         int m_channels;
         int m_sampleRate;
+        int m_audioBufferLength;
         std::vector<float> m_audioBuffer;
 
         Cpu::Chip8 *m_cpu;
@@ -50,8 +51,8 @@ namespace Plip::Core::Chip8 {
         void *m_videoOutput;
 
         void Draw() const;
-        std::vector<float> GenerateSilence();
-        std::vector<float> GenerateSine();
+        std::vector<float> GenerateSilence(int samples);
+        std::vector<float> GenerateSine(int samples);
         void WriteCharacterSet(uint32_t address) const;
 
         static constexpr int ScreenWidth = 64;

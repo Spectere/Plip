@@ -32,6 +32,24 @@ namespace PlipSdl {
         return str;
     }
 
+    bool Config::Contains(const std::string &key) const {
+        return Contains(global, key);
+    }
+
+    bool Config::Contains(const std::string &section, const std::string &key) const {
+        const auto secLower = ToLower(section);
+        const auto keyLower = ToLower(key);
+
+        const auto itSection = m_section.find(secLower);
+        if(itSection == m_section.end()) return false;
+
+        const auto itKey = itSection->second.find(keyLower);
+        if(itKey == itSection->second.end()) return false;
+
+        return true;
+    }
+
+
     const std::string &Config::GetValue(const std::string &key) {
         return GetValue(global, key);
     }

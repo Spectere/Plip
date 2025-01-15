@@ -12,7 +12,7 @@
 namespace PlipSdl {
     class SdlAudio final : public Plip::PlipAudio {
     public:
-        SdlAudio();
+        SdlAudio(int sampleRate, int bufferLength);
         ~SdlAudio();
 
         void DequeueAll() override;

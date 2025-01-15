@@ -46,11 +46,11 @@ namespace Plip {
 
     private:
         static constexpr PlipCoreDescription m_supportedCores[] = {
-                {
-                        "chip8",
-                        PlipValidCore::Chip8,
-                        "CHIP-8"
-                }
+            {
+                "chip8",
+                PlipValidCore::Chip8,
+                "CHIP-8"
+            }
         };
     };
 }

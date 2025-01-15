@@ -9,13 +9,13 @@
 
 #include "Chip8Instance.h"
 
+#include <iostream>
+
 #include "../../PlipIo.h"
 
 namespace Plip::Core::Chip8 {
     Chip8Instance::Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video)
     : PlipCore(audio, input, video) {
-        using pa = PlipAudio;
-
         m_ram = new PlipMemoryRam(RamSize);
         m_memory->AddBlock(m_ram);
 
@@ -45,9 +45,10 @@ namespace Plip::Core::Chip8 {
 
         m_cycleTime = m_cpu->GetCycleTime();
 
-        m_channels = pa::Channels;
-        m_sampleRate = pa::SampleRate;
-        m_audioBuffer = std::vector<float>(pa::BufferLength * m_channels);
+        m_channels = PlipAudio::Channels;
+        m_sampleRate = m_audio->GetSampleRate();
+        m_audioBufferLength = m_audio->GetBufferLength();
+        m_audioBuffer = std::vector<float>(m_audioBufferLength * m_channels);
 
         const auto cycles = SineHz / static_cast<double>(m_sampleRate);
         m_delta = cycles * 2.0 * M_PI;
@@ -64,13 +65,14 @@ namespace Plip::Core::Chip8 {
             m_cpu->Cycle();
             m_cycleRemaining -= m_cycleTime;
 
-            if(m_audio->GetQueueSize() < PlipAudio::BufferLength) {
-                // This is a pretty lame implementation, but it should be good
-                // enough for this.
+            if(const auto audioQueueFilled = m_audio->GetQueueSize(); audioQueueFilled < (m_audioBufferLength * m_channels)) {
+                // This implementation is horrible, broken, and sounds bad, but it gets the point across.
+                // Kinda. If I ever get on a proper CHIP-8 kick I might correct this.
+                const auto remainder = m_audioBufferLength - audioQueueFilled;
                 if(m_cpu->IsAudioPlaying()) {
-                    m_audio->Enqueue(GenerateSine());
+                    m_audio->Enqueue(GenerateSine(remainder));
                 } else {
-                    m_audio->Enqueue(GenerateSilence());
+                    m_audio->Enqueue(GenerateSilence(remainder));
                 }
             }
 
@@ -102,8 +104,8 @@ namespace Plip::Core::Chip8 {
         m_video->Render();
     }
 
-    std::vector<float> Chip8Instance::GenerateSilence() {
-        for(auto i = 0; i < PlipAudio::BufferLength; i++) {
+    std::vector<float> Chip8Instance::GenerateSilence(const int samples) {
+        for(auto i = 0; i < samples; i++) {
             for(auto c = 0; c < m_channels; c++) {
                 m_audioBuffer[i * m_channels + c] = 0;
             }
@@ -113,8 +115,8 @@ namespace Plip::Core::Chip8 {
         return m_audioBuffer;
     }
 
-    std::vector<float> Chip8Instance::GenerateSine() {
-        for(auto i = 0; i < PlipAudio::BufferLength; i++) {
+    std::vector<float> Chip8Instance::GenerateSine(const int samples) {
+        for(auto i = 0; i < samples; i++) {
             for(auto c = 0; c < m_channels; c++) {
                 m_audioBuffer[i * m_channels + c] = static_cast<float>(SineVolume * std::sin(m_angle));
             }

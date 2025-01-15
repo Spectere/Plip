@@ -8,11 +8,11 @@
 #include "SdlAudio.h"
 
 namespace PlipSdl {
-    SdlAudio::SdlAudio() {
+    SdlAudio::SdlAudio(const int sampleRate, const int bufferLength) : PlipAudio(sampleRate, bufferLength) {
         SDL_InitSubSystem(SDL_INIT_AUDIO);
 
         // Open audio device.
-        constexpr SDL_AudioSpec want { SDL_AUDIO_F32, Channels, SampleRate };
+        const SDL_AudioSpec want { SDL_AUDIO_F32, Channels, m_sampleRate };
 
         m_device = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &want, nullptr, nullptr);
         if(m_device == nullptr) {
@@ -41,7 +41,7 @@ namespace PlipSdl {
     }
 
     void SdlAudio::Enqueue(const std::vector<float> buffer) {
-        if(!IsActive()) return;
+        if(!m_active) return;
         SDL_PutAudioStreamData(m_device, buffer.data(), static_cast<int>(buffer.size()));
     }
 

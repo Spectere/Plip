@@ -12,11 +12,14 @@
 namespace PlipSdl {
     class Config {
     public:
+        bool Contains(const std::string &key) const;
+        bool Contains(const std::string &section, const std::string &key) const;
         const std::string &GetValue(const std::string &key);
         const std::string &GetValue(const std::string &section, const std::string &key);
         bool LoadFile(const std::string &filename);
         void SetValue(const std::string &key, const std::string &value);
         void SetValue(const std::string &section, const std::string &key, const std::string &value);
+
 
         template<typename T>
         T GetValue(const std::string &key) {
@@ -31,6 +34,15 @@ namespace PlipSdl {
             std::stringstream conversion(val);
             conversion >> output;
             return output;
+        }
+
+        template<typename T>
+        T GetValue(const std::string &section, const std::string &key, T defaultValue) {
+            if(!Contains(section, key)) {
+                return defaultValue;
+            }
+
+            return GetValue<T>(section, key);
         }
 
         const std::string global = "\x01";

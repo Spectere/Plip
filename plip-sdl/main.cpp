@@ -16,6 +16,7 @@
 #include "PlipInstance.h"
 
 #include "Config.h"
+#include "Game.h"
 #include "SDL/SdlAudio.h"
 #include "SDL/SdlEvent.h"
 #include "SDL/SdlWindow.h"
@@ -32,47 +33,7 @@ std::vector<std::vector<std::string>> intParamMapping = {
         { "fps"  , "video", "targetFps" }
 };
 
-void GameLoop(const Plip::PlipInstance *plip, PlipSdl::Config *config, PlipSdl::SdlEvent *event, PlipSdl::Timer *timer) {
-    const auto audio = plip->GetAudio();
-    const auto video = plip->GetVideo();
-
-    const auto targetFps = config->GetValue<int>("video", "targetFps");
-    const auto frameTime = 1000000000 / targetFps;
-
-    auto running = true;
-    while(running) {
-        timer->StopwatchStart();
-
-        switch(event->ProcessEvents()) {
-            case PlipSdl::SdlUiEvent::Quit:
-                running = false;
-                break;
-
-            case PlipSdl::SdlUiEvent::WindowResized:
-                dynamic_cast<PlipSdl::SdlWindow*>(video)->CalculateDestinationRectangle();
-                break;
-
-            default:
-                break;
-        }
-
-        // As implemented, this will not be able to compensate for the host being
-        // unable to keep up with the emulation core.
-        // TODO: Fix this so that it will skip frames where appropriate.
-        plip->Run(frameTime);
-
-        const auto time = timer->StopwatchStop();
-        auto delay = frameTime - time;
-        while(delay < 0)
-            delay += frameTime;
-
-        timer->Nanosleep(delay);
-    }
-
-    audio->DequeueAll();
-}
-
-cxxopts::ParseResult ParseCmdLine(int argc, char **argv) {
+cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
     try {
         cxxopts::Options options(argv[0]);
 
@@ -198,16 +159,26 @@ int main(int argc, char **argv) {
         }
     }
 
-    auto videoScale = config->GetValue<int>("video", "scale");
-    auto integerScaling = config->GetValue<bool>("video", "integer-scaling");
+    // Audio Settings
+    const auto sampleRate = config->GetValue<int>("audio", "sample-rate", 48000);
+    const auto bufferLength = config->GetValue<int>("audio", "buffer-length", 8192);
+
+    auto audio = new PlipSdl::SdlAudio(sampleRate, bufferLength);
+
+    // Video Settings
+    auto videoScale = config->GetValue<int>("video", "scale", 1);
+    auto integerScaling = config->GetValue<bool>("video", "integer-scaling", false);
+    auto targetFps = config->GetValue<int>("video", "target-fps", 60);
 
     if(opts["integer-scaling"].count() > 0) {
-        config->SetValue("video", "integer-scaling", "true");
         integerScaling = true;
     }
 
+    if(opts["fps"].count() > 0) {
+        targetFps = opts["fps"].as<int>();
+    }
+
     auto window = new PlipSdl::SdlWindow(version, integerScaling);
-    auto audio = new PlipSdl::SdlAudio();
     auto plip = new Plip::PlipInstance(window, audio);
     auto timer = new PlipSdl::TimerSdl();
 
@@ -234,10 +205,14 @@ int main(int argc, char **argv) {
         event->AddDigitalBinding(id, key);
     }
 
-    // Set the initial window scaling, then go into the game loop.
+    // Set the initial window scaling...
     window->SetScale(videoScale);
-    GameLoop(plip, config, event, timer);
 
+    // ...then go into the game loop.
+    auto game = std::make_unique<PlipSdl::Game>(plip, event, window, timer, targetFps);
+    game->Run();
+
+    // fin.
     SDL_Quit();
     return 0;
 }
