@@ -19,6 +19,8 @@ namespace Plip::Cpu {
 
         void Cycle() override;
         void DelayTimer();
+        [[nodiscard]] unsigned long GetPc() const override { return m_pc; }
+        [[nodiscard]] std::map<std::string, RegisterValue> GetRegisters() const override;
         [[nodiscard]] uint64_t* GetVideo() const { return m_videoBuffer; }
         [[nodiscard]] bool IsAudioPlaying() const { return m_timerAudio >= 2; }
         void Reset(uint32_t pc) override;
@@ -58,7 +60,7 @@ namespace Plip::Cpu {
         void OpEXOO(uint8_t reg, uint8_t op);
         void OpFXOO(uint8_t reg, uint8_t op);
 
-        static constexpr int StackSize = 12;
+        static constexpr int StackSize = 16;
 
         std::mt19937 m_rng;
 

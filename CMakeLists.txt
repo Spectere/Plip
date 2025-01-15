@@ -134,7 +134,7 @@ include(CTest)
 include(Catch)
 
 add_executable(${test_name}
-    test/HelloTest.cpp
+    test/Cpu/Chip8/Chip8Ops.cpp
 )
 
 target_include_directories(${test_name}

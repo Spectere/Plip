@@ -51,8 +51,8 @@ namespace Plip::Core::Chip8 {
         void *m_videoOutput;
 
         void Draw() const;
-        std::vector<float> GenerateSilence(int samples);
-        std::vector<float> GenerateSine(int samples);
+        std::vector<float> GenerateSilence(unsigned long samples);
+        std::vector<float> GenerateSine(unsigned long samples);
         void WriteCharacterSet(uint32_t address) const;
 
         static constexpr int ScreenWidth = 64;

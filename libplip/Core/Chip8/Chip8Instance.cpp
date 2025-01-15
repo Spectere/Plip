@@ -104,7 +104,7 @@ namespace Plip::Core::Chip8 {
         m_video->Render();
     }
 
-    std::vector<float> Chip8Instance::GenerateSilence(const int samples) {
+    std::vector<float> Chip8Instance::GenerateSilence(const unsigned long samples) {
         for(auto i = 0; i < samples; i++) {
             for(auto c = 0; c < m_channels; c++) {
                 m_audioBuffer[i * m_channels + c] = 0;
@@ -115,7 +115,7 @@ namespace Plip::Core::Chip8 {
         return m_audioBuffer;
     }
 
-    std::vector<float> Chip8Instance::GenerateSine(const int samples) {
+    std::vector<float> Chip8Instance::GenerateSine(const unsigned long samples) {
         for(auto i = 0; i < samples; i++) {
             for(auto c = 0; c < m_channels; c++) {
                 m_audioBuffer[i * m_channels + c] = static_cast<float>(SineVolume * std::sin(m_angle));

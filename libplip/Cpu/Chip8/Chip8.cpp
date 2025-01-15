@@ -18,7 +18,7 @@ namespace Plip::Cpu {
         m_input = input;
         m_videoBuffer = new uint64_t[VideoSize] {};
 
-        m_rng = std::mt19937((std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+        m_rng = std::mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     }
 
     void Chip8::Cycle() {
@@ -101,6 +101,32 @@ namespace Plip::Cpu {
         }
 
         return dump.str();
+    }
+
+    std::map<std::string, RegisterValue> Chip8::GetRegisters() const {
+        return {
+            { "V0", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x0])) },
+            { "V1", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x1])) },
+            { "V2", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x2])) },
+            { "V3", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x3])) },
+            { "V4", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x4])) },
+            { "V5", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x5])) },
+            { "V6", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x6])) },
+            { "V7", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x7])) },
+            { "V8", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x8])) },
+            { "V9", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x9])) },
+            { "VA", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xA])) },
+            { "VB", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xB])) },
+            { "VC", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xC])) },
+            { "VD", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xD])) },
+            { "VE", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xE])) },
+            { "VF", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xF])) },
+            { "PC", RegisterValue(Int16Be, static_cast<uint64_t>(m_pc)) },
+            { "SP", RegisterValue(Int16Be, static_cast<uint64_t>(m_sp)) },
+            { "I", RegisterValue(Int16Be, static_cast<uint64_t>(m_i)) },
+            { "Audio", RegisterValue(Int8, static_cast<uint64_t>(m_timerAudio)) },
+            { "Delay", RegisterValue(Int8, static_cast<uint64_t>(m_timerDelay)) }
+        };
     }
 
     void Chip8::Reset(const uint32_t pc) {
