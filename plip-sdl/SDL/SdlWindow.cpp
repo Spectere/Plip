@@ -82,13 +82,10 @@ namespace PlipSdl {
 
     void SdlWindow::CalculateDestinationRectangle() {
         SDL_GetWindowSize(m_window, &m_windowWidth, &m_windowHeight);
-        CalculateDestinationRectangle(m_windowWidth, m_windowHeight);
-    }
 
-    void SdlWindow::CalculateDestinationRectangle(const int windowWidth, const int windowHeight) {
         // Update output size/position, based on the various aspect ratios and scaling options.
-        const auto xMaxScale = static_cast<double>(windowWidth) / m_textureDisplayWidth;
-        const auto yMaxScale = static_cast<double>(windowHeight) / m_textureDisplayHeight;
+        const auto xMaxScale = static_cast<double>(m_windowWidth) / m_textureDisplayWidth;
+        const auto yMaxScale = static_cast<double>(m_windowHeight) / m_textureDisplayHeight;
         auto scale = xMaxScale < yMaxScale ? xMaxScale : yMaxScale;
 
         if(m_integerScaling && scale >= 1.0f) {
@@ -97,8 +94,8 @@ namespace PlipSdl {
 
         const int targetWidth = static_cast<int>(m_textureDisplayWidth * scale);
         const int targetHeight = static_cast<int>(m_textureDisplayHeight * scale);
-        const int xOffset = (windowWidth - targetWidth) / 2;
-        const int yOffset = (windowHeight - targetHeight) / 2;
+        const int xOffset = (m_windowWidth - targetWidth) / 2;
+        const int yOffset = (m_windowHeight - targetHeight) / 2;
 
         m_destRect.x = static_cast<float>(xOffset);
         m_destRect.y = static_cast<float>(yOffset);
@@ -159,6 +156,7 @@ namespace PlipSdl {
     }
 
     void SdlWindow::Render() {
+        Clear();
         SDL_RenderTexture(m_renderer, m_texture, nullptr, &m_destRect);
         SDL_RenderPresent(m_renderer);
     }
@@ -183,9 +181,8 @@ namespace PlipSdl {
             SDL_SetWindowSize(m_window, m_windowWidth, m_windowHeight);
         }
 
-        // Recalculate the destination rectangle. Use the overload that accepts the window dimensions,
-        // since calling SDL_GetWindowSize at this point will likely return the wrong value.
-        CalculateDestinationRectangle(m_windowWidth, m_windowHeight);
+        // Recalculate the destination rectangle.
+        CalculateDestinationRectangle();
     }
 
     bool SdlWindow::SelectFormat(const uint32_t format) {
@@ -269,7 +266,7 @@ namespace PlipSdl {
         const auto newHeight = m_textureDisplayHeight * scale;
 
         SDL_SetWindowSize(m_window, newWidth, newHeight);
-        CalculateDestinationRectangle(newWidth, newHeight);
+        CalculateDestinationRectangle();
     }
 
     void SdlWindow::SetTitle(const std::string title) {

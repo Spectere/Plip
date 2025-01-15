@@ -29,7 +29,6 @@ namespace PlipSdl {
         void SetScale(int scale);
 
     private:
-        void CalculateDestinationRectangle(int windowWidth, int windowHeight);
         void CreateTexture(int textureWidth, int textureHeight, double pixelAspectX, double pixelAspectY);
         bool SelectFormat(uint32_t format);
         static SDL_PixelFormat SelectSdlFormat(Plip::PlipVideoFormat format);
