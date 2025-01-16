@@ -5,8 +5,8 @@
 #pragma once
 
 #include "PlipInstance.h"
-#include "SDL/SdlEvent.h"
-#include "SDL/SdlWindow.h"
+#include "Sdl/SdlEvent.h"
+#include "Sdl/SdlWindow.h"
 #include "Timer/Timer.h"
 
 namespace PlipSdl {

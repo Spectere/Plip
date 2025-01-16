@@ -17,9 +17,9 @@
 
 #include "Config.h"
 #include "Game.h"
-#include "SDL/SdlAudio.h"
-#include "SDL/SdlEvent.h"
-#include "SDL/SdlWindow.h"
+#include "Sdl/SdlAudio.h"
+#include "Sdl/SdlEvent.h"
+#include "Sdl/SdlWindow.h"
 
 #include "Timer/TimerSdl.h"
 

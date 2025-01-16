@@ -105,9 +105,9 @@ add_executable(${gui_name}
     plip-sdl/Config.cpp                 plip-sdl/Config.h
     plip-sdl/Game.cpp                   plip-sdl/Game.h
 
-    plip-sdl/SDL/SdlAudio.cpp           plip-sdl/SDL/SdlAudio.h
-    plip-sdl/SDL/SdlEvent.cpp           plip-sdl/SDL/SdlEvent.h
-    plip-sdl/SDL/SdlWindow.cpp          plip-sdl/SDL/SdlWindow.h
+    plip-sdl/Sdl/SdlAudio.cpp           plip-sdl/Sdl/SdlAudio.h
+    plip-sdl/Sdl/SdlEvent.cpp           plip-sdl/Sdl/SdlEvent.h
+    plip-sdl/Sdl/SdlWindow.cpp          plip-sdl/Sdl/SdlWindow.h
 
                                         plip-sdl/Timer/Timer.h
     plip-sdl/Timer/TimerSdl.cpp         plip-sdl/Timer/TimerSdl.h
