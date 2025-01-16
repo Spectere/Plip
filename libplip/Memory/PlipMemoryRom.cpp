@@ -20,8 +20,12 @@ PlipMemoryRom::~PlipMemoryRom() {
     delete m_data;
 }
 
-uint8_t PlipMemoryRom::GetByte(const uint32_t address) {
-    return m_data[address];
+uint8_t PlipMemoryRom::GetByte(const uint32_t address, const bool privileged) {
+    if(m_readable || privileged) {
+        return m_data[address];
+    }
+
+    return 0x00;
 }
 
 uint32_t PlipMemoryRom::GetLength() {
