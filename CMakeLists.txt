@@ -71,13 +71,9 @@ add_library(${lib_name}
     libplip/PlipIo.cpp                              libplip/PlipIo.h
     libplip/PlipUtility.cpp                         libplip/PlipUtility.h
 
-    libplip/Core/PlipCore.cpp                       libplip/Core/PlipCore.h
-    libplip/Core/Chip8/Chip8Instance.cpp            libplip/Core/Chip8/Chip8Instance.h
+                                                    libplip/Audio/PlipAudio.h
 
     libplip/Cpu/PlipCpu.cpp                         libplip/Cpu/PlipCpu.h
-
-    libplip/Cpu/Chip8/Chip8.cpp                     libplip/Cpu/Chip8/Chip8.h
-    libplip/Cpu/Chip8/Chip8.Ops.cpp
 
     libplip/Input/PlipInput.cpp                     libplip/Input/PlipInput.h
     libplip/Input/PlipInputDefinition.cpp           libplip/Input/PlipInputDefinition.h
@@ -88,6 +84,24 @@ add_library(${lib_name}
     libplip/Memory/PlipMemoryRom.cpp                libplip/Memory/PlipMemoryRom.h
 
     libplip/Video/PlipVideo.cpp                     libplip/Video/PlipVideo.h
+                                                    libplip/Video/PlipVideoException.h
+
+    ########
+    # CPUs #
+    ########
+
+    # CHIP-8
+    libplip/Cpu/Chip8/Chip8.cpp                     libplip/Cpu/Chip8/Chip8.h
+    libplip/Cpu/Chip8/Chip8.Ops.cpp
+
+
+    #########
+    # Cores #
+    #########
+
+    # CHIP-8
+    libplip/Core/PlipCore.cpp                       libplip/Core/PlipCore.h
+    libplip/Core/Chip8/Chip8Instance.cpp            libplip/Core/Chip8/Chip8Instance.h
 )
 
 if(BIG_ENDIAN)
