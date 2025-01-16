@@ -182,7 +182,11 @@ int main(int argc, char **argv) {
     auto plip = new Plip::PlipInstance(window, audio);
     auto timer = new PlipSdl::TimerSdl();
 
-    switch(plip->Load(coreTag, filename)) {
+    // Grab the core configuration.
+    std::string coreSection = "core." + coreName;
+    auto coreConfig = config->ConvertSectionToPlipKvpCollection(coreSection);
+
+    switch(plip->Load(coreTag, filename, coreConfig)) {
         case Plip::PlipError::FileNotFound:
             std::cout << "File not found (" << filename << ")!\n" << std::endl;
             return 1;
@@ -197,9 +201,9 @@ int main(int argc, char **argv) {
     auto event = new PlipSdl::SdlEvent(input);
 
     // Load inputs for the active core.
-    std::string section = "input." + coreName;
+    std::string inputSection = "input." + coreName;
     for(const auto&[id, definition] : input->GetInputList()) {
-        auto key = config->GetValue(section, definition.GetDescription());
+        auto key = config->GetValue(inputSection, definition.GetDescription());
         if(key == config->empty) continue;
 
         event->AddDigitalBinding(id, key);

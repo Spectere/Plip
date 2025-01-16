@@ -14,8 +14,8 @@
 #include "../../PlipIo.h"
 
 namespace Plip::Core::Chip8 {
-    Chip8Instance::Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video)
-    : PlipCore(audio, input, video) {
+    Chip8Instance::Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video, const PlipKeyValuePairCollection &config)
+    : PlipCore(audio, input, video, config) {
         m_ram = new PlipMemoryRam(RamSize);
         m_memory->AddBlock(m_ram);
 
@@ -48,10 +48,19 @@ namespace Plip::Core::Chip8 {
         m_channels = PlipAudio::Channels;
         m_sampleRate = m_audio->GetSampleRate();
         m_audioBufferLength = m_audio->GetBufferLength();
-        m_audioBuffer = std::vector<float>(m_audioBufferLength * m_channels);
+        m_audioBuffer.resize(m_audioSamplesPerGeneration * m_channels);
+        m_waveform = m_config.GetValue("waveform", 0);
+        m_audioBufferFillThreshold = m_audioBufferLength * m_channels;
 
-        const auto cycles = SineHz / static_cast<double>(m_sampleRate);
-        m_delta = cycles * 2.0 * M_PI;
+        if(m_waveform == 1) {
+            // Square waves are kinda loud.
+            m_waveformVolume /= 2;
+        }
+
+        const auto cycles = WaveformHz / static_cast<double>(m_sampleRate);
+        m_phaseDelta = cycles * 2.0 * M_PI;
+        m_phaseAdjustment = m_audioSamplesPerGeneration / 256;  // I really don't know why this fixes the audio wonkiness.
+                                                                // I have to be missing something, right?
     }
 
     Chip8Instance::~Chip8Instance() {
@@ -65,14 +74,11 @@ namespace Plip::Core::Chip8 {
             m_cpu->Cycle();
             m_cycleRemaining -= m_cycleTime;
 
-            if(const auto audioQueueFilled = m_audio->GetQueueSize(); audioQueueFilled < (m_audioBufferLength * m_channels)) {
-                // This implementation is horrible, broken, and sounds bad, but it gets the point across.
-                // Kinda. If I ever get on a proper CHIP-8 kick I might correct this.
-                const auto remainder = m_audioBufferLength - audioQueueFilled;
+            if(const auto audioQueueFilled = m_audio->GetQueueSize(); audioQueueFilled < m_audioBufferFillThreshold) {
                 if(m_cpu->IsAudioPlaying()) {
-                    m_audio->Enqueue(GenerateSine(remainder));
+                    m_audio->Enqueue(m_waveform == 0 ? GenerateSine() : GenerateSquare());
                 } else {
-                    m_audio->Enqueue(GenerateSilence(remainder));
+                    m_audio->Enqueue(GenerateSilence());
                 }
             }
 
@@ -104,25 +110,36 @@ namespace Plip::Core::Chip8 {
         m_video->Render();
     }
 
-    std::vector<float> Chip8Instance::GenerateSilence(const unsigned long samples) {
-        for(auto i = 0; i < samples; i++) {
+    std::vector<float> Chip8Instance::GenerateSilence() {
+        for(auto i = 0; i < m_audioSamplesPerGeneration; i++) {
             for(auto c = 0; c < m_channels; c++) {
                 m_audioBuffer[i * m_channels + c] = 0;
             }
-            m_angle += m_delta;  // Keep the wave generator going to prevent clicks.
+            m_phase += m_phaseDelta;  // Keep the wave generator going to prevent clicks.
         }
 
         return m_audioBuffer;
     }
 
-    std::vector<float> Chip8Instance::GenerateSine(const unsigned long samples) {
-        for(auto i = 0; i < samples; i++) {
+    std::vector<float> Chip8Instance::GenerateSine() {
+        for(auto i = 0; i < m_audioSamplesPerGeneration; i++) {
             for(auto c = 0; c < m_channels; c++) {
-                m_audioBuffer[i * m_channels + c] = static_cast<float>(SineVolume * std::sin(m_angle));
+                m_audioBuffer[i * m_channels + c] = static_cast<float>(m_waveformVolume * std::sin(m_phase));
             }
-            m_angle += m_delta;
+            m_phase += m_phaseDelta;
         }
+        m_phase -= m_phaseDelta * m_phaseAdjustment;
+        return m_audioBuffer;
+    }
 
+    std::vector<float> Chip8Instance::GenerateSquare() {
+        for(auto i = 0; i < m_audioSamplesPerGeneration; i++) {
+            for(auto c = 0; c < m_channels; c++) {
+                m_audioBuffer[i * m_channels + c] = static_cast<float>(WaveformVolume * std::sin(m_phase)) > 0 ? m_waveformVolume : -m_waveformVolume;
+            }
+            m_phase += m_phaseDelta;
+        }
+        m_phase -= m_phaseDelta * m_phaseAdjustment;
         return m_audioBuffer;
     }
 

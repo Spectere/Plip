@@ -66,6 +66,7 @@ add_custom_target(
 )
 
 add_library(${lib_name}
+                                                    libplip/PlipKeyValuePairCollection.h
     libplip/PlipInstance.cpp                        libplip/PlipInstance.h
     libplip/PlipIo.cpp                              libplip/PlipIo.h
     libplip/PlipUtility.cpp                         libplip/PlipUtility.h

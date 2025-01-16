@@ -49,6 +49,13 @@ namespace PlipSdl {
         return true;
     }
 
+    Plip::PlipKeyValuePairCollection Config::ConvertSectionToPlipKvpCollection(const std::string &key) const {
+        try {
+            return Plip::PlipKeyValuePairCollection(m_section.at(key));
+        } catch([[maybe_unused]] std::out_of_range &ex) {
+            return {};
+        }
+    }
 
     const std::string &Config::GetValue(const std::string &key) {
         return GetValue(global, key);

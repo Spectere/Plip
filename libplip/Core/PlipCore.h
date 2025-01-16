@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "../PlipError.h"
+#include "../PlipKeyValuePairCollection.h"
 #include "../Audio/PlipAudio.h"
 #include "../Input/PlipInput.h"
 #include "../Video/PlipVideo.h"
@@ -36,11 +37,13 @@ namespace Plip {
         virtual PlipError Load(const std::string &path) = 0;
 
     protected:
-        explicit PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video);
+        explicit PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKeyValuePairCollection config);
 
         PlipAudio *m_audio;
         PlipInput *m_input;
         PlipVideo *m_video;
+
+        PlipKeyValuePairCollection m_config;
 
         PlipMemoryMap *m_memory = new PlipMemoryMap();
 

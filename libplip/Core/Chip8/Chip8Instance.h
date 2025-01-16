@@ -19,7 +19,7 @@
 namespace Plip::Core::Chip8 {
     class Chip8Instance final : public PlipCore {
     public:
-        Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video);
+        Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video, const PlipKeyValuePairCollection &config);
         ~Chip8Instance() override;
 
         void Delta(long ns) override;
@@ -30,16 +30,21 @@ namespace Plip::Core::Chip8 {
         static constexpr long DelayTimerTick = 16666666;
         static constexpr uint32_t ProgramOffset = 0x200;
         static constexpr uint32_t RamSize = 0x1000;
-        static constexpr double SineHz = 440.0;
-        static constexpr double SineVolume = 0.25;
+        static constexpr double WaveformHz = 440.0;
+        static constexpr double WaveformVolume = 0.25;
 
     private:
-        double m_angle = 0.0;
-        double m_delta;
+        double m_waveformVolume = WaveformVolume;
+        double m_phase = 0.0;
+        double m_phaseDelta;
         int m_channels;
         int m_sampleRate;
         int m_audioBufferLength;
+        int m_waveform;
+        const int m_audioSamplesPerGeneration = 1024;
         std::vector<float> m_audioBuffer;
+        int m_audioBufferFillThreshold;
+        int m_phaseAdjustment;
 
         Cpu::Chip8 *m_cpu;
         long m_cycleRemaining = 0;
@@ -51,8 +56,9 @@ namespace Plip::Core::Chip8 {
         void *m_videoOutput;
 
         void Draw() const;
-        std::vector<float> GenerateSilence(unsigned long samples);
-        std::vector<float> GenerateSine(unsigned long samples);
+        std::vector<float> GenerateSilence();
+        std::vector<float> GenerateSine();
+        std::vector<float> GenerateSquare();
         void WriteCharacterSet(uint32_t address) const;
 
         static constexpr int ScreenWidth = 64;

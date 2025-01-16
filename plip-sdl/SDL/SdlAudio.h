@@ -23,6 +23,6 @@ namespace PlipSdl {
 
     private:
         size_t m_bufferSize = {};
-        SDL_AudioStream* m_device = nullptr;
+        SDL_AudioStream* m_stream = nullptr;
     };
 }

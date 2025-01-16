@@ -25,7 +25,7 @@ namespace Plip {
         [[nodiscard]] PlipCore* GetCore() const;
         [[nodiscard]] PlipInput* GetInput() const;
         [[nodiscard]] PlipVideo* GetVideo() const;
-        PlipError Load(PlipValidCore core, const std::string &path);
+        PlipError Load(PlipValidCore core, const std::string &path, const PlipKeyValuePairCollection &config);
         void Run(long ns) const;
 
     private:

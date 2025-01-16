@@ -46,10 +46,10 @@ namespace Plip {
         return m_video;
     }
 
-    PlipError PlipInstance::Load(const PlipValidCore core, const std::string &path) {
+    PlipError PlipInstance::Load(const PlipValidCore core, const std::string &path, const PlipKeyValuePairCollection &config) {
         switch(core) {
             case PlipValidCore::Chip8:
-                m_core = new Core::Chip8::Chip8Instance(m_audio, m_input, m_video);
+                m_core = new Core::Chip8::Chip8Instance(m_audio, m_input, m_video, config);
                 break;
             default:
                 return PlipError::InvalidCore;
