@@ -33,7 +33,7 @@ namespace Plip {
         static std::vector<PlipCoreDescription> GetSupportedCores();
 
         virtual void Delta(long ns) = 0;
-        virtual PlipMemoryMap* GetMemoryMap() final { return m_memory; }
+        PlipMemoryMap* GetMemoryMap() const { return m_memory; }
         virtual PlipError Load(const std::string &path) = 0;
 
     protected:
