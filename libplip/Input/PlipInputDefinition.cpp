@@ -5,25 +5,25 @@
 
 #include "PlipInputDefinition.h"
 
-namespace Plip {
-    PlipInputDefinition::PlipInputDefinition(const PlipInputType type, const std::string &description) {
-        m_type = type;
-        m_description = description;
-    }
+using Plip::PlipInputDefinition;
 
-    PlipInputData PlipInputDefinition::GetData() const {
-        return m_data;
-    }
+PlipInputDefinition::PlipInputDefinition(const PlipInputType type, const std::string &description) {
+    m_type = type;
+    m_description = description;
+}
 
-    std::string PlipInputDefinition::GetDescription() const {
-        return m_description;
-    }
+Plip::PlipInputData PlipInputDefinition::GetData() const {
+    return m_data;
+}
 
-    PlipInputType PlipInputDefinition::GetType() const {
-        return m_type;
-    }
+std::string PlipInputDefinition::GetDescription() const {
+    return m_description;
+}
 
-    void PlipInputDefinition::SetData(const PlipInputData data) {
-        m_data = data;
-    }
+Plip::PlipInputType PlipInputDefinition::GetType() const {
+    return m_type;
+}
+
+void PlipInputDefinition::SetData(const PlipInputData data) {
+    m_data = data;
 }

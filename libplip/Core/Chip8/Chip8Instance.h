@@ -31,10 +31,10 @@ namespace Plip::Core::Chip8 {
         static constexpr uint32_t ProgramOffset = 0x200;
         static constexpr uint32_t RamSize = 0x1000;
         static constexpr double WaveformHz = 440.0;
-        static constexpr double WaveformVolume = 0.25;
+        static constexpr float WaveformVolume = 0.25;
 
     private:
-        double m_waveformVolume = WaveformVolume;
+        float m_waveformVolume = WaveformVolume;
         double m_phase = 0.0;
         double m_phaseDelta;
         int m_channels;

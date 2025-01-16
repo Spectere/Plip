@@ -5,25 +5,25 @@
 
 #include "PlipMemoryRam.h"
 
-namespace Plip {
-    PlipMemoryRam::PlipMemoryRam(const uint32_t amount) {
-        m_data = new uint8_t[amount] {};
-        m_length = amount;
-    }
+using Plip::PlipMemoryRam;
 
-    PlipMemoryRam::~PlipMemoryRam() {
-        delete m_data;
-    }
+PlipMemoryRam::PlipMemoryRam(const uint32_t amount) {
+    m_data = new uint8_t[amount] {};
+    m_length = amount;
+}
 
-    uint8_t PlipMemoryRam::GetByte(const uint32_t address) {
-        return m_data[address];
-    }
+PlipMemoryRam::~PlipMemoryRam() {
+    delete m_data;
+}
 
-    uint32_t PlipMemoryRam::GetLength() {
-        return m_length;
-    }
+uint8_t PlipMemoryRam::GetByte(const uint32_t address) {
+    return m_data[address];
+}
 
-    void PlipMemoryRam::SetByte(const uint32_t address, const uint8_t value) {
-        m_data[address] = value;
-    }
+uint32_t PlipMemoryRam::GetLength() {
+    return m_length;
+}
+
+void PlipMemoryRam::SetByte(const uint32_t address, const uint8_t value) {
+    m_data[address] = value;
 }

@@ -5,22 +5,22 @@
 
 #include "PlipCpu.h"
 
-namespace Plip::Cpu {
-    PlipCpu::PlipCpu(long hz, PlipMemoryMap* memoryMap) {
-        SetHz(hz);
-        m_memory = memoryMap;
-    }
+using Plip::Cpu::PlipCpu;
 
-    long PlipCpu::GetCycleTime() const {
-        return m_cycle;
-    }
+PlipCpu::PlipCpu(const long hz, PlipMemoryMap* memoryMap) {
+    SetHz(hz);
+    m_memory = memoryMap;
+}
 
-    long PlipCpu::GetHz(const long hz) const {
-        return m_hz;
-    }
+long PlipCpu::GetCycleTime() const {
+    return m_cycle;
+}
 
-    void PlipCpu::SetHz(const long hz) {
-        m_hz = hz;
-        m_cycle = 1000000000 / hz;
-    }
+long PlipCpu::GetHz(const long hz) const {
+    return m_hz;
+}
+
+void PlipCpu::SetHz(const long hz) {
+    m_hz = hz;
+    m_cycle = 1000000000 / hz;
 }

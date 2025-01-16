@@ -9,16 +9,16 @@
 
 #include "../PlipKeyValuePairCollection.h"
 
-namespace Plip {
-    PlipCore::PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKeyValuePairCollection config)
-        : m_audio(audio), m_input(input), m_video(video), m_config(std::move(config)) {}
+using Plip::PlipCore;
 
-    std::vector<PlipCoreDescription> PlipCore::GetSupportedCores() {
-        std::vector<PlipCoreDescription> coreList;
+PlipCore::PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKeyValuePairCollection config)
+    : m_audio(audio), m_input(input), m_video(video), m_config(std::move(config)) {}
 
-        for(auto core : m_supportedCores)
-            coreList.push_back(core);
+std::vector<Plip::PlipCoreDescription> PlipCore::GetSupportedCores() {
+    std::vector<PlipCoreDescription> coreList;
 
-        return coreList;
-    }
+    for(auto core : m_supportedCores)
+        coreList.push_back(core);
+
+    return coreList;
 }
