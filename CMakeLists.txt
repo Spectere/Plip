@@ -69,6 +69,7 @@ add_library(${lib_name}
                                                     libplip/PlipKeyValuePairCollection.h
     libplip/PlipInstance.cpp                        libplip/PlipInstance.h
     libplip/PlipIo.cpp                              libplip/PlipIo.h
+                                                    libplip/PlipSupport.h
     libplip/PlipUtility.cpp                         libplip/PlipUtility.h
 
                                                     libplip/Audio/PlipAudio.h
