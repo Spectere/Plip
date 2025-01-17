@@ -25,15 +25,20 @@ std::ifstream PlipIo::LoadFile(const std::string &path) {
     return std::ifstream(path.c_str());
 }
 
-std::vector<char> PlipIo::ReadFile(std::ifstream &file, uintmax_t size) {
+std::vector<char> PlipIo::ReadFile(std::ifstream &file, const uintmax_t size) {
     std::vector<char> data(size);
 
+    // Unlikely, but let's handle it anyway.
+    if(size > std::numeric_limits<std::streamsize>::max()) {
+        throw std::runtime_error("File size is larger than supported.");
+    }
+
     file.seekg(std::istream::beg);
-    file.read(data.data(), data.size());
+    file.read(data.data(), static_cast<long>(data.size()));
     return data;
 }
 
-std::vector<char> PlipIo::ReadFile(const std::string &path, uintmax_t size) {
+std::vector<char> PlipIo::ReadFile(const std::string &path, const uintmax_t size) {
     auto file = LoadFile(path);
     return ReadFile(file, size);
 }
