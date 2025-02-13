@@ -14,6 +14,10 @@ using Plip::PlipCore;
 PlipCore::PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKeyValuePairCollection config)
     : m_audio(audio), m_input(input), m_video(video), m_config(std::move(config)) {}
 
+void PlipCore::Step() {
+    Delta(m_singleStepTime);
+}
+
 std::vector<Plip::PlipCoreDescription> PlipCore::GetSupportedCores() {
     std::vector<PlipCoreDescription> coreList;
 

@@ -27,6 +27,8 @@ namespace PlipSdl {
         Timer* m_timer;
 
         bool m_paused = false;
+        bool m_step = false;
+        bool m_turbo = false;
         int m_frameTimeNs;
     };
 }

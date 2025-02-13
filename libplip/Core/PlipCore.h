@@ -31,6 +31,7 @@ namespace Plip {
         virtual ~PlipCore() = default;
 
         static std::vector<PlipCoreDescription> GetSupportedCores();
+        void Step();
 
         virtual void Delta(long ns) = 0;
         [[nodiscard]] PlipMemoryMap* GetMemoryMap() const { return m_memory; }
@@ -46,6 +47,8 @@ namespace Plip {
         PlipKeyValuePairCollection m_config;
 
         PlipMemoryMap *m_memory = new PlipMemoryMap();
+
+        long m_singleStepTime = {};
 
     private:
         static constexpr PlipCoreDescription m_supportedCores[] = {

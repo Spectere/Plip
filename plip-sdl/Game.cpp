@@ -27,12 +27,24 @@ void Game::Run() {
                     running = false;
                     break;
 
+                case PlipSdlEvent::Step:
+                    m_step = true;
+                    break;
+
                 case PlipSdlEvent::ToggleGui:
                     m_gui->SetEnabled(!m_gui->GetEnabled());
                     break;
 
                 case PlipSdlEvent::TogglePause:
                     m_paused = !m_paused;
+                    break;
+
+                case PlipSdlEvent::TurboDisable:
+                    m_turbo = false;
+                    break;
+
+                case PlipSdlEvent::TurboEnable:
+                    m_turbo = true;
                     break;
 
                 case PlipSdlEvent::WindowResized:
@@ -48,6 +60,9 @@ void Game::Run() {
 
         if(!m_paused) {
             m_plip->Run(m_frameTimeNs);
+        } else if(m_paused && m_step) {
+            m_plip->Step();
+            m_step = false;
         }
 
         m_window->Render();
@@ -56,11 +71,14 @@ void Game::Run() {
 
         const auto elapsedTime = m_timer->StopwatchStop();
         auto delay = m_frameTimeNs - elapsedTime;
-        while(delay < 0) {
-            delay += m_frameTimeNs;
-        }
 
-        m_timer->Nanosleep(delay);
+        if(!m_turbo) {
+            while(delay < 0) {
+                delay += m_frameTimeNs;
+            }
+
+            m_timer->Nanosleep(delay);
+        }
     }
 
     audio->DequeueAll();
