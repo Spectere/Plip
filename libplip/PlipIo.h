@@ -14,6 +14,7 @@ namespace Plip {
     class PlipIo {
     public:
         static bool FileExists(const std::string &path);
+        static std::string GetFilename(const std::string &path);
         static uintmax_t GetSize(const std::string &path);
         static std::ifstream LoadFile(const std::string &path);
         static std::vector<char> ReadFile(std::ifstream &file, uintmax_t size);

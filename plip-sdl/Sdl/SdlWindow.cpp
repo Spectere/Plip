@@ -14,13 +14,13 @@
 
 namespace PlipSdl {
     SdlWindow::SdlWindow(const std::string &title, const bool integerScaling)
-    : m_integerScaling(integerScaling) {
+    : m_baseTitle(title), m_integerScaling(integerScaling) {
         std::stringstream error;
 
         SDL_InitSubSystem(SDL_INIT_VIDEO);
 
         // Try to create a window.
-        m_window = SDL_CreateWindow(title.c_str(),
+        m_window = SDL_CreateWindow(m_baseTitle.c_str(),
                 m_windowWidth, m_windowHeight,
                 SDL_WINDOW_RESIZABLE);
 
@@ -270,6 +270,7 @@ namespace PlipSdl {
     }
 
     void SdlWindow::SetTitle(const std::string title) {
-        SDL_SetWindowTitle(m_window, title.c_str());
+        const auto newTitle = m_baseTitle + " - " + title;
+        SDL_SetWindowTitle(m_window, newTitle.c_str());
     }
 }

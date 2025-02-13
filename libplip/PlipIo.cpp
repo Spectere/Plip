@@ -16,6 +16,12 @@ bool PlipIo::FileExists(const std::string &path) {
     return success;
 }
 
+std::string PlipIo::GetFilename(const std::string &path) {
+    const auto fsPath = std::filesystem::path(path);
+    return fsPath.filename().string();
+}
+
+
 uintmax_t PlipIo::GetSize(const std::string &path) {
     namespace fs = std::filesystem;
     return file_size(fs::path(path));

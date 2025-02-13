@@ -35,6 +35,7 @@ namespace PlipSdl {
 
         const int m_initWidth = 32;
         const int m_initHeight = 32;
+        std::string m_baseTitle;
 
         int m_windowWidth = m_initWidth;
         int m_windowHeight = m_initHeight;

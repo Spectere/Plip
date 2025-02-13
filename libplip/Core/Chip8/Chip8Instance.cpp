@@ -149,6 +149,9 @@ Plip::PlipError Chip8Instance::Load(const std::string &path) {
     const auto size = io::GetSize(path);
     const auto data = io::ReadFile(path, size);
 
+    // Update titlebar.
+    m_video->SetTitle("CHIP-8: " + io::GetFilename(path));
+
     // Zero RAM.
     for(auto i = 0; i < RamSize; i++)
         m_memory->SetByte(i, 0x00);
