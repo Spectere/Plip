@@ -7,6 +7,8 @@
 
 #include "SdlEvent.h"
 
+#include "PlipUtility.h"
+
 namespace PlipSdl {
     void SdlEvent::AddDigitalBinding(int id, SDL_Scancode scancode) {
         m_digitalBinding.insert(std::pair(scancode, id));
@@ -17,34 +19,64 @@ namespace PlipSdl {
         AddDigitalBinding(id, scancode);
     }
 
-    SdlUiEvent SdlEvent::ProcessEvents() {
+    std::vector<PlipSdlEvent> SdlEvent::ProcessEvents() {
         SDL_Event ev;
-        auto uiEvent = SdlUiEvent::None;
+        auto uiEvents = std::vector<PlipSdlEvent>();
 
         while(SDL_PollEvent(&ev)) {
             switch(ev.type) {
                 case SDL_EVENT_KEY_DOWN:
-                    UpdateDigitalInput(ev.key.scancode, true);
+                    if(ev.key.scancode == m_guiKey) {
+                        uiEvents.push_back(PlipSdlEvent::ToggleGui);
+                    } else if(ev.key.scancode == m_pauseKey) {
+                        uiEvents.push_back(PlipSdlEvent::TogglePause);
+                    } else if(ev.key.scancode == m_stepKey) {
+                        uiEvents.push_back( PlipSdlEvent::Step);
+                    } else if(ev.key.scancode == m_turboKey) {
+                        uiEvents.push_back(PlipSdlEvent::TurboEnable);
+                    } else {
+                        UpdateDigitalInput(ev.key.scancode, true);
+                    }
                     break;
 
                 case SDL_EVENT_KEY_UP:
-                    UpdateDigitalInput(ev.key.scancode, false);
+                    if(ev.key.scancode == m_turboKey) {
+                        uiEvents.push_back( PlipSdlEvent::TurboDisable);
+                    } else {
+                        UpdateDigitalInput(ev.key.scancode, false);
+                    }
                     break;
 
                 case SDL_EVENT_QUIT:
-                    uiEvent = SdlUiEvent::Quit;
+                    uiEvents.push_back(PlipSdlEvent::Quit);
                     break;
 
                 case SDL_EVENT_WINDOW_RESIZED:
-                    uiEvent = SdlUiEvent::WindowResized;
+                    uiEvents.push_back(PlipSdlEvent::WindowResized);
                     break;
 
                 default:
                     break;
             }
+
+            m_gui->SendEvent(ev);
         }
 
-        return uiEvent;
+        return uiEvents;
+    }
+
+    void SdlEvent::SetKey(const std::string &action, SDL_Scancode scancode) {
+        const auto lower = Plip::PlipUtility::StringToLower(action);
+
+        if(lower == "gui") m_guiKey = scancode;
+        if(lower == "pause") m_pauseKey = scancode;
+        if(lower == "step") m_stepKey = scancode;
+        if(lower == "turbo") m_turboKey = scancode;
+    }
+
+    void SdlEvent::SetKey(const std::string &action, const std::string &binding) {
+        const auto scancode = SDL_GetScancodeFromName(binding.c_str());
+        SetKey(action, scancode);
     }
 
     void SdlEvent::UpdateDigitalInput(const SDL_Scancode scancode, const bool value) {

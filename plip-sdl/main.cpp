@@ -17,6 +17,7 @@
 
 #include "Config.h"
 #include "Game.h"
+#include "Gui.h"
 #include "Sdl/SdlAudio.h"
 #include "Sdl/SdlEvent.h"
 #include "Sdl/SdlWindow.h"
@@ -26,6 +27,13 @@
 std::vector<std::vector<std::string>> defaultConfig = {
         { "video", "scale"    , "1"  },
         { "video", "targetFps", "60" }
+};
+
+std::unordered_map<std::string, SDL_Scancode> defaultFrontEndKeys = {
+    { "gui", SDL_SCANCODE_F1 },
+    { "pause", SDL_SCANCODE_GRAVE },
+    { "step", SDL_SCANCODE_BACKSLASH },
+    { "turbo", SDL_SCANCODE_TAB }
 };
 
 std::vector<std::vector<std::string>> intParamMapping = {
@@ -52,9 +60,10 @@ cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
         ;
 
         options.add_options("Video")
-                ( "f,fps", "sets the target frame rate", cxxopts::value<int>()->default_value("60"))
-                ( "i,integer-scaling", "disallows fractional scaling during window resizes")
-                ( "s,scale", "sets the initial window scaling", cxxopts::value<int>()->default_value("1"))
+                ("f,fps", "sets the target frame rate", cxxopts::value<int>()->default_value("60"))
+                ("i,integer-scaling", "disallows fractional scaling during window resizes")
+                ("s,scale", "sets the initial window scaling", cxxopts::value<int>()->default_value("1"))
+                ("g,gui", "enable the GUI on launch")
         ;
 
         options.parse_positional({"core", "filename" });
@@ -198,7 +207,21 @@ int main(int argc, char **argv) {
     }
 
     auto input = plip->GetInput();
-    auto event = new PlipSdl::SdlEvent(input);
+    const auto gui = new PlipSdl::Gui(window);
+    auto event = new PlipSdl::SdlEvent(input, gui);
+
+    gui->SetEnabled(opts["gui"].as<bool>());
+
+    // Load inputs for Plip.
+    for(const auto &[id, defaultScancode] : defaultFrontEndKeys) {
+        auto configScancode = config->GetValue("input.plip", id);
+
+        if(configScancode == config->empty) {
+            event->SetKey(id, defaultScancode);
+        } else {
+            event->SetKey(id, configScancode);
+        }
+    }
 
     // Load inputs for the active core.
     std::string inputSection = "input." + coreName;
@@ -213,10 +236,11 @@ int main(int argc, char **argv) {
     window->SetScale(videoScale);
 
     // ...then go into the game loop.
-    auto game = std::make_unique<PlipSdl::Game>(plip, event, window, timer, targetFps);
+    auto game = std::make_unique<PlipSdl::Game>(plip, event, window, timer, gui, targetFps);
     game->Run();
 
     // fin.
+    delete gui;
     SDL_Quit();
     return 0;
 }

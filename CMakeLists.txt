@@ -38,6 +38,44 @@ FetchContent_Populate(
     SOURCE_DIR     ${CXXOPTS_DIR}
 )
 
+# Dear ImGui
+# Modified from: https://gist.github.com/jeffamstutz/992723dfabac4e3ffff265eb71a24cd9
+set(IMGUI_DIR ${CMAKE_BINARY_DIR}/lib/imgui)
+
+FetchContent_Populate(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG        dbb5eeaadffb6a3ba6a60de1290312e5802dba5a  # v1.91.8
+    SOURCE_DIR     ${IMGUI_DIR}
+)
+
+add_library(imgui STATIC
+    ${IMGUI_DIR}/imconfig.h
+    ${IMGUI_DIR}/imgui.h
+
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_demo.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+
+    ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+)
+
+target_link_libraries(imgui PUBLIC
+    SDL3::SDL3
+)
+
+target_include_directories(imgui PUBLIC
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+)
+
+target_compile_definitions(imgui PUBLIC
+    IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+)
+
 # SDL3
 FetchContent_Declare(
     SDL3
@@ -119,6 +157,7 @@ add_executable(${gui_name}
     plip-sdl/main.cpp
     plip-sdl/Config.cpp                 plip-sdl/Config.h
     plip-sdl/Game.cpp                   plip-sdl/Game.h
+    plip-sdl/Gui.cpp                    plip-sdl/Gui.h
 
     plip-sdl/Sdl/SdlAudio.cpp           plip-sdl/Sdl/SdlAudio.h
     plip-sdl/Sdl/SdlEvent.cpp           plip-sdl/Sdl/SdlEvent.h
@@ -126,6 +165,20 @@ add_executable(${gui_name}
 
                                         plip-sdl/Timer/Timer.h
     plip-sdl/Timer/TimerSdl.cpp         plip-sdl/Timer/TimerSdl.h
+
+    # Dear ImGui
+    ${imgui_SOURCE_DIR}/imgui.cpp                              ${imgui_SOURCE_DIR}/imgui.h
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_internal.h
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/imstb_rectpack.h
+    ${imgui_SOURCE_DIR}/imstb_textedit.h
+    ${imgui_SOURCE_DIR}/imstb_truetype.h
+
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp           ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.h
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp   ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.h
 )
 
 target_include_directories(${gui_name}
@@ -135,6 +188,9 @@ target_include_directories(${gui_name}
 
     PUBLIC
         SDL3::SDL3
+
+        ${imgui_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}/backends
 )
 
 target_link_libraries(${gui_name}

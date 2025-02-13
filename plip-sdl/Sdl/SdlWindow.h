@@ -16,16 +16,20 @@ namespace PlipSdl {
         ~SdlWindow();
 
         bool BeginDraw() override;
-        void CalculateDestinationRectangle();
         void Clear() override;
         void Draw(void *data) override;
         bool EndDraw() override;
         Plip::PlipVideoFormat GetFormat() override;
         int GetHeight() override;
         int GetWidth() override;
-        void Render() override;
+        void Present() const;
+        void Render();
         void ResizeOutput(int width, int height, double pixelAspectX, double pixelAspectY) override;
         void SetTitle(std::string title) override;
+
+        void CalculateDestinationRectangle();
+        [[nodiscard]] SDL_Renderer* GetRenderer() const;
+        [[nodiscard]] SDL_Window* GetWindow() const;
         void SetScale(int scale);
 
     private:
@@ -49,12 +53,12 @@ namespace PlipSdl {
         double m_texturePixelAspectY = 1.0;
         SDL_FRect m_destRect = {};
 
-        void *m_texData = nullptr;
+        void* m_texData = nullptr;
         int m_pitch = -1;
 
-        SDL_Window *m_window = nullptr;
-        SDL_Renderer *m_renderer = nullptr;
-        SDL_Texture *m_texture = nullptr;
+        SDL_Window* m_window = nullptr;
+        SDL_Renderer* m_renderer = nullptr;
+        SDL_Texture* m_texture = nullptr;
 
         Plip::PlipVideoFormat m_format = Plip::PlipVideoFormat::Unknown;
     };

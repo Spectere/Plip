@@ -3,6 +3,7 @@
  * Miscellaneous helper functions.
  */
 
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 
@@ -22,4 +23,10 @@ std::string PlipUtility::FormatHex(const uintmax_t value, const int precision) {
         << std::hex << value;
 
     return fmt.str();
+}
+
+std::string PlipUtility::StringToLower(const std::string &str) {
+    std::string lower = str;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    return lower;
 }

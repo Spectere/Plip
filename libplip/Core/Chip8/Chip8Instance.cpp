@@ -106,7 +106,6 @@ void Chip8Instance::Draw() const {
     m_video->BeginDraw();
     m_video->Draw(m_videoOutput);
     m_video->EndDraw();
-    m_video->Render();
 }
 
 std::vector<float> Chip8Instance::GenerateSilence() {

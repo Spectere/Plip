@@ -13,5 +13,6 @@ namespace Plip {
     public:
         static std::string DumpValue(const std::string &label, uintmax_t value, int precision);
         static std::string FormatHex(uintmax_t value, int precision);
+        static std::string StringToLower(const std::string &str);
     };
 }

@@ -151,14 +151,25 @@ namespace PlipSdl {
         return m_textureHeight;
     }
 
+    SDL_Renderer* SdlWindow::GetRenderer() const {
+        return m_renderer;
+    }
+
     int SdlWindow::GetWidth() {
         return m_textureWidth;
+    }
+
+    SDL_Window* SdlWindow::GetWindow() const {
+        return m_window;
+    }
+
+    void SdlWindow::Present() const {
+        SDL_RenderPresent(m_renderer);
     }
 
     void SdlWindow::Render() {
         Clear();
         SDL_RenderTexture(m_renderer, m_texture, nullptr, &m_destRect);
-        SDL_RenderPresent(m_renderer);
     }
 
     void SdlWindow::ResizeOutput(const int width, const int height, const double pixelAspectX, const double pixelAspectY) {
