@@ -3,6 +3,7 @@
  * An implementation of a CHIP-8 CPU.
  */
 
+#include <chrono>
 #include <iomanip>
 #include <sstream>
 
@@ -104,29 +105,29 @@ std::string Chip8::DumpRegisters() const {
     return dump.str();
 }
 
-std::map<std::string, Plip::Cpu::RegisterValue> Chip8::GetRegisters() const {
+std::map<std::string, Plip::DebugValue> Chip8::GetRegisters() const {
     return {
-        { "V0", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x0])) },
-        { "V1", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x1])) },
-        { "V2", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x2])) },
-        { "V3", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x3])) },
-        { "V4", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x4])) },
-        { "V5", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x5])) },
-        { "V6", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x6])) },
-        { "V7", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x7])) },
-        { "V8", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x8])) },
-        { "V9", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0x9])) },
-        { "VA", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xA])) },
-        { "VB", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xB])) },
-        { "VC", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xC])) },
-        { "VD", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xD])) },
-        { "VE", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xE])) },
-        { "VF", RegisterValue(Int8, static_cast<uint64_t>(m_reg[0xF])) },
-        { "PC", RegisterValue(Int16Be, static_cast<uint64_t>(m_pc)) },
-        { "SP", RegisterValue(Int16Be, static_cast<uint64_t>(m_sp)) },
-        { "I", RegisterValue(Int16Be, static_cast<uint64_t>(m_i)) },
-        { "Audio", RegisterValue(Int8, static_cast<uint64_t>(m_timerAudio)) },
-        { "Delay", RegisterValue(Int8, static_cast<uint64_t>(m_timerDelay)) }
+        { "V0", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x0])) },
+        { "V1", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x1])) },
+        { "V2", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x2])) },
+        { "V3", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x3])) },
+        { "V4", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x4])) },
+        { "V5", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x5])) },
+        { "V6", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x6])) },
+        { "V7", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x7])) },
+        { "V8", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x8])) },
+        { "V9", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0x9])) },
+        { "VA", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0xA])) },
+        { "VB", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0xB])) },
+        { "VC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0xC])) },
+        { "VD", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0xD])) },
+        { "VE", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0xE])) },
+        { "VF", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_reg[0xF])) },
+        { "PC", DebugValue(DebugValueType::Int16Be, static_cast<uint64_t>(m_pc)) },
+        { "SP", DebugValue(DebugValueType::Int16Be, static_cast<uint64_t>(m_sp)) },
+        { "I", DebugValue(DebugValueType::Int16Be, static_cast<uint64_t>(m_i)) },
+        { "Audio", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_timerAudio)) },
+        { "Delay", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_timerDelay)) },
     };
 }
 

@@ -5,12 +5,11 @@
 
 #pragma once
 
-#include <chrono>
 #include <random>
 
 #include "../PlipCpu.h"
+#include "../../DebugValue.h"
 #include "../../Input/PlipInput.h"
-#include "../../Video/PlipVideo.h"
 
 namespace Plip::Cpu {
     class Chip8 final : public PlipCpu {
@@ -20,7 +19,7 @@ namespace Plip::Cpu {
         void Cycle() override;
         void DelayTimer();
         [[nodiscard]] unsigned long GetPc() const override { return m_pc; }
-        [[nodiscard]] std::map<std::string, RegisterValue> GetRegisters() const override;
+        [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         [[nodiscard]] uint64_t* GetVideo() const { return m_videoBuffer; }
         [[nodiscard]] bool IsAudioPlaying() const { return m_timerAudio >= 2; }
         void Reset(uint32_t pc) override;

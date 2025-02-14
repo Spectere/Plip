@@ -50,7 +50,7 @@ void Gui::SendEvent(const SDL_Event &event) const {
     ImGui_ImplSDL3_ProcessEvent(&event);
 }
 
-void Gui::SetDebugInfo(std::map<std::string, std::map<std::string, Plip::Cpu::RegisterValue>> debugInfo) {
+void Gui::SetDebugInfo(std::map<std::string, std::map<std::string, Plip::DebugValue>> debugInfo) {
     m_debugInfo = std::move(debugInfo);
 }
 
@@ -86,11 +86,13 @@ PlipSdl::PlipUiEvent Gui::Update() {
                 ImGui::TableNextRow();
 
                 ImGui::TableNextColumn(); ImGui::Text(key.c_str());
-                ImGui::TableNextColumn(); if(value.Type == Plip::Cpu::Float32Be
-                    || value.Type == Plip::Cpu::Float64Be
-                    || value.Type == Plip::Cpu::Float32Le
-                    || value.Type == Plip::Cpu::Float64Le) {
+                ImGui::TableNextColumn(); if(value.Type == Plip::DebugValueType::Float32Be
+                    || value.Type == Plip::DebugValueType::Float64Be
+                    || value.Type == Plip::DebugValueType::Float32Le
+                    || value.Type == Plip::DebugValueType::Float64Le) {
                     ImGui::Text("%f", value.ValueFloat);
+                } else if(value.Type == Plip::DebugValueType::String) {
+                    ImGui::Text("%s", value.ValueString.c_str());
                 } else {
                     ImGui::Text("%d", value.ValueInt);
                 }

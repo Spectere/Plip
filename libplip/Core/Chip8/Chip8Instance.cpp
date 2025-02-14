@@ -141,7 +141,7 @@ std::vector<float> Chip8Instance::GenerateSquare() {
     return m_audioBuffer;
 }
 
-std::map<std::string, std::map<std::string, Plip::Cpu::RegisterValue>> Chip8Instance::GetDebugInfo() const {
+std::map<std::string, std::map<std::string, Plip::DebugValue>> Chip8Instance::GetDebugInfo() const {
     return {
         { "CPU", m_cpu->GetRegisters() }
     };

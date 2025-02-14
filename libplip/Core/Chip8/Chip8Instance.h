@@ -10,6 +10,7 @@
 #include <string>
 
 #include "../PlipCore.h"
+#include "../../DebugValue.h"
 #include "../../PlipError.h"
 #include "../../PlipInstance.h"
 #include "../../Cpu/Chip8/Chip8.h"
@@ -23,7 +24,7 @@ namespace Plip::Core::Chip8 {
         ~Chip8Instance() override;
 
         void Delta(long ns) override;
-        [[nodiscard]] std::map<std::string, std::map<std::string, Cpu::RegisterValue>> GetDebugInfo() const override;
+        [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         PlipError Load(const std::string &path) override;
 
         static constexpr uint32_t ClockRate = 500;

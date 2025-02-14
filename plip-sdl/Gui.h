@@ -6,6 +6,8 @@
 
 #include <map>
 
+#include "DebugValue.h"
+
 #include "PlipUiEvent.h"
 #include "Cpu/PlipCpu.h"
 #include "Sdl/SdlWindow.h"
@@ -20,7 +22,7 @@ namespace PlipSdl {
         void NewFrame() const;
         void Render() const;
         void SendEvent(const SDL_Event &event) const;
-        void SetDebugInfo(std::map<std::string, std::map<std::string, Plip::Cpu::RegisterValue>> debugInfo);
+        void SetDebugInfo(std::map<std::string, std::map<std::string, Plip::DebugValue>> debugInfo);
         void SetEnabled(bool enable);
         PlipUiEvent Update();
 
@@ -28,6 +30,6 @@ namespace PlipSdl {
         bool m_enabled = false;
         SDL_Renderer* m_renderer;
 
-        std::map<std::string, std::map<std::string, Plip::Cpu::RegisterValue>> m_debugInfo;
+        std::map<std::string, std::map<std::string, Plip::DebugValue>> m_debugInfo;
     };
 }
