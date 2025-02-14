@@ -104,9 +104,12 @@ add_custom_target(
 )
 
 add_library(${lib_name}
-                                                    libplip/PlipKeyValuePairCollection.h
+                                                    libplip/DebugValue.h
+                                                    libplip/PlipEmulationException.h
+                                                    libplip/PlipError.h
     libplip/PlipInstance.cpp                        libplip/PlipInstance.h
     libplip/PlipIo.cpp                              libplip/PlipIo.h
+                                                    libplip/PlipKeyValuePairCollection.h
                                                     libplip/PlipSupport.h
     libplip/PlipUtility.cpp                         libplip/PlipUtility.h
 
