@@ -13,16 +13,27 @@
 #include <cmath>
 
 namespace PlipSdl {
-    SdlWindow::SdlWindow(const std::string &title, const bool integerScaling)
-    : m_baseTitle(title), m_integerScaling(integerScaling) {
+    SdlWindow::SdlWindow(const std::string &title, const bool integerScaling, const int lockScale, const int forceWidth, const int forceHeight)
+    : m_baseTitle(title), m_integerScaling(integerScaling), m_lockScale(lockScale) {
         std::stringstream error;
+
+        // Quick sanity check before we fully initialize the window.
+        if((forceWidth <= 0 && forceHeight > 0) || (forceWidth > 0 && forceHeight <= 0)) {
+            throw Plip::PlipVideoException("Cannot only forcibly set one window dimension.");
+        }
+
+        if(forceWidth > 0) {
+            m_forceDimensions = true;
+            m_windowWidth = forceWidth;
+            m_windowHeight = forceHeight;
+        }
 
         SDL_InitSubSystem(SDL_INIT_VIDEO);
 
         // Try to create a window.
         m_window = SDL_CreateWindow(m_baseTitle.c_str(),
                 m_windowWidth, m_windowHeight,
-                SDL_WINDOW_RESIZABLE);
+                m_forceDimensions ? 0 : SDL_WINDOW_RESIZABLE);
 
         if(m_window == nullptr) {
             error << "Unable to create SDL window: " << SDL_GetError();
@@ -86,16 +97,24 @@ namespace PlipSdl {
         // Update output size/position, based on the various aspect ratios and scaling options.
         const auto xMaxScale = static_cast<double>(m_windowWidth) / m_textureDisplayWidth;
         const auto yMaxScale = static_cast<double>(m_windowHeight) / m_textureDisplayHeight;
-        auto scale = xMaxScale < yMaxScale ? xMaxScale : yMaxScale;
 
-        if(m_integerScaling && scale >= 1.0f) {
-            scale = std::floor(scale);
+        double scale;
+
+        if(m_lockScale > 0) {
+            scale = m_lockScale;
+        } else {
+            scale = xMaxScale < yMaxScale ? xMaxScale : yMaxScale;
+
+            if(m_integerScaling && scale >= 1.0f) {
+                scale = std::floor(scale);
+            }
         }
 
-        const int targetWidth = static_cast<int>(m_textureDisplayWidth * scale);
-        const int targetHeight = static_cast<int>(m_textureDisplayHeight * scale);
-        const int xOffset = (m_windowWidth - targetWidth) / 2;
-        const int yOffset = (m_windowHeight - targetHeight) / 2;
+        const auto targetWidth = static_cast<int>(m_textureDisplayWidth * scale);
+        const auto targetHeight = static_cast<int>(m_textureDisplayHeight * scale);
+
+        const auto xOffset = (m_windowWidth - targetWidth) / 2;
+        const auto yOffset = (m_windowHeight - targetHeight) / 2;
 
         m_destRect.x = static_cast<float>(xOffset);
         m_destRect.y = static_cast<float>(yOffset);
@@ -163,6 +182,10 @@ namespace PlipSdl {
         return m_window;
     }
 
+    bool SdlWindow::IsScaleLocked() const {
+        return m_lockScale;
+    }
+
     void SdlWindow::Present() const {
         SDL_RenderPresent(m_renderer);
     }
@@ -176,20 +199,22 @@ namespace PlipSdl {
         // Destroy and recreate the texture.
         CreateTexture(width, height, pixelAspectX, pixelAspectY);
 
-        // Resize the window if it's too small to contain the new texture.
-        auto doResize = false;
-        if(m_windowWidth < m_textureDisplayWidth) {
-            m_windowWidth = m_textureDisplayWidth;
-            doResize = true;
-        }
+        if(!m_forceDimensions) {
+            // Resize the window if it's too small to contain the new texture.
+            auto doResize = false;
+            if(m_windowWidth < m_textureDisplayWidth) {
+                m_windowWidth = m_textureDisplayWidth;
+                doResize = true;
+            }
 
-        if(m_windowHeight < m_textureDisplayHeight) {
-            m_windowHeight = m_textureDisplayHeight;
-            doResize = true;
-        }
+            if(m_windowHeight < m_textureDisplayHeight) {
+                m_windowHeight = m_textureDisplayHeight;
+                doResize = true;
+            }
 
-        if(doResize) {
-            SDL_SetWindowSize(m_window, m_windowWidth, m_windowHeight);
+            if(doResize) {
+                SDL_SetWindowSize(m_window, m_windowWidth, m_windowHeight);
+            }
         }
 
         // Recalculate the destination rectangle.
@@ -273,6 +298,8 @@ namespace PlipSdl {
     }
 
     void SdlWindow::SetScale(const int scale) {
+        if(m_forceDimensions) return;
+
         const auto newWidth = m_textureDisplayWidth * scale;
         const auto newHeight = m_textureDisplayHeight * scale;
 

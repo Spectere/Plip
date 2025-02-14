@@ -12,7 +12,7 @@
 namespace PlipSdl {
     class SdlWindow final : public Plip::PlipVideo {
     public:
-        explicit SdlWindow(const std::string &title = "", bool integerScaling = false);
+        explicit SdlWindow(const std::string &title = "", bool integerScaling = false, int lockScale = -1, int forceWidth = -1, int forceHeight = -1);
         ~SdlWindow();
 
         bool BeginDraw() override;
@@ -22,6 +22,7 @@ namespace PlipSdl {
         Plip::PlipVideoFormat GetFormat() override;
         int GetHeight() override;
         int GetWidth() override;
+        [[nodiscard]] bool IsScaleLocked() const;
         void Present() const;
         void Render();
         void ResizeOutput(int width, int height, double pixelAspectX, double pixelAspectY) override;
@@ -44,6 +45,8 @@ namespace PlipSdl {
         int m_windowWidth = m_initWidth;
         int m_windowHeight = m_initHeight;
         bool m_integerScaling = false;
+        int m_lockScale = -1;
+        bool m_forceDimensions = false;
 
         int m_textureWidth = m_initWidth;
         int m_textureHeight = m_initHeight;

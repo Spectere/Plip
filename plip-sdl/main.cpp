@@ -62,8 +62,11 @@ cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
         options.add_options("Video")
                 ("f,fps", "sets the target frame rate", cxxopts::value<int>()->default_value("60"))
                 ("i,integer-scaling", "disallows fractional scaling during window resizes")
+                ("lock-scale", "locks the video scale to the initial value")
                 ("s,scale", "sets the initial window scaling", cxxopts::value<int>()->default_value("1"))
                 ("g,gui", "enable the GUI on launch")
+                ("force-width", "forces a specific window width", cxxopts::value<int>())
+                ("force-height", "forces a specific window height", cxxopts::value<int>())
         ;
 
         options.parse_positional({"core", "filename" });
@@ -187,7 +190,22 @@ int main(int argc, char **argv) {
         targetFps = opts["fps"].as<int>();
     }
 
-    auto window = new PlipSdl::SdlWindow(version, integerScaling);
+    int lockScale = -1;
+    if(opts["lock-scale"].count() > 0) {
+        lockScale = videoScale;
+    }
+
+    auto forceWidth = -1;
+    if(opts["force-width"].count() > 0) {
+        forceWidth = opts["force-width"].as<int>();
+    }
+
+    auto forceHeight = -1;
+    if(opts["force-height"].count() > 0) {
+        forceHeight = opts["force-height"].as<int>();
+    }
+
+    auto window = new PlipSdl::SdlWindow(version, integerScaling, lockScale, forceWidth, forceHeight);
     auto plip = new Plip::PlipInstance(window, audio);
     auto timer = new PlipSdl::TimerSdl();
 
