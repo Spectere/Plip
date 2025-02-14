@@ -60,7 +60,7 @@ void Game::Run() {
         m_gui->NewFrame();
         if(m_gui->GetEnabled()) {
             m_gui->SetDebugInfo(m_plip->GetCore()->GetDebugInfo());
-            switch(m_gui->Update()) {
+            switch(m_gui->Update(m_paused)) {
                 case PlipUiEvent::PauseDisable:
                     m_paused = false;
                     break;

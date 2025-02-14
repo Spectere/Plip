@@ -58,7 +58,7 @@ void Gui::SetEnabled(const bool enable) {
     m_enabled = enable;
 }
 
-PlipSdl::PlipUiEvent Gui::Update() {
+PlipSdl::PlipUiEvent Gui::Update(bool corePaused) {
     auto event = PlipUiEvent::None;
 
     if(!ImGui::Begin("Debug", &m_enabled, ImGuiWindowFlags_None)) {
@@ -66,18 +66,20 @@ PlipSdl::PlipUiEvent Gui::Update() {
         return event;
     }
 
-    if(ImGui::Button("Pause")) {
-        event = PlipUiEvent::PauseEnable;
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Step")) {
-        event = PlipUiEvent::Step;
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Play")) {
-        event = PlipUiEvent::PauseDisable;
+    // Emulator controls.
+    m_paused = corePaused;
+    if(ImGui::Checkbox("Pause", &m_paused)) {
+        event = m_paused ? PlipUiEvent::PauseEnable : PlipUiEvent::PauseDisable;
     }
 
+    if(m_paused) {
+        ImGui::SameLine();
+        if(ImGui::Button("Step")) {
+            event = PlipUiEvent::Step;
+        }
+    }
+
+    // Draw core debug information.
     for(const auto &[section, values] : m_debugInfo) {
         if(!ImGui::CollapsingHeader(section.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) continue;
 
