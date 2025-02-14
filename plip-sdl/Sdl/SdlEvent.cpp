@@ -19,21 +19,21 @@ namespace PlipSdl {
         AddDigitalBinding(id, scancode);
     }
 
-    std::vector<PlipSdlEvent> SdlEvent::ProcessEvents() {
+    std::vector<PlipUiEvent> SdlEvent::ProcessEvents() {
         SDL_Event ev;
-        auto uiEvents = std::vector<PlipSdlEvent>();
+        auto uiEvents = std::vector<PlipUiEvent>();
 
         while(SDL_PollEvent(&ev)) {
             switch(ev.type) {
                 case SDL_EVENT_KEY_DOWN:
                     if(ev.key.scancode == m_guiKey) {
-                        uiEvents.push_back(PlipSdlEvent::ToggleGui);
+                        uiEvents.push_back(PlipUiEvent::ToggleGui);
                     } else if(ev.key.scancode == m_pauseKey) {
-                        uiEvents.push_back(PlipSdlEvent::TogglePause);
+                        uiEvents.push_back(PlipUiEvent::TogglePause);
                     } else if(ev.key.scancode == m_stepKey) {
-                        uiEvents.push_back( PlipSdlEvent::Step);
+                        uiEvents.push_back( PlipUiEvent::Step);
                     } else if(ev.key.scancode == m_turboKey) {
-                        uiEvents.push_back(PlipSdlEvent::TurboEnable);
+                        uiEvents.push_back(PlipUiEvent::TurboEnable);
                     } else {
                         UpdateDigitalInput(ev.key.scancode, true);
                     }
@@ -41,18 +41,18 @@ namespace PlipSdl {
 
                 case SDL_EVENT_KEY_UP:
                     if(ev.key.scancode == m_turboKey) {
-                        uiEvents.push_back( PlipSdlEvent::TurboDisable);
+                        uiEvents.push_back( PlipUiEvent::TurboDisable);
                     } else {
                         UpdateDigitalInput(ev.key.scancode, false);
                     }
                     break;
 
                 case SDL_EVENT_QUIT:
-                    uiEvents.push_back(PlipSdlEvent::Quit);
+                    uiEvents.push_back(PlipUiEvent::Quit);
                     break;
 
                 case SDL_EVENT_WINDOW_RESIZED:
-                    uiEvents.push_back(PlipSdlEvent::WindowResized);
+                    uiEvents.push_back(PlipUiEvent::WindowResized);
                     break;
 
                 default:

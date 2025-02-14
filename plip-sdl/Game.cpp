@@ -3,6 +3,7 @@
 // The main game loop.
 
 #include "Game.h"
+#include "PlipUiEvent.h"
 
 using PlipSdl::Game;
 
@@ -23,31 +24,31 @@ void Game::Run() {
         auto uiEvents = m_event->ProcessEvents();
         for(const auto &event : uiEvents) {
             switch(event) {
-                case PlipSdlEvent::Quit:
+                case PlipUiEvent::Quit:
                     running = false;
                     break;
 
-                case PlipSdlEvent::Step:
+                case PlipUiEvent::Step:
                     m_step = true;
                     break;
 
-                case PlipSdlEvent::ToggleGui:
+                case PlipUiEvent::ToggleGui:
                     m_gui->SetEnabled(!m_gui->GetEnabled());
                     break;
 
-                case PlipSdlEvent::TogglePause:
+                case PlipUiEvent::TogglePause:
                     m_paused = !m_paused;
                     break;
 
-                case PlipSdlEvent::TurboDisable:
+                case PlipUiEvent::TurboDisable:
                     m_turbo = false;
                     break;
 
-                case PlipSdlEvent::TurboEnable:
+                case PlipUiEvent::TurboEnable:
                     m_turbo = true;
                     break;
 
-                case PlipSdlEvent::WindowResized:
+                case PlipUiEvent::WindowResized:
                     m_window->CalculateDestinationRectangle();
                     break;
 
@@ -57,6 +58,25 @@ void Game::Run() {
         }
 
         m_gui->NewFrame();
+        if(m_gui->GetEnabled()) {
+            m_gui->SetDebugInfo(m_plip->GetCore()->GetDebugInfo());
+            switch(m_gui->Update()) {
+                case PlipUiEvent::PauseDisable:
+                    m_paused = false;
+                    break;
+
+                case PlipUiEvent::PauseEnable:
+                    m_paused = true;
+                    break;
+
+                case PlipUiEvent::Step:
+                    m_step = true;
+                    break;
+
+                default:
+                    break;
+            }
+        }
 
         if(!m_paused) {
             m_plip->Run(m_frameTimeNs);

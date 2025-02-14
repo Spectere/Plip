@@ -141,6 +141,12 @@ std::vector<float> Chip8Instance::GenerateSquare() {
     return m_audioBuffer;
 }
 
+std::map<std::string, std::map<std::string, Plip::Cpu::RegisterValue>> Chip8Instance::GetDebugInfo() const {
+    return {
+        { "CPU", m_cpu->GetRegisters() }
+    };
+}
+
 Plip::PlipError Chip8Instance::Load(const std::string &path) {
     using io = PlipIo;
     if(!io::FileExists(path)) return PlipError::FileNotFound;

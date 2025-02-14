@@ -7,6 +7,7 @@
 #include "imgui_impl_sdlrenderer3.h"
 
 #include "Gui.h"
+#include "PlipUiEvent.h"
 
 using PlipSdl::Gui;
 
@@ -33,17 +34,12 @@ bool Gui::GetEnabled() const {
 }
 
 void Gui::NewFrame() const {
-    if(!m_enabled) return;
-
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
 }
 
 void Gui::Render() const {
-    if(!m_enabled) return;
-
     ImGui::Render();
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), m_renderer);
 }
@@ -54,6 +50,57 @@ void Gui::SendEvent(const SDL_Event &event) const {
     ImGui_ImplSDL3_ProcessEvent(&event);
 }
 
+void Gui::SetDebugInfo(std::map<std::string, std::map<std::string, Plip::Cpu::RegisterValue>> debugInfo) {
+    m_debugInfo = std::move(debugInfo);
+}
+
 void Gui::SetEnabled(const bool enable) {
     m_enabled = enable;
+}
+
+PlipSdl::PlipUiEvent Gui::Update() {
+    auto event = PlipUiEvent::None;
+
+    if(!ImGui::Begin("Debug", &m_enabled, ImGuiWindowFlags_None)) {
+        ImGui::End();
+        return event;
+    }
+
+    if(ImGui::Button("Pause")) {
+        event = PlipUiEvent::PauseEnable;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Step")) {
+        event = PlipUiEvent::Step;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Play")) {
+        event = PlipUiEvent::PauseDisable;
+    }
+
+    for(const auto &[section, values] : m_debugInfo) {
+        if(!ImGui::CollapsingHeader(section.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) continue;
+
+        if(ImGui::BeginTable(section.c_str(), 2)) {
+            for(const auto &[key, value] : values) {
+                ImGui::TableNextRow();
+
+                ImGui::TableNextColumn(); ImGui::Text(key.c_str());
+                ImGui::TableNextColumn(); if(value.Type == Plip::Cpu::Float32Be
+                    || value.Type == Plip::Cpu::Float64Be
+                    || value.Type == Plip::Cpu::Float32Le
+                    || value.Type == Plip::Cpu::Float64Le) {
+                    ImGui::Text("%f", value.ValueFloat);
+                } else {
+                    ImGui::Text("%d", value.ValueInt);
+                }
+            }
+
+            ImGui::EndTable();
+        }
+    }
+
+    ImGui::End();
+
+    return event;
 }

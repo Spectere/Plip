@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,10 @@
 #include "../Memory/PlipMemoryMap.h"
 
 namespace Plip {
+    namespace Cpu {
+        struct RegisterValue;
+    }
+
     enum class PlipValidCore {
         Chip8
     };
@@ -34,6 +39,7 @@ namespace Plip {
         void Step();
 
         virtual void Delta(long ns) = 0;
+        virtual std::map<std::string, std::map<std::string, Cpu::RegisterValue>> GetDebugInfo() const = 0;
         [[nodiscard]] PlipMemoryMap* GetMemoryMap() const { return m_memory; }
         virtual PlipError Load(const std::string &path) = 0;
 

@@ -23,6 +23,7 @@ namespace Plip::Core::Chip8 {
         ~Chip8Instance() override;
 
         void Delta(long ns) override;
+        [[nodiscard]] std::map<std::string, std::map<std::string, Cpu::RegisterValue>> GetDebugInfo() const override;
         PlipError Load(const std::string &path) override;
 
         static constexpr uint32_t ClockRate = 500;
