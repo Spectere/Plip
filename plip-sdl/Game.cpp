@@ -11,7 +11,7 @@ Game::Game(Plip::PlipInstance* plip, SdlEvent* event, SdlWindow* window, Timer* 
 : m_plip(plip), m_event(event), m_window(window), m_timer(timer), m_gui(gui), m_frameTimeNs(1000000000 / targetFps) { }
 
 bool Game::GetPaused() const {
-    return m_paused;
+    return m_gui->State.PauseCore;
 }
 
 void Game::Run() {
@@ -37,7 +37,7 @@ void Game::Run() {
                     break;
 
                 case PlipUiEvent::TogglePause:
-                    m_paused = !m_paused;
+                    m_gui->State.PauseCore = !m_gui->State.PauseCore;
                     break;
 
                 case PlipUiEvent::TurboDisable:
@@ -59,16 +59,35 @@ void Game::Run() {
 
         m_gui->NewFrame();
         if(m_gui->GetEnabled()) {
+            if(m_gui->State.PerformRead) {
+                auto memoryBase = m_gui->State.ReadAddress;
+                const auto coreMemoryAmount = m_plip->GetCore()->GetMemoryMap()->GetLength();
+                constexpr auto displayColumns = m_gui->State.MemoryDisplayColumns;
+                constexpr auto displayRows = m_gui->State.MemoryDisplayRows;
+
+                // Clamp the memory base.
+                if(memoryBase >= coreMemoryAmount) {
+                    memoryBase = coreMemoryAmount - 1;
+                }
+
+                // Figure out where to start reading.
+                if(memoryBase < displayColumns) {
+                    memoryBase = 0;
+                } else if(memoryBase + displayColumns > coreMemoryAmount) {
+                    memoryBase = memoryBase - (memoryBase % displayColumns) - (displayColumns * (displayRows - 1));
+                } else {
+                    memoryBase = memoryBase - (memoryBase % displayColumns) - displayColumns;
+                }
+                m_gui->State.MemoryDisplayBase = memoryBase;
+
+                // Dump!
+                for(auto i = 0; i < displayColumns * displayRows; i++) {
+                    m_gui->State.MemoryContents[i] = m_plip->GetCore()->GetMemoryMap()->GetByte(memoryBase + i);
+                }
+            }
+
             m_gui->SetDebugInfo(m_plip->GetCore()->GetDebugInfo());
-            switch(m_gui->Update(m_paused)) {
-                case PlipUiEvent::PauseDisable:
-                    m_paused = false;
-                    break;
-
-                case PlipUiEvent::PauseEnable:
-                    m_paused = true;
-                    break;
-
+            switch(m_gui->Update()) {
                 case PlipUiEvent::Step:
                     m_step = true;
                     break;
@@ -76,11 +95,19 @@ void Game::Run() {
                 default:
                     break;
             }
+
+            if(m_gui->State.PerformWrite) {
+                m_plip->GetCore()->GetMemoryMap()->SetByte(
+                    m_gui->State.WriteAddress,
+                    m_gui->State.WriteValue
+                );
+                m_gui->State.PerformWrite = false;
+            }
         }
 
-        if(!m_paused) {
+        if(!m_gui->State.PauseCore) {
             m_plip->Run(m_frameTimeNs);
-        } else if(m_paused && m_step) {
+        } else if(m_gui->State.PauseCore && m_step) {
             m_plip->Step();
             m_step = false;
         }
@@ -105,5 +132,5 @@ void Game::Run() {
 }
 
 void Game::SetPaused(const bool paused) {
-    m_paused = paused;
+    m_gui->State.PauseCore = paused;
 }

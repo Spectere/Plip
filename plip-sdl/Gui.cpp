@@ -7,6 +7,7 @@
 #include "imgui_impl_sdlrenderer3.h"
 
 #include "Gui.h"
+
 #include "PlipUiEvent.h"
 
 using PlipSdl::Gui;
@@ -58,25 +59,81 @@ void Gui::SetEnabled(const bool enable) {
     m_enabled = enable;
 }
 
-PlipSdl::PlipUiEvent Gui::Update(bool corePaused) {
+PlipSdl::PlipUiEvent Gui::Update() {
     auto event = PlipUiEvent::None;
 
-    if(!ImGui::Begin("Debug", &m_enabled, ImGuiWindowFlags_None)) {
+    if(!ImGui::Begin("Debug", &m_enabled, ImGuiWindowFlags_None) || !m_enabled) {
+        State.PerformRead = false;
         ImGui::End();
         return event;
     }
 
     // Emulator controls.
-    m_paused = corePaused;
-    if(ImGui::Checkbox("Pause", &m_paused)) {
-        event = m_paused ? PlipUiEvent::PauseEnable : PlipUiEvent::PauseDisable;
+    if(ImGui::Checkbox("Pause", &State.PauseCore)) {
+        event = State.PauseCore ? PlipUiEvent::PauseEnable : PlipUiEvent::PauseDisable;
     }
 
-    if(m_paused) {
+    if(State.PauseCore) {
         ImGui::SameLine();
         if(ImGui::Button("Step")) {
             event = PlipUiEvent::Step;
         }
+    }
+
+    // Memory viewer/editor.
+    if(ImGui::CollapsingHeader("Memory")) {
+        static int address = 0;
+        static int value = 0;
+
+        static int valueType = 1;
+
+        State.PerformRead = true;
+
+        ImGui::InputInt("Addr", &address, 1, 16, ImGuiInputTextFlags_CharsHexadecimal);
+
+        if(valueType == 0) {
+            ImGui::InputInt("Val", &value, 1, 10, ImGuiInputTextFlags_CharsDecimal);
+        } else {
+            ImGui::InputInt("Val", &value, 1, 16, ImGuiInputTextFlags_CharsHexadecimal);
+        }
+
+        ImGui::Text("Value in");
+        ImGui::SameLine();
+        ImGui::RadioButton("dec", &valueType, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("hex", &valueType, 1);
+
+        if(ImGui::Button("Read")) {
+            State.ReadAddress = address;
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Write")) {
+            State.WriteAddress = address;
+            State.WriteValue = static_cast<uint8_t>(value & 0xFF);
+            State.PerformWrite = true;
+        }
+
+        constexpr auto memoryAddress = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
+        constexpr auto memoryNormal = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+        constexpr auto memoryHighlight = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+        for(auto y = 0; y < State.MemoryDisplayRows; y++) {
+            ImGui::TextColored(
+                memoryAddress,
+                "%.8X", State.MemoryDisplayBase + (State.MemoryDisplayColumns * y)
+            );
+
+            for(auto x = 0; x < State.MemoryDisplayColumns; x++) {
+                const auto currentAddress = State.MemoryDisplayBase + (y * State.MemoryDisplayColumns) + x;
+
+                ImGui::SameLine();
+                ImGui::TextColored(
+                    currentAddress == State.ReadAddress ? memoryHighlight : memoryNormal,
+                    "%.2X", State.MemoryContents[(y * State.MemoryDisplayColumns) + x]
+                );
+            }
+        }
+    } else {
+        State.PerformRead = false;
     }
 
     // Draw core debug information.
@@ -88,15 +145,42 @@ PlipSdl::PlipUiEvent Gui::Update(bool corePaused) {
                 ImGui::TableNextRow();
 
                 ImGui::TableNextColumn(); ImGui::Text(key.c_str());
-                ImGui::TableNextColumn(); if(value.Type == Plip::DebugValueType::Float32Be
-                    || value.Type == Plip::DebugValueType::Float64Be
-                    || value.Type == Plip::DebugValueType::Float32Le
-                    || value.Type == Plip::DebugValueType::Float64Le) {
-                    ImGui::Text("%f", value.ValueFloat);
-                } else if(value.Type == Plip::DebugValueType::String) {
-                    ImGui::Text("%s", value.ValueString.c_str());
-                } else {
-                    ImGui::Text("%d", value.ValueInt);
+                ImGui::TableNextColumn();
+                switch(value.Type) {
+                    case Plip::DebugValueType::Float32Le:
+                    case Plip::DebugValueType::Float32Be:
+                    case Plip::DebugValueType::Float64Le:
+                    case Plip::DebugValueType::Float64Be:
+                        ImGui::Text("%f", value.ValueFloat);
+                        break;
+
+                    case Plip::DebugValueType::Int8:
+                        ImGui::Text("0x%.2X (%d)", value.ValueInt, value.ValueInt);
+                        break;
+
+                    case Plip::DebugValueType::Int16Le:
+                    case Plip::DebugValueType::Int16Be:
+                        ImGui::Text("0x%.4X (%d)", value.ValueInt, value.ValueInt);
+                        break;
+
+                    case Plip::DebugValueType::Int32Le:
+                    case Plip::DebugValueType::Int32Be:
+                        ImGui::Text("0x%.8X (%d)", value.ValueInt, value.ValueInt);
+                        break;
+
+                    case Plip::DebugValueType::Int64Le:
+                    case Plip::DebugValueType::Int64Be:
+                        ImGui::Text("0x%.16X (%d)", value.ValueInt, value.ValueInt);
+                        break;
+
+                    case Plip::DebugValueType::String:
+                        ImGui::Text("%s", value.ValueString.c_str());
+                        break;
+
+                    case Plip::DebugValueType::Unknown:
+                    default:
+                        ImGui::Text("???");
+                        break;
                 }
             }
 
