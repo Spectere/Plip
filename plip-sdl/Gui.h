@@ -5,10 +5,10 @@
 #pragma once
 
 #include <map>
+#include <set>
 
 #include "DebugValue.h"
 
-#include "PlipUiEvent.h"
 #include "Sdl/SdlWindow.h"
 
 namespace PlipSdl {
@@ -18,6 +18,7 @@ namespace PlipSdl {
         // Emulator state.
         bool PauseCore = false;
         bool SingleStep = false;
+        bool TurboEnabled = false;
 
         // Memory display.
         bool PerformRead = false;
@@ -33,6 +34,11 @@ namespace PlipSdl {
 
         uint32_t WriteAddress {};
         uint8_t WriteValue {};
+
+        // Breakpoints.
+        std::set<uint32_t> Breakpoints {};
+        bool BreakpointsActive = false;
+        uint32_t BreakpointHit = UINT32_MAX;
     };
 
     class Gui {
@@ -51,6 +57,7 @@ namespace PlipSdl {
         GuiState State = {};
 
     private:
+        void DrawBreakpointControls();
         void DrawCoreDebugInfo();
         void DrawEmulatorControls();
         void DrawMemoryTools();

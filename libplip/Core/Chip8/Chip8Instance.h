@@ -25,6 +25,7 @@ namespace Plip::Core::Chip8 {
 
         void Delta(long ns) override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
+        bool IsPcAt(uint64_t pc) const override;
         PlipError Load(const std::string &path) override;
 
         static constexpr uint32_t ClockRate = 500;

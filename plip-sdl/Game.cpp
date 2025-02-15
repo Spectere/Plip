@@ -14,7 +14,7 @@ bool Game::GetPaused() const {
     return m_gui->State.PauseCore;
 }
 
-void Game::Run() {
+void Game::Run() const {
     const auto audio = m_plip->GetAudio();
 
     auto running = true;
@@ -38,14 +38,15 @@ void Game::Run() {
 
                 case PlipUiEvent::TogglePause:
                     m_gui->State.PauseCore = !m_gui->State.PauseCore;
+                    m_gui->State.BreakpointHit = UINT32_MAX;
                     break;
 
                 case PlipUiEvent::TurboDisable:
-                    m_turbo = false;
+                    m_gui->State.TurboEnabled = false;
                     break;
 
                 case PlipUiEvent::TurboEnable:
-                    m_turbo = true;
+                    m_gui->State.TurboEnabled = true;
                     break;
 
                 case PlipUiEvent::WindowResized:
@@ -100,6 +101,16 @@ void Game::Run() {
 
         if(!m_gui->State.PauseCore) {
             m_plip->Run(m_frameTimeNs);
+
+            if(m_gui->State.BreakpointsActive) {
+                for(const auto bp : m_gui->State.Breakpoints) {
+                    if(!m_plip->GetCore()->IsPcAt(bp)) continue;
+
+                    m_gui->State.BreakpointHit = bp;
+                    m_gui->State.PauseCore = true;
+                    break;
+                }
+            }
         } else if(m_gui->State.PauseCore && m_gui->State.SingleStep) {
             m_plip->Step();
             m_gui->State.SingleStep = false;
@@ -112,7 +123,7 @@ void Game::Run() {
         const auto elapsedTime = m_timer->StopwatchStop();
         auto delay = m_frameTimeNs - elapsedTime;
 
-        if(!m_turbo) {
+        if(!m_gui->State.TurboEnabled) {
             while(delay < 0) {
                 delay += m_frameTimeNs;
             }

@@ -147,6 +147,10 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> Chip8Instance::Ge
     };
 }
 
+bool Chip8Instance::IsPcAt(const uint64_t pc) const {
+    return m_cpu->GetPc() == pc;
+}
+
 Plip::PlipError Chip8Instance::Load(const std::string &path) {
     using io = PlipIo;
     if(!io::FileExists(path)) return PlipError::FileNotFound;

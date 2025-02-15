@@ -59,6 +59,10 @@ cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
                 ("V,version", "displays the version information and exits")
         ;
 
+        options.add_options("Core")
+                ("p,pause", "starts the emulator in a paused state")
+        ;
+
         options.add_options("Video")
                 ("f,fps", "sets the target frame rate", cxxopts::value<int>()->default_value("60"))
                 ("i,integer-scaling", "disallows fractional scaling during window resizes")
@@ -229,6 +233,7 @@ int main(int argc, char **argv) {
     auto event = new PlipSdl::SdlEvent(input, gui);
 
     gui->SetEnabled(opts["gui"].as<bool>());
+    gui->State.PauseCore = opts["pause"].count() > 0;
 
     // Load inputs for Plip.
     for(const auto &[id, defaultScancode] : defaultFrontEndKeys) {

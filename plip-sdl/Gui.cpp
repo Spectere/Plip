@@ -8,8 +8,6 @@
 
 #include "Gui.h"
 
-#include "PlipUiEvent.h"
-
 using PlipSdl::Gui;
 
 Gui::Gui(const SdlWindow* sdlWindow) : m_renderer(sdlWindow->GetRenderer()) {
@@ -28,6 +26,57 @@ Gui::~Gui() {
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
+}
+
+void Gui::DrawBreakpointControls() {
+    static auto bpHitHighlight = ImGui::GetColorU32( ImVec4(0.3f, 0.0, 0.0, 1.0f));
+
+    static int address = 0;
+
+    if(ImGui::CollapsingHeader("Breakpoints")) {
+        auto removeBp = false;
+        uint32_t removeBpVal {};
+
+        ImGui::InputInt("Addr", &address, 1, 0x100, ImGuiInputTextFlags_CharsHexadecimal);
+
+        if(ImGui::Button("Add")) {
+            State.Breakpoints.insert(address);
+            State.BreakpointsActive = true;
+        }
+
+        if(State.Breakpoints.size() > 0) {
+            ImGui::Separator();
+
+            ImGui::BeginTable("breakpoints", 2);
+            for(const auto bp : State.Breakpoints) {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+
+                if(State.PauseCore && State.BreakpointHit == bp) {
+                    ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bpHitHighlight);
+                }
+
+                ImGui::Text("0x%.8X", bp);
+
+                ImGui::TableNextColumn();
+                ImGui::PushID(bp);
+                if(ImGui::Button("x")) {
+                    removeBp = true;
+                    removeBpVal = bp;
+                }
+                ImGui::PopID();
+            }
+            ImGui::EndTable();
+        }
+
+        if(removeBp) {
+            State.Breakpoints.erase(removeBpVal);
+
+            if(State.Breakpoints.size() == 0) {
+                State.BreakpointsActive = false;
+            }
+        }
+    }
 }
 
 void Gui::DrawCoreDebugInfo() {
@@ -92,6 +141,8 @@ void Gui::DrawEmulatorControls() {
         if(ImGui::Button("Step")) {
             State.SingleStep = true;
         }
+    } else {
+        State.BreakpointHit = UINT32_MAX;
     }
 }
 
@@ -191,6 +242,7 @@ void Gui::Update() {
 
     DrawEmulatorControls();
     DrawMemoryTools();
+    DrawBreakpointControls();
     DrawCoreDebugInfo();
 
     ImGui::End();

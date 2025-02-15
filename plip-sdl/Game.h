@@ -14,7 +14,7 @@ namespace PlipSdl {
     class Game {
     public:
         Game(Plip::PlipInstance* plip, SdlEvent* event, SdlWindow* window, Timer* timer, Gui* gui, int targetFps);
-        void Run();
+        void Run() const;
 
         [[nodiscard]] bool GetPaused() const;
         void SetPaused(bool paused) const;
@@ -26,8 +26,6 @@ namespace PlipSdl {
         SdlWindow* m_window;
         Timer* m_timer;
 
-        bool m_step = false;
-        bool m_turbo = false;
         int m_frameTimeNs;
     };
 }
