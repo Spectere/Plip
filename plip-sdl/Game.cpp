@@ -29,7 +29,7 @@ void Game::Run() {
                     break;
 
                 case PlipUiEvent::Step:
-                    m_step = true;
+                    m_gui->State.SingleStep = true;
                     break;
 
                 case PlipUiEvent::ToggleGui:
@@ -87,14 +87,7 @@ void Game::Run() {
             }
 
             m_gui->SetDebugInfo(m_plip->GetCore()->GetDebugInfo());
-            switch(m_gui->Update()) {
-                case PlipUiEvent::Step:
-                    m_step = true;
-                    break;
-
-                default:
-                    break;
-            }
+            m_gui->Update();
 
             if(m_gui->State.PerformWrite) {
                 m_plip->GetCore()->GetMemoryMap()->SetByte(
@@ -107,9 +100,9 @@ void Game::Run() {
 
         if(!m_gui->State.PauseCore) {
             m_plip->Run(m_frameTimeNs);
-        } else if(m_gui->State.PauseCore && m_step) {
+        } else if(m_gui->State.PauseCore && m_gui->State.SingleStep) {
             m_plip->Step();
-            m_step = false;
+            m_gui->State.SingleStep = false;
         }
 
         m_window->Render();
@@ -131,6 +124,6 @@ void Game::Run() {
     audio->DequeueAll();
 }
 
-void Game::SetPaused(const bool paused) {
+void Game::SetPaused(const bool paused) const {
     m_gui->State.PauseCore = paused;
 }

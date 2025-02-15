@@ -30,57 +30,72 @@ Gui::~Gui() {
     ImGui::DestroyContext();
 }
 
-bool Gui::GetEnabled() const {
-    return m_enabled;
-}
+void Gui::DrawCoreDebugInfo() {
+    for(const auto &[section, values] : m_debugInfo) {
+        if(!ImGui::CollapsingHeader(section.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) continue;
 
-void Gui::NewFrame() const {
-    ImGui_ImplSDLRenderer3_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
-    ImGui::NewFrame();
-}
+        if(ImGui::BeginTable(section.c_str(), 2)) {
+            for(const auto &[key, value] : values) {
+                ImGui::TableNextRow();
 
-void Gui::Render() const {
-    ImGui::Render();
-    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), m_renderer);
-}
+                ImGui::TableNextColumn(); ImGui::Text(key.c_str());
+                ImGui::TableNextColumn();
+                switch(value.Type) {
+                    case Plip::DebugValueType::Float32Le:
+                    case Plip::DebugValueType::Float32Be:
+                    case Plip::DebugValueType::Float64Le:
+                    case Plip::DebugValueType::Float64Be:
+                        ImGui::Text("%f", value.ValueFloat);
+                        break;
 
-void Gui::SendEvent(const SDL_Event &event) const {
-    if(!m_enabled) return;
+                    case Plip::DebugValueType::Int8:
+                        ImGui::Text("0x%.2X (%d)", value.ValueInt, value.ValueInt);
+                        break;
 
-    ImGui_ImplSDL3_ProcessEvent(&event);
-}
+                    case Plip::DebugValueType::Int16Le:
+                    case Plip::DebugValueType::Int16Be:
+                        ImGui::Text("0x%.4X (%d)", value.ValueInt, value.ValueInt);
+                        break;
 
-void Gui::SetDebugInfo(std::map<std::string, std::map<std::string, Plip::DebugValue>> debugInfo) {
-    m_debugInfo = std::move(debugInfo);
-}
+                    case Plip::DebugValueType::Int32Le:
+                    case Plip::DebugValueType::Int32Be:
+                        ImGui::Text("0x%.8X (%d)", value.ValueInt, value.ValueInt);
+                        break;
 
-void Gui::SetEnabled(const bool enable) {
-    m_enabled = enable;
-}
+                    case Plip::DebugValueType::Int64Le:
+                    case Plip::DebugValueType::Int64Be:
+                        ImGui::Text("0x%.16X (%d)", value.ValueInt, value.ValueInt);
+                        break;
 
-PlipSdl::PlipUiEvent Gui::Update() {
-    auto event = PlipUiEvent::None;
+                    case Plip::DebugValueType::String:
+                        ImGui::Text("%s", value.ValueString.c_str());
+                        break;
 
-    if(!ImGui::Begin("Debug", &m_enabled, ImGuiWindowFlags_None) || !m_enabled) {
-        State.PerformRead = false;
-        ImGui::End();
-        return event;
+                    case Plip::DebugValueType::Unknown:
+                    default:
+                        ImGui::Text("???");
+                        break;
+                }
+            }
+
+            ImGui::EndTable();
+        }
     }
+}
 
-    // Emulator controls.
-    if(ImGui::Checkbox("Pause", &State.PauseCore)) {
-        event = State.PauseCore ? PlipUiEvent::PauseEnable : PlipUiEvent::PauseDisable;
-    }
+
+void Gui::DrawEmulatorControls() {
+    ImGui::Checkbox("Pause", &State.PauseCore);
 
     if(State.PauseCore) {
         ImGui::SameLine();
         if(ImGui::Button("Step")) {
-            event = PlipUiEvent::Step;
+            State.SingleStep = true;
         }
     }
+}
 
-    // Memory viewer/editor.
+void Gui::DrawMemoryTools() {
     if(ImGui::CollapsingHeader("Memory")) {
         static int address = 0;
         static int value = 0;
@@ -135,60 +150,48 @@ PlipSdl::PlipUiEvent Gui::Update() {
     } else {
         State.PerformRead = false;
     }
+}
 
-    // Draw core debug information.
-    for(const auto &[section, values] : m_debugInfo) {
-        if(!ImGui::CollapsingHeader(section.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) continue;
 
-        if(ImGui::BeginTable(section.c_str(), 2)) {
-            for(const auto &[key, value] : values) {
-                ImGui::TableNextRow();
+bool Gui::GetEnabled() const {
+    return State.GuiShown;
+}
 
-                ImGui::TableNextColumn(); ImGui::Text(key.c_str());
-                ImGui::TableNextColumn();
-                switch(value.Type) {
-                    case Plip::DebugValueType::Float32Le:
-                    case Plip::DebugValueType::Float32Be:
-                    case Plip::DebugValueType::Float64Le:
-                    case Plip::DebugValueType::Float64Be:
-                        ImGui::Text("%f", value.ValueFloat);
-                        break;
+void Gui::NewFrame() const {
+    ImGui_ImplSDLRenderer3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+}
 
-                    case Plip::DebugValueType::Int8:
-                        ImGui::Text("0x%.2X (%d)", value.ValueInt, value.ValueInt);
-                        break;
+void Gui::Render() const {
+    ImGui::Render();
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), m_renderer);
+}
 
-                    case Plip::DebugValueType::Int16Le:
-                    case Plip::DebugValueType::Int16Be:
-                        ImGui::Text("0x%.4X (%d)", value.ValueInt, value.ValueInt);
-                        break;
+void Gui::SendEvent(const SDL_Event &event) const {
+    if(!State.GuiShown) return;
 
-                    case Plip::DebugValueType::Int32Le:
-                    case Plip::DebugValueType::Int32Be:
-                        ImGui::Text("0x%.8X (%d)", value.ValueInt, value.ValueInt);
-                        break;
+    ImGui_ImplSDL3_ProcessEvent(&event);
+}
 
-                    case Plip::DebugValueType::Int64Le:
-                    case Plip::DebugValueType::Int64Be:
-                        ImGui::Text("0x%.16X (%d)", value.ValueInt, value.ValueInt);
-                        break;
+void Gui::SetDebugInfo(std::map<std::string, std::map<std::string, Plip::DebugValue>> debugInfo) {
+    m_debugInfo = std::move(debugInfo);
+}
 
-                    case Plip::DebugValueType::String:
-                        ImGui::Text("%s", value.ValueString.c_str());
-                        break;
+void Gui::SetEnabled(const bool enable) {
+    State.GuiShown = enable;
+}
 
-                    case Plip::DebugValueType::Unknown:
-                    default:
-                        ImGui::Text("???");
-                        break;
-                }
-            }
-
-            ImGui::EndTable();
-        }
+void Gui::Update() {
+    if(!ImGui::Begin("Debug", &State.GuiShown, ImGuiWindowFlags_None)) {
+        State.PerformRead = false;
+        ImGui::End();
+        return;
     }
 
-    ImGui::End();
+    DrawEmulatorControls();
+    DrawMemoryTools();
+    DrawCoreDebugInfo();
 
-    return event;
+    ImGui::End();
 }

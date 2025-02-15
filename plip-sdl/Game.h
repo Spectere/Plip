@@ -17,7 +17,7 @@ namespace PlipSdl {
         void Run();
 
         [[nodiscard]] bool GetPaused() const;
-        void SetPaused(bool paused);
+        void SetPaused(bool paused) const;
 
     private:
         Plip::PlipInstance* m_plip;
