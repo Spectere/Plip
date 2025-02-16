@@ -4,6 +4,7 @@
  */
 
 #include "SharpLr35902.h"
+#include "../../PlipSupport.h"
 
 using Plip::Cpu::SharpLr35902;
 
@@ -42,9 +43,9 @@ std::map<std::string, Plip::DebugValue> SharpLr35902::GetRegisters() const {
         { "L", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.L)) },
         { "SP", DebugValue(DebugValueType::Int16Be, static_cast<uint64_t>(m_registers.SP)) },
         { "PC", DebugValue(DebugValueType::Int16Be, static_cast<uint64_t>(m_registers.PC)) },
-        { "ZF", DebugValue(static_cast<bool>(m_registers.F & 0x80)) },
-        { "NF", DebugValue(static_cast<bool>(m_registers.F & 0x40)) },
-        { "HF", DebugValue(static_cast<bool>(m_registers.F & 0x20)) },
-        { "CF", DebugValue(static_cast<bool>(m_registers.F & 0x10)) },
+        { "CF", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, SharpLr35902Registers::CarryFlagBit))) },
+        { "HF", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, SharpLr35902Registers::HalfCarryFlagBit))) },
+        { "NF", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, SharpLr35902Registers::SubtractFlagBit))) },
+        { "ZF", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, SharpLr35902Registers::ZeroFlagBit))) },
     };
 }

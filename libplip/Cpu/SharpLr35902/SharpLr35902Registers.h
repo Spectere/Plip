@@ -7,8 +7,15 @@
 
 #include <cstdint>
 
+#include "../../PlipSupport.h"
+
 namespace Plip::Cpu {
     struct SharpLr35902Registers {
+        static constexpr int CarryFlagBit = 4;
+        static constexpr int HalfCarryFlagBit = 5;
+        static constexpr int SubtractFlagBit = 6;
+        static constexpr int ZeroFlagBit = 7;
+
         uint8_t A;
         uint8_t F;
         uint8_t B;
@@ -20,6 +27,22 @@ namespace Plip::Cpu {
 
         uint16_t SP;
         uint16_t PC;
+
+        void ClearCarryFlag() { BIT_CLEAR(F, CarryFlagBit); }
+        [[nodiscard]] bool GetCarryFlag() const { return BIT_TEST(F, CarryFlagBit); }
+        void SetCarryFlag() { BIT_SET(F, CarryFlagBit); }
+
+        void ClearSubtractFlag() { BIT_CLEAR(F, SubtractFlagBit); }
+        [[nodiscard]] bool GetSubtractFlag() const { return BIT_TEST(F, SubtractFlagBit); }
+        void SetSubtractFlag() { BIT_SET(F, SubtractFlagBit); }
+
+        void ClearHalfCarryFlag() { BIT_CLEAR(F, HalfCarryFlagBit); }
+        [[nodiscard]] bool GetHalfCarryFlag() const { return BIT_TEST(F, HalfCarryFlagBit); }
+        void SetHalfCarryFlag() { BIT_SET(F, HalfCarryFlagBit); }
+
+        void ClearZeroFlag() { BIT_CLEAR(F, ZeroFlagBit); }
+        [[nodiscard]] bool GetZeroFlag() const { return BIT_TEST(F, ZeroFlagBit); }
+        void SetZeroFlag() { BIT_SET(F, ZeroFlagBit); }
 
         void AddBc(const uint16_t value) { Set16(B, C, GetBc() + value); }
         void AddDe(const uint16_t value) { Set16(D, E, GetDe() + value); }
