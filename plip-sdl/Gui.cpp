@@ -120,6 +120,10 @@ void Gui::DrawCoreDebugInfo() {
                         ImGui::Text("%s", value.ValueString.c_str());
                         break;
 
+                    case Plip::DebugValueType::Flag:
+                        ImGui::Text("%d", value.ValueFlag);
+                        break;
+
                     case Plip::DebugValueType::Unknown:
                     default:
                         ImGui::Text("???");

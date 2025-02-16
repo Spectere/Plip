@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
 namespace Plip {
     enum class DebugValueType {
@@ -21,14 +22,16 @@ namespace Plip {
         Float32Be,
         Float64Le,
         Float64Be,
-        String
+        String,
+        Flag
     };
 
     struct DebugValue {
         DebugValue() : Type(DebugValueType::Unknown) {}
-        explicit DebugValue(const std::string& value) : Type(DebugValueType::String), ValueString(value) {}
-        DebugValue(const DebugValueType type, const uint64_t value) : Type(type), ValueInt(value) {}
-        DebugValue(const DebugValueType type, const double value) : Type(type), ValueFloat(value) {}
+        explicit DebugValue(std::string value) : Type(DebugValueType::String), ValueString(std::move(value)) {}
+        explicit DebugValue(const DebugValueType type, const uint64_t value) : Type(type), ValueInt(value) {}
+        explicit DebugValue(const DebugValueType type, const double value) : Type(type), ValueFloat(value) {}
+        explicit DebugValue(const bool value) : Type(DebugValueType::Flag), ValueFlag(value) {}
 
         DebugValueType Type;
 
@@ -38,5 +41,6 @@ namespace Plip {
         };
 
         std::string ValueString {};
+        bool ValueFlag {};
     };
 }

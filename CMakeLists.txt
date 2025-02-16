@@ -107,6 +107,7 @@ add_library(${lib_name}
                                                     libplip/DebugValue.h
                                                     libplip/PlipEmulationException.h
                                                     libplip/PlipError.h
+                                                    libplip/PlipInitializationException.h
     libplip/PlipInstance.cpp                        libplip/PlipInstance.h
     libplip/PlipIo.cpp                              libplip/PlipIo.h
                                                     libplip/PlipKeyValuePairCollection.h
@@ -136,6 +137,10 @@ add_library(${lib_name}
     libplip/Cpu/Chip8/Chip8.cpp                     libplip/Cpu/Chip8/Chip8.h
     libplip/Cpu/Chip8/Chip8.Ops.cpp
 
+    # Sharp LR35902
+    libplip/Cpu/SharpLr35902/SharpLr35902.cpp       libplip/Cpu/SharpLr35902/SharpLr35902.h
+                                                    libplip/Cpu/SharpLr35902/SharpLr35902Registers.h
+
 
     #########
     # Cores #
@@ -144,6 +149,9 @@ add_library(${lib_name}
     # CHIP-8
     libplip/Core/PlipCore.cpp                       libplip/Core/PlipCore.h
     libplip/Core/Chip8/Chip8Instance.cpp            libplip/Core/Chip8/Chip8Instance.h
+
+    # GameBoy
+    libplip/Core/GameBoy/GameBoyInstance.cpp        libplip/Core/GameBoy/GameBoyInstance.h
 )
 
 if(BIG_ENDIAN)
@@ -210,7 +218,14 @@ include(CTest)
 include(Catch)
 
 add_executable(${test_name}
+    # Common
+    test/Cpu/MockCpu.h
+
+    # CHIP-8
     test/Cpu/Chip8/Chip8Ops.cpp
+
+    # Sharp LR35902
+    test/Cpu/SharpLr35902/SharpLr35902Common.h
 )
 
 target_include_directories(${test_name}

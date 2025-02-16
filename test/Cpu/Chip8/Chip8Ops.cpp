@@ -4,21 +4,24 @@
 
 #include <PlipEmulationException.h>
 
-#include "Cpu/Chip8/Chip8.h"
-
 #include "catch2/catch_test_macros.hpp"
+
+#include "Cpu/Chip8/Chip8.h"
 #include "Core/Chip8/Chip8Instance.h"
-#include "Memory/PlipMemoryRam.h"
+
+#include "../MockCpu.h"
 
 using namespace Plip;
 
 #define TEST_NAME(name) "[CHIP-8 CPU] " name
 #define OP(op) "[chip8cpu][" op "]"
-#define TEST(name, op) TEST_CASE_METHOD(Chip8CpuFixture, TEST_NAME(name), OP(op))
+#define TEST(name, op) TEST_CASE_METHOD(MockCpu<Cpu::Chip8>, TEST_NAME(name), OP(op))
 
 #define REG(reg) cpu->GetRegisters()[reg].ValueInt
 
-constexpr int16_t LoadRegistersSubroutineAddress = 0xF00;
+constexpr uint16_t InitialPc = 0x200;
+
+constexpr uint16_t LoadRegistersSubroutineAddress = 0xF00;
 constexpr uint8_t MockV0 = 0x01;
 constexpr uint8_t MockV1 = 0x11;
 constexpr uint8_t MockV2 = 0x22;
@@ -36,41 +39,8 @@ constexpr uint8_t MockVD = 0xDD;
 constexpr uint8_t MockVE = 0xEE;
 constexpr uint8_t MockVF = 0xFF;
 
-class Chip8CpuFixture {
-public:
-    Chip8CpuFixture() {
-        memory = CreateMockMemoryMap();
-
-        cpu = CreateMockCpu(memory);
-        cpu->Reset(InitialPc);
-    }
-
-    void LoadData(int offset, const std::vector<uint8_t>& data) const {
-        for(const auto byte : data) {
-            memory->SetByte(offset++, byte);
-        }
-    }
-
-    constexpr static int InitialPc = 0x200;
-
-    Cpu::Chip8* cpu;
-    PlipMemoryMap* memory;
-
-
-private:
-    static PlipMemoryMap* CreateMockMemoryMap() {
-        const auto memoryMap = new PlipMemoryMap();
-        memoryMap->AddBlock(new PlipMemoryRam(0x1000), 0);
-        return memoryMap;
-    }
-
-    static Cpu::Chip8* CreateMockCpu(PlipMemoryMap* memoryMap) {
-        return new Cpu::Chip8(1000, memoryMap, Core::Chip8::Chip8Instance::CharacterSet, nullptr);
-    }
-};
-
 // Requires CALL/RET support to function.
-void CreateLoadRegistersRoutine(const Chip8CpuFixture* fixture) {
+void CreateLoadRegistersRoutine(const MockCpu<Cpu::Chip8>* fixture) {
     fixture->LoadData(LoadRegistersSubroutineAddress, {
         0x60, MockV0,  // V0 = 0x01
         0x61, MockV1,  // V1 = 0x11
@@ -92,25 +62,26 @@ void CreateLoadRegistersRoutine(const Chip8CpuFixture* fixture) {
     });
 }
 
-void DoLoadAllRegisters(const Chip8CpuFixture* fixture) {
+void DoLoadAllRegisters(const MockCpu<Cpu::Chip8>* fixture) {
     CreateLoadRegistersRoutine(fixture);
-    fixture->LoadData(Chip8CpuFixture::InitialPc, { 0x2F, 00 });
+    fixture->LoadData(InitialPc, { 0x2F, 00 });
+
     fixture->cpu->Cycle();  // Jump into subroutine.
     CHECK(fixture->cpu->GetPc() == LoadRegistersSubroutineAddress);
 
     while(fixture->REG("SP") == 1) {
         fixture->cpu->Cycle();
     }
-    CHECK(fixture->cpu->GetPc() == Chip8CpuFixture::InitialPc + 2);
+    CHECK(fixture->cpu->GetPc() == InitialPc + 2);
 }
 
-void Execute(const Chip8CpuFixture* fixture, const std::vector<uint8_t> &data) {
+void Execute(const MockCpu<Cpu::Chip8>* fixture, const std::vector<uint8_t> &data) {
     constexpr auto cycleLimit = 1000;
 
-    fixture->LoadData(Chip8CpuFixture::InitialPc, data);
-    fixture->cpu->Reset(Chip8CpuFixture::InitialPc);
+    fixture->LoadData(InitialPc, data);
+    fixture->cpu->Reset(InitialPc);
     int cycles = 0;
-    while(fixture->cpu->GetPc() != Chip8CpuFixture::InitialPc + data.size()) {
+    while(fixture->cpu->GetPc() != InitialPc + data.size()) {
         fixture->cpu->Cycle();
         if(++cycles >= cycleLimit) {
             throw std::runtime_error("Infinite loop detected.");
@@ -120,6 +91,7 @@ void Execute(const Chip8CpuFixture* fixture, const std::vector<uint8_t> &data) {
 
 TEST("Stack underflow", "RET-underflow") {  // 00EE
     LoadData(InitialPc, { 0x00, 0xEE });
+    cpu->Reset(InitialPc);
     REQUIRE_THROWS(cpu->Cycle());  // Stack underflow.
 }
 
@@ -153,6 +125,9 @@ TEST("Stack overflow", "CALL-overflow") {  // 0x2nnn
     LoadData(0x2E0, { 0x22, 0xB0 });
     LoadData(0x2F0, { 0x23, 0x00 });
     LoadData(0x300, { 0x23, 0x10 });
+
+    cpu->Reset(InitialPc);
+
     for(auto i = 0; i < 16; i++) { // Fill up the stack...
         cpu->Cycle();
     }
@@ -161,8 +136,9 @@ TEST("Stack overflow", "CALL-overflow") {  // 0x2nnn
 
 TEST("Unconditional jump", "JP") {  // 1nnn
     LoadData(InitialPc, { 0x1F, 0xFF });
-    cpu->Cycle();
+    cpu->Reset(InitialPc);
 
+    cpu->Cycle();
     REQUIRE(cpu->GetPc() == 0xFFF);
 }
 
@@ -207,6 +183,8 @@ TEST("Skip if register equals another register", "SNr,r") {  // 5xy0
 }
 
 TEST("Load registers from value", "LDr,b") {  // 6xnn
+    cpu->Reset(InitialPc);
+
     DoLoadAllRegisters(this);
 
     REQUIRE(REG("V0") == MockV0);
@@ -417,6 +395,7 @@ TEST("Jump to V0 + value", "JPV0,a") {  // Bnnn
         0x60, 0x01,  // LD V0, 0x01
         0xB2, 0x23,  // JP V0, 0x123
     });
+    cpu->Reset(InitialPc);
 
     cpu->Cycle();
     cpu->Cycle();
@@ -429,6 +408,7 @@ TEST("Delay timer", "LDr,n") {  // Fx07/Fx15
         0xF0, 0x15,  // LD DT, V0
         0xF1, 0x07,  // LD V1, DT
     });
+    cpu->Reset(InitialPc);
 
     cpu->Cycle();
     cpu->Cycle();
@@ -455,6 +435,7 @@ TEST("Sound timer", "LDST,r") {  // Fx18
         0x60, 0x02,  // LD V0, 0x02
         0xF0, 0x18,  // LD ST, V0
     });
+    cpu->Reset(InitialPc);
 
     cpu->Cycle();
     cpu->Cycle();

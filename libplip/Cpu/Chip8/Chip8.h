@@ -14,6 +14,7 @@
 namespace Plip::Cpu {
     class Chip8 final : public PlipCpu {
     public:
+        Chip8(const long hz, PlipMemoryMap* memoryMap) : Chip8(hz, memoryMap, 0, nullptr) {}
         Chip8(long hz, PlipMemoryMap* memoryMap, uint16_t charset, PlipInput *input);
 
         void Cycle() override;

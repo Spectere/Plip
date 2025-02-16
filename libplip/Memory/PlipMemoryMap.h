@@ -22,6 +22,7 @@ namespace Plip {
     public:
         void AddBlock(PlipMemory *memory, uint32_t offset = 0);
         void AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length);
+        void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset = 0);
         void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
         [[nodiscard]] uint8_t GetByte(uint32_t address) const;
         uint32_t GetLength();

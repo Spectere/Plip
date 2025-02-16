@@ -19,7 +19,8 @@
 
 namespace Plip {
     enum class PlipValidCore {
-        Chip8
+        Chip8,
+        GameBoy
     };
 
     struct PlipCoreDescription {
@@ -61,6 +62,11 @@ namespace Plip {
                 "chip8",
                 PlipValidCore::Chip8,
                 "CHIP-8"
+            },
+            {
+                "gameboy",
+                PlipValidCore::GameBoy,
+                "Nintendo(R) GameBoy(TM)"
             }
         };
     };
