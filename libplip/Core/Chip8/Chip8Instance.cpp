@@ -70,8 +70,7 @@ void Chip8Instance::Delta(const long ns) {
     m_cycleRemaining += ns;
 
     do {
-        m_cpu->Cycle();
-        m_cycleRemaining -= m_cycleTime;
+        m_cycleRemaining -= m_cpu->Cycle();
 
         if(const auto audioQueueFilled = m_audio->GetQueueSize(); audioQueueFilled < m_audioBufferFillThreshold) {
             if(m_cpu->IsAudioPlaying()) {

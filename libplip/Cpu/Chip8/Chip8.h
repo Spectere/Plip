@@ -17,7 +17,7 @@ namespace Plip::Cpu {
         Chip8(const long hz, PlipMemoryMap* memoryMap) : Chip8(hz, memoryMap, 0, nullptr) {}
         Chip8(long hz, PlipMemoryMap* memoryMap, uint16_t charset, PlipInput *input);
 
-        void Cycle() override;
+        long Cycle() override;
         void DelayTimer();
         [[nodiscard]] unsigned long GetPc() const override { return m_pc; }
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;

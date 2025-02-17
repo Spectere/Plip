@@ -11,9 +11,6 @@ using Plip::Cpu::SharpLr35902;
 SharpLr35902::SharpLr35902(const long hz, PlipMemoryMap *memoryMap) : PlipCpu(hz, memoryMap) {
 }
 
-void SharpLr35902::Cycle() {
-}
-
 unsigned long SharpLr35902::GetPc() const {
     return m_registers.PC;
 }

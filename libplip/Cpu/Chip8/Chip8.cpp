@@ -23,7 +23,7 @@ Chip8::Chip8(const long hz, PlipMemoryMap *memoryMap, const uint16_t charset, Pl
     m_rng = std::mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 }
 
-void Chip8::Cycle() {
+long Chip8::Cycle() {
     const auto inst = Fetch();
     const auto left = GetReg1(inst);
     const auto right = GetReg2(inst);
@@ -40,7 +40,7 @@ void Chip8::Cycle() {
         }
     }
 
-    if(m_waitForKey) return;
+    if(m_waitForKey) return m_cycle;
 
     switch(inst & 0xF000) {
         case 0x0000:
@@ -69,6 +69,8 @@ void Chip8::Cycle() {
         case 0xF000: OpFXOO(left, val); break;
         default: throw PlipEmulationException("unexpected opcode");
     }
+
+    return m_cycle;
 }
 
 void Chip8::DelayTimer() {

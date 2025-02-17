@@ -13,7 +13,7 @@ namespace Plip::Cpu {
     public:
         SharpLr35902(long hz, PlipMemoryMap* memoryMap);
 
-        void Cycle() override;
+        long Cycle() override;
         [[nodiscard]] unsigned long GetPc() const override;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
