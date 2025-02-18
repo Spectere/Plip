@@ -48,6 +48,7 @@ public:
     [[nodiscard]] uint16_t GetBc() const { return m_registers.GetBc(); }
     [[nodiscard]] uint16_t GetDe() const { return m_registers.GetDe(); }
     [[nodiscard]] uint16_t GetHl() const { return m_registers.GetHl(); }
+    [[nodiscard]] uint16_t GetSp() const { return m_registers.SP; }
 
     [[nodiscard]] uint8_t GetRegister8ByIndex(const int index) {
         return m_registers.Get8ByIndex(index);
@@ -60,4 +61,5 @@ public:
     void SetBc(const uint16_t value) { m_registers.SetBc(value); }
     void SetDe(const uint16_t value) { m_registers.SetDe(value); }
     void SetHl(const uint16_t value) { m_registers.SetHl(value); }
+    void SetSp(const uint16_t value) { m_registers.SP = value; }
 };

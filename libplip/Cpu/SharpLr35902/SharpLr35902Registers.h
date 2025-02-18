@@ -30,6 +30,7 @@ namespace Plip::Cpu {
         static constexpr int RegIndex16De = 0b01;
         static constexpr int RegIndex16Hl = 0b10;
         static constexpr int RegIndex16Sp = 0b11;
+        static constexpr int RegIndex16Af = 0b11;
 
         uint8_t A;
         uint8_t F;

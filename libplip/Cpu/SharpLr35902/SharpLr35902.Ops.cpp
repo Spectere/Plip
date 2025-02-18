@@ -11,7 +11,16 @@ using Plip::Cpu::SharpLr35902;
 
 static int cycleCount = 0;
 static uint8_t op;
-static uint8_t op2;
+
+#define CHECK_ADD_CARRY(left, right) { \
+    if(((uint16_t)(left) & 0xFF) + ((uint16_t)(right) & 0xFF) > 0xFF) m_registers.SetCarryFlag(); \
+    else m_registers.ClearCarryFlag(); \
+}
+
+#define CHECK_ADD_HALF_CARRY(left, right) { \
+    if(((left) & 0x0F) + ((right) & 0x0F) > 0x0F) m_registers.SetHalfCarryFlag(); \
+    else m_registers.ClearHalfCarryFlag(); \
+}
 
 #define FETCH_PC(var) { \
     var = m_memory->GetByte(m_registers.PC++); \
@@ -188,6 +197,105 @@ long SharpLr35902::DecodeAndExecute() {
             FETCH_PC(memLow);
             FETCH_PC(memHigh);
             FETCH_ADDR(m_registers.A, (memHigh << 8) | memLow);
+            break;
+        }
+
+        //
+        // 16-bit Load Instructions
+        //
+        case 0x01: case 0x11: case 0x21: case 0x31: {
+            // LD xx, imm16
+            // 3 cycles, - - - -
+            const auto destRegIdx = OP_REG16;
+            uint8_t valLow;
+            uint8_t valHigh;
+            FETCH_PC(valLow);
+            FETCH_PC(valHigh);
+            m_registers.Set16ByIndex(destRegIdx, (valHigh << 8) | valLow);
+            break;
+        }
+
+        case 0x08: {
+            // LD [imm16], SP
+            // 5 cycles, - - - - -
+            uint8_t addrLow;
+            uint8_t addrHigh;
+            FETCH_PC(addrLow);
+            FETCH_PC(addrHigh);
+
+            const uint16_t addr = (addrHigh << 8) | addrLow;
+            STORE_ADDR(addr, m_registers.SP);
+            STORE_ADDR(addr + 1, m_registers.SP >> 8);
+            break;
+        }
+
+        case 0xC1: case 0xD1: case 0xE1: case 0xF1: {
+            // POP xx
+            // 3 cycles, BC/DE/HL: - - - -, AF: Z N H C
+            const auto destReg16Idx = OP_REG16;
+            uint8_t valLow;
+            uint8_t valHigh;
+            FETCH_ADDR(valLow, m_registers.SP++);
+            FETCH_ADDR(valHigh, m_registers.SP++);
+            if(destReg16Idx == m_registers.RegIndex16Af) {
+                // AF shares an index with SP, but it must be handled differently.
+                m_registers.A = valHigh;
+                m_registers.F = valLow & 0xF0;  // lower 4 bits are discarded
+            } else {
+                m_registers.Set16ByIndex(destReg16Idx, (valHigh << 8) | valLow);
+            }
+            break;
+        }
+
+        case 0xC5: case 0xD5: case 0xE5: case 0xF5: {
+            // PUSH xx
+            // 3 cycles, - - - -
+            const auto srcReg16Idx = OP_REG16;
+            uint8_t valLow;
+            uint8_t valHigh;
+            if(srcReg16Idx == m_registers.RegIndex16Af) {
+                // AF shares an index with SP, but it must be handled differently.
+                valLow = m_registers.F & 0xF0;
+                valHigh = m_registers.A;
+            } else {
+                const auto val = m_registers.Get16ByIndex(srcReg16Idx);
+                valLow = val;
+                valHigh = val >> 8;
+            }
+            STORE_ADDR(--m_registers.SP, valHigh);
+            STORE_ADDR(--m_registers.SP, valLow);
+            break;
+        }
+
+        case 0xF8: {
+            // LD HL, SP + imm8s
+            // 3 cycles, 0 0 H C
+            uint8_t val;
+            FETCH_PC(val);
+            m_registers.SetHl(m_registers.SP);
+
+            m_registers.ClearSubtractFlag();
+            m_registers.ClearZeroFlag();
+            CHECK_ADD_HALF_CARRY(m_registers.L, val);
+            CHECK_ADD_CARRY(m_registers.L, val);
+
+            m_registers.L += val;
+
+            // Adjust H if necessary.
+            if(m_registers.GetCarryFlag() && (val & 0b1000000) == 0) {
+                m_registers.H++;
+            } else if(!m_registers.GetCarryFlag() && (val & 0b1000000) != 0) {
+                m_registers.H--;
+            }
+            cycleCount++;
+            break;  // TODO: Finish me.
+        }
+
+        case 0xF9: {
+            // LD SP, HL
+            // 2 cycles, - - - -
+            m_registers.SP = m_registers.GetHl();
+            cycleCount++;
             break;
         }
 
