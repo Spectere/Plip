@@ -288,7 +288,7 @@ long SharpLr35902::DecodeAndExecute() {
                 m_registers.H--;
             }
             cycleCount++;
-            break;  // TODO: Finish me.
+            break;
         }
 
         case 0xF9: {
