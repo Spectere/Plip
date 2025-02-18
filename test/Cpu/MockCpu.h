@@ -37,11 +37,11 @@ public:
 private:
     static Plip::PlipMemoryMap* CreateMockMemoryMap() {
         const auto memoryMap = new Plip::PlipMemoryMap();
-        memoryMap->AddBlock(new Plip::PlipMemoryRam(0x1000), 0);
+        memoryMap->AddBlock(new Plip::PlipMemoryRam(0x10000), 0);
         return memoryMap;
     }
 
     static CpuType* CreateMockCpu(Plip::PlipMemoryMap* memoryMap) {
-        return new CpuType(1000, memoryMap);
+        return new CpuType(1000000000, memoryMap);  // 1Ghz = Cycle() returns 1 for each cycle
     }
 };

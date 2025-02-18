@@ -9,16 +9,21 @@
 #include "../PlipCpu.h"
 
 namespace Plip::Cpu {
-    class SharpLr35902 final : public PlipCpu {
+    class SharpLr35902 : public PlipCpu {
     public:
         SharpLr35902(long hz, PlipMemoryMap* memoryMap);
+        virtual ~SharpLr35902() = default;
 
         long Cycle() override;
         [[nodiscard]] unsigned long GetPc() const override;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
 
-    private:
+    protected:
         SharpLr35902Registers m_registers {};
+
+    private:
+        long DecodeAndExecute();
+        uint16_t GetPointerAddress(int pointerIndex);
     };
 }

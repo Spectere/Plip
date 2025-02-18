@@ -8,7 +8,10 @@
 
 using Plip::Cpu::SharpLr35902;
 
-SharpLr35902::SharpLr35902(const long hz, PlipMemoryMap *memoryMap) : PlipCpu(hz, memoryMap) {
+SharpLr35902::SharpLr35902(const long hz, PlipMemoryMap *memoryMap) : PlipCpu(hz, memoryMap) { }
+
+long SharpLr35902::Cycle() {
+    return DecodeAndExecute() * m_cycle;
 }
 
 unsigned long SharpLr35902::GetPc() const {
