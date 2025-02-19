@@ -22,6 +22,20 @@ static uint8_t op;
     else m_registers.ClearHalfCarryFlag(); \
 }
 
+#define CHECK_SUB_BORROW(left, right) { \
+    ((right) > (left)) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag(); \
+}
+
+#define CHECK_SUB_HALF_BORROW(left, right) { \
+    if(((right) & 0x0F) > ((left) & 0x0F)) m_registers.SetHalfCarryFlag(); \
+    else m_registers.ClearHalfCarryFlag(); \
+}
+
+#define CHECK_ZERO(val) { \
+    if((val) == 0) m_registers.SetZeroFlag(); \
+    else m_registers.ClearZeroFlag(); \
+}
+
 #define FETCH_PC(var) { \
     var = m_memory->GetByte(m_registers.PC++); \
     ++cycleCount; \
@@ -230,7 +244,7 @@ long SharpLr35902::DecodeAndExecute() {
         }
 
         case 0xC1: case 0xD1: case 0xE1: case 0xF1: {
-            // POP xx
+            // POP zz
             // 3 cycles, BC/DE/HL: - - - -, AF: Z N H C
             const auto destReg16Idx = OP_REG16;
             uint8_t valLow;
@@ -248,7 +262,7 @@ long SharpLr35902::DecodeAndExecute() {
         }
 
         case 0xC5: case 0xD5: case 0xE5: case 0xF5: {
-            // PUSH xx
+            // PUSH zz
             // 3 cycles, - - - -
             const auto srcReg16Idx = OP_REG16;
             uint8_t valLow;
@@ -296,6 +310,104 @@ long SharpLr35902::DecodeAndExecute() {
             // 2 cycles, - - - -
             m_registers.SP = m_registers.GetHl();
             cycleCount++;
+            break;
+        }
+
+        //
+        // 8-bit Arithmetic / Logical Instructions
+        //
+        case 0x04: case 0x0C: case 0x14: case 0x1C: case 0x24: case 0x2C: case 0x3C: {
+            // INC x
+            // 1 cycle, Z 0 H -
+            const auto destRegIdx = OP_REG_X;
+            uint8_t regValue = m_registers.Get8ByIndex(destRegIdx);
+
+            CHECK_ADD_HALF_CARRY(regValue, 1);
+            m_registers.ClearSubtractFlag();
+
+            m_registers.Set8ByIndex(destRegIdx, ++regValue);
+            CHECK_ZERO(regValue);
+
+            break;
+        }
+
+        case 0x05: case 0x0D: case 0x15: case 0x1D: case 0x25: case 0x2D: case 0x3D: {
+            // DEC x
+            // 1 cycle, Z 1 H -
+            const auto destRegIdx = OP_REG_X;
+            uint8_t regValue = m_registers.Get8ByIndex(destRegIdx);
+
+            CHECK_SUB_HALF_BORROW(regValue, 1);
+            m_registers.SetSubtractFlag();
+
+            m_registers.Set8ByIndex(destRegIdx, --regValue);
+            CHECK_ZERO(regValue);
+
+            break;
+        }
+
+        case 0x34: {
+            // INC [HL]
+            // 3 cycles, Z 0 H -
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+
+            CHECK_ADD_HALF_CARRY(memValue, 1);
+            m_registers.ClearSubtractFlag();
+
+            STORE_ADDR(m_registers.GetHl(), ++memValue);
+            CHECK_ZERO(memValue);
+
+            break;
+        }
+
+        case 0x35: {
+            // DEC [HL]
+            // 3 cycles, Z 0 H -
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+
+            CHECK_SUB_HALF_BORROW(memValue, 1);
+            m_registers.SetSubtractFlag();
+
+            STORE_ADDR(m_registers.GetHl(), --memValue);
+            CHECK_ZERO(memValue);
+
+            break;
+        }
+
+        case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x87:
+        case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8F: {
+            // ADD A, y (0x80-0x87)
+            // ADC A, y (0x88-0x8F)
+            // 1 cycle, Z 0 H C
+            const auto srcRegIdx = OP_REG_Y;
+            const auto srcValue = m_registers.Get8ByIndex(srcRegIdx)
+                + ((m_registers.GetCarryFlag() && op >= 0x88) ? 1 : 0);
+
+            CHECK_ADD_HALF_CARRY(m_registers.A, srcValue);
+            CHECK_ADD_CARRY(m_registers.A, srcValue);
+            m_registers.A += srcValue;
+            m_registers.ClearSubtractFlag();
+            CHECK_ZERO(m_registers.A);
+
+            break;
+        }
+
+        case 0x86: case 0x8E: {
+            // ADD A, [HL] (0x86)
+            // ADC A, [HL] (0x8E)
+            // 2 cycles, Z 0 H C
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue += ((m_registers.GetCarryFlag() && op >= 0x88) ? 1 : 0);
+
+            CHECK_ADD_HALF_CARRY(m_registers.A, memValue);
+            CHECK_ADD_CARRY(m_registers.A, memValue);
+            m_registers.A += memValue;
+            m_registers.ClearSubtractFlag();
+            CHECK_ZERO(m_registers.A);
+
             break;
         }
 

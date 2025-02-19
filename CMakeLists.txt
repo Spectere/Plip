@@ -227,6 +227,7 @@ add_executable(${test_name}
 
     # Sharp LR35902
     test/Cpu/SharpLr35902/SharpLr35902Common.h
+    test/Cpu/SharpLr35902/SharpLr35902.Arith8.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Ld8.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Ld16.cpp
 )

@@ -1,5 +1,5 @@
 /* SharpLr35902.Ld16.cpp
-*
+ *
  * Tests the CPU core's ability to load 16-bit values.
  */
 
