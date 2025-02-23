@@ -165,10 +165,10 @@ TEST("LD HL, SP + imm8s (zero)", "LD-SP,imm8s (zero)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x150);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == false);
-    CHECK(cpu->GetCarryFlag() == false);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_CLEAR;
+    CHECK_CARRY_CLEAR;
     CHECK(cycles == 3);
 }
 
@@ -178,10 +178,10 @@ TEST("LD HL, SP + imm8s (pos, NH, NC)", "LD-SP,imm8s (pos, NH, NC)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x151);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == false);
-    CHECK(cpu->GetCarryFlag() == false);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_CLEAR;
+    CHECK_CARRY_CLEAR;
     CHECK(cycles == 3);
 }
 
@@ -191,10 +191,10 @@ TEST("LD HL, SP + imm8s (pos, H, NC)", "LD-SP,imm8s (pos, H, NC)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x160);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == true);
-    CHECK(cpu->GetCarryFlag() == false);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_SET;
+    CHECK_CARRY_CLEAR;
     CHECK(cycles == 3);
 }
 
@@ -204,10 +204,10 @@ TEST("LD HL, SP + imm8s (pos, NH, C)", "LD-SP,imm8s (pos, H, C)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x20F);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == false);
-    CHECK(cpu->GetCarryFlag() == true);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_CLEAR;
+    CHECK_CARRY_SET;
     CHECK(cycles == 3);
 }
 
@@ -217,10 +217,10 @@ TEST("LD HL, SP + imm8s (pos, H, C)", "LD-SP,imm8s (pos, H, C)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x200);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == true);
-    CHECK(cpu->GetCarryFlag() == true);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_SET;
+    CHECK_CARRY_SET;
     CHECK(cycles == 3);
 }
 
@@ -230,10 +230,10 @@ TEST("LD HL, SP + imm8s (neg, H, C)", "LD-SP,imm8s (neg, H, C)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x150);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == true);
-    CHECK(cpu->GetCarryFlag() == true);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_SET;
+    CHECK_CARRY_SET;
     CHECK(cycles == 3);
 }
 
@@ -243,10 +243,10 @@ TEST("LD HL, SP + imm8s (neg, NH, C)", "LD-SP,imm8s (neg, NH, C)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x14F);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == false);
-    CHECK(cpu->GetCarryFlag() == true);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_CLEAR;
+    CHECK_CARRY_SET;
     CHECK(cycles == 3);
 }
 
@@ -256,10 +256,10 @@ TEST("LD HL, SP + imm8s (neg, H, NC)", "LD-SP,imm8s (neg, H, NC)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x1F0);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == true);
-    CHECK(cpu->GetCarryFlag() == false);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_SET;
+    CHECK_CARRY_CLEAR;
     CHECK(cycles == 3);
 }
 
@@ -269,10 +269,10 @@ TEST("LD HL, SP + imm8s (neg, NH, NC)", "LD-SP,imm8s (neg, NH, NC)") {  // 0xF8
 
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetHl() == 0x1FF);
-    CHECK(cpu->GetSubtractFlag() == false);
-    CHECK(cpu->GetZeroFlag() == false);
-    CHECK(cpu->GetHalfCarryFlag() == false);
-    CHECK(cpu->GetCarryFlag() == false);
+    CHECK_SUBTRACT_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_HALF_CLEAR;
+    CHECK_CARRY_CLEAR;
     CHECK(cycles == 3);
 }
 
