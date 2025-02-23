@@ -15,6 +15,18 @@ using namespace Plip;
 #define OP(op) "[lr35902cpu][" op "]"
 #define TEST(name, op) TEST_CASE_METHOD(MockCpu<MockSharpLr35902>, TEST_NAME(name), OP(op))
 
+#define CHECK_CARRY_CLEAR CHECK(cpu->GetCarryFlag() == false)
+#define CHECK_CARRY_SET CHECK(cpu->GetCarryFlag() == true)
+
+#define CHECK_HALF_CLEAR CHECK(cpu->GetHalfCarryFlag() == false)
+#define CHECK_HALF_SET CHECK(cpu->GetHalfCarryFlag() == true)
+
+#define CHECK_SUBTRACT_CLEAR CHECK(cpu->GetSubtractFlag() == false)
+#define CHECK_SUBTRACT_SET CHECK(cpu->GetSubtractFlag() == true)
+
+#define CHECK_ZERO_CLEAR CHECK(cpu->GetZeroFlag() == false)
+#define CHECK_ZERO_SET CHECK(cpu->GetZeroFlag() == true)
+
 class MockSharpLr35902 final : public Cpu::SharpLr35902 {
 public:
     static constexpr int RegIndexB  = 0b000;

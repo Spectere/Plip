@@ -24,6 +24,12 @@ namespace Plip::Cpu {
 
     private:
         long DecodeAndExecute();
+        void DecodeAndExecuteCb();
         uint16_t GetPointerAddress(int pointerIndex);
+        void OpAddToRegisterA(int value, bool addWithCarry);
+        void OpBitwiseAndRegisterA(uint8_t value);
+        void OpBitwiseOrRegisterA(uint8_t value);
+        void OpBitwiseXorRegisterA(uint8_t value);
+        void OpSubtractFromRegisterA(int value, bool subtractWithBorrow, bool discardResult);
     };
 }

@@ -13,7 +13,7 @@ static int cycleCount = 0;
 static uint8_t op;
 
 #define CHECK_ADD_CARRY(left, right) { \
-    if(((uint16_t)(left) & 0xFF) + ((uint16_t)(right) & 0xFF) > 0xFF) m_registers.SetCarryFlag(); \
+    if(((uint16_t)(left)) + ((uint16_t)(right)) > 0xFF) m_registers.SetCarryFlag(); \
     else m_registers.ClearCarryFlag(); \
 }
 
@@ -64,7 +64,7 @@ static constexpr int AddrHlD = 0b11;
 
 void DecodeAndExecuteCb();
 
-uint16_t SharpLr35902::GetPointerAddress(int pointerIndex) {
+uint16_t SharpLr35902::GetPointerAddress(const int pointerIndex) {
     switch(pointerIndex) {
         case AddrBc: return m_registers.GetBc();
         case AddrDe: return m_registers.GetDe();
@@ -81,6 +81,52 @@ uint16_t SharpLr35902::GetPointerAddress(int pointerIndex) {
         default:
             throw new PlipEmulationException("BUG: Attempted to resolve a pointer using an out of range index.");
     }
+}
+
+void SharpLr35902::OpAddToRegisterA(int value, const bool addWithCarry) {
+    value += ((addWithCarry && m_registers.GetCarryFlag()) ? 1 : 0);
+
+    CHECK_ADD_HALF_CARRY(m_registers.A, value);
+    CHECK_ADD_CARRY(m_registers.A, value);
+    m_registers.A += value;
+    m_registers.ClearSubtractFlag();
+    CHECK_ZERO(m_registers.A);
+}
+
+void SharpLr35902::OpBitwiseAndRegisterA(const uint8_t value) {
+    m_registers.A &= value;
+    m_registers.ClearCarryFlag();
+    m_registers.SetHalfCarryFlag();
+    m_registers.ClearSubtractFlag();
+    CHECK_ZERO(m_registers.A);
+}
+
+void SharpLr35902::OpBitwiseOrRegisterA(const uint8_t value) {
+    m_registers.A |= value;
+    m_registers.ClearCarryFlag();
+    m_registers.ClearHalfCarryFlag();
+    m_registers.ClearSubtractFlag();
+    CHECK_ZERO(m_registers.A);
+}
+
+void SharpLr35902::OpBitwiseXorRegisterA(const uint8_t value) {
+    m_registers.A ^= value;
+    m_registers.ClearCarryFlag();
+    m_registers.ClearHalfCarryFlag();
+    m_registers.ClearSubtractFlag();
+    CHECK_ZERO(m_registers.A);
+}
+
+void SharpLr35902::OpSubtractFromRegisterA(int value, const bool subtractWithBorrow, const bool discardResult) {
+    value += ((subtractWithBorrow && m_registers.GetCarryFlag()) ? 1 : 0);
+    const uint8_t result = m_registers.A - value;
+
+    CHECK_SUB_HALF_BORROW(m_registers.A, value);
+    CHECK_SUB_BORROW(m_registers.A, value);
+    m_registers.SetSubtractFlag();
+    CHECK_ZERO(result);
+
+    if(!discardResult) m_registers.A = result;
 }
 
 long SharpLr35902::DecodeAndExecute() {
@@ -376,20 +422,71 @@ long SharpLr35902::DecodeAndExecute() {
             break;
         }
 
+        case 0x27: {
+            // DAA
+            // 1 cycle, Z - 0 C
+            uint8_t adjustment = 0;
+
+            if(m_registers.GetSubtractFlag()) {
+                adjustment += m_registers.GetHalfCarryFlag() ? 0x06 : 0;
+                adjustment += m_registers.GetCarryFlag() ? 0x60 : 0;
+                m_registers.A -= adjustment;
+                m_registers.ClearCarryFlag();
+            } else {
+                adjustment += (m_registers.GetHalfCarryFlag() || ((m_registers.A & 0x0F) > 0x09)) ? 0x06 : 0;
+                if(m_registers.GetCarryFlag() || m_registers.A > 0x99) {
+                    adjustment |= 0x60;
+                    m_registers.SetCarryFlag();
+                } else {
+                    m_registers.ClearCarryFlag();
+                }
+                m_registers.A += adjustment;
+            }
+
+            CHECK_ZERO(m_registers.A);
+            m_registers.ClearHalfCarryFlag();
+
+            break;
+        }
+
+        case 0x2F: {
+            // CPL
+            // 1 cycle, - 1 1 -
+            m_registers.SetSubtractFlag();
+            m_registers.SetHalfCarryFlag();
+
+            m_registers.A ^= 0xFF;
+            break;
+        }
+
+        case 0x37: {
+            // SCF
+            // 1 cycle, - 0 0 1
+            m_registers.ClearSubtractFlag();
+            m_registers.ClearHalfCarryFlag();
+            m_registers.SetCarryFlag();
+
+            break;
+        }
+
+        case 0x3F: {
+            // CCF
+            // 1 cycle, - 0 0 C
+
+            m_registers.ClearSubtractFlag();
+            m_registers.ClearHalfCarryFlag();
+            m_registers.GetCarryFlag() ? m_registers.ClearCarryFlag() : m_registers.SetCarryFlag();
+
+            break;
+        }
+
         case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x87:
         case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8F: {
             // ADD A, y (0x80-0x87)
             // ADC A, y (0x88-0x8F)
             // 1 cycle, Z 0 H C
-            const auto srcRegIdx = OP_REG_Y;
-            const auto srcValue = m_registers.Get8ByIndex(srcRegIdx)
-                + ((m_registers.GetCarryFlag() && op >= 0x88) ? 1 : 0);
-
-            CHECK_ADD_HALF_CARRY(m_registers.A, srcValue);
-            CHECK_ADD_CARRY(m_registers.A, srcValue);
-            m_registers.A += srcValue;
-            m_registers.ClearSubtractFlag();
-            CHECK_ZERO(m_registers.A);
+            const auto regValue = m_registers.Get8ByIndex(OP_REG_Y);
+            OpAddToRegisterA(regValue, op >= 0x88);
 
             break;
         }
@@ -398,15 +495,169 @@ long SharpLr35902::DecodeAndExecute() {
             // ADD A, [HL] (0x86)
             // ADC A, [HL] (0x8E)
             // 2 cycles, Z 0 H C
+            int memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            OpAddToRegisterA(memValue, op == 0x8E);
+
+            break;
+        }
+
+        case 0xC6: case 0xCE: {
+            // ADD A, imm8 (0xC6)
+            // ADC A, imm8 (0xCE)
+            // 2 cycles, Z 0 H C
+            int immValue;
+            FETCH_PC(immValue);
+            OpAddToRegisterA(immValue, op == 0xCE);
+
+            break;
+        }
+
+        case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x97:
+        case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9F: {
+            // SUB A, y (0x90-0x97)
+            // SBC A, y (0x98-0x9F)
+            // 1 cycle, Z 1 H C
+            const auto regValue = m_registers.Get8ByIndex(OP_REG_Y);
+            OpSubtractFromRegisterA(regValue, op >= 0x98, false);
+
+            break;
+        }
+
+        case 0x96: case 0x9E: {
+            // SUB A, [HL] (0x96)
+            // SBC A, [HL] (0x9E)
+            // 2 cycles, Z 1 H C
+            int memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            OpSubtractFromRegisterA(memValue, op == 0x9E, false);
+
+            break;
+        }
+
+        case 0xD6: case 0xDE: {
+            // SUB A, imm8 (0xD6)
+            // SBC A, imm8 (0xDE)
+            // 2 cycles, Z 1 H C
+            int immValue;
+            FETCH_PC(immValue);
+            OpSubtractFromRegisterA(immValue, op == 0xDE, false);
+
+            break;
+        }
+
+        case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA7: {
+            // AND A, y
+            // 1 cycle, Z 0 1 0
+            const auto regValue = m_registers.Get8ByIndex(OP_REG_Y);
+            OpBitwiseAndRegisterA(regValue);
+
+            break;
+        }
+
+        case 0xA6: {
+            // AND A, [HL]
+            // 2 cycles, Z 0 1 0
             uint8_t memValue;
             FETCH_ADDR(memValue, m_registers.GetHl());
-            memValue += ((m_registers.GetCarryFlag() && op >= 0x88) ? 1 : 0);
+            OpBitwiseAndRegisterA(memValue);
 
-            CHECK_ADD_HALF_CARRY(m_registers.A, memValue);
-            CHECK_ADD_CARRY(m_registers.A, memValue);
-            m_registers.A += memValue;
-            m_registers.ClearSubtractFlag();
-            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0xE6: {
+            // AND A, imm8
+            // 2 cycles, Z 0 1 0
+            uint8_t immValue;
+            FETCH_PC(immValue);
+            OpBitwiseAndRegisterA(immValue);
+
+            break;
+        }
+
+        case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAF: {
+            // XOR A, y
+            // 1 cycle, Z 0 0 0
+            const auto regValue = m_registers.Get8ByIndex(OP_REG_Y);
+            OpBitwiseXorRegisterA(regValue);
+
+            break;
+        }
+
+        case 0xAE: {
+            // XOR A, [HL]
+            // 2 cycles, Z 0 0 0
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            OpBitwiseXorRegisterA(memValue);
+
+            break;
+        }
+
+        case 0xEE: {
+            // XOR A, imm8
+            // 2 cycles, Z 0 0 0
+            uint8_t immValue;
+            FETCH_PC(immValue);
+            OpBitwiseXorRegisterA(immValue);
+
+            break;
+        }
+
+        case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB7: {
+            // OR A, y
+            // 1 cycle, Z 0 0 0
+            const auto regValue = m_registers.Get8ByIndex(OP_REG_Y);
+            OpBitwiseOrRegisterA(regValue);
+
+            break;
+        }
+
+        case 0xB6: {
+            // OR A, [HL]
+            // 2 cycles, Z 0 0 0
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            OpBitwiseOrRegisterA(memValue);
+
+            break;
+        }
+
+        case 0xF6: {
+            // OR A, imm8
+            // 2 cycles, Z 0 0 0
+            uint8_t immValue;
+            FETCH_PC(immValue);
+            OpBitwiseOrRegisterA(immValue);
+
+            break;
+        }
+
+        case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBF: {
+            // CP A, y
+            // 1 cycle, Z 1 H C
+            const auto regValue = m_registers.Get8ByIndex(OP_REG_Y);
+            OpSubtractFromRegisterA(regValue, false, true);
+
+            break;
+        }
+
+        case 0xBE: {
+            // CP A, [HL]
+            // 2 cycles, Z 1 H C
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            OpSubtractFromRegisterA(memValue, false, true);
+
+            break;
+        }
+
+        case 0xFE: {
+            // CP A, imm8
+            // 2 cycles, Z 1 H C
+            uint8_t immValue;
+            FETCH_PC(immValue);
+            OpSubtractFromRegisterA(immValue, false, true);
 
             break;
         }
@@ -417,7 +668,3 @@ long SharpLr35902::DecodeAndExecute() {
 
     return cycleCount;
 }
-
-void DecodeAndExecuteCb() {
-}
-
