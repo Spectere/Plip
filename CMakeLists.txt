@@ -109,6 +109,7 @@ add_library(${lib_name}
                                                     libplip/PlipError.h
                                                     libplip/PlipInitializationException.h
     libplip/PlipInstance.cpp                        libplip/PlipInstance.h
+                                                    libplip/PlipInvalidOpcodeException.h
     libplip/PlipIo.cpp                              libplip/PlipIo.h
                                                     libplip/PlipKeyValuePairCollection.h
                                                     libplip/PlipSupport.h
@@ -229,6 +230,7 @@ add_executable(${test_name}
     test/Cpu/SharpLr35902/SharpLr35902Common.h
     test/Cpu/SharpLr35902/SharpLr35902.Arith8.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Arith16.cpp
+    test/Cpu/SharpLr35902/SharpLr35902.Jumps.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Ld8.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Ld16.cpp
 )

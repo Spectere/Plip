@@ -29,7 +29,7 @@ void SharpLr35902::Reset(uint32_t pc) {
     m_registers.L = 0;
 
     m_registers.SP = 0;
-    m_registers.PC = 0;
+    m_registers.PC = pc;
 }
 
 std::map<std::string, Plip::DebugValue> SharpLr35902::GetRegisters() const {

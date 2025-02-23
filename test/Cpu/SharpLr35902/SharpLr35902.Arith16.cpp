@@ -1,5 +1,5 @@
 /* SharpLr35902.Arith16.cpp
-*
+ *
  * Tests the CPU core's ability to perform 16-bit arithmetic and logical operations.
  */
 

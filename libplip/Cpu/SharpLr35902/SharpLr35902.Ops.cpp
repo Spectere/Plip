@@ -6,6 +6,7 @@
 
 #include "SharpLr35902.h"
 #include "../../PlipEmulationException.h"
+#include "../../PlipInvalidOpcodeException.h"
 
 using Plip::Cpu::SharpLr35902;
 
@@ -41,6 +42,12 @@ static uint8_t op;
     ++cycleCount; \
 }
 
+#define FETCH_PC16(var) { \
+    uint8_t low;  FETCH_PC(low); \
+    uint8_t high; FETCH_PC(high); \
+    var = (high << 8) | low; \
+}
+
 #define FETCH_ADDR(var, addr) { \
     var = m_memory->GetByte(addr); \
     ++cycleCount; \
@@ -51,16 +58,27 @@ static uint8_t op;
     ++cycleCount; \
 }
 
+#define JUMP_ABSOLUTE(addr) { \
+    m_registers.PC = addr; \
+    ++cycleCount; \
+}
+
 #define OP_REG_X ((op >> 3) & 0b111)
 #define OP_REG_Y (op & 0b111)
 #define OP_REG16 ((op >> 4) & 0b11)
 #define OP_PTR OP_REG16
 #define OP_COND ((op >> 3) & 0b11)
+#define OP_VEC OP_REG_X
 
 static constexpr int AddrBc  = 0b00;
 static constexpr int AddrDe  = 0b01;
 static constexpr int AddrHlI = 0b10;
 static constexpr int AddrHlD = 0b11;
+
+static constexpr int CondNZ = 0b00;
+static constexpr int CondZ  = 0b01;
+static constexpr int CondNC = 0b10;
+static constexpr int CondC  = 0b11;
 
 void DecodeAndExecuteCb();
 
@@ -81,6 +99,38 @@ uint16_t SharpLr35902::GetPointerAddress(const int pointerIndex) {
         default:
             throw new PlipEmulationException("BUG: Attempted to resolve a pointer using an out of range index.");
     }
+}
+
+uint8_t SharpLr35902::Pop8FromStack() {
+    uint8_t value;
+    FETCH_ADDR(value, m_registers.SP++);
+    return value;
+}
+
+uint16_t SharpLr35902::Pop16FromStack() {
+    uint8_t high;
+    uint8_t low;
+
+    Pop16FromStack(high, low);
+    return (high << 8) | low;
+}
+
+void SharpLr35902::Pop16FromStack(uint8_t &high, uint8_t &low) {
+    low = Pop8FromStack();
+    high = Pop8FromStack();
+}
+
+void SharpLr35902::Push8ToStack(const uint8_t value) {
+    STORE_ADDR(--m_registers.SP, value);
+}
+
+void SharpLr35902::Push16ToStack(const uint16_t value) {
+    Push16ToStack(value >> 8, value);
+}
+
+void SharpLr35902::Push16ToStack(const uint8_t high, const uint8_t low) {
+    Push8ToStack(high);
+    Push8ToStack(low);
 }
 
 void SharpLr35902::OpAddToRegisterA(int value, const bool addWithCarry) {
@@ -117,6 +167,27 @@ void SharpLr35902::OpBitwiseXorRegisterA(const uint8_t value) {
     CHECK_ZERO(m_registers.A);
 }
 
+void SharpLr35902::OpJumpRelative(const int8_t offset) {
+    m_registers.PC += offset;
+    ++cycleCount;
+}
+
+bool SharpLr35902::TestConditional(const int conditional) const {
+    switch(conditional) {
+        case CondC:  return m_registers.GetCarryFlag();
+        case CondNC: return !m_registers.GetCarryFlag();
+        case CondZ:  return m_registers.GetZeroFlag();
+        case CondNZ: return !m_registers.GetZeroFlag();
+        default:
+            throw new PlipEmulationException("BUG: Conditional value out of range.");
+    }
+}
+
+void SharpLr35902::OpReturn() {
+    const auto addr = Pop16FromStack();
+    JUMP_ABSOLUTE(addr);
+}
+
 void SharpLr35902::OpSubtractFromRegisterA(int value, const bool subtractWithBorrow, const bool discardResult) {
     value += ((subtractWithBorrow && m_registers.GetCarryFlag()) ? 1 : 0);
     const uint8_t result = m_registers.A - value;
@@ -134,6 +205,106 @@ long SharpLr35902::DecodeAndExecute() {
 
     FETCH_PC(op);
     switch(op) {
+        //
+        // Jumps/Calls
+        //
+        case 0x18: {
+            // JR imm8s
+            // 3 cycles, - - - -
+            uint8_t immValue;
+            FETCH_PC(immValue);
+            OpJumpRelative(static_cast<int8_t>(immValue));
+            break;
+        }
+
+        case 0x20: case 0x28: case 0x30: case 0x38: {
+            // JR c, imm8s
+            // 3/2 cycles, - - - -
+            uint8_t immValue;
+            FETCH_PC(immValue);
+
+            if(TestConditional(OP_COND)) {
+                OpJumpRelative(static_cast<int8_t>(immValue));
+            }
+
+            break;
+        }
+
+        case 0xC9: {
+            // RET
+            // 4 cycles, - - - -
+            OpReturn();
+            break;
+        }
+
+        case 0xC0: case 0xC8: case 0xD0: case 0xD8: {
+            // RET c
+            // 5/2 cycles, - - - -
+            if(TestConditional(OP_COND)) {
+                OpReturn();
+            }
+            ++cycleCount;
+            break;
+        }
+
+        case 0xC3: {
+            // JP imm16
+            // 4 cycles, - - - -
+            uint16_t addr;
+            FETCH_PC16(addr);
+            JUMP_ABSOLUTE(addr);
+            break;
+        }
+
+        case 0xC2: case 0xCA: case 0xD2: case 0xDA: {
+            // JP c, imm16
+            // 4/3 cycles, - - - -
+            uint16_t addr;
+            FETCH_PC16(addr);
+            if(TestConditional(OP_COND)) {
+                JUMP_ABSOLUTE(addr);
+            }
+            break;
+        }
+
+        case 0xC7: case 0xCF: case 0xD7: case 0xDF: case 0xE7: case 0xEF: case 0xF7: case 0xFF: {
+            // RST vec
+            // 4 cycles, - - - -
+            const uint16_t vector = OP_VEC * 8;
+            Push16ToStack(m_registers.PC);
+            JUMP_ABSOLUTE(vector);
+            break;
+        }
+
+        case 0xE9: {
+            // JP HL
+            // 1 cycle, - - - -
+            m_registers.PC = m_registers.GetHl();
+            break;
+        }
+
+        case 0xCD: {
+            // CALL imm16
+            // 6 cycles, - - - -
+            uint16_t destAddr;
+            FETCH_PC16(destAddr);
+            Push16ToStack(m_registers.PC);
+            JUMP_ABSOLUTE(destAddr);
+            break;
+        }
+
+        case 0xC4: case 0xCC: case 0xD4: case 0xDC: {
+            // CALL c, imm16
+            // 6/3 cycles, - - - -
+            uint16_t destAddr;
+            FETCH_PC16(destAddr);
+            if(TestConditional(OP_COND)) {
+                Push16ToStack(m_registers.PC);
+                JUMP_ABSOLUTE(destAddr);
+            }
+            break;
+        }
+
         //
         // 8-bit Load Instructions
         //
@@ -295,8 +466,7 @@ long SharpLr35902::DecodeAndExecute() {
             const auto destReg16Idx = OP_REG16;
             uint8_t valLow;
             uint8_t valHigh;
-            FETCH_ADDR(valLow, m_registers.SP++);
-            FETCH_ADDR(valHigh, m_registers.SP++);
+            Pop16FromStack(valHigh, valLow);
             if(destReg16Idx == m_registers.RegIndex16Af) {
                 // AF shares an index with SP, but it must be handled differently.
                 m_registers.A = valHigh;
@@ -322,8 +492,7 @@ long SharpLr35902::DecodeAndExecute() {
                 valLow = val;
                 valHigh = val >> 8;
             }
-            STORE_ADDR(--m_registers.SP, valHigh);
-            STORE_ADDR(--m_registers.SP, valLow);
+            Push16ToStack(valHigh, valLow);
             break;
         }
 
@@ -730,7 +899,7 @@ long SharpLr35902::DecodeAndExecute() {
         }
 
         default:
-            throw PlipEmulationException("Instruction not implemented");
+            throw PlipInvalidOpcodeException(op);
     }
 
     return cycleCount;

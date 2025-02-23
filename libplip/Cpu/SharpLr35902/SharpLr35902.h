@@ -30,6 +30,15 @@ namespace Plip::Cpu {
         void OpBitwiseAndRegisterA(uint8_t value);
         void OpBitwiseOrRegisterA(uint8_t value);
         void OpBitwiseXorRegisterA(uint8_t value);
+        void OpJumpRelative(int8_t offset);
+        void OpReturn();
         void OpSubtractFromRegisterA(int value, bool subtractWithBorrow, bool discardResult);
+        uint8_t Pop8FromStack();
+        uint16_t Pop16FromStack();
+        void Pop16FromStack(uint8_t& high, uint8_t& low);
+        void Push8ToStack(uint8_t value);
+        void Push16ToStack(uint16_t value);
+        void Push16ToStack(uint8_t high, uint8_t low);
+        bool TestConditional(int conditional) const;
     };
 }
