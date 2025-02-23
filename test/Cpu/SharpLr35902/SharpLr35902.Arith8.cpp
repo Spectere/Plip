@@ -1,4 +1,4 @@
-/* SharpLr35902.Ld16.cpp
+/* SharpLr35902.Arith8.cpp
  *
  * Tests the CPU core's ability to perform 8-bit arithmetic and logical operations.
  */

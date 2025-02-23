@@ -662,9 +662,81 @@ long SharpLr35902::DecodeAndExecute() {
             break;
         }
 
+        //
+        // 16-bit Arithmetic / Logical Instructions
+        //
+        case 0x03: case 0x13: case 0x23: case 0x33: {
+            // INC zz
+            // 2 cycles, - - - -
+            const auto destRegIdx = OP_REG16;
+            const auto regValue = m_registers.Get16ByIndex(destRegIdx);
+            m_registers.Set16ByIndex(destRegIdx, regValue + 1);
+
+            ++cycleCount;
+            break;
+        }
+
+        case 0x0B: case 0x1B: case 0x2B: case 0x3B: {
+            // DEC zz
+            // 2 cycles, - - - -
+            const auto destRegIdx = OP_REG16;
+            const auto regValue = m_registers.Get16ByIndex(destRegIdx);
+            m_registers.Set16ByIndex(destRegIdx, regValue - 1);
+
+            ++cycleCount;
+            break;
+        }
+
+        case 0x09: case 0x19: case 0x29: case 0x39: {
+            // ADD HL, zz
+            // 2 cycles, - 0 H C
+            const auto srcRegIdx = OP_REG16;
+            const auto regValue = m_registers.Get16ByIndex(srcRegIdx);
+
+            int part = regValue & 0xFF;
+            auto lowCarry = (m_registers.L + part) > 0xFF;
+            m_registers.L += part;
+
+            part = (regValue >> 8) + (lowCarry ? 1 : 0);
+            CHECK_ADD_CARRY(m_registers.H, part);
+            CHECK_ADD_HALF_CARRY(m_registers.H, part);
+            m_registers.H += part;
+            m_registers.ClearSubtractFlag();
+
+            ++cycleCount;
+            break;
+        }
+
+        case 0xE8: {
+            // ADD SP, imm8s
+            // 4 cycles, 0 0 H C
+            uint8_t immValue;
+            FETCH_PC(immValue);
+
+            m_registers.ClearSubtractFlag();
+            m_registers.ClearZeroFlag();
+            CHECK_ADD_HALF_CARRY(m_registers.SP & 0x0F, immValue);
+            CHECK_ADD_CARRY(m_registers.SP & 0xFF, immValue);
+
+            if(immValue & 0b10000000) {
+                // imm8s is negative
+                m_registers.SP -= (immValue ^ 0xFF) + 1;
+            } else {
+                m_registers.SP += immValue;
+            }
+
+            cycleCount += 2;
+            break;
+        }
+
         default:
             throw PlipEmulationException("Instruction not implemented");
     }
 
     return cycleCount;
 }
+
+void SharpLr35902::DecodeAndExecuteCb() {
+
+}
+

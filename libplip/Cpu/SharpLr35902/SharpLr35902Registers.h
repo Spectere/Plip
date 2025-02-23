@@ -132,8 +132,8 @@ namespace Plip::Cpu {
         }
 
         static void Set16(uint8_t& high, uint8_t& low, const uint16_t value) {
-            high = static_cast<uint8_t>((value & 0xFF00) >> 8);
-            low = static_cast<uint8_t>(value & 0x00FF);
+            high = (value & 0xFF00) >> 8;
+            low = value & 0x00FF;
         }
     };
 }
