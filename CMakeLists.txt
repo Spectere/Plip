@@ -230,6 +230,7 @@ add_executable(${test_name}
     test/Cpu/SharpLr35902/SharpLr35902Common.h
     test/Cpu/SharpLr35902/SharpLr35902.Arith8.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Arith16.cpp
+    test/Cpu/SharpLr35902/SharpLr35902.Bits.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Jumps.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Ld8.cpp
     test/Cpu/SharpLr35902/SharpLr35902.Ld16.cpp

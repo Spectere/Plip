@@ -16,7 +16,7 @@ namespace Plip {
         template<typename T>
         std::string integerToHexString(T value) {
             std::stringstream sStream;
-            sStream << "0x" << std::setfill('0') << std::setw(sizeof(T) * 2) << std::hex << value;
+            sStream << "0x" << std::setfill('0') << std::setw(sizeof(T) * 2) << std::uppercase << std::hex << value;
             return sStream.str();
         }
 

@@ -7,6 +7,7 @@
 #include "SharpLr35902.h"
 #include "../../PlipEmulationException.h"
 #include "../../PlipInvalidOpcodeException.h"
+#include "../../PlipSupport.h"
 
 using Plip::Cpu::SharpLr35902;
 
@@ -69,6 +70,7 @@ static uint8_t op;
 #define OP_PTR OP_REG16
 #define OP_COND ((op >> 3) & 0b11)
 #define OP_VEC OP_REG_X
+#define OP_BIT OP_REG_X
 
 static constexpr int AddrBc  = 0b00;
 static constexpr int AddrDe  = 0b01;
@@ -188,6 +190,63 @@ void SharpLr35902::OpReturn() {
     JUMP_ABSOLUTE(addr);
 }
 
+uint8_t SharpLr35902::OpRotateLeft(uint8_t value, const bool throughCarry, const bool checkZeroFlag) {
+    m_registers.ClearSubtractFlag();
+    m_registers.ClearHalfCarryFlag();
+
+    const auto newLeastSignificantBit = throughCarry
+        ? (m_registers.GetCarryFlag() ? 1 : 0)
+        : (value & 0b10000000) >> 7;
+
+    (value & 0b10000000) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+    value <<= 1;
+    value |= newLeastSignificantBit;
+
+    (checkZeroFlag && value == 0) ? m_registers.SetZeroFlag() : m_registers.ClearZeroFlag();
+
+    return value;
+}
+
+uint8_t SharpLr35902::OpRotateRight(uint8_t value, const bool throughCarry, const bool checkZeroFlag) {
+    m_registers.ClearSubtractFlag();
+    m_registers.ClearHalfCarryFlag();
+
+    const auto newMostSignificantBit = throughCarry
+        ? (m_registers.GetCarryFlag() ? 1 : 0)
+        : (value & 0b1);
+
+    (value & 0b1) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+    value >>= 1;
+    value |= (newMostSignificantBit << 7);
+
+    (checkZeroFlag && value == 0) ? m_registers.SetZeroFlag() : m_registers.ClearZeroFlag();
+
+    return value;
+}
+
+uint8_t SharpLr35902::OpShiftLeft(uint8_t value) {
+    m_registers.ClearSubtractFlag();
+    m_registers.ClearHalfCarryFlag();
+
+    (value & 0b10000000) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+    value <<= 1;
+    CHECK_ZERO(value);
+
+    return value;
+}
+
+uint8_t SharpLr35902::OpShiftRight(uint8_t value, const bool arithmetic) {
+    m_registers.ClearSubtractFlag();
+    m_registers.ClearHalfCarryFlag();
+
+    (value & 0b1) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+    value >>= 1;
+    if(arithmetic && (value & 0b01000000)) value |= 0b10000000;
+    CHECK_ZERO(value);
+
+    return value;
+}
+
 void SharpLr35902::OpSubtractFromRegisterA(int value, const bool subtractWithBorrow, const bool discardResult) {
     value += ((subtractWithBorrow && m_registers.GetCarryFlag()) ? 1 : 0);
     const uint8_t result = m_registers.A - value;
@@ -199,6 +258,18 @@ void SharpLr35902::OpSubtractFromRegisterA(int value, const bool subtractWithBor
 
     if(!discardResult) m_registers.A = result;
 }
+
+uint8_t SharpLr35902::OpSwapNibbles(uint8_t value) {
+    m_registers.ClearSubtractFlag();
+    m_registers.ClearHalfCarryFlag();
+    m_registers.ClearCarryFlag();
+
+    value = (value << 4) | (value >> 4);
+    CHECK_ZERO(value);
+
+    return value;
+}
+
 
 long SharpLr35902::DecodeAndExecute() {
     cycleCount = 0;
@@ -898,6 +969,42 @@ long SharpLr35902::DecodeAndExecute() {
             break;
         }
 
+        //
+        // 8-bit Shift, Rotate, and Bit Instructions
+        //
+        case 0x07: {
+            // RLCA
+            // 1 cycle, 0 0 0 C
+            m_registers.A = OpRotateLeft(m_registers.A, false, false);
+            break;
+        }
+
+        case 0x0F: {
+            // RRCA
+            // 1 cycle, 0 0 0 C
+            m_registers.A = OpRotateRight(m_registers.A, false, false);
+            break;
+        }
+
+        case 0x17: {
+            // RLA
+            // 1 cycle, 0 0 0 C
+            m_registers.A = OpRotateLeft(m_registers.A, true, false);
+            break;
+        }
+
+        case 0x1F: {
+            // RRA
+            // 1 cycle, 0 0 0 C
+            m_registers.A = OpRotateRight(m_registers.A, true, false);
+            break;
+        }
+
+        case 0xCB: {
+            DecodeAndExecuteCb();
+            break;
+        }
+
         default:
             throw PlipInvalidOpcodeException(op);
     }
@@ -906,6 +1013,209 @@ long SharpLr35902::DecodeAndExecute() {
 }
 
 void SharpLr35902::DecodeAndExecuteCb() {
+    FETCH_PC(op);
 
+    switch(op) {
+        case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x07:
+        case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x17: {
+            // RLC y (0x00-0x07)
+            // RL y (0x10-0x17)
+            // 2 cycles, Z 0 0 C
+            const auto regIdx = OP_REG_Y;
+            const auto regValue = m_registers.Get8ByIndex(regIdx);
+            const auto result = OpRotateLeft(regValue, op >= 0x10, true);
+            m_registers.Set8ByIndex(regIdx, result);
+            break;
+        }
+
+        case 0x06: case 0x16: {
+            // RLC [HL] (0x06)
+            // RL [HL] (0x16)
+            // 4 cycles, Z 0 0 C
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue = OpRotateLeft(memValue, op == 0x16, true);
+            STORE_ADDR(m_registers.GetHl(), memValue);
+            break;
+        }
+
+        case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D: case 0x0F:
+        case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1F: {
+            // RRC y (0x08-0x0F)
+            // RR y (0x18-0x1F)
+            // 2 cycles, Z 0 0 C
+            const auto regIdx = OP_REG_Y;
+            const auto regValue = m_registers.Get8ByIndex(regIdx);
+            const auto result = OpRotateRight(regValue, op >= 0x18, true);
+            m_registers.Set8ByIndex(regIdx, result);
+            break;
+        }
+
+        case 0x0E: case 0x1E: {
+            // RRC [HL] (0x0E)
+            // RR [HL] (0x1E)
+            // 4 cycles, Z 0 0 C
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue = OpRotateRight(memValue, op == 0x1E, true);
+            STORE_ADDR(m_registers.GetHl(), memValue);
+            break;
+        }
+
+        case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x27: {
+            // SLA y
+            // 2 cycles, Z 0 0 C
+            const auto regIdx = OP_REG_Y;
+            m_registers.Set8ByIndex(regIdx, OpShiftLeft(m_registers.Get8ByIndex(regIdx)));
+            break;
+        }
+
+        case 0x26: {
+            // SLA [HL]
+            // 4 cycles, Z 0 0 C
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue = OpShiftLeft(memValue);
+            STORE_ADDR(m_registers.GetHl(), memValue);
+            break;
+        }
+
+        case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D: case 0x2F: {
+            // SRA y
+            // 2 cycles, Z 0 0 C
+            const auto regIdx = OP_REG_Y;
+            m_registers.Set8ByIndex(regIdx, OpShiftRight(m_registers.Get8ByIndex(regIdx), true));
+            break;
+        }
+
+        case 0x2E: {
+            // SRA [HL]
+            // 4 cycles, Z 0 0 C
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue = OpShiftRight(memValue, true);
+            STORE_ADDR(m_registers.GetHl(), memValue);
+            break;
+        }
+
+        case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x37: {
+            // SWAP y
+            // 2 cycles, Z 0 0 0
+            const auto regIdx = OP_REG_Y;
+            m_registers.Set8ByIndex(regIdx, OpSwapNibbles(m_registers.Get8ByIndex(regIdx)));
+            break;
+        }
+
+        case 0x36: {
+            // SWAP [HL]
+            // 4 cycles, Z 0 0 0
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue = OpSwapNibbles(memValue);
+            STORE_ADDR(m_registers.GetHl(), memValue);
+            break;
+        }
+
+        case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D: case 0x3F: {
+            // SRL y
+            // 2 cycles, Z 0 0 C
+            const auto regIdx = OP_REG_Y;
+            m_registers.Set8ByIndex(regIdx, OpShiftRight(m_registers.Get8ByIndex(regIdx), false));
+            break;
+        }
+
+        case 0x3E: {
+            // SRL [HL]
+            // 4 cycles, Z 0 0 C
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue = OpShiftRight(memValue, false);
+            STORE_ADDR(m_registers.GetHl(), memValue);
+            break;
+        }
+
+        case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x47:
+        case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4F:
+        case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x57:
+        case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5F:
+        case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x67:
+        case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6F:
+        case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x77:
+        case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7F: {
+            // BIT imm3, y
+            // 2 cycles, Z 0 1 -
+            ((m_registers.Get8ByIndex(OP_REG_Y) >> OP_BIT) & 0b1)
+                ? m_registers.ClearZeroFlag() : m_registers.SetZeroFlag();
+            m_registers.ClearSubtractFlag();
+            m_registers.SetHalfCarryFlag();
+            break;
+        }
+
+        case 0x46: case 0x4E: case 0x56: case 0x5E: case 0x66: case 0x6E: case 0x76: case 0x7E: {
+            // BIT imm3, y
+            // 3 cycles, Z 0 1 -
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            ((memValue >> OP_BIT) & 0b1) ? m_registers.ClearZeroFlag() : m_registers.SetZeroFlag();
+            m_registers.ClearSubtractFlag();
+            m_registers.SetHalfCarryFlag();
+            break;
+        }
+
+        case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x87:
+        case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8F:
+        case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x97:
+        case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9F:
+        case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA7:
+        case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAF:
+        case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB7:
+        case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBF: {
+            // RES imm3, y
+            // 2 cycles, - - - -
+            const uint8_t regIdx = OP_REG_Y;
+            m_registers.Set8ByIndex(regIdx, BIT_CLEAR(m_registers.Get8ByIndex(regIdx), OP_BIT));
+            break;
+        }
+
+        case 0x86: case 0x8E: case 0x96: case 0x9E: case 0xA6: case 0xAE: case 0xB6: case 0xBE: {
+            // RES imm3, [HL]
+            // 4 cycles, - - - -
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue = BIT_CLEAR(memValue, OP_BIT);
+            STORE_ADDR(m_registers.GetHl(), memValue);
+            break;
+        }
+
+        case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC7:
+        case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCF:
+        case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD7:
+        case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDF:
+        case 0xE0: case 0xE1: case 0xE2: case 0xE3: case 0xE4: case 0xE5: case 0xE7:
+        case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEF:
+        case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF7:
+        case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFF: {
+            // SET imm3, y
+            // 2 cycles, - - - -
+            const uint8_t regIdx = OP_REG_Y;
+            m_registers.Set8ByIndex(regIdx, BIT_SET(m_registers.Get8ByIndex(regIdx), OP_BIT));
+            break;
+        }
+
+        case 0xC6: case 0xCE: case 0xD6: case 0xDE: case 0xE6: case 0xEE: case 0xF6: case 0xFE: {
+            // SET imm3, [HL]
+            // 4 cycles, - - - -
+            uint8_t memValue;
+            FETCH_ADDR(memValue, m_registers.GetHl());
+            memValue = BIT_SET(memValue, OP_BIT);
+            STORE_ADDR(m_registers.GetHl(), memValue);
+            break;
+        }
+
+        default: {
+            const uint16_t actualOpcode = 0xCB00 | op;
+            throw PlipInvalidOpcodeException(actualOpcode);
+        }
+    }
 }
 

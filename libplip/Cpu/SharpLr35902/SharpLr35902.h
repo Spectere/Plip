@@ -32,7 +32,12 @@ namespace Plip::Cpu {
         void OpBitwiseXorRegisterA(uint8_t value);
         void OpJumpRelative(int8_t offset);
         void OpReturn();
+        uint8_t OpRotateLeft(uint8_t value, bool throughCarry, bool checkZeroFlag);
+        uint8_t OpRotateRight(uint8_t value, bool throughCarry, bool checkZeroFlag);
+        uint8_t OpShiftLeft(uint8_t value);
+        uint8_t OpShiftRight(uint8_t value, bool arithmetic);
         void OpSubtractFromRegisterA(int value, bool subtractWithBorrow, bool discardResult);
+        uint8_t OpSwapNibbles(uint8_t value);
         uint8_t Pop8FromStack();
         uint16_t Pop16FromStack();
         void Pop16FromStack(uint8_t& high, uint8_t& low);

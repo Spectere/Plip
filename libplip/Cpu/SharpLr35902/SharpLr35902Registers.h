@@ -44,21 +44,21 @@ namespace Plip::Cpu {
         uint16_t SP;
         uint16_t PC;
 
-        void ClearCarryFlag() { BIT_CLEAR(F, CarryFlagBit); }
+        void ClearCarryFlag() { F = BIT_CLEAR(F, CarryFlagBit); }
         [[nodiscard]] bool GetCarryFlag() const { return BIT_TEST(F, CarryFlagBit); }
-        void SetCarryFlag() { BIT_SET(F, CarryFlagBit); }
+        void SetCarryFlag() { F = BIT_SET(F, CarryFlagBit); }
 
-        void ClearSubtractFlag() { BIT_CLEAR(F, SubtractFlagBit); }
+        void ClearSubtractFlag() { F = BIT_CLEAR(F, SubtractFlagBit); }
         [[nodiscard]] bool GetSubtractFlag() const { return BIT_TEST(F, SubtractFlagBit); }
-        void SetSubtractFlag() { BIT_SET(F, SubtractFlagBit); }
+        void SetSubtractFlag() { F = BIT_SET(F, SubtractFlagBit); }
 
-        void ClearHalfCarryFlag() { BIT_CLEAR(F, HalfCarryFlagBit); }
+        void ClearHalfCarryFlag() { F = BIT_CLEAR(F, HalfCarryFlagBit); }
         [[nodiscard]] bool GetHalfCarryFlag() const { return BIT_TEST(F, HalfCarryFlagBit); }
-        void SetHalfCarryFlag() { BIT_SET(F, HalfCarryFlagBit); }
+        void SetHalfCarryFlag() { F = BIT_SET(F, HalfCarryFlagBit); }
 
-        void ClearZeroFlag() { BIT_CLEAR(F, ZeroFlagBit); }
+        void ClearZeroFlag() { F = BIT_CLEAR(F, ZeroFlagBit); }
         [[nodiscard]] bool GetZeroFlag() const { return BIT_TEST(F, ZeroFlagBit); }
-        void SetZeroFlag() { BIT_SET(F, ZeroFlagBit); }
+        void SetZeroFlag() { F = BIT_SET(F, ZeroFlagBit); }
 
         void AddBc(const uint16_t value) { Set16(B, C, GetBc() + value); }
         void AddDe(const uint16_t value) { Set16(D, E, GetDe() + value); }
