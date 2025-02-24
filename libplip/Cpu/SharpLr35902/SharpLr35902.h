@@ -9,6 +9,12 @@
 #include "../PlipCpu.h"
 
 namespace Plip::Cpu {
+    enum class SharpLr35902ImeState {
+        Disabled,
+        PendingEnable,
+        Enabled
+    };
+
     class SharpLr35902 : public PlipCpu {
     public:
         SharpLr35902(long hz, PlipMemoryMap* memoryMap);
@@ -19,8 +25,17 @@ namespace Plip::Cpu {
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
 
+        constexpr static int InterruptVBlank = 0b00001;
+        constexpr static int InterruptLcd    = 0b00010;
+        constexpr static int InterruptTimer  = 0b00100;
+        constexpr static int InterruptSerial = 0b01000;
+        constexpr static int InterruptJoypad = 0b10000;
+
     protected:
+        bool m_halt = false;
+        bool m_holdPc = false;
         SharpLr35902Registers m_registers {};
+        SharpLr35902ImeState m_ime = SharpLr35902ImeState::Enabled;
 
     private:
         long DecodeAndExecute();
@@ -44,6 +59,9 @@ namespace Plip::Cpu {
         void Push8ToStack(uint8_t value);
         void Push16ToStack(uint16_t value);
         void Push16ToStack(uint8_t high, uint8_t low);
+        void ServiceInterrupt(int activeInterrupts);
         bool TestConditional(int conditional) const;
+
+        bool m_enableInterrupts = false;
     };
 }

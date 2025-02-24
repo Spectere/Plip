@@ -39,7 +39,8 @@ static uint8_t op;
 }
 
 #define FETCH_PC(var) { \
-    var = m_memory->GetByte(m_registers.PC++); \
+    var = m_memory->GetByte(m_registers.PC); \
+    if(!m_holdPc) ++m_registers.PC; else m_holdPc = false; \
     ++cycleCount; \
 }
 
@@ -63,6 +64,9 @@ static uint8_t op;
     m_registers.PC = addr; \
     ++cycleCount; \
 }
+
+#define REG_IE (m_memory->GetByte(0xFFFF))
+#define REG_IF (m_memory->GetByte(0xFF0F))
 
 #define OP_REG_X ((op >> 3) & 0b111)
 #define OP_REG_Y (op & 0b111)
@@ -270,12 +274,100 @@ uint8_t SharpLr35902::OpSwapNibbles(uint8_t value) {
     return value;
 }
 
+void SharpLr35902::ServiceInterrupt(const int activeInterrupts) {
+    // Disable interrupts and call the appropriate handler.
+    m_ime = SharpLr35902ImeState::Disabled;
+
+    uint16_t destAddr = 0x40;
+    for(auto i = 0; i < 5; i++) {
+        // Interrupts are serviced in order of LSB to MSB.
+        if((activeInterrupts & (1 << i)) > 0) {
+            // Found one! Set the destination address and jump.
+            destAddr += i * 8;
+            break;
+        }
+    }
+
+    Push16ToStack(m_registers.PC);
+    JUMP_ABSOLUTE(destAddr);
+}
 
 long SharpLr35902::DecodeAndExecute() {
     cycleCount = 0;
 
+    const auto activeInterrupts = REG_IE & REG_IF & 0b11111;
+    if(m_halt) {
+        if(activeInterrupts == 0) {
+            // No pending interrupts. Do nothing.
+            return 1;
+        }
+
+        m_halt = false;
+        if(m_ime != SharpLr35902ImeState::Enabled) {
+            // Interrupts are disabled. Wake up, but don't service the interrupt.
+            return 1;
+        }
+    }
+
+    if(m_ime == SharpLr35902ImeState::Enabled && activeInterrupts) {
+        cycleCount += 2;
+        ServiceInterrupt(activeInterrupts);
+        return cycleCount;
+    }
+
     FETCH_PC(op);
     switch(op) {
+        //
+        // Miscellaneous / Control Instructions
+        //
+        case 0x00: break;  // Whew. That was tough.
+
+        case 0x10: {
+            // STOP imm8
+            // 2 cycles, - - - -
+
+            // According to PanDocs, no licensed DMG ROM uses STOP, so we're gonna leave
+            // it like this for now. :)
+            throw "not yet implemented";
+        }
+
+        case 0x76: {
+            // HALT
+            // 1 cycle, - - - -
+            if(m_ime == SharpLr35902ImeState::Disabled && activeInterrupts != 0) {
+                // HALT bug triggered. The CPU will not be halted, interrupts will
+                // not be serviced, and the PC will be NOT be incremented during the
+                // next fetch.
+                m_holdPc = true;
+            } else if(m_ime == SharpLr35902ImeState::PendingEnable && activeInterrupts != 0) {
+                // HALT bug triggered. When HALT follows EI, the address containing the
+                // HALT op is pushed onto the stack, the interrupt is serviced, and execution
+                // resumes at the HALT instruction. The reason this happens is probably due
+                // to the intricacies of the silicon, but we'll just simulate it by decrementing
+                // PC and calling the interrupt handler.
+                --m_registers.PC;
+                ++cycleCount;
+                ServiceInterrupt(activeInterrupts);
+            } else {
+                m_halt = true;
+            }
+            break;
+        }
+
+        case 0xF3: {
+            // DI
+            // 1 cycle, - - - -
+            m_ime = SharpLr35902ImeState::Disabled;
+            break;
+        }
+
+        case 0xFB: {
+            // EI
+            // 1 cycle, - - - -
+            m_enableInterrupts = true;
+            break;
+        }
+
         //
         // Jumps/Calls
         //
@@ -305,6 +397,17 @@ long SharpLr35902::DecodeAndExecute() {
             // RET
             // 4 cycles, - - - -
             OpReturn();
+            break;
+        }
+
+        case 0xD9: {
+            // RETI
+            // 4 cycles, - - - -
+
+            // Equivalent to EI, RET, so interrupts are enabled immediately after this
+            // instruction.
+            OpReturn();
+            m_ime = SharpLr35902ImeState::Enabled;
             break;
         }
 

@@ -187,6 +187,18 @@ TEST("RET", "RET") {  // 0xC9
     CHECK(cycles == 4);
 }
 
+TEST("RETI", "RETI") {  // 0xD9
+    LoadData(0x1FE, { 0x00, 0x01 });
+    LoadData(0x00, { 0xD9 });
+    cpu->SetSp(0x1FE);
+    cpu->SetImeState(Cpu::SharpLr35902ImeState::Disabled);
+
+    const auto cycles = cpu->Cycle();
+    CHECK(cpu->GetPc() == 0x100);
+    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(cycles == 4);
+}
+
 TEST("RET NZ (NZ)", "RET-NZ-NZ") {  // 0xC0
     LoadData(0x1FE, { 0x00, 0x01 });
     LoadData(0x00, { 0xC0 });

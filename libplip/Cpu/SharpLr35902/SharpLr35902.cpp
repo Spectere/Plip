@@ -11,14 +11,23 @@ using Plip::Cpu::SharpLr35902;
 SharpLr35902::SharpLr35902(const long hz, PlipMemoryMap *memoryMap) : PlipCpu(hz, memoryMap) { }
 
 long SharpLr35902::Cycle() {
-    return DecodeAndExecute() * m_cycle;
+    const auto cycleCount = DecodeAndExecute();
+
+    if(m_enableInterrupts) {
+        m_ime = SharpLr35902ImeState::PendingEnable;
+        m_enableInterrupts = false;
+    } else if(m_ime == SharpLr35902ImeState::PendingEnable) {
+        m_ime = SharpLr35902ImeState::Enabled;
+    }
+
+    return cycleCount * m_cycle;
 }
 
 unsigned long SharpLr35902::GetPc() const {
     return m_registers.PC;
 }
 
-void SharpLr35902::Reset(uint32_t pc) {
+void SharpLr35902::Reset(const uint32_t pc) {
     m_registers.A = 0;
     m_registers.F = 0;
     m_registers.B = 0;

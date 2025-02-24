@@ -56,6 +56,12 @@ public:
     [[nodiscard]] bool GetZeroFlag() const { return m_registers.GetZeroFlag(); }
     void SetZeroFlag() { return m_registers.SetZeroFlag(); }
 
+    Cpu::SharpLr35902ImeState GetImeState() const { return m_ime; }
+    void SetImeState(const Cpu::SharpLr35902ImeState newState) { m_ime = newState; }
+
+    bool GetHalt() const { return m_halt; }
+    void SetHalt(const bool value) { m_halt = value; }
+
     [[nodiscard]] uint16_t GetAf() const { return m_registers.GetAf(); }
     [[nodiscard]] uint16_t GetBc() const { return m_registers.GetBc(); }
     [[nodiscard]] uint16_t GetDe() const { return m_registers.GetDe(); }
