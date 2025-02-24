@@ -22,6 +22,7 @@ namespace Plip::Cpu {
 
         long Cycle() override;
         [[nodiscard]] unsigned long GetPc() const override;
+        [[nodiscard]] std::map<std::string, DebugValue> GetDebugInfo() const;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
 

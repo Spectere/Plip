@@ -41,6 +41,13 @@ void SharpLr35902::Reset(const uint32_t pc) {
     m_registers.PC = pc;
 }
 
+std::map<std::string, Plip::DebugValue> SharpLr35902::GetDebugInfo() const {
+    return {
+        { "Halt", DebugValue(m_halt) },
+        { "IME", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ime)) }
+    };
+}
+
 std::map<std::string, Plip::DebugValue> SharpLr35902::GetRegisters() const {
     return {
         { "A", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.A)) },

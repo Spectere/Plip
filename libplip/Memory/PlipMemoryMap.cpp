@@ -91,7 +91,10 @@ PlipMemoryMap::BlockRangeResult PlipMemoryMap::IsBlockInRange(const PlipMemoryMa
     return PartiallyInRange;
 }
 
-void PlipMemoryMap::SetByte(const uint32_t address, const uint8_t value) const {
+void PlipMemoryMap::SetByte(const uint32_t address, const uint8_t value) {
+    LastWrittenAddress = address;
+    LastWrittenValue = value;
+
     auto [ memory, offset ] = FindAddress(address);
 
     if(memory == nullptr) return;

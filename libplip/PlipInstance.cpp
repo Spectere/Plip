@@ -7,6 +7,7 @@
 #include "PlipVersion.h"
 
 #include "Core/Chip8/Chip8Instance.h"
+#include "Core/GameBoy/GameBoyInstance.h"
 
 using Plip::PlipInstance;
 
@@ -51,6 +52,9 @@ Plip::PlipError PlipInstance::Load(const PlipValidCore core, const std::string &
     switch(core) {
         case PlipValidCore::Chip8:
             m_core = new Core::Chip8::Chip8Instance(m_audio, m_input, m_video, config);
+            break;
+        case PlipValidCore::GameBoy:
+            m_core = new Core::GameBoy::GameBoyInstance(m_audio, m_input, m_video, config);
             break;
         default:
             return PlipError::InvalidCore;

@@ -26,8 +26,11 @@ namespace Plip {
         void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
         [[nodiscard]] uint8_t GetByte(uint32_t address) const;
         uint32_t GetLength();
-        void SetByte(uint32_t address, uint8_t value) const;
+        void SetByte(uint32_t address, uint8_t value);
         void UnassignBlock(uint32_t address, uint32_t length);
+
+        uint32_t LastWrittenAddress = 0;
+        uint8_t LastWrittenValue = 0;
 
     private:
         enum BlockRangeResult {

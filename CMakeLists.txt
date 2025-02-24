@@ -154,6 +154,9 @@ add_library(${lib_name}
 
     # GameBoy
     libplip/Core/GameBoy/GameBoyInstance.cpp        libplip/Core/GameBoy/GameBoyInstance.h
+    libplip/Core/GameBoy/GameBoyInstance.Video.cpp
+                                                    libplip/Core/GameBoy/MemoryBankController.h
+                                                    libplip/Core/GameBoy/VideoMode.h
 )
 
 if(BIG_ENDIAN)

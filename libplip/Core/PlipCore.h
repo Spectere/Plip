@@ -37,8 +37,7 @@ namespace Plip {
         void Step();
 
         virtual void Delta(long ns) = 0;
-        virtual std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const
-        = 0;
+        virtual std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const = 0;
         [[nodiscard]] PlipMemoryMap* GetMemoryMap() const { return m_memory; }
         virtual bool IsPcAt(uint64_t pc) const = 0;
         virtual PlipError Load(const std::string &path) = 0;
