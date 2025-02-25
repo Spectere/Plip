@@ -128,7 +128,7 @@ namespace Plip::Core::GameBoy {
         static constexpr auto PPU_FrameTime = 4560;
 
         static constexpr auto PPU_TileBase = 0x0000;
-        static constexpr auto PPU_TileBaseBlockOffset = 0x0800;
+        static constexpr auto PPU_TileBaseBlock2 = 0x1000;
         static constexpr auto PPU_TileMapBase = 0x1800;
         static constexpr auto PPU_TileMapBlockOffset = 0x0400;
 

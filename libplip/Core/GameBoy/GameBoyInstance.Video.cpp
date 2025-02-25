@@ -115,8 +115,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing() const {
         const auto backgroundPalette = m_ioRegisters->GetByte(IOReg_BGPalette);
         const auto scrollY = m_ioRegisters->GetByte(IOReg_ScrollY);
 
-        const auto tileDataAddrOffset = (BIT_TEST(lcdControl, 4)) ? 0 : PPU_TileBaseBlockOffset;
-        const auto tileDataAddr = PPU_TileBase + tileDataAddrOffset;
+        const auto tilesUseBlock2 = (BIT_TEST(lcdControl, 4)) == 0;
 
         const auto tileMapAddrOffset = (BIT_TEST(lcdControl, 3)) ? PPU_TileMapBlockOffset : 0;
         const auto tileMapAddr = PPU_TileMapBase + tileMapAddrOffset;
@@ -132,8 +131,9 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing() const {
 
         const auto lineOffset = tilePixelY * 2;
 
-        const auto pixelDataLow = m_videoRam->GetByte(tileDataAddr + (tileIndex * 16) + lineOffset, true);
-        const auto pixelDataHigh = m_videoRam->GetByte(tileDataAddr + (tileIndex * 16) + lineOffset + 1, true);
+        const auto tileStartAddr = PPU_TileBase | ((tilesUseBlock2 && tileIndex < 128) ? (1 << 12) : 0);
+        const auto pixelDataLow = m_videoRam->GetByte(tileStartAddr + (tileIndex * 16) + lineOffset, true);
+        const auto pixelDataHigh = m_videoRam->GetByte(tileStartAddr + (tileIndex * 16) + lineOffset + 1, true);
         const auto tileShift = 7 - tilePixelX;
         const auto pixelData = (((pixelDataHigh >> tileShift) & 0b1) << 1)
                              | ((pixelDataLow >> tileShift) & 0b1);
