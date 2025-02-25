@@ -8,7 +8,7 @@
 using PlipSdl::Game;
 
 Game::Game(Plip::PlipInstance* plip, SdlEvent* event, SdlWindow* window, Timer* timer, Gui* gui, const int targetFps)
-: m_plip(plip), m_event(event), m_window(window), m_timer(timer), m_gui(gui), m_frameTimeNs(1000000000 / targetFps) { }
+: m_plip(plip), m_gui(gui), m_event(event), m_window(window), m_timer(timer), m_frameTimeNs(1000000000 / targetFps) { }
 
 bool Game::GetPaused() const {
     return m_gui->State.PauseCore;
@@ -16,6 +16,8 @@ bool Game::GetPaused() const {
 
 void Game::Run() const {
     const auto audio = m_plip->GetAudio();
+    auto averageFrameTimeCount = 0;
+    long averageFrameTime = 0;
 
     auto running = true;
     while(running) {
@@ -100,7 +102,7 @@ void Game::Run() const {
         }
 
         if(!m_gui->State.PauseCore) {
-            m_plip->Run(m_frameTimeNs);
+            m_plip->Run(m_frameTimeNs * 1.25);
 
             if(m_gui->State.BreakpointsActive) {
                 for(const auto bp : m_gui->State.Breakpoints) {
@@ -122,6 +124,13 @@ void Game::Run() const {
 
         const auto elapsedTime = m_timer->StopwatchStop();
         auto delay = m_frameTimeNs - elapsedTime;
+
+        averageFrameTime += elapsedTime;
+        if(++averageFrameTimeCount > AverageFrameTimeSampleSize) {
+            m_gui->State.AverageFrameTime = averageFrameTime / AverageFrameTimeSampleSize;
+            averageFrameTimeCount = 0;
+            averageFrameTime = 0;
+        }
 
         if(!m_gui->State.TurboEnabled) {
             while(delay < 0) {

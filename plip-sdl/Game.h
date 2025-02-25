@@ -20,6 +20,8 @@ namespace PlipSdl {
         void SetPaused(bool paused) const;
 
     private:
+        static constexpr auto AverageFrameTimeSampleSize = 60;
+
         Plip::PlipInstance* m_plip;
         Gui* m_gui;
         SdlEvent* m_event;
