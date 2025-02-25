@@ -37,7 +37,9 @@ void Gui::DrawBreakpointControls() {
         auto removeBp = false;
         uint32_t removeBpVal {};
 
+        ImGui::PushID("breakpoint-addr");
         ImGui::InputInt("Addr", &address, 1, 0x100, ImGuiInputTextFlags_CharsHexadecimal);
+        ImGui::PopID();
 
         if(ImGui::Button("Add")) {
             State.Breakpoints.insert(address);
@@ -159,13 +161,17 @@ void Gui::DrawMemoryTools() {
 
         State.PerformRead = true;
 
+        ImGui::PushID("memory-addr");
         ImGui::InputInt("Addr", &address, 1, 16, ImGuiInputTextFlags_CharsHexadecimal);
+        ImGui::PopID();
 
+        ImGui::PushID("memory-val");
         if(valueType == 0) {
             ImGui::InputInt("Val", &value, 1, 10, ImGuiInputTextFlags_CharsDecimal);
         } else {
             ImGui::InputInt("Val", &value, 1, 16, ImGuiInputTextFlags_CharsHexadecimal);
         }
+        ImGui::PopID();
 
         ImGui::Text("Value in");
         ImGui::SameLine();
