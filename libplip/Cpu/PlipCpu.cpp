@@ -16,7 +16,7 @@ long PlipCpu::GetCycleTime() const {
     return m_cycle;
 }
 
-long PlipCpu::GetHz(const long hz) const {
+long PlipCpu::GetHz() const {
     return m_hz;
 }
 

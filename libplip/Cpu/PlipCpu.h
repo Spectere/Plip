@@ -15,7 +15,7 @@ namespace Plip::Cpu {
     class PlipCpu {
     public:
         [[nodiscard]] long GetCycleTime() const;
-        [[nodiscard]] long GetHz(long hz) const;
+        [[nodiscard]] long GetHz() const;
         void SetHz(long hz);
 
         virtual long Cycle() = 0;
