@@ -25,6 +25,7 @@ namespace Plip::Core::Chip8 {
 
         void Delta(long ns) override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
+        std::vector<uint64_t> GetPcs() const;
         bool IsPcAt(uint64_t pc) const override;
         PlipError Load(const std::string &path) override;
         void Reset() override {}

@@ -146,6 +146,10 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> Chip8Instance::Ge
     };
 }
 
+std::vector<uint64_t> Chip8Instance::GetPcs() const {
+    return { m_cpu->GetPc() };
+}
+
 bool Chip8Instance::IsPcAt(const uint64_t pc) const {
     return m_cpu->GetPc() == pc;
 }

@@ -6,6 +6,7 @@
 
 #include <map>
 #include <set>
+#include <vector>
 
 #include "DebugValue.h"
 
@@ -32,6 +33,8 @@ namespace PlipSdl {
 
         // Memory manipulation.
         bool PerformWrite = false;
+
+        std::vector<uint64_t> PcAddresses;
 
         uint32_t WriteAddress {};
         uint8_t WriteValue {};

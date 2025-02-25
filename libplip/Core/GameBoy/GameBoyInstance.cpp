@@ -101,6 +101,10 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
     };
 }
 
+std::vector<uint64_t> GameBoyInstance::GetPcs() const {
+    return { m_cpu->GetPc() };
+}
+
 Plip::PlipError GameBoyInstance::Load(const std::string &path) {
     if(!PlipIo::FileExists(path)) {
         return PlipError::FileNotFound;

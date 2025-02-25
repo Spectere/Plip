@@ -21,6 +21,7 @@ namespace Plip::Core::GameBoy {
 
         void Delta(long ns) override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
+        std::vector<uint64_t> GetPcs() const override;
         bool IsPcAt(uint64_t pc) const override;
         PlipError Load(const std::string &path) override;
         void Reset() override;

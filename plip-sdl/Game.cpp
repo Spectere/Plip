@@ -45,6 +45,7 @@ void Game::Run() const {
                 case PlipUiEvent::TogglePause:
                     m_gui->State.PauseCore = !m_gui->State.PauseCore;
                     m_gui->State.BreakpointHit = UINT32_MAX;
+                    m_gui->State.PcAddresses.clear();
                     break;
 
                 case PlipUiEvent::TurboDisable:
@@ -120,6 +121,9 @@ void Game::Run() const {
         } else if(m_gui->State.PauseCore && m_gui->State.SingleStep) {
             m_plip->Step();
             m_gui->State.SingleStep = false;
+            m_gui->State.PcAddresses = m_plip->GetCore()->GetPcs();
+        } else {
+            m_gui->State.PcAddresses = m_plip->GetCore()->GetPcs();
         }
 
         m_window->Render();

@@ -2,6 +2,8 @@
 //
 // Handles initializing, populating, and rendering the ImGui overlay.
 
+#include <algorithm>
+
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
@@ -149,6 +151,7 @@ void Gui::DrawEmulatorControls() {
         }
     } else {
         State.BreakpointHit = UINT32_MAX;
+        State.PcAddresses.clear();
     }
 }
 
@@ -192,6 +195,7 @@ void Gui::DrawMemoryTools() {
         constexpr auto memoryAddress = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
         constexpr auto memoryNormal = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
         constexpr auto memoryHighlight = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+        constexpr auto memoryPcAddress = ImVec4(0.4f, 0.8f, 1.0f, 1.0f);
         for(auto y = 0; y < State.MemoryDisplayRows; y++) {
             ImGui::TextColored(
                 memoryAddress,
@@ -201,9 +205,16 @@ void Gui::DrawMemoryTools() {
             for(auto x = 0; x < State.MemoryDisplayColumns; x++) {
                 const auto currentAddress = State.MemoryDisplayBase + (y * State.MemoryDisplayColumns) + x;
 
+                ImVec4 addressColor = memoryNormal;
+                if(std::find(State.PcAddresses.begin(), State.PcAddresses.end(), currentAddress) != State.PcAddresses.end()) {
+                    addressColor = memoryPcAddress;
+                } else if(currentAddress == State.ReadAddress) {
+                    addressColor = memoryHighlight;
+                }
+
                 ImGui::SameLine();
                 ImGui::TextColored(
-                    currentAddress == State.ReadAddress ? memoryHighlight : memoryNormal,
+                    addressColor,
                     "%.2X", State.MemoryContents[(y * State.MemoryDisplayColumns) + x]
                 );
             }
