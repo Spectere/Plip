@@ -181,9 +181,6 @@ add_executable(${gui_name}
     plip-sdl/Sdl/SdlEvent.cpp           plip-sdl/Sdl/SdlEvent.h
     plip-sdl/Sdl/SdlWindow.cpp          plip-sdl/Sdl/SdlWindow.h
 
-                                        plip-sdl/Timer/Timer.h
-    plip-sdl/Timer/TimerSdl.cpp         plip-sdl/Timer/TimerSdl.h
-
     # Dear ImGui
     ${imgui_SOURCE_DIR}/imgui.cpp                              ${imgui_SOURCE_DIR}/imgui.h
     ${imgui_SOURCE_DIR}/imgui_demo.cpp

@@ -19,7 +19,7 @@ namespace PlipSdl {
         bool PauseCore = false;
         bool SingleStep = false;
         bool TurboEnabled = false;
-        long AverageFrameTime = 0;
+        double AverageFrameTime = 0;
 
         // Memory display.
         bool PerformRead = false;

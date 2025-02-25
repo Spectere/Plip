@@ -22,8 +22,6 @@
 #include "Sdl/SdlEvent.h"
 #include "Sdl/SdlWindow.h"
 
-#include "Timer/TimerSdl.h"
-
 std::vector<std::vector<std::string>> defaultConfig = {
         { "video", "scale"    , "1"  },
         { "video", "targetFps", "60" }
@@ -211,7 +209,6 @@ int main(int argc, char **argv) {
 
     auto window = new PlipSdl::SdlWindow(version, integerScaling, lockScale, forceWidth, forceHeight);
     auto plip = new Plip::PlipInstance(window, audio);
-    auto timer = new PlipSdl::TimerSdl();
 
     // Grab the core configuration.
     std::string coreSection = "core." + coreName;
@@ -259,7 +256,7 @@ int main(int argc, char **argv) {
     window->SetScale(videoScale);
 
     // ...then go into the game loop.
-    auto game = std::make_unique<PlipSdl::Game>(plip, event, window, timer, gui, targetFps);
+    auto game = std::make_unique<PlipSdl::Game>(plip, event, window, gui, targetFps);
     game->Run();
 
     // fin.

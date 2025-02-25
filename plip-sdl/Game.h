@@ -8,12 +8,11 @@
 #include "PlipInstance.h"
 #include "Sdl/SdlEvent.h"
 #include "Sdl/SdlWindow.h"
-#include "Timer/Timer.h"
 
 namespace PlipSdl {
     class Game {
     public:
-        Game(Plip::PlipInstance* plip, SdlEvent* event, SdlWindow* window, Timer* timer, Gui* gui, int targetFps);
+        Game(Plip::PlipInstance* plip, SdlEvent* event, SdlWindow* window, Gui* gui, int targetFps);
         void Run() const;
 
         [[nodiscard]] bool GetPaused() const;
@@ -26,8 +25,7 @@ namespace PlipSdl {
         Gui* m_gui;
         SdlEvent* m_event;
         SdlWindow* m_window;
-        Timer* m_timer;
 
-        int m_frameTimeNs;
+        double m_frameTime;
     };
 }

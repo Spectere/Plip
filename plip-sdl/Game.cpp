@@ -2,26 +2,30 @@
 //
 // The main game loop.
 
+#include <chrono>
+#include <thread>
+
 #include "Game.h"
 #include "PlipUiEvent.h"
 
 using PlipSdl::Game;
 
-Game::Game(Plip::PlipInstance* plip, SdlEvent* event, SdlWindow* window, Timer* timer, Gui* gui, const int targetFps)
-: m_plip(plip), m_gui(gui), m_event(event), m_window(window), m_timer(timer), m_frameTimeNs(1000000000 / targetFps) { }
+Game::Game(Plip::PlipInstance* plip, SdlEvent* event, SdlWindow* window, Gui* gui, const int targetFps)
+: m_plip(plip), m_gui(gui), m_event(event), m_window(window), m_frameTime(1.0 / targetFps) { }
 
 bool Game::GetPaused() const {
     return m_gui->State.PauseCore;
 }
 
 void Game::Run() const {
+    const auto frameTimeNs = m_frameTime * 1000000000;
     const auto audio = m_plip->GetAudio();
     auto averageFrameTimeCount = 0;
-    long averageFrameTime = 0;
+    double averageFrameTime = 0;
 
     auto running = true;
     while(running) {
-        m_timer->StopwatchStart();
+        const auto frameStartTime = std::chrono::steady_clock::now();
 
         auto uiEvents = m_event->ProcessEvents();
         for(const auto &event : uiEvents) {
@@ -102,7 +106,7 @@ void Game::Run() const {
         }
 
         if(!m_gui->State.PauseCore) {
-            m_plip->Run(m_frameTimeNs * 1.25);
+            m_plip->Run(frameTimeNs);
 
             if(m_gui->State.BreakpointsActive) {
                 for(const auto bp : m_gui->State.Breakpoints) {
@@ -122,22 +126,22 @@ void Game::Run() const {
         m_gui->Render();
         m_window->Present();
 
-        const auto elapsedTime = m_timer->StopwatchStop();
-        auto delay = m_frameTimeNs - elapsedTime;
+        const auto elapsedTime = std::chrono::duration<double>(
+            std::chrono::steady_clock::now() - frameStartTime
+        ).count();
+
+        if(elapsedTime < m_frameTime && !m_gui->State.TurboEnabled) {
+            const auto sleepTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::duration<double>(m_frameTime - elapsedTime)
+            );
+            std::this_thread::sleep_for(sleepTime);
+        }
 
         averageFrameTime += elapsedTime;
         if(++averageFrameTimeCount > AverageFrameTimeSampleSize) {
-            m_gui->State.AverageFrameTime = averageFrameTime / AverageFrameTimeSampleSize;
+            m_gui->State.AverageFrameTime = averageFrameTime / AverageFrameTimeSampleSize * 1000;
             averageFrameTimeCount = 0;
             averageFrameTime = 0;
-        }
-
-        if(!m_gui->State.TurboEnabled) {
-            while(delay < 0) {
-                delay += m_frameTimeNs;
-            }
-
-            m_timer->Nanosleep(delay);
         }
     }
 
