@@ -41,6 +41,7 @@ namespace Plip {
         [[nodiscard]] PlipMemoryMap* GetMemoryMap() const { return m_memory; }
         virtual bool IsPcAt(uint64_t pc) const = 0;
         virtual PlipError Load(const std::string &path) = 0;
+        virtual void Reset() = 0;
 
     protected:
         explicit PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKeyValuePairCollection config);

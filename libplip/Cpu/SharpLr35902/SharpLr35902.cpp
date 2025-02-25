@@ -39,12 +39,14 @@ void SharpLr35902::Reset(const uint32_t pc) {
 
     m_registers.SP = 0;
     m_registers.PC = pc;
+
+    m_ime = SharpLr35902ImeState::Disabled;
 }
 
 std::map<std::string, Plip::DebugValue> SharpLr35902::GetDebugInfo() const {
     return {
         { "Halt", DebugValue(m_halt) },
-        { "IME", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ime)) }
+        { "IME", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ime)) },
     };
 }
 

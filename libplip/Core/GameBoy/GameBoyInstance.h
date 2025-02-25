@@ -6,14 +6,15 @@
 #pragma once
 
 #include "MemoryBankController.h"
-#include "VideoMode.h"
+#include "PPU_Mode.h"
+#include "PPU_OutputStage.h"
 #include "../PlipCore.h"
 #include "../../Cpu/SharpLr35902/SharpLr35902.h"
 #include "../../Memory/PlipMemoryRam.h"
 #include "../../Memory/PlipMemoryRom.h"
 
 namespace Plip::Core::GameBoy {
-    class GameBoyInstance : public PlipCore {
+    class GameBoyInstance final : public PlipCore {
     public:
         GameBoyInstance(PlipAudio* audio, PlipInput* input, PlipVideo* video, const PlipKeyValuePairCollection &config);
         ~GameBoyInstance() override;
@@ -22,16 +23,29 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         bool IsPcAt(uint64_t pc) const override;
         PlipError Load(const std::string &path) override;
+        void Reset() override;
 
     private:
         // GameBoyInstance
         void BootRomFlagHandler();
         void InitCartridgeRam();
+        void RaiseInterrupt(Cpu::SharpLr35902Interrupt interrupt) const;
         void ReadCartridgeFeatures();
 
         // GameBoyInstance.Video
-        void Plot(int color, int pos) const;
-        void VideoCycle();
+        void PPU_Cycle();
+        void PPU_DotClock();
+        bool PPU_DotClock_OamScan();
+        bool PPU_DotClock_Output();
+        void PPU_DotClock_Output_Drawing() const;
+        void PPU_FinishTransition();
+        void PPU_FinishTransition_OamScan(uint8_t lcdStatus) const;
+        void PPU_FinishTransition_VBlank(uint8_t lcdStatus);
+        [[nodiscard]] std::map<std::string, DebugValue> PPU_GetDebugInfo() const;
+        void PPU_Plot(int color, int pos) const;
+        void PPU_Reset();
+        void PPU_SetMemoryPermissions() const;
+        void PPU_VideoModeTransition();
 
         //
         // Fields
@@ -76,24 +90,62 @@ namespace Plip::Core::GameBoy {
 
         PlipMemoryRom* m_bootRom;
         PlipMemoryRom* m_rom = nullptr;
-        PlipMemoryRam* m_videoRam = new PlipMemoryRam(0x2000);
-        PlipMemoryRam* m_workRam = new PlipMemoryRam(0x2000);
-        PlipMemoryRam* m_oam = new PlipMemoryRam(0x100);
-        PlipMemoryRom* m_unusable = new PlipMemoryRom(m_unusableContents, 0x60);
-        PlipMemoryRam* m_ioRegisters = new PlipMemoryRam(0x80);
-        PlipMemoryRam* m_highRam = new PlipMemoryRam(0x80);
+        PlipMemoryRam* m_videoRam = new PlipMemoryRam(0x2000, 0xFF);
+        PlipMemoryRam* m_workRam = new PlipMemoryRam(0x2000, 0xFF);
+        PlipMemoryRam* m_oam = new PlipMemoryRam(0x100, 0xFF);
+        PlipMemoryRom* m_unusable = new PlipMemoryRom(m_unusableContents, 0x60, 0xFF);
+        PlipMemoryRam* m_ioRegisters = new PlipMemoryRam(0x80, 0xFF);
+        PlipMemoryRam* m_highRam = new PlipMemoryRam(0x80, 0xFF);
         PlipMemoryRam* m_cartRam = nullptr;
 
         // I/O registers
-        static constexpr auto JoypadInput = 0x00;
-        static constexpr auto InterruptFlag = 0x0F;
-        static constexpr auto BootRomDisable = 0x50;
+        static constexpr auto IOReg_JoypadInput = 0x00;
+        static constexpr auto IOReg_InterruptFlag = 0x0F;
+        static constexpr auto IOReg_LcdControl = 0x40;
+        static constexpr auto IOReg_LcdStatus = 0x41;
+        static constexpr auto IOReg_ScrollY = 0x42;
+        static constexpr auto IOReg_ScrollX = 0x43;
+        static constexpr auto IOReg_LcdYCoordinate = 0x44;
+        static constexpr auto IOReg_LcdYCompare = 0x45;
+        static constexpr auto IOReg_BGPalette = 0x47;
+        static constexpr auto IOReg_Obj0Palette = 0x48;
+        static constexpr auto IOReg_Obj1Palette = 0x49;
+        static constexpr auto IOReg_WindowY = 0x4A;
+        static constexpr auto IOReg_WindowX = 0x4B;
+        static constexpr auto IOReg_BootRomDisable = 0x50;
 
         // System flags
         bool m_bootRomDisableFlag = false;
 
         // PPU
-        bool m_lcdOff = false;
-        VideoMode m_videoMode;
+        static constexpr auto PPU_Block0 = 0x0000;
+        static constexpr auto PPU_Block1 = 0x0800;
+        static constexpr auto PPU_Block2 = 0x1000;
+        static constexpr auto PPU_DotsPerCycle = 4;
+
+        static constexpr auto PPU_OamScanTime = 80;
+        static constexpr auto PPU_ScanlineTime = 376;
+        static constexpr auto PPU_FrameTime = 4560;
+
+        static constexpr auto PPU_TileBase = 0x0000;
+        static constexpr auto PPU_TileBaseBlockOffset = 0x0800;
+        static constexpr auto PPU_TileMapBase = 0x1800;
+        static constexpr auto PPU_TileMapBlockOffset = 0x0400;
+
+        static constexpr auto PPU_TileSizeX = 8;
+        static constexpr auto PPU_TileSizeY = 8;
+        static constexpr auto PPU_MapTileCountX = 256 / PPU_TileSizeX;
+        static constexpr auto PPU_MapTileCountY = 256 / PPU_TileSizeY;
+
+        int m_ppuDotClock {};
+        int m_ppuDrawTime {};
+        uint8_t m_ppuLastLcdControl {};
+        bool m_ppuLcdOff = false;
+        PPU_Mode m_ppuMode {};
+        int m_ppuOutputClock {};
+        PPU_OutputStage m_ppuOutputStage {};
+        uint8_t m_ppuLcdXCoordinate {};
+        uint8_t m_ppuLcdYCoordinate {};
+        int m_ppuScrollX {};
     };
 }

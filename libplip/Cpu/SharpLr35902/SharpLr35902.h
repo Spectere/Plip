@@ -15,6 +15,14 @@ namespace Plip::Cpu {
         Enabled
     };
 
+    enum class SharpLr35902Interrupt {
+        VBlank = 0b00001,
+        Lcd    = 0b00010,
+        Timer  = 0b00100,
+        Serial = 0b01000,
+        Joypad = 0b10000
+    };
+
     class SharpLr35902 : public PlipCpu {
     public:
         SharpLr35902(long hz, PlipMemoryMap* memoryMap);
@@ -25,12 +33,6 @@ namespace Plip::Cpu {
         [[nodiscard]] std::map<std::string, DebugValue> GetDebugInfo() const;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
-
-        constexpr static int InterruptVBlank = 0b00001;
-        constexpr static int InterruptLcd    = 0b00010;
-        constexpr static int InterruptTimer  = 0b00100;
-        constexpr static int InterruptSerial = 0b01000;
-        constexpr static int InterruptJoypad = 0b10000;
 
     protected:
         bool m_halt = false;

@@ -15,6 +15,7 @@ TEST("Interrupt VBlank (Running, IME+)", "IntVBlank-Running,IME-E") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x40);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011110);
     CHECK(cycles == 5);
 }
 
@@ -26,6 +27,7 @@ TEST("Interrupt VBlank (Running, IME~)", "IntVBlank-Running,IME-P") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -37,6 +39,7 @@ TEST("Interrupt VBlank (Running, IME-)", "IntVBlank-Running,IME-D") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -50,6 +53,7 @@ TEST("Interrupt VBlank (Halt, IME+)", "IntVBlank-Halt,IME-E") {
     CHECK(cpu->GetPc() == 0x40);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011110);
     CHECK(cycles == 5);
 }
 
@@ -63,6 +67,7 @@ TEST("Interrupt VBlank (Halt, IME~)", "IntVBlank-Halt,IME-P") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -76,6 +81,7 @@ TEST("Interrupt VBlank (Halt, IME-)", "IntVBlank-Halt,IME-D") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -87,6 +93,7 @@ TEST("Interrupt LCD (Running, IME+)", "IntLCD-Running,IME-E") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x48);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011101);
     CHECK(cycles == 5);
 }
 
@@ -98,6 +105,7 @@ TEST("Interrupt LCD (Running, IME~)", "IntLCD-Running,IME-P") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -109,6 +117,7 @@ TEST("Interrupt LCD (Running, IME-)", "IntLCD-Running,IME-D") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -122,6 +131,7 @@ TEST("Interrupt LCD (Halt, IME+)", "IntLCD-Halt,IME-E") {
     CHECK(cpu->GetPc() == 0x48);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011101);
     CHECK(cycles == 5);
 }
 
@@ -135,6 +145,7 @@ TEST("Interrupt LCD (Halt, IME~)", "IntLCD-Halt,IME-P") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -148,6 +159,7 @@ TEST("Interrupt LCD (Halt, IME-)", "IntLCD-Halt,IME-D") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -159,6 +171,7 @@ TEST("Interrupt Timer (Running, IME+)", "IntTimer-Running,IME-E") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x50);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011011);
     CHECK(cycles == 5);
 }
 
@@ -170,6 +183,7 @@ TEST("Interrupt Timer (Running, IME~)", "IntTimer-Running,IME-P") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -181,6 +195,7 @@ TEST("Interrupt Timer (Running, IME-)", "IntTimer-Running,IME-D") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -194,6 +209,7 @@ TEST("Interrupt Timer (Halt, IME+)", "IntTimer-Halt,IME-E") {
     CHECK(cpu->GetPc() == 0x50);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011011);
     CHECK(cycles == 5);
 }
 
@@ -207,6 +223,7 @@ TEST("Interrupt Timer (Halt, IME~)", "IntTimer-Halt,IME-P") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -220,6 +237,7 @@ TEST("Interrupt Timer (Halt, IME-)", "IntTimer-Halt,IME-D") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -231,6 +249,7 @@ TEST("Interrupt Serial (Running, IME+)", "IntSerial-Running,IME-E") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x58);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00010111);
     CHECK(cycles == 5);
 }
 
@@ -242,6 +261,7 @@ TEST("Interrupt Serial (Running, IME~)", "IntSerial-Running,IME-P") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -253,6 +273,7 @@ TEST("Interrupt Serial (Running, IME-)", "IntSerial-Running,IME-D") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -266,6 +287,7 @@ TEST("Interrupt Serial (Halt, IME+)", "IntSerial-Halt,IME-E") {
     CHECK(cpu->GetPc() == 0x58);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00010111);
     CHECK(cycles == 5);
 }
 
@@ -279,6 +301,7 @@ TEST("Interrupt Serial (Halt, IME~)", "IntSerial-Halt,IME-P") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -292,6 +315,7 @@ TEST("Interrupt Serial (Halt, IME-)", "IntSerial-Halt,IME-D") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -303,6 +327,7 @@ TEST("Interrupt Joypad (Running, IME+)", "IntJoypad-Running,IME-E") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x60);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00001111);
     CHECK(cycles == 5);
 }
 
@@ -314,6 +339,7 @@ TEST("Interrupt Joypad (Running, IME~)", "IntJoypad-Running,IME-P") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -325,6 +351,7 @@ TEST("Interrupt Joypad (Running, IME-)", "IntJoypad-Running,IME-D") {
     const auto cycles = cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -338,6 +365,7 @@ TEST("Interrupt Joypad (Halt, IME+)", "IntJoypad-Halt,IME-E") {
     CHECK(cpu->GetPc() == 0x60);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00001111);
     CHECK(cycles == 5);
 }
 
@@ -351,6 +379,7 @@ TEST("Interrupt Joypad (Halt, IME~)", "IntJoypad-Halt,IME-P") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }
 
@@ -364,5 +393,6 @@ TEST("Interrupt Joypad (Halt, IME-)", "IntJoypad-Halt,IME-D") {
     CHECK(cpu->GetPc() == 0x00);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
     CHECK(cpu->GetHalt() == false);
+    CHECK(memory->GetByte(0xFF0F) == 0b00011111);
     CHECK(cycles == 1);
 }

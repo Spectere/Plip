@@ -20,6 +20,7 @@ namespace Plip {
         [[nodiscard]] virtual bool GetWritable() const { return m_writable; }
         virtual void SetByte(uint32_t address, uint8_t value, bool privileged = false) = 0;
         virtual void SetReadable(const bool readable) { m_readable = readable; }
+        void SetUnprivilegedReadValue(uint8_t value) { m_unprivilegedValue = value; }
         virtual void SetWritable(const bool writable) { m_writable = writable; }
 
     protected:
@@ -28,5 +29,6 @@ namespace Plip {
 
         bool m_readable = true;
         bool m_writable = true;
+        uint8_t m_unprivilegedValue;
     };
 }

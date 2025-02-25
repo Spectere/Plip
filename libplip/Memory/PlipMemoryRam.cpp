@@ -7,9 +7,11 @@
 
 using Plip::PlipMemoryRam;
 
-PlipMemoryRam::PlipMemoryRam(const uint32_t amount) {
+PlipMemoryRam::PlipMemoryRam(const uint32_t amount, const uint8_t unprivilegedValue) {
     m_data = new uint8_t[amount] {};
     m_length = amount;
+
+    m_unprivilegedValue = unprivilegedValue;
 }
 
 PlipMemoryRam::~PlipMemoryRam() {
@@ -21,7 +23,7 @@ uint8_t PlipMemoryRam::GetByte(const uint32_t address, const bool privileged) {
         return m_data[address];
     }
 
-    return 0x00;
+    return m_unprivilegedValue;
 }
 
 uint32_t PlipMemoryRam::GetLength() {

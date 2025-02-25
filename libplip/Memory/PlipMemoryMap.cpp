@@ -69,7 +69,7 @@ std::tuple<Plip::PlipMemory*, uint32_t> PlipMemoryMap::FindAddress(const uint32_
 uint8_t PlipMemoryMap::GetByte(const uint32_t address) const {
     auto [ memory, offset ] = FindAddress(address);
 
-    if(memory == nullptr) return 0;
+    if(memory == nullptr) return m_invalidByte;
     return memory->GetByte(offset);
 }
 
@@ -100,6 +100,11 @@ void PlipMemoryMap::SetByte(const uint32_t address, const uint8_t value) {
     if(memory == nullptr) return;
     memory->SetByte(offset, value);
 }
+
+void PlipMemoryMap::SetInvalidByte(const uint8_t value) {
+    m_invalidByte = value;
+}
+
 
 void PlipMemoryMap::UnassignBlock(const uint32_t address, const uint32_t length) {
     /* This function must handle the following cases:

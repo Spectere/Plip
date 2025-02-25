@@ -10,7 +10,7 @@
 namespace Plip {
     class PlipMemoryRam final : public PlipMemory {
     public:
-        explicit PlipMemoryRam(uint32_t amount);
+        explicit PlipMemoryRam(uint32_t amount, uint8_t unprivilegedValue = 0);
         ~PlipMemoryRam();
 
         uint8_t GetByte(uint32_t address, bool privileged = false) override;

@@ -27,6 +27,7 @@ namespace Plip {
         [[nodiscard]] uint8_t GetByte(uint32_t address) const;
         uint32_t GetLength();
         void SetByte(uint32_t address, uint8_t value);
+        void SetInvalidByte(uint8_t value);
         void UnassignBlock(uint32_t address, uint32_t length);
 
         uint32_t LastWrittenAddress = 0;
@@ -44,5 +45,6 @@ namespace Plip {
         static inline BlockRangeResult IsBlockInRange(const PlipMemoryMapRange &block, uint32_t startAddress, uint32_t endAddress);
 
         std::list<PlipMemoryMapRange> m_range;
+        uint8_t m_invalidByte = 0;
     };
 }

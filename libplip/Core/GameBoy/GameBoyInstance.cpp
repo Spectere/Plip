@@ -3,8 +3,6 @@
  * A GameBoy emulation core.
  */
 
-#include <cstring>
-
 #include "GameBoyInstance.h"
 
 #include "../../PlipInitializationException.h"
@@ -27,27 +25,18 @@ GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *
 
     const auto bootRomSize = PlipIo::GetSize(bootRomPath);
     const auto bootRomData = PlipIo::ReadFile(bootRomPath, bootRomSize);
-    m_bootRom = new PlipMemoryRom(bootRomData.data(), bootRomSize);
+    m_bootRom = new PlipMemoryRom(bootRomData.data(), bootRomSize, 0xFF);
 
     // Initialize framebuffer and video subsystem.
     m_video->ResizeOutput(ScreenWidth, ScreenHeight, 1.0, 1.0);
     m_videoFormat = PlipVideo::GetFormatInfo(video->GetFormat());
     m_videoBufferSize = m_videoFormat.pixelWidth * ScreenWidth * ScreenHeight;
     m_videoBuffer = new uint8_t[m_videoBufferSize];
-    m_videoMode = VideoMode::OamSearch;
 
-    // Paint the framebuffer white.
-    memset(m_videoBuffer, 0xFF, m_videoBufferSize);
+    // Invalid and unreadable memory values are generally pulled high.
+    m_memory->SetInvalidByte(0xFF);
 
-    // Initialize system memory map.
-    m_memory->AssignBlock(m_videoRam, VideoRamAddress);
-    m_memory->AssignBlock(m_workRam, WorkRamAddress);
-    m_memory->AssignBlock(m_oam, OamAddress);
-    m_memory->AssignBlock(m_unusable, UnusableAddress);
-    m_memory->AssignBlock(m_ioRegisters, IoRegistersAddress);
-    m_memory->AssignBlock(m_highRam, HighRamAddress);
-
-    // Initialize CPU.
+    // Create CPU.
     m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory);
 }
 
@@ -57,16 +46,16 @@ GameBoyInstance::~GameBoyInstance() {
 }
 
 void GameBoyInstance::BootRomFlagHandler() {
-    if(m_memory->LastWrittenAddress != IoRegistersAddress + BootRomDisable) return;
+    if(m_memory->LastWrittenAddress != IoRegistersAddress + IOReg_BootRomDisable) return;
     if(m_memory->LastWrittenValue == 0) return;
 
     // Swap the boot ROM out for the cartridge ROM, then update the register.
     m_bootRomDisableFlag = true;
     m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
-    m_ioRegisters->SetByte(BootRomDisable, 1);
+    m_ioRegisters->SetByte(IOReg_BootRomDisable, 1);
 }
 
-void GameBoyInstance::Delta(long ns) {
+void GameBoyInstance::Delta(const long ns) {
     auto timeRemaining = ns;
     const auto cycleTime = m_cpu->GetCycleTime();
 
@@ -78,11 +67,11 @@ void GameBoyInstance::Delta(long ns) {
             BootRomFlagHandler();
         } else {
             // Keep the register set.
-            m_ioRegisters->SetByte(BootRomDisable, 1);
+            m_ioRegisters->SetByte(IOReg_BootRomDisable, 1);
         }
 
         // PPU
-        VideoCycle();
+        PPU_Cycle();
 
         timeRemaining -= cpuTime;
     } while(cycleTime < timeRemaining);
@@ -91,7 +80,8 @@ void GameBoyInstance::Delta(long ns) {
 std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::GetDebugInfo() const {
     return {
         { "CPU Registers", m_cpu->GetRegisters() },
-        { "CPU (Other)", m_cpu->GetDebugInfo() }
+        { "CPU (Other)", m_cpu->GetDebugInfo() },
+        { "PPU", PPU_GetDebugInfo() },
     };
 }
 
@@ -100,19 +90,17 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
         return PlipError::FileNotFound;
     }
 
-    // Load the ROM into 0x0000-0x8000.
+    // Load the ROM.
     const auto size = PlipIo::GetSize(path);
     const auto data = PlipIo::ReadFile(path, size);
-    m_rom = new PlipMemoryRom(data.data(), size);
-    m_memory->AssignBlock(m_rom, BaseRomAddress, 0x0000, 0x8000);
+    m_rom = new PlipMemoryRom(data.data(), size, 0xFF);
 
     // Read the ROM header.
     ReadCartridgeFeatures();
     InitCartridgeRam();
 
-    // Load the boot ROM into 0x0000-0x00FF (overlaying the cartridge ROM).
-    m_memory->AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
-    m_bootRomDisableFlag = false;
+    // Reset system.
+    Reset();
 
     return PlipError::Success;
 }
@@ -146,7 +134,7 @@ void GameBoyInstance::InitCartridgeRam() {
     }
 
     if(m_cartRamBanks > 0) {
-        m_cartRam = new PlipMemoryRam(8192 * m_cartRamBanks);
+        m_cartRam = new PlipMemoryRam(8192 * m_cartRamBanks, 0xFF);
         m_memory->AssignBlock(m_cartRam, CartRamAddress, 0x0000, 0x2000);
     }
 }
@@ -210,4 +198,50 @@ void GameBoyInstance::ReadCartridgeFeatures() {
 
     // Sensor
     m_hasSensor = cartType == 0x22;
+}
+
+void GameBoyInstance::RaiseInterrupt(const Cpu::SharpLr35902Interrupt interrupt) const {
+    const auto interruptFlag = m_ioRegisters->GetByte(IOReg_InterruptFlag);
+    m_ioRegisters->SetByte(IOReg_InterruptFlag, interruptFlag | static_cast<int>(interrupt));
+}
+
+void GameBoyInstance::Reset() {
+    // Clear RAM and I/O registers..
+    for(auto i = 0; i < m_workRam->GetLength(); i++)
+        m_workRam->SetByte(i, 0);
+
+    for(auto i = 0; i < m_videoRam->GetLength(); i++)
+        m_videoRam->SetByte(i, 0);
+
+    for(auto i = 0; i < m_oam->GetLength(); i++)
+        m_oam->SetByte(i, 0);
+
+    for(auto i = 0; i < m_ioRegisters->GetLength(); i++)
+        m_ioRegisters->SetByte(i, 0);
+
+    for(auto i = 0; i < m_highRam->GetLength(); i++)
+        m_highRam->SetByte(i, 0);
+
+    if(m_cartRamBanks > 0)
+        for(auto i = 0; i < m_cartRam->GetLength(); i++)
+            m_cartRam->SetByte(i, 0);
+
+    // Initialize system memory map.
+    m_memory->AssignBlock(m_videoRam, VideoRamAddress);
+    m_memory->AssignBlock(m_workRam, WorkRamAddress);
+    m_memory->AssignBlock(m_oam, OamAddress);
+    m_memory->AssignBlock(m_unusable, UnusableAddress);
+    m_memory->AssignBlock(m_ioRegisters, IoRegistersAddress);
+    m_memory->AssignBlock(m_highRam, HighRamAddress);
+    m_memory->AssignBlock(m_rom, BaseRomAddress, 0x0000, 0x8000);
+
+    // Load the boot ROM into 0x0000-0x00FF (overlaying the cartridge ROM).
+    m_memory->AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
+    m_bootRomDisableFlag = false;
+
+    // Reset CPU.
+    m_cpu->Reset(0x0000);
+
+    // Reset PPU.
+    PPU_Reset();
 }

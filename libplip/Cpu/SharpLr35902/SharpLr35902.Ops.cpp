@@ -282,8 +282,9 @@ void SharpLr35902::ServiceInterrupt(const int activeInterrupts) {
     for(auto i = 0; i < 5; i++) {
         // Interrupts are serviced in order of LSB to MSB.
         if((activeInterrupts & (1 << i)) > 0) {
-            // Found one! Set the destination address and jump.
+            // Found one! Set the destination address, clear the flag, and jump.
             destAddr += i * 8;
+            m_memory->SetByte(0xFF0F, REG_IF ^ (1 << i));
             break;
         }
     }
