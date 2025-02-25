@@ -11,6 +11,11 @@
 
 using Plip::Core::GameBoy::GameBoyInstance;
 
+#define READ_INPUT(idx) { \
+    if(m_input->GetInput(idx).digital) \
+        m_keypad |= 1 << idx; \
+}
+
 GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *video, const PlipKeyValuePairCollection &config)
 : PlipCore(audio, input, video, config) {
     // Load the boot ROM.
@@ -32,6 +37,9 @@ GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *
     m_videoFormat = PlipVideo::GetFormatInfo(video->GetFormat());
     m_videoBufferSize = m_videoFormat.pixelWidth * ScreenWidth * ScreenHeight;
     m_videoBuffer = new uint8_t[m_videoBufferSize];
+
+    // Initialize input.
+    RegisterInput();
 
     // Invalid and unreadable memory values are generally pulled high.
     m_memory->SetInvalidByte(0xFF);
@@ -59,6 +67,8 @@ void GameBoyInstance::Delta(const long ns) {
     auto timeRemaining = ns;
     const auto cycleTime = m_cpu->GetCycleTime();
 
+    ReadJoypad();
+
     do {
         const auto cpuTime = m_cpu->Cycle();
 
@@ -69,6 +79,9 @@ void GameBoyInstance::Delta(const long ns) {
             // Keep the register set.
             m_ioRegisters->SetByte(IOReg_BootRomDisable, 1);
         }
+
+        // Input
+        InputRegisterHandler();
 
         // PPU
         PPU_Cycle();
@@ -82,6 +95,9 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "CPU Registers", m_cpu->GetRegisters() },
         { "CPU (Other)", m_cpu->GetDebugInfo() },
         { "PPU", PPU_GetDebugInfo() },
+        { "System", {
+            { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) }
+        }}
     };
 }
 
@@ -138,6 +154,21 @@ void GameBoyInstance::InitCartridgeRam() {
         m_memory->AssignBlock(m_cartRam, CartRamAddress, 0x0000, 0x2000);
     }
 }
+
+void GameBoyInstance::InputRegisterHandler() const {
+    auto inputRegister = m_ioRegisters->GetByte(IOReg_JoypadInput);
+
+    inputRegister |= 0b1111;
+    if(!BIT_TEST(inputRegister, 5)) {
+        // Read button keys.
+        inputRegister ^= m_keypad & 0b1111;
+    } else if(!BIT_TEST(inputRegister, 4)) {
+        // Read d-pad.
+        inputRegister ^= m_keypad >> 4;
+    }
+    m_ioRegisters->SetByte(IOReg_JoypadInput, inputRegister);
+}
+
 
 bool GameBoyInstance::IsPcAt(const uint64_t pc) const {
     return m_cpu->GetPc() == pc;
@@ -204,6 +235,30 @@ void GameBoyInstance::RaiseInterrupt(const Cpu::SharpLr35902Interrupt interrupt)
     const auto interruptFlag = m_ioRegisters->GetByte(IOReg_InterruptFlag);
     m_ioRegisters->SetByte(IOReg_InterruptFlag, interruptFlag | static_cast<int>(interrupt));
 }
+
+void GameBoyInstance::ReadJoypad() {
+    m_keypad = 0;
+    READ_INPUT(InputRight);
+    READ_INPUT(InputLeft);
+    READ_INPUT(InputUp);
+    READ_INPUT(InputDown);
+    READ_INPUT(InputA);
+    READ_INPUT(InputB);
+    READ_INPUT(InputSelect);
+    READ_INPUT(InputStart);
+}
+
+void GameBoyInstance::RegisterInput() const {
+    m_input->AddInput(InputA, PlipInputDefinition(PlipInputType::Digital, "A"), { .digital = false });
+    m_input->AddInput(InputB, PlipInputDefinition(PlipInputType::Digital, "B"), { .digital = false });
+    m_input->AddInput(InputSelect, PlipInputDefinition(PlipInputType::Digital, "Select"), { .digital = false });
+    m_input->AddInput(InputStart, PlipInputDefinition(PlipInputType::Digital, "Start"), { .digital = false });
+    m_input->AddInput(InputRight, PlipInputDefinition(PlipInputType::Digital, "Right"), { .digital = false });
+    m_input->AddInput(InputLeft, PlipInputDefinition(PlipInputType::Digital, "Left"), { .digital = false });
+    m_input->AddInput(InputUp, PlipInputDefinition(PlipInputType::Digital, "Up"), { .digital = false });
+    m_input->AddInput(InputDown, PlipInputDefinition(PlipInputType::Digital, "Down"), { .digital = false });
+}
+
 
 void GameBoyInstance::Reset() {
     // Clear RAM and I/O registers..

@@ -29,8 +29,11 @@ namespace Plip::Core::GameBoy {
         // GameBoyInstance
         void BootRomFlagHandler();
         void InitCartridgeRam();
+        void InputRegisterHandler() const;
         void RaiseInterrupt(Cpu::SharpLr35902Interrupt interrupt) const;
+        void ReadJoypad();
         void ReadCartridgeFeatures();
+        void RegisterInput() const;
 
         // GameBoyInstance.Video
         void PPU_Cycle();
@@ -60,6 +63,18 @@ namespace Plip::Core::GameBoy {
         PlipVideoFormatInfo m_videoFormat {};
         uint8_t *m_videoBuffer;
         size_t m_videoBufferSize;
+
+        // Input
+        static constexpr auto InputA      = 0;
+        static constexpr auto InputB      = 1;
+        static constexpr auto InputSelect = 2;
+        static constexpr auto InputStart  = 3;
+        static constexpr auto InputRight  = 4;
+        static constexpr auto InputLeft   = 5;
+        static constexpr auto InputUp     = 6;
+        static constexpr auto InputDown   = 7;
+
+        int m_keypad {};
 
         // Cartridge features
         static constexpr auto CartRamSizeOffset = 0x0149;
