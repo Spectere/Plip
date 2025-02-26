@@ -21,6 +21,9 @@ namespace PlipSdl {
     private:
         static constexpr auto AverageFrameTimeSampleSize = 60;
 
+        void AddBreakpoint(uint64_t addr);
+        void RemoveBreakpoint(uint64_t addr);
+
         Plip::PlipInstance* m_plip;
         Gui* m_gui;
         SdlEvent* m_event;

@@ -45,7 +45,7 @@ void Gui::DrawBreakpointControls() {
 
         if(ImGui::Button("Add")) {
             State.Breakpoints.insert(address);
-            State.BreakpointsActive = true;
+            State.BreakpointsUpdated = true;
         }
 
         if(State.Breakpoints.size() > 0) {
@@ -74,11 +74,8 @@ void Gui::DrawBreakpointControls() {
         }
 
         if(removeBp) {
-            State.Breakpoints.erase(removeBpVal);
-
-            if(State.Breakpoints.size() == 0) {
-                State.BreakpointsActive = false;
-            }
+            State.Breakpoints.insert(address);
+            State.BreakpointsUpdated = false;
         }
     }
 }

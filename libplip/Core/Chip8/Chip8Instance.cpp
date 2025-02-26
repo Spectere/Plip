@@ -69,6 +69,7 @@ Chip8Instance::~Chip8Instance() {
 void Chip8Instance::Delta(const long ns) {
     m_cycleRemaining += ns;
 
+    ClearActiveBreakpoint();
     do {
         m_cycleRemaining -= m_cpu->Cycle();
 
@@ -84,6 +85,14 @@ void Chip8Instance::Delta(const long ns) {
         if(m_delayRemaining <= 0) {
             m_cpu->DelayTimer();
             m_delayRemaining += DelayTimerTick;
+        }
+
+        if(!m_breakpoints.empty()) {
+            auto bp = std::find(m_breakpoints.begin(), m_breakpoints.end(), m_cpu->GetPc());
+            if(bp != m_breakpoints.end()) {
+                SetActiveBreakpoint(*bp);
+                break;
+            }
         }
     } while(m_cycleTime < m_cycleRemaining);
 
@@ -148,10 +157,6 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> Chip8Instance::Ge
 
 std::vector<uint64_t> Chip8Instance::GetPcs() const {
     return { m_cpu->GetPc() };
-}
-
-bool Chip8Instance::IsPcAt(const uint64_t pc) const {
-    return m_cpu->GetPc() == pc;
 }
 
 Plip::PlipError Chip8Instance::Load(const std::string &path) {

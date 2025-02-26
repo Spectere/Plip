@@ -5,46 +5,13 @@
 #pragma once
 
 #include <map>
-#include <set>
-#include <vector>
 
 #include "DebugValue.h"
+#include "GuiState.h"
 
 #include "Sdl/SdlWindow.h"
 
 namespace PlipSdl {
-    struct GuiState {
-        bool GuiShown = false;
-
-        // Emulator state.
-        bool PauseCore = false;
-        bool SingleStep = false;
-        bool TurboEnabled = false;
-        double AverageFrameTime = 0;
-
-        // Memory display.
-        bool PerformRead = false;
-
-        constexpr static int MemoryDisplayColumns = 16;
-        constexpr static int MemoryDisplayRows = 3;
-        uint32_t ReadAddress {};
-        uint32_t MemoryDisplayBase {};
-        uint8_t MemoryContents[MemoryDisplayColumns * MemoryDisplayRows] {};
-
-        // Memory manipulation.
-        bool PerformWrite = false;
-
-        std::vector<uint64_t> PcAddresses;
-
-        uint32_t WriteAddress {};
-        uint8_t WriteValue {};
-
-        // Breakpoints.
-        std::set<uint32_t> Breakpoints {};
-        bool BreakpointsActive = false;
-        uint32_t BreakpointHit = UINT32_MAX;
-    };
-
     class Gui {
     public:
         explicit Gui(const SdlWindow* sdlWindow);

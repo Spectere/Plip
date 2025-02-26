@@ -44,7 +44,7 @@ void Game::Run() const {
 
                 case PlipUiEvent::TogglePause:
                     m_gui->State.PauseCore = !m_gui->State.PauseCore;
-                    m_gui->State.BreakpointHit = UINT32_MAX;
+                    m_gui->State.BreakpointHit = UINT64_MAX;
                     m_gui->State.PcAddresses.clear();
                     break;
 
@@ -104,19 +104,19 @@ void Game::Run() const {
                 );
                 m_gui->State.PerformWrite = false;
             }
+
+            if(m_gui->State.BreakpointsUpdated) {
+                m_gui->State.BreakpointsUpdated = false;
+                m_plip->GetCore()->SetBreakpoints(m_gui->State.Breakpoints);
+            }
         }
 
         if(!m_gui->State.PauseCore) {
             m_plip->Run(frameTimeNs);
 
-            if(m_gui->State.BreakpointsActive) {
-                for(const auto bp : m_gui->State.Breakpoints) {
-                    if(!m_plip->GetCore()->IsPcAt(bp)) continue;
-
-                    m_gui->State.BreakpointHit = bp;
-                    m_gui->State.PauseCore = true;
-                    break;
-                }
+            if(m_plip->GetCore()->GetActiveBreakpoint() != UINT64_MAX) {
+                m_gui->State.BreakpointHit = m_plip->GetCore()->GetActiveBreakpoint();
+                m_gui->State.PauseCore = true;
             }
         } else if(m_gui->State.PauseCore && m_gui->State.SingleStep) {
             m_plip->Step();

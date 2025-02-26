@@ -68,6 +68,7 @@ void GameBoyInstance::Delta(const long ns) {
     const auto cycleTime = m_cpu->GetCycleTime();
 
     ReadJoypad();
+    ClearActiveBreakpoint();
 
     do {
         const auto cpuTime = m_cpu->Cycle();
@@ -85,6 +86,15 @@ void GameBoyInstance::Delta(const long ns) {
 
         // PPU
         PPU_Cycle();
+
+        // Breakpoints
+        if(!m_breakpoints.empty()) {
+            auto bp = std::find(m_breakpoints.begin(), m_breakpoints.end(), m_cpu->GetPc());
+            if(bp != m_breakpoints.end()) {
+                SetActiveBreakpoint(*bp);
+                break;
+            }
+        }
 
         timeRemaining -= cpuTime;
     } while(cycleTime < timeRemaining);
@@ -171,11 +181,6 @@ void GameBoyInstance::InputRegisterHandler() const {
         inputRegister ^= m_keypad >> 4;
     }
     m_ioRegisters->SetByte(IOReg_JoypadInput, inputRegister);
-}
-
-
-bool GameBoyInstance::IsPcAt(const uint64_t pc) const {
-    return m_cpu->GetPc() == pc;
 }
 
 void GameBoyInstance::ReadCartridgeFeatures() {
