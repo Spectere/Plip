@@ -772,10 +772,9 @@ long SharpLr35902::DecodeAndExecute() {
             uint8_t adjustment = 0;
 
             if(m_registers.GetSubtractFlag()) {
-                adjustment += m_registers.GetHalfCarryFlag() ? 0x06 : 0;
-                adjustment += m_registers.GetCarryFlag() ? 0x60 : 0;
+                adjustment |= m_registers.GetHalfCarryFlag() ? 0x06 : 0;
+                adjustment |= m_registers.GetCarryFlag() ? 0x60 : 0;
                 m_registers.A -= adjustment;
-                m_registers.ClearCarryFlag();
             } else {
                 adjustment += (m_registers.GetHalfCarryFlag() || ((m_registers.A & 0x0F) > 0x09)) ? 0x06 : 0;
                 if(m_registers.GetCarryFlag() || m_registers.A > 0x99) {

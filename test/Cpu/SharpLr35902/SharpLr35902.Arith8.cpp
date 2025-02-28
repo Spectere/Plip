@@ -767,7 +767,7 @@ TEST("DAA (S, NH, C) (NZ, NC)", "DAA-S-NH,C-NZ,NC") {  // 0x27
     CHECK_ZERO_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_HALF_CLEAR;
-    CHECK_CARRY_CLEAR;
+    CHECK_CARRY_SET;
     CHECK(cycles == 1);
 }
 
@@ -782,7 +782,7 @@ TEST("DAA (S, NH, C) (Z, NC)", "DAA-S-NH,C-Z,NC") {  // 0x27
     CHECK_ZERO_SET;
     CHECK_SUBTRACT_SET;
     CHECK_HALF_CLEAR;
-    CHECK_CARRY_CLEAR;
+    CHECK_CARRY_SET;
     CHECK(cycles == 1);
 }
 
@@ -798,7 +798,7 @@ TEST("DAA (S, H, C) (NZ, NC)", "DAA-S-H,C-NZ,NC") {  // 0x27
     CHECK_ZERO_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_HALF_CLEAR;
-    CHECK_CARRY_CLEAR;
+    CHECK_CARRY_SET;
     CHECK(cycles == 1);
 }
 
@@ -814,7 +814,7 @@ TEST("DAA (S, H, C) (Z, NC)", "DAA-S-H,C-Z,NC") {  // 0x27
     CHECK_ZERO_SET;
     CHECK_SUBTRACT_SET;
     CHECK_HALF_CLEAR;
-    CHECK_CARRY_CLEAR;
+    CHECK_CARRY_SET;
     CHECK(cycles == 1);
 }
 

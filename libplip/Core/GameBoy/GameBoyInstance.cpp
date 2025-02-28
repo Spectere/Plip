@@ -132,6 +132,9 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
     ReadCartridgeFeatures();
     InitCartridgeRam();
 
+    // Update titlebar.
+    m_video->SetTitle("GameBoy: " + PlipIo::GetFilename(path));
+
     // Reset system.
     Reset();
 
