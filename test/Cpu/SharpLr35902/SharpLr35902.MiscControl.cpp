@@ -137,3 +137,19 @@ TEST("EI", "EI") {
     cpu->Cycle();
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
 }
+
+TEST("EI (Multiple)", "EI-multiple") {
+    LoadData(0x00, { 0xFB, 0xFB, 0xFB });
+
+    // Check for pending enable...
+    const auto cycles = cpu->Cycle();
+    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::PendingEnable);
+    CHECK(cycles == 1);
+
+    // Repeatedly check for enabled.
+    cpu->Cycle();
+    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    cpu->Cycle();
+    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+}
+

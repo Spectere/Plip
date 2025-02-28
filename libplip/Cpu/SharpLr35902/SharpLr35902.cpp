@@ -13,7 +13,7 @@ SharpLr35902::SharpLr35902(const long hz, PlipMemoryMap *memoryMap) : PlipCpu(hz
 long SharpLr35902::Cycle() {
     const auto cycleCount = DecodeAndExecute();
 
-    if(m_enableInterrupts) {
+    if(m_enableInterrupts && m_ime == SharpLr35902ImeState::Disabled) {
         m_ime = SharpLr35902ImeState::PendingEnable;
         m_enableInterrupts = false;
     } else if(m_ime == SharpLr35902ImeState::PendingEnable) {
