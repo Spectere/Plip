@@ -87,6 +87,9 @@ void GameBoyInstance::Delta(const long ns) {
         // PPU
         PPU_Cycle();
 
+        // Hold the I/O registers at expected values.
+        UndefinedRegisters();
+
         // Breakpoints
         if(!m_breakpoints.empty()) {
             auto bp = std::find(m_breakpoints.begin(), m_breakpoints.end(), m_cpu->GetPc());
@@ -172,7 +175,7 @@ void GameBoyInstance::InitCartridgeRam() {
 void GameBoyInstance::InputRegisterHandler() const {
     auto inputRegister = m_ioRegisters->GetByte(IOReg_JoypadInput);
 
-    inputRegister |= 0b1111;
+    inputRegister |= 0b11001111;
     if(!BIT_TEST(inputRegister, 5)) {
         // Read button keys.
         inputRegister ^= m_keypad & 0b1111;
@@ -268,7 +271,6 @@ void GameBoyInstance::RegisterInput() const {
     m_input->AddInput(InputDown, PlipInputDefinition(PlipInputType::Digital, "Down"), { .digital = false });
 }
 
-
 void GameBoyInstance::Reset() {
     // Clear RAM and I/O registers..
     for(auto i = 0; i < m_workRam->GetLength(); i++)
@@ -308,4 +310,35 @@ void GameBoyInstance::Reset() {
 
     // Reset PPU.
     PPU_Reset();
+
+    // Reset I/O registers.
+    ResetIoRegisters();
 }
+
+void GameBoyInstance::ResetIoRegisters() const {
+    m_ioRegisters->SetByte(IOReg_InterruptFlag, 0b11100000);
+}
+
+void GameBoyInstance::UndefinedRegisters() const {
+    /*
+     * Sets all undefined/unimplemented registers to the appropriate values.
+     */
+
+    // Serial
+    m_ioRegisters->SetByte(IOReg_SerialControl, 0b01111110);
+
+    // Timer
+    m_ioRegisters->SetByte(IOReg_Divider, 0xAD);
+    m_ioRegisters->SetByte(IOReg_TimerControl, 0xF8);
+
+    // Undefined
+    m_ioRegisters->SetByte(0x03, 0b11111111);
+    m_ioRegisters->SetByte(0x08, 0b11111111);
+    m_ioRegisters->SetByte(0x09, 0b11111111);
+    m_ioRegisters->SetByte(0x0A, 0b11111111);
+    m_ioRegisters->SetByte(0x0B, 0b11111111);
+    m_ioRegisters->SetByte(0x0C, 0b11111111);
+    m_ioRegisters->SetByte(0x0D, 0b11111111);
+    m_ioRegisters->SetByte(0x0E, 0b11111111);
+}
+

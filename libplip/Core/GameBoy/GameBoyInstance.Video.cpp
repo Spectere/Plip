@@ -11,6 +11,8 @@ using Plip::Core::GameBoy::GameBoyInstance;
 
 void GameBoyInstance::PPU_Cycle() {
     const auto currentLcdControl = m_ioRegisters->GetByte(IOReg_LcdControl);
+    const auto currentLcdStatus = m_ioRegisters->GetByte(IOReg_LcdStatus);
+
 
     if(BIT_TEST(m_ppuLastLcdControl, 7) && !BIT_TEST(currentLcdControl, 7)) {
         // LCD was disabled during this cycle. Flag all memory as writable and blank the screen.
@@ -31,15 +33,19 @@ void GameBoyInstance::PPU_Cycle() {
     if(BIT_TEST(currentLcdControl, 7)) {
         // Run 4 dot clock cycles per CPU cycle.
         for(auto dotCycle = 0; dotCycle < PPU_DotsPerCycle; dotCycle++) {
-            PPU_DotClock();
+            PPU_DotClock(currentLcdControl, currentLcdStatus);
         }
     }
 
     m_ioRegisters->SetByte(IOReg_LcdYCoordinate, m_ppuLcdYCoordinate);
     m_ppuLastLcdControl = currentLcdControl;
+
+    // Update the LCD STAT register.
+    const auto lcdStatusNew = 0b10000000 | (m_ppuLyc ? 0b100 : 0) | static_cast<uint8_t>(m_ppuMode) | (currentLcdStatus & 0b111000);
+    m_ioRegisters->SetByte(IOReg_LcdStatus, lcdStatusNew);
 }
 
-void GameBoyInstance::PPU_DotClock() {
+void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdStatus) {
     bool performModeTransition = false;
 
     switch(m_ppuMode) {
@@ -59,7 +65,7 @@ void GameBoyInstance::PPU_DotClock() {
             performModeTransition = !PPU_DotClock_OamScan();
             break;
         case PPU_Mode::Output:
-            performModeTransition = !PPU_DotClock_Output();
+            performModeTransition = !PPU_DotClock_Output(lcdControl);
             break;
     }
 
@@ -68,7 +74,7 @@ void GameBoyInstance::PPU_DotClock() {
     } else {
         // Transition to the next video mode.
         PPU_VideoModeTransition();
-        PPU_FinishTransition();
+        PPU_FinishTransition(lcdStatus);
     }
 }
 
@@ -77,7 +83,7 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
     return m_ppuDotClock < PPU_OamScanTime;
 }
 
-bool GameBoyInstance::PPU_DotClock_Output() {
+bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
     // The exact number of clocks this takes depends on the SCX register, so we need
     // this to handle its own timing. This should only indicate that it's ready to
     // transition to the next PPU mode when it's plotted the number of horizontal
@@ -92,7 +98,7 @@ bool GameBoyInstance::PPU_DotClock_Output() {
         }
 
         case PPU_OutputStage::Drawing: {
-            PPU_DotClock_Output_Drawing();
+            PPU_DotClock_Output_Drawing(lcdControl);
             ++m_ppuLcdXCoordinate;
             break;
         }
@@ -101,9 +107,8 @@ bool GameBoyInstance::PPU_DotClock_Output() {
     return m_ppuLcdXCoordinate < ScreenWidth;
 }
 
-void GameBoyInstance::PPU_DotClock_Output_Drawing() const {
+void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) const {
     const auto pixelOffset = (m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate;
-    const auto lcdControl = m_ioRegisters->GetByte(IOReg_LcdControl);
 
     if(!BIT_TEST(lcdControl, 7)) {
         // The LCD should not be disabled here. Plot an error pixel.
@@ -146,8 +151,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing() const {
     }
 }
 
-void GameBoyInstance::PPU_FinishTransition() {
-    const uint8_t lcdStatus = m_ioRegisters->GetByte(IOReg_LcdStatus);
+void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
     PPU_SetMemoryPermissions();
     m_ppuDotClock = 0;
 
@@ -173,15 +177,15 @@ void GameBoyInstance::PPU_FinishTransition() {
     }
 }
 
-void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) const {
-    const auto lcdYComparison = m_ppuLcdYCoordinate == m_ioRegisters->GetByte(IOReg_LcdYCompare);
+void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) {
+    m_ppuLyc = m_ppuLcdYCoordinate == m_ioRegisters->GetByte(IOReg_LcdYCompare);
 
     if(BIT_TEST(lcdStatus, 5)) {
         // OAM interrupt.
         RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
     }
 
-    if(lcdYComparison) {
+    if(BIT_TEST(lcdStatus, 2) && m_ppuLyc) {
         // LYC == LY interrupt.
         RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
         m_ioRegisters->SetByte(IOReg_LcdStatus, BIT_SET(lcdStatus, 2));
@@ -252,6 +256,7 @@ void GameBoyInstance::PPU_Reset() {
     m_ppuDrawTime = 0;
     m_ppuLastLcdControl = 0;
     m_ppuLcdOff = false;
+    m_ppuLyc = false;
     m_ppuMode = PPU_Mode::OamScan;
     m_ppuLcdXCoordinate = 0;
     m_ppuLcdYCoordinate = 0;
