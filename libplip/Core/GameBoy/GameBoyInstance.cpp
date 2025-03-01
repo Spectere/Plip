@@ -87,6 +87,9 @@ void GameBoyInstance::Delta(const long ns) {
         // PPU
         PPU_Cycle();
 
+        // MBC
+        MBC_Cycle();
+
         // Hold the I/O registers at expected values.
         UndefinedRegisters();
 
@@ -107,6 +110,7 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
     return {
         { "CPU Registers", m_cpu->GetRegisters() },
         { "CPU (Other)", m_cpu->GetDebugInfo() },
+        { "MBC", MBC_GetDebugInfo() },
         { "PPU", PPU_GetDebugInfo() },
         { "System", {
             { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) }
@@ -142,11 +146,13 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
 }
 
 void GameBoyInstance::InitCartridgeRam() {
+    if(!m_hasRam) return;
+
     switch(const auto ramSize = m_rom->GetByte(CartRamSizeOffset)) {
         case 0x00:  // 0KB
         case 0x01:  // 2KB
         case 0x02:  // 8KB
-            m_cartRamBanks = 0;
+            m_cartRamBanks = 1;
             break;
 
         case 0x03:  // 32KB
@@ -169,10 +175,8 @@ void GameBoyInstance::InitCartridgeRam() {
         }
     }
 
-    if(m_cartRamBanks > 0) {
-        m_cartRam = new PlipMemoryRam(8192 * m_cartRamBanks, 0xFF);
-        m_memory->AssignBlock(m_cartRam, CartRamAddress, 0x0000, 0x2000);
-    }
+    m_cartRam = new PlipMemoryRam(8192 * m_cartRamBanks, 0xFF);
+    m_memory->AssignBlock(m_cartRam, CartRamAddress, 0x0000, 0x2000);
 }
 
 void GameBoyInstance::InputRegisterHandler() const {
@@ -195,7 +199,11 @@ void GameBoyInstance::ReadCartridgeFeatures() {
     // MBC
     switch(cartType) {
         case 0x00: case 0x08: case 0x09:
-            m_mbc = MemoryBankController::None;
+            m_mbc = MBC_Type::None;
+            break;
+
+        case 0x01: case 0x02: case 0x03:
+            m_mbc = MBC_Type::Mbc1;
             break;
 
         default: {
@@ -302,7 +310,7 @@ void GameBoyInstance::Reset() {
     m_memory->AssignBlock(m_unusable, UnusableAddress);
     m_memory->AssignBlock(m_ioRegisters, IoRegistersAddress);
     m_memory->AssignBlock(m_highRam, HighRamAddress);
-    m_memory->AssignBlock(m_rom, BaseRomAddress, 0x0000, 0x8000);
+    m_memory->AssignBlock(m_rom, RomBank0Address, RomBank0Address, RomBank0Length + RomBank1Length);
 
     // Load the boot ROM into 0x0000-0x00FF (overlaying the cartridge ROM).
     m_memory->AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
@@ -313,6 +321,9 @@ void GameBoyInstance::Reset() {
 
     // Reset PPU.
     PPU_Reset();
+
+    // Perform any necessary MBC initialization.
+    MBC_Init();
 
     // Reset I/O registers.
     ResetIoRegisters();

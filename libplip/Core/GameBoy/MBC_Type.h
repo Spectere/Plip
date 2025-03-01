@@ -6,7 +6,7 @@
 #pragma once
 
 namespace Plip::Core::GameBoy {
-    enum class MemoryBankController {
+    enum class MBC_Type {
         None,
         Mbc1,
         Mbc2,

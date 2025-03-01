@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "MemoryBankController.h"
+#include "MBC_Type.h"
 #include "PPU_Mode.h"
 #include "PPU_OutputStage.h"
 #include "../PlipCore.h"
@@ -36,6 +36,11 @@ namespace Plip::Core::GameBoy {
         void RegisterInput() const;
         void ResetIoRegisters() const;
         void UndefinedRegisters() const;
+
+        // GameBoyInstance.Mbc
+        void MBC_Cycle();
+        void MBC_Init();
+        [[nodiscard]] std::map<std::string, DebugValue> MBC_GetDebugInfo() const;
 
         // GameBoyInstance.Video
         void PPU_Cycle();
@@ -81,7 +86,7 @@ namespace Plip::Core::GameBoy {
         // Cartridge features
         static constexpr auto CartRamSizeOffset = 0x0149;
 
-        MemoryBankController m_mbc = MemoryBankController::None;
+        MBC_Type m_mbc = MBC_Type::None;
         bool m_hasBattery = false;
         bool m_hasCamera = false;
         bool m_hasRam = false;
@@ -90,12 +95,27 @@ namespace Plip::Core::GameBoy {
 
         uint16_t m_cartRamBanks = 0;
 
+        // MBC
+        std::string m_mbcName {};  // purely for debugging purposes
+
+        bool m_mbcRamEnable {};
+        uint8_t m_mbcBankingMode {};
+        uint8_t m_mbcBankRegister0 {};
+        uint8_t m_mbcBankRegister1 {};
+        bool m_mbcRegister1SelectsRomBank {};
+        uint8_t m_mbcRom0Bank {};
+        uint8_t m_mbcRom1Bank {};
+        uint8_t m_mbcRamBank {};
+
         // Static memory addresses
-        static constexpr auto BaseRomAddress = 0x0000;
-        static constexpr auto BankedRomAddress = 0x4000;
+        static constexpr auto RomBank0Address = 0x0000;
+        static constexpr auto RomBank0Length = 0x4000;
+        static constexpr auto RomBank1Address = 0x4000;
+        static constexpr auto RomBank1Length = 0x4000;
         static constexpr auto VideoRamAddress = 0x8000;
         static constexpr auto WorkRamAddress = 0xC000;
         static constexpr auto CartRamAddress = 0xA000;
+        static constexpr auto CartRamLength = 0x2000;
         static constexpr auto EchoRamAddress = 0xE000;
         static constexpr auto OamAddress = 0xFE00;
         static constexpr auto UnusableAddress = 0xFEA0;
