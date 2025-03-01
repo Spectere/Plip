@@ -71,7 +71,7 @@ void Chip8Instance::Delta(const long ns) {
 
     ClearActiveBreakpoint();
     do {
-        m_cycleRemaining -= m_cpu->Cycle();
+        m_cycleRemaining -= m_cpu->Step();
 
         if(const auto audioQueueFilled = m_audio->GetQueueSize(); audioQueueFilled < m_audioBufferFillThreshold) {
             if(m_cpu->IsAudioPlaying()) {

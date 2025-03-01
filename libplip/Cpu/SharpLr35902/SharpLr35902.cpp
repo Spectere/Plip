@@ -10,19 +10,6 @@ using Plip::Cpu::SharpLr35902;
 
 SharpLr35902::SharpLr35902(const long hz, PlipMemoryMap *memoryMap) : PlipCpu(hz, memoryMap) { }
 
-long SharpLr35902::Cycle() {
-    const auto cycleCount = DecodeAndExecute();
-
-    if(m_enableInterrupts && m_ime == SharpLr35902ImeState::Disabled) {
-        m_ime = SharpLr35902ImeState::PendingEnable;
-        m_enableInterrupts = false;
-    } else if(m_ime == SharpLr35902ImeState::PendingEnable) {
-        m_ime = SharpLr35902ImeState::Enabled;
-    }
-
-    return cycleCount * m_cycle;
-}
-
 unsigned long SharpLr35902::GetPc() const {
     return m_registers.PC;
 }
@@ -66,4 +53,17 @@ std::map<std::string, Plip::DebugValue> SharpLr35902::GetRegisters() const {
         { "NF", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, SharpLr35902Registers::SubtractFlagBit))) },
         { "ZF", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, SharpLr35902Registers::ZeroFlagBit))) },
     };
+}
+
+long SharpLr35902::Step() {
+    const auto cycleCount = DecodeAndExecute();
+
+    if(m_enableInterrupts && m_ime == SharpLr35902ImeState::Disabled) {
+        m_ime = SharpLr35902ImeState::PendingEnable;
+        m_enableInterrupts = false;
+    } else if(m_ime == SharpLr35902ImeState::PendingEnable) {
+        m_ime = SharpLr35902ImeState::Enabled;
+    }
+
+    return cycleCount;
 }

@@ -42,6 +42,6 @@ private:
     }
 
     static CpuType* CreateMockCpu(Plip::PlipMemoryMap* memoryMap) {
-        return new CpuType(1000000000, memoryMap);  // 1Ghz = Cycle() returns 1 for each cycle
+        return new CpuType(1000, memoryMap);
     }
 };

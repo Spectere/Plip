@@ -23,7 +23,7 @@ Chip8::Chip8(const long hz, PlipMemoryMap *memoryMap, const uint16_t charset, Pl
     m_rng = std::mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 }
 
-long Chip8::Cycle() {
+long Chip8::Step() {
     const auto inst = Fetch();
     const auto left = GetReg1(inst);
     const auto right = GetReg2(inst);

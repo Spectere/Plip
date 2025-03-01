@@ -28,7 +28,7 @@ namespace Plip::Cpu {
         SharpLr35902(long hz, PlipMemoryMap* memoryMap);
         virtual ~SharpLr35902() = default;
 
-        long Cycle() override;
+        long Step() override;
         [[nodiscard]] unsigned long GetPc() const override;
         [[nodiscard]] std::map<std::string, DebugValue> GetDebugInfo() const;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;

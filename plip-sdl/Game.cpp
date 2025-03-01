@@ -112,7 +112,7 @@ void Game::Run() const {
         }
 
         if(!m_gui->State.PauseCore) {
-            m_plip->Run(frameTimeNs * 4);  // TODO: Remove me--this is here to run tests faster.
+            m_plip->Run(frameTimeNs);
 
             if(m_plip->GetCore()->GetActiveBreakpoint() != UINT64_MAX) {
                 m_gui->State.BreakpointHit = m_plip->GetCore()->GetActiveBreakpoint();

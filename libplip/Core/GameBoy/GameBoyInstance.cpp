@@ -71,9 +71,10 @@ void GameBoyInstance::Delta(const long ns) {
     ClearActiveBreakpoint();
 
     do {
-        const auto cpuTime = m_cpu->Cycle();
-        const auto cpuCycles = cpuTime / cycleTime;
+        // Run CPU for one cycle.
+        m_cpu->Cycle();
 
+        // Handle ROM disable flag.
         if(!m_bootRomDisableFlag) {
             // See if we need to disable the boot ROM.
             BootRomFlagHandler();
@@ -88,13 +89,11 @@ void GameBoyInstance::Delta(const long ns) {
         // MBC
         MBC_Cycle();
 
-        for(auto i = 0; i < cpuCycles; i++) {
-            // PPU
-            PPU_Cycle();
+        // PPU
+        PPU_Cycle();
 
-            // Timer
-            Timer_Cycle();
-        }
+        // Timer
+        Timer_Cycle();
 
         // Hold the I/O registers at expected values.
         UndefinedRegisters();
@@ -108,7 +107,7 @@ void GameBoyInstance::Delta(const long ns) {
             }
         }
 
-        timeRemaining -= cpuTime;
+        timeRemaining -= cycleTime;
     } while(cycleTime < timeRemaining);
 }
 
