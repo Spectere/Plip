@@ -21,6 +21,9 @@ void GameBoyInstance::Timer_Cycle() {
             m_ioRegisters->SetByte(IOReg_TimerControl, 0b11111 | lastWrittenValue);
             break;
         }
+
+        default:  // There, CLion. Are you happy now?
+            break;
     }
 
     // Set DIV.
