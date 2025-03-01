@@ -35,18 +35,26 @@ namespace Plip::Core::GameBoy {
         void ReadJoypad();
         void ReadCartridgeFeatures();
         void RegisterInput() const;
+        void RegisterWriteServiced() const;
         void ResetIoRegisters() const;
         void UndefinedRegisters() const;
 
         // GameBoyInstance.Mbc
         void MBC_Cycle();
-        void MBC_Cycle_MBC1(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
-        void MBC_Cycle_MBC2(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
+        bool MBC_Cycle_MBC1(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
+        bool MBC_Cycle_MBC2(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
         void MBC_EnableRam(bool enable);
         void MBC_Init();
         void MBC_Init_MBC2();
         void MBC_Remap(bool remapRom, bool remapRam) const;
         [[nodiscard]] std::map<std::string, DebugValue> MBC_GetDebugInfo() const;
+
+        // GameBoyInstance.Timer
+        void Timer_Cycle();
+        [[nodiscard]] std::map<std::string, DebugValue> Timer_GetDebugInfo() const;
+        void Timer_Init();
+
+        uint16_t m_timerSystem {};
 
         // GameBoyInstance.Video
         void PPU_Cycle();

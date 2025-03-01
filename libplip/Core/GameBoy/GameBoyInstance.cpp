@@ -72,6 +72,7 @@ void GameBoyInstance::Delta(const long ns) {
 
     do {
         const auto cpuTime = m_cpu->Cycle();
+        const auto cpuCycles = cpuTime / cycleTime;
 
         if(!m_bootRomDisableFlag) {
             // See if we need to disable the boot ROM.
@@ -84,11 +85,16 @@ void GameBoyInstance::Delta(const long ns) {
         // Input
         InputRegisterHandler();
 
-        // PPU
-        PPU_Cycle();
-
         // MBC
         MBC_Cycle();
+
+        for(auto i = 0; i < cpuCycles; i++) {
+            // PPU
+            PPU_Cycle();
+
+            // Timer
+            Timer_Cycle();
+        }
 
         // Hold the I/O registers at expected values.
         UndefinedRegisters();
@@ -112,6 +118,7 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "CPU (Other)", m_cpu->GetDebugInfo() },
         { "MBC", MBC_GetDebugInfo() },
         { "PPU", PPU_GetDebugInfo() },
+        { "Timer", Timer_GetDebugInfo() },
         { "System", {
             { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) }
         }}
@@ -286,6 +293,13 @@ void GameBoyInstance::RegisterInput() const {
     m_input->AddInput(InputDown, PlipInputDefinition(PlipInputType::Digital, "Down"), { .digital = false });
 }
 
+void GameBoyInstance::RegisterWriteServiced() const {
+    // Clear the last written values to ensure that the request isn't immediately
+    // serviced again.
+    m_memory->LastWrittenAddress = 0xFFFF;
+    m_memory->LastWrittenValue = 0;
+}
+
 void GameBoyInstance::Reset() {
     // Clear RAM and I/O registers..
     for(auto i = 0; i < m_workRam->GetLength(); i++)
@@ -326,11 +340,15 @@ void GameBoyInstance::Reset() {
     // Reset PPU.
     PPU_Reset();
 
+    // Reset timer.
+    Timer_Init();
+
     // Perform any necessary MBC initialization.
     MBC_Init();
 
     // Reset I/O registers.
     ResetIoRegisters();
+    RegisterWriteServiced();
 }
 
 void GameBoyInstance::ResetIoRegisters() const {
@@ -344,10 +362,6 @@ void GameBoyInstance::UndefinedRegisters() const {
 
     // Serial
     m_ioRegisters->SetByte(IOReg_SerialControl, 0b01111110);
-
-    // Timer
-    m_ioRegisters->SetByte(IOReg_Divider, 0xAD);
-    m_ioRegisters->SetByte(IOReg_TimerControl, 0xF8);
 
     // Undefined
     m_ioRegisters->SetByte(0x03, 0b11111111);

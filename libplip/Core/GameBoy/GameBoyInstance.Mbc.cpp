@@ -11,14 +11,16 @@ void GameBoyInstance::MBC_Cycle() {
     const auto lastWrittenAddress = m_memory->LastWrittenAddress;
     const auto lastWrittenValue = m_memory->LastWrittenValue;
 
+    bool registerWriteServiced = false;
+
     switch(m_mbc) {
         case MBC_Type::None:
             return;
         case MBC_Type::Mbc1:
-            MBC_Cycle_MBC1(lastWrittenAddress, lastWrittenValue);
+            registerWriteServiced = MBC_Cycle_MBC1(lastWrittenAddress, lastWrittenValue);
             break;
         case MBC_Type::Mbc2:
-            MBC_Cycle_MBC2(lastWrittenAddress, lastWrittenValue);
+            registerWriteServiced = MBC_Cycle_MBC2(lastWrittenAddress, lastWrittenValue);
             break;
         case MBC_Type::Mbc3:
         case MBC_Type::Mbc5:
@@ -33,16 +35,15 @@ void GameBoyInstance::MBC_Cycle() {
             throw PlipEmulationException("Unsupported MBC");
     }
 
-    // Clear the last written values to ensure that the request isn't immediately
-    // serviced again.
-    m_memory->LastWrittenAddress = 0xFFFF;
-    m_memory->LastWrittenValue = 0;
+    if(registerWriteServiced) {
+        RegisterWriteServiced();
+    }
 }
 
-void GameBoyInstance::MBC_Cycle_MBC1(const uint16_t lastWrittenAddress, const uint8_t lastWrittenValue) {
+bool GameBoyInstance::MBC_Cycle_MBC1(const uint16_t lastWrittenAddress, const uint8_t lastWrittenValue) {
     bool bankSwitch = false;
 
-    if(lastWrittenAddress > 0x7FFF) return;
+    if(lastWrittenAddress > 0x7FFF) return false;
 
     if(lastWrittenAddress < 0x2000) {
         // RAM enable.
@@ -90,10 +91,12 @@ void GameBoyInstance::MBC_Cycle_MBC1(const uint16_t lastWrittenAddress, const ui
         // Remap memory.
         MBC_Remap(true, true);
     }
+
+    return true;
 }
 
-void GameBoyInstance::MBC_Cycle_MBC2(const uint16_t lastWrittenAddress, const uint8_t lastWrittenValue) {
-    if(lastWrittenAddress > 0x3FFF) return;
+bool GameBoyInstance::MBC_Cycle_MBC2(const uint16_t lastWrittenAddress, const uint8_t lastWrittenValue) {
+    if(lastWrittenAddress > 0x3FFF) return false;
 
     if(BIT_TEST(lastWrittenAddress, 8)) {
         // ROM bank switch.
@@ -104,6 +107,8 @@ void GameBoyInstance::MBC_Cycle_MBC2(const uint16_t lastWrittenAddress, const ui
         // RAM enable/disable.
         MBC_EnableRam((lastWrittenValue & 0xF) == 0xA);
     }
+
+    return true;
 }
 
 void GameBoyInstance::MBC_EnableRam(const bool enable) {
@@ -137,9 +142,6 @@ void GameBoyInstance::MBC_Init() {
         case MBC_Type::HuC3: m_mbcName = "HuC3"; break;
         default: m_mbcName = "UNKNOWN"; break;
     }
-
-    // Ensure that registers don't get changed early.
-    m_memory->LastWrittenAddress = 0xFFFF;
 
     // Cartridge RAM should be disabled initially.
     MBC_EnableRam(false);
