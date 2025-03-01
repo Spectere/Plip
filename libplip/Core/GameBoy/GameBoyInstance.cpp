@@ -146,7 +146,7 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
 }
 
 void GameBoyInstance::InitCartridgeRam() {
-    if(!m_hasRam) return;
+    if(!m_hasCartRam) return;
 
     switch(const auto ramSize = m_rom->GetByte(CartRamSizeOffset)) {
         case 0x00:  // 0KB
@@ -206,6 +206,10 @@ void GameBoyInstance::ReadCartridgeFeatures() {
             m_mbc = MBC_Type::Mbc1;
             break;
 
+        case 0x05: case 0x06:
+            m_mbc = MBC_Type::Mbc2;
+            break;
+
         default: {
             std::stringstream ex;
             ex << "invalid/unsupported memory bank controller: "
@@ -219,10 +223,10 @@ void GameBoyInstance::ReadCartridgeFeatures() {
         case 0x02: case 0x03: case 0x08: case 0x09: case 0x0C: case 0x0D:
         case 0x0F: case 0x10: case 0x12: case 0x13: case 0x1A: case 0x1B:
         case 0x1D: case 0x1E: case 0x22: case 0xFF:
-            m_hasRam = true;
+            m_hasCartRam = true;
             break;
         default:
-            m_hasRam = false;
+            m_hasCartRam = false;
             break;
     }
 

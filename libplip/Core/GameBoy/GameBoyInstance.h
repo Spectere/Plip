@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "Mbc2Ram.h"
 #include "MBC_Type.h"
 #include "PPU_Mode.h"
 #include "PPU_OutputStage.h"
@@ -40,7 +41,11 @@ namespace Plip::Core::GameBoy {
         // GameBoyInstance.Mbc
         void MBC_Cycle();
         void MBC_Cycle_MBC1(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
+        void MBC_Cycle_MBC2(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
+        void MBC_EnableRam(bool enable);
         void MBC_Init();
+        void MBC_Init_MBC2();
+        void MBC_Remap(bool remapRom, bool remapRam) const;
         [[nodiscard]] std::map<std::string, DebugValue> MBC_GetDebugInfo() const;
 
         // GameBoyInstance.Video
@@ -90,7 +95,7 @@ namespace Plip::Core::GameBoy {
         MBC_Type m_mbc = MBC_Type::None;
         bool m_hasBattery = false;
         bool m_hasCamera = false;
-        bool m_hasRam = false;
+        bool m_hasCartRam = false;
         bool m_hasRtc = false;
         bool m_hasSensor = false;
 
@@ -107,6 +112,8 @@ namespace Plip::Core::GameBoy {
         uint8_t m_mbcRom0Bank {};
         uint8_t m_mbcRom1Bank {};
         uint8_t m_mbcRamBank {};
+
+        Mbc2Ram* m_mbc2Ram = nullptr;
 
         // Static memory addresses
         static constexpr auto RomBank0Address = 0x0000;
