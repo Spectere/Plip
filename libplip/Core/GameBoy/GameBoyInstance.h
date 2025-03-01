@@ -39,6 +39,7 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance.Mbc
         void MBC_Cycle();
+        void MBC_Cycle_MBC1(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
         void MBC_Init();
         [[nodiscard]] std::map<std::string, DebugValue> MBC_GetDebugInfo() const;
 

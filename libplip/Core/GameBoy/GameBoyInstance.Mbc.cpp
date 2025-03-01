@@ -10,13 +10,36 @@
 using Plip::Core::GameBoy::GameBoyInstance;
 
 void GameBoyInstance::MBC_Cycle() {
-    if(m_mbc == MBC_Type::None) return;
-
-    // Only worry about MBC1 for now since some tests (blargg) require them.
-    // We'll refactor this as necessary when we add support for more.
     const auto lastWrittenAddress = m_memory->LastWrittenAddress;
     const auto lastWrittenValue = m_memory->LastWrittenValue;
 
+    switch(m_mbc) {
+        case MBC_Type::None:
+            return;
+        case MBC_Type::Mbc1:
+            MBC_Cycle_MBC1(lastWrittenAddress, lastWrittenValue);
+            break;
+        case MBC_Type::Mbc2:
+        case MBC_Type::Mbc3:
+        case MBC_Type::Mbc5:
+        case MBC_Type::Mbc6:
+        case MBC_Type::Mbc7:
+        case MBC_Type::Mmm01:
+        case MBC_Type::PocketCamera:
+        case MBC_Type::BandaiTama5:
+        case MBC_Type::HuC1:
+        case MBC_Type::HuC3:
+        default:
+            throw new PlipEmulationException("Unsupported MBC");
+    }
+
+    // Clear the last written values to ensure that the request isn't immediately
+    // serviced again.
+    m_memory->LastWrittenAddress = 0xFFFF;
+    m_memory->LastWrittenValue = 0;
+}
+
+void GameBoyInstance::MBC_Cycle_MBC1(const uint16_t lastWrittenAddress, const uint8_t lastWrittenValue) {
     bool bankSwitch = false;
 
     if(lastWrittenAddress > 0x7FFF) return;
@@ -42,11 +65,6 @@ void GameBoyInstance::MBC_Cycle() {
         m_mbcBankingMode = lastWrittenValue & 0b1;
         bankSwitch = true;
     }
-
-    // Clear the last written values to ensure that the request isn't immediately
-    // serviced again.
-    m_memory->LastWrittenAddress = 0xFFFF;
-    m_memory->LastWrittenValue = 0;
 
     // Swap banks if requested.
     if(bankSwitch) {
