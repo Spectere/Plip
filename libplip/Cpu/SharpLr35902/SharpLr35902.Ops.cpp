@@ -24,12 +24,28 @@ static uint8_t op;
     else m_registers.ClearHalfCarryFlag(); \
 }
 
+#define CHECK_ADD_HALF_CARRY_WITH_CARRY(left, right, carry) { \
+    if(((left) & 0x0F) + ((right) & 0x0F) + carry > 0x0F) m_registers.SetHalfCarryFlag(); \
+    else m_registers.ClearHalfCarryFlag(); \
+}
+
 #define CHECK_SUB_BORROW(left, right) { \
-    ((right) > (left)) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag(); \
+    if((static_cast<int>(left) - static_cast<int>(right)) < 0) m_registers.SetCarryFlag(); \
+    else m_registers.ClearCarryFlag(); \
+}
+
+#define CHECK_SUB_BORROW_WITH_BORROW(left, right, borrow) { \
+    if((static_cast<int>(left) - static_cast<int>(right)) - borrow < 0) m_registers.SetCarryFlag(); \
+    else m_registers.ClearCarryFlag(); \
 }
 
 #define CHECK_SUB_HALF_BORROW(left, right) { \
-    if(((right) & 0x0F) > ((left) & 0x0F)) m_registers.SetHalfCarryFlag(); \
+    if((static_cast<int>(left) & 0x0F) - (static_cast<int>(right) & 0x0F) < 0) m_registers.SetHalfCarryFlag(); \
+    else m_registers.ClearHalfCarryFlag(); \
+}
+
+#define CHECK_SUB_HALF_BORROW_WITH_BORROW(left, right, borrow) { \
+    if((static_cast<int>(left) & 0x0F) - (static_cast<int>(right) & 0x0F) - borrow < 0) m_registers.SetHalfCarryFlag(); \
     else m_registers.ClearHalfCarryFlag(); \
 }
 
@@ -139,12 +155,12 @@ void SharpLr35902::Push16ToStack(const uint8_t high, const uint8_t low) {
     Push8ToStack(low);
 }
 
-void SharpLr35902::OpAddToRegisterA(int value, const bool addWithCarry) {
-    value += ((addWithCarry && m_registers.GetCarryFlag()) ? 1 : 0);
+void SharpLr35902::OpAddToRegisterA(const int value, const bool addWithCarry) {
+    const auto carry = (addWithCarry && m_registers.GetCarryFlag()) ? 1 : 0;
 
-    CHECK_ADD_HALF_CARRY(m_registers.A, value);
-    CHECK_ADD_CARRY(m_registers.A, value);
-    m_registers.A += value;
+    CHECK_ADD_HALF_CARRY_WITH_CARRY(m_registers.A, value, carry);
+    CHECK_ADD_CARRY(m_registers.A, value + carry);
+    m_registers.A += value + carry;
     m_registers.ClearSubtractFlag();
     CHECK_ZERO(m_registers.A);
 }
@@ -251,12 +267,12 @@ uint8_t SharpLr35902::OpShiftRight(uint8_t value, const bool arithmetic) {
     return value;
 }
 
-void SharpLr35902::OpSubtractFromRegisterA(int value, const bool subtractWithBorrow, const bool discardResult) {
-    value += ((subtractWithBorrow && m_registers.GetCarryFlag()) ? 1 : 0);
-    const uint8_t result = m_registers.A - value;
+void SharpLr35902::OpSubtractFromRegisterA(const int value, const bool subtractWithBorrow, const bool discardResult) {
+    const auto borrow = ((subtractWithBorrow && m_registers.GetCarryFlag()) ? 1 : 0);
+    const uint8_t result = m_registers.A - value - borrow;
 
-    CHECK_SUB_HALF_BORROW(m_registers.A, value);
-    CHECK_SUB_BORROW(m_registers.A, value);
+    CHECK_SUB_HALF_BORROW_WITH_BORROW(m_registers.A, value, borrow);
+    CHECK_SUB_BORROW_WITH_BORROW(m_registers.A, value, borrow);
     m_registers.SetSubtractFlag();
     CHECK_ZERO(result);
 
@@ -1040,10 +1056,11 @@ long SharpLr35902::DecodeAndExecute() {
             auto lowCarry = (m_registers.L + part) > 0xFF;
             m_registers.L += part;
 
-            part = (regValue >> 8) + (lowCarry ? 1 : 0);
-            CHECK_ADD_CARRY(m_registers.H, part);
-            CHECK_ADD_HALF_CARRY(m_registers.H, part);
-            m_registers.H += part;
+            part = regValue >> 8;
+            const auto carry = lowCarry ? 1 : 0;
+            CHECK_ADD_CARRY(m_registers.H, part + carry);
+            CHECK_ADD_HALF_CARRY_WITH_CARRY(m_registers.H, part, carry);
+            m_registers.H += part + carry;
             m_registers.ClearSubtractFlag();
 
             ++cycleCount;

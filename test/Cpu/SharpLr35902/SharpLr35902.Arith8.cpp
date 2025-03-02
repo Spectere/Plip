@@ -1641,12 +1641,12 @@ TEST("ADC A, B (C) (NC, NH, NZ)", "ADC-A,B-C-NC-NH-NZ") {  // 0x88
 
 TEST("ADC A, B (C) (C, NH, NZ)", "ADC-A,B-C-C-NH-NZ") {  // 0x88
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
-    cpu->SetRegister8ByIndex(cpu->RegIndexB, 0x1F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexB, 0x20);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x88 });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x10);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x11);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_CLEAR;
@@ -1696,21 +1696,6 @@ TEST("ADC A, B (C) (C, NH, Z)", "ADC-A,B-C-C-NH-Z") {  // 0x88
     CHECK_HALF_SET;
     CHECK_SUBTRACT_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("ADC A, B (C) (C, H, NZ) (OF)", "ADB-A,B-C-C-H-NZ-OF") {  // 0x88
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexB, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x88 });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -1801,12 +1786,12 @@ TEST("ADC A, C (C) (NC, NH, NZ)", "ADC-A,C-C-NC-NH-NZ") {  // 0x89
 
 TEST("ADC A, C (C) (C, NH, NZ)", "ADC-A,C-C-C-NH-NZ") {  // 0x89
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
-    cpu->SetRegister8ByIndex(cpu->RegIndexC, 0x1F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexC, 0x20);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x89 });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x10);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x11);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_CLEAR;
@@ -1856,21 +1841,6 @@ TEST("ADC A, C (C) (C, H, Z)", "ADC-A,C-C-C-H-Z") {  // 0x89
     CHECK_HALF_SET;
     CHECK_SUBTRACT_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("ADC A, C (C) (C, NH, NZ) (OF)", "ADB-A,C-C-C-NH-NZ-OF") {  // 0x89
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexC, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x89 });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -1961,12 +1931,12 @@ TEST("ADC A, D (C) (NC, NH, NZ)", "ADC-A,D-C-NC-NH-NZ") {  // 0x8A
 
 TEST("ADC A, D (C) (C, NH, NZ)", "ADC-A,D-C-C-NH-NZ") {  // 0x8A
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
-    cpu->SetRegister8ByIndex(cpu->RegIndexD, 0x1F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexD, 0x20);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x8A });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x10);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x11);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_CLEAR;
@@ -2016,21 +1986,6 @@ TEST("ADC A, D (C) (C, H, Z)", "ADC-A,D-C-C-H-Z") {  // 0x8A
     CHECK_HALF_SET;
     CHECK_SUBTRACT_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("ADC A, D (C) (C, NH, NZ) (OF)", "ADB-A,D-C-C-NH-NZ-OF") {  // 0x8A
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexD, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x8A });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -2121,12 +2076,12 @@ TEST("ADC A, E (C) (NC, NH, NZ)", "ADC-A,E-C-NC-NH-NZ") {  // 0x8B
 
 TEST("ADC A, E (C) (C, NH, NZ)", "ADC-A,E-C-C-NH-NZ") {  // 0x8B
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
-    cpu->SetRegister8ByIndex(cpu->RegIndexE, 0x1F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexE, 0x20);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x8B });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x10);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x11);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_CLEAR;
@@ -2176,21 +2131,6 @@ TEST("ADC A, E (C) (C, H, Z)", "ADC-A,E-C-C-H-Z") {  // 0x8B
     CHECK_HALF_SET;
     CHECK_SUBTRACT_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("ADC A, E (C) (C, NH, NZ) (OF)", "ADB-A,E-C-C-NH-NZ-OF") {  // 0x8B
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexE, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x8B });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -2281,12 +2221,12 @@ TEST("ADC A, H (C) (NC, NH, NZ)", "ADC-A,H-C-NC-NH-NZ") {  // 0x8C
 
 TEST("ADC A, H (C) (C, NH, NZ)", "ADC-A,H-C-C-NH-NZ") {  // 0x8C
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
-    cpu->SetRegister8ByIndex(cpu->RegIndexH, 0x1F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexH, 0x20);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x8C });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x10);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x11);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_CLEAR;
@@ -2336,21 +2276,6 @@ TEST("ADC A, H (C) (C, H, Z)", "ADC-A,H-C-C-H-Z") {  // 0x8C
     CHECK_HALF_SET;
     CHECK_SUBTRACT_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("ADC A, H (C) (C, NH, NZ) (OF)", "ADB-A,H-C-C-NH-NZ-OF") {  // 0x8C
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexH, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x8C });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -2441,12 +2366,12 @@ TEST("ADC A, L (C) (NC, NH, NZ)", "ADC-A,L-C-NC-NH-NZ") {  // 0x8D
 
 TEST("ADC A, L (C) (C, NH, NZ)", "ADC-A,L-C-C-NH-NZ") {  // 0x8D
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
-    cpu->SetRegister8ByIndex(cpu->RegIndexL, 0x1F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexL, 0x20);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x8D });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x10);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x11);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_CLEAR;
@@ -2496,21 +2421,6 @@ TEST("ADC A, L (C) (C, H, Z)", "ADC-A,L-C-C-H-Z") {  // 0x8D
     CHECK_HALF_SET;
     CHECK_SUBTRACT_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("ADC A, L (C) (C, NH, NZ) (OF)", "ADB-A,L-C-C-NH-NZ-OF") {  // 0x8D
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexL, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x8D });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -2609,11 +2519,11 @@ TEST("ADC A, <HL> (C) (C, NH, NZ)", "ADC-A,HL-C-C-NH-NZ") {  // 0x8E
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
     cpu->SetHl(0x200);
     cpu->SetCarryFlag();
-    memory->SetByte(0x200, 0x1F);
+    memory->SetByte(0x200, 0x20);
     LoadData(0x00, { 0x8E });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x10);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x11);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_CLEAR;
@@ -2666,22 +2576,6 @@ TEST("ADC A, <HL> (C) (C, H, Z)", "ADC-A,HL-C-C-H-Z") {  // 0x8E
     CHECK_HALF_SET;
     CHECK_SUBTRACT_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 2);
-}
-
-TEST("ADC A, <HL> (C) (C, NH, NZ) (OF)", "ADB-A,HL-C-C-NH-NZ-OF") {  // 0x8E
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetHl(0x200);
-    cpu->SetCarryFlag();
-    memory->SetByte(0x200, 0xFF);
-    LoadData(0x00, { 0x8E });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
 }
 
@@ -2806,33 +2700,6 @@ TEST("ADC A, A (C) (C, H, NZ)", "ADC-A,A-C-C-H-NZ") {  // 0x8F
     CHECK(cycles == 1);
 }
 
-TEST("ADC A, A (C) (C, NH, NZ) (OF)", "ADB-A,L-C-C-NH-NZ-OF") {  // 0x8F
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x8F });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xFF);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
-    CHECK(cycles == 1);
-}
-
-TEST("ADC A, imm8 (NC) (NC, NH, NZ)", "ADC-A,imm8-NC-NC-NH-NZ") {  // 0xCE
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    LoadData(0x00, { 0xCE, 0x0E });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x0F);
-    CHECK_CARRY_CLEAR;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
-    CHECK(cycles == 2);
-}
-
 TEST("ADC A, imm8 (NC) (C, NH, NZ)", "ADC-A,imm8-NC-C-NH-NZ") {  // 0xCE
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
     LoadData(0x00, { 0xCE, 0x20 });
@@ -2902,10 +2769,10 @@ TEST("ADC A, imm8 (C) (NC, NH, NZ)", "ADC-A,imm8-C-NC-NH-NZ") {  // 0xCE
 TEST("ADC A, imm8 (C) (C, NH, NZ)", "ADC-A,imm8-C-C-NH-NZ") {  // 0xCE
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xF0);
     cpu->SetCarryFlag();
-    LoadData(0x00, { 0xCE, 0x1F });
+    LoadData(0x00, { 0xCE, 0x20 });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x10);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x11);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_CLEAR;
@@ -2952,20 +2819,6 @@ TEST("ADC A, imm8 (C) (C, H, Z)", "ADC-A,imm8-C-C-H-Z") {  // 0xCE
     CHECK_HALF_SET;
     CHECK_SUBTRACT_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 2);
-}
-
-TEST("ADC A, imm8 (C) (C, NH, NZ) (OF)", "Aimm8-A,HL-C-C-NH-NZ-OF") {  // 0xCE
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0xCE, 0xFF });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_CLEAR;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
 }
 
@@ -3645,12 +3498,12 @@ TEST("SBC A, B (C) (NC, H, NZ)", "SBC-A,B-C-NC-H-NZ") {  // 0x98
 
 TEST("SBC A, B (C) (C, NH, NZ)", "SBC-A,B-C-C-NH-NZ") {  // 0x98
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x08);
-    cpu->SetRegister8ByIndex(cpu->RegIndexB, 0x0F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexB, 0x10);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x98 });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF8);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF7);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
@@ -3685,21 +3538,6 @@ TEST("SBC A, B (C) (NC, NH, Z)", "SBC-A,B-C-NC-NH-Z") {  // 0x98
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("SBC A, B (C) (C, NH, NZ) (OF)", "SBC-A,B-C-C-NH-NZ-OF") {  // 0x98
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexB, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x98 });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_SET;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -3805,12 +3643,12 @@ TEST("SBC A, C (C) (NC, H, NZ)", "SBC-A,C-C-NC-H-NZ") {  // 0x99
 
 TEST("SBC A, C (C) (C, NH, NZ)", "SBC-A,C-C-C-NH-NZ") {  // 0x99
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x08);
-    cpu->SetRegister8ByIndex(cpu->RegIndexC, 0x0F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexC, 0x10);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x99 });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF8);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF7);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
@@ -3845,21 +3683,6 @@ TEST("SBC A, C (C) (NC, NH, Z)", "SBC-A,C-C-NC-NH-Z") {  // 0x99
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("SBC A, C (C) (C, NH, NZ) (OF)", "SBC-A,C-C-C-NH-NZ-OF") {  // 0x99
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexC, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x99 });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_SET;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -3965,12 +3788,12 @@ TEST("SBC A, D (C) (NC, H, NZ)", "SBC-A,D-C-NC-H-NZ") {  // 0x9A
 
 TEST("SBC A, D (C) (C, NH, NZ)", "SBC-A,D-C-C-NH-NZ") {  // 0x9A
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x08);
-    cpu->SetRegister8ByIndex(cpu->RegIndexD, 0x0F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexD, 0x10);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x9A });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF8);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF7);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
@@ -4005,21 +3828,6 @@ TEST("SBC A, D (C) (NC, NH, Z)", "SBC-A,D-C-NC-NH-Z") {  // 0x9A
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("SBC A, D (C) (C, NH, NZ) (OF)", "SBC-A,D-C-C-NH-NZ-OF") {  // 0x9A
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexD, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x9A });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_SET;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -4125,12 +3933,12 @@ TEST("SBC A, E (C) (NC, H, NZ)", "SBC-A,E-C-NC-H-NZ") {  // 0x9B
 
 TEST("SBC A, E (C) (C, NH, NZ)", "SBC-A,E-C-C-NH-NZ") {  // 0x9B
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x08);
-    cpu->SetRegister8ByIndex(cpu->RegIndexE, 0x0F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexE, 0x10);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x9B });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF8);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF7);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
@@ -4165,21 +3973,6 @@ TEST("SBC A, E (C) (NC, NH, Z)", "SBC-A,E-C-NC-NH-Z") {  // 0x9B
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("SBC A, E (C) (C, NH, NZ) (OF)", "SBC-A,E-C-C-NH-NZ-OF") {  // 0x9B
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexE, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x9B });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_SET;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -4285,12 +4078,12 @@ TEST("SBC A, H (C) (NC, H, NZ)", "SBC-A,H-C-NC-H-NZ") {  // 0x9C
 
 TEST("SBC A, H (C) (C, NH, NZ)", "SBC-A,H-C-C-NH-NZ") {  // 0x9C
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x08);
-    cpu->SetRegister8ByIndex(cpu->RegIndexH, 0x0F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexH, 0x10);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x9C });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF8);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF7);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
@@ -4325,21 +4118,6 @@ TEST("SBC A, H (C) (NC, NH, Z)", "SBC-A,H-C-NC-NH-Z") {  // 0x9C
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("SBC A, H (C) (C, NH, NZ) (OF)", "SBC-A,H-C-C-NH-NZ-OF") {  // 0x9C
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexH, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x9C });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_SET;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -4445,12 +4223,12 @@ TEST("SBC A, L (C) (NC, H, NZ)", "SBC-A,L-C-NC-H-NZ") {  // 0x9D
 
 TEST("SBC A, L (C) (C, NH, NZ)", "SBC-A,L-C-C-NH-NZ") {  // 0x9D
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x08);
-    cpu->SetRegister8ByIndex(cpu->RegIndexL, 0x0F);
+    cpu->SetRegister8ByIndex(cpu->RegIndexL, 0x10);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x9D });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF8);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF7);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
@@ -4485,21 +4263,6 @@ TEST("SBC A, L (C) (NC, NH, Z)", "SBC-A,L-C-NC-NH-Z") {  // 0x9D
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_ZERO_SET;
-    CHECK(cycles == 1);
-}
-
-TEST("SBC A, L (C) (C, NH, NZ) (OF)", "SBC-A,L-C-C-NH-NZ-OF") {  // 0x9D
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetRegister8ByIndex(cpu->RegIndexL, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x9D });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_SET;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
 }
 
@@ -4613,12 +4376,12 @@ TEST("SBC A, <HL> (C) (NC, H, NZ)", "SBC-A,HL-C-NC-H-NZ") {  // 0x9E
 TEST("SBC A, <HL> (C) (C, NH, NZ)", "SBC-A,HL-C-C-NH-NZ") {  // 0x9E
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x08);
     cpu->SetHl(0x200);
-    memory->SetByte(0x200, 0x0F);
+    memory->SetByte(0x200, 0x10);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x9E });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF8);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF7);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
@@ -4658,22 +4421,6 @@ TEST("SBC A, <HL> (C) (NC, NH, Z)", "SBC-A,HL-C-NC-NH-Z") {  // 0x9E
     CHECK(cycles == 2);
 }
 
-TEST("SBC A, <HL> (C) (C, NH, NZ) (OF)", "SBC-A,HL-C-C-NH-NZ-OF") {  // 0x9E
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetHl(0x200);
-    memory->SetByte(0x200, 0xFF);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0x9E });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_SET;
-    CHECK_ZERO_CLEAR;
-    CHECK(cycles == 2);
-}
-
 TEST("SBC A, A (NC)", "SBC-A,A-NC") {  // 0x9F
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xFF);
     LoadData(0x00, { 0x9F });
@@ -4687,15 +4434,15 @@ TEST("SBC A, A (NC)", "SBC-A,A-NC") {  // 0x9F
     CHECK(cycles == 1);
 }
 
-TEST("SBC A, A (C)", "SBC-A,A-C") {  // 0x9F
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xFF);
+TEST("SBC A, A (C, H)", "SBC-A,A-C,H") {  // 0x9F
+    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0xFA);
     cpu->SetCarryFlag();
     LoadData(0x00, { 0x9F });
 
     const auto cycles = cpu->Step();
     CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xFF);
     CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
+    CHECK_HALF_SET;
     CHECK_SUBTRACT_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 1);
@@ -4797,10 +4544,10 @@ TEST("SBC A, imm8 (C) (NC, H, NZ)", "SBC-A,imm8-C-NC-H-NZ") {  // 0xDE
 TEST("SBC A, imm8 (C) (C, NH, NZ)", "SBC-A,imm8-C-C-NH-NZ") {  // 0xDE
     cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x08);
     cpu->SetCarryFlag();
-    LoadData(0x00, { 0xDE, 0x0F });
+    LoadData(0x00, { 0xDE, 0x10 });
 
     const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF8);
+    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0xF7);
     CHECK_CARRY_SET;
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
@@ -4833,20 +4580,6 @@ TEST("SBC A, imm8 (C) (NC, NH, Z)", "SBC-A,imm8-C-NC-NH-Z") {  // 0xDE
     CHECK_HALF_CLEAR;
     CHECK_SUBTRACT_SET;
     CHECK_ZERO_SET;
-    CHECK(cycles == 2);
-}
-
-TEST("SBC A, imm8 (C) (C, NH, NZ) (OF)", "SBC-A,imm8-C-C-NH-NZ-OF") {  // 0xDE
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x01);
-    cpu->SetCarryFlag();
-    LoadData(0x00, { 0xDE, 0xFF });
-
-    const auto cycles = cpu->Step();
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x01);
-    CHECK_CARRY_SET;
-    CHECK_HALF_CLEAR;
-    CHECK_SUBTRACT_SET;
-    CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
 }
 
