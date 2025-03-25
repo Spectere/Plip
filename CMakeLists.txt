@@ -157,6 +157,7 @@ add_library(${lib_name}
     libplip/Core/GameBoy/GameBoyInstance.Mbc.cpp
     libplip/Core/GameBoy/GameBoyInstance.Timer.cpp
     libplip/Core/GameBoy/GameBoyInstance.Video.cpp
+    libplip/Core/GameBoy/GameBoyIoRegisters.cpp     libplip/Core/GameBoy/GameBoyIoRegisters.h
     libplip/Core/GameBoy/Mbc2Ram.cpp                libplip/Core/GameBoy/Mbc2Ram.h
                                                     libplip/Core/GameBoy/MBC_Type.h
                                                     libplip/Core/GameBoy/PPU_Mode.h

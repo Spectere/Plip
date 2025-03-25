@@ -10,9 +10,8 @@
 using Plip::Core::GameBoy::GameBoyInstance;
 
 void GameBoyInstance::PPU_Cycle() {
-    const auto currentLcdControl = m_ioRegisters->GetByte(IOReg_LcdControl);
-    const auto currentLcdStatus = m_ioRegisters->GetByte(IOReg_LcdStatus);
-
+    const auto currentLcdControl = m_ioRegisters->GetByte(IoRegister::LcdControl);
+    const auto currentLcdStatus = m_ioRegisters->GetByte(IoRegister::LcdStatus);
 
     if(BIT_TEST(m_ppuLastLcdControl, 7) && !BIT_TEST(currentLcdControl, 7)) {
         // LCD was disabled during this cycle. Flag all memory as writable and blank the screen.
@@ -37,12 +36,12 @@ void GameBoyInstance::PPU_Cycle() {
         }
     }
 
-    m_ioRegisters->SetByte(IOReg_LcdYCoordinate, m_ppuLcdYCoordinate);
+    m_ioRegisters->SetPpuYCoordinate(m_ppuLcdYCoordinate);
     m_ppuLastLcdControl = currentLcdControl;
 
     // Update the LCD STAT register.
     const auto lcdStatusNew = 0b10000000 | (m_ppuLyc ? 0b100 : 0) | static_cast<uint8_t>(m_ppuMode) | (currentLcdStatus & 0b111000);
-    m_ioRegisters->SetByte(IOReg_LcdStatus, lcdStatusNew);
+    m_ioRegisters->SetByte(IoRegister::LcdStatus, lcdStatusNew);
 }
 
 void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdStatus) {
@@ -117,8 +116,8 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) cons
 
     if(BIT_TEST(lcdControl, 0)) {
         // Background/Window drawing is enabled.
-        const auto backgroundPalette = m_ioRegisters->GetByte(IOReg_BGPalette);
-        const auto scrollY = m_ioRegisters->GetByte(IOReg_ScrollY);
+        const auto backgroundPalette = m_ioRegisters->GetByte(IoRegister::BgPalette);
+        const auto scrollY = m_ioRegisters->GetByte(IoRegister::ScrollY);
 
         const auto tilesUseBlock2 = (BIT_TEST(lcdControl, 4)) == 0;
 
@@ -172,13 +171,13 @@ void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
 
         case PPU_Mode::Output:
             m_ppuOutputStage = PPU_OutputStage::BackgroundScrolling;
-            m_ppuScrollX = m_ioRegisters->GetByte(IOReg_ScrollX);
+            m_ppuScrollX = m_ioRegisters->GetByte(IoRegister::ScrollX);
             break;
     }
 }
 
 void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) {
-    m_ppuLyc = m_ppuLcdYCoordinate == m_ioRegisters->GetByte(IOReg_LcdYCompare);
+    m_ppuLyc = m_ppuLcdYCoordinate == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
 
     if(BIT_TEST(lcdStatus, 5)) {
         // OAM interrupt.
@@ -188,7 +187,7 @@ void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) {
     if(BIT_TEST(lcdStatus, 2) && m_ppuLyc) {
         // LYC == LY interrupt.
         RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
-        m_ioRegisters->SetByte(IOReg_LcdStatus, BIT_SET(lcdStatus, 2));
+        m_ioRegisters->SetByte(IoRegister::LcdStatus, BIT_SET(lcdStatus, 2));
     }
 }
 
@@ -208,14 +207,15 @@ void GameBoyInstance::PPU_FinishTransition_VBlank(const uint8_t lcdStatus) {
 
 std::map<std::string, Plip::DebugValue> GameBoyInstance::PPU_GetDebugInfo() const {
     return {
-        { "LCDC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_LcdControl))) },
-        { "LY", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_LcdYCoordinate))) },
-        { "LYC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_LcdYCompare))) },
-        { "STAT", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_LcdStatus))) },
-        { "SCX", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_ScrollX))) },
-        { "SCY", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_ScrollY))) },
-        { "WX", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_WindowX))) },
-        { "WY", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_WindowY))) },
+        { "LCDC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::LcdControl))) },
+        { "LY", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::LcdYCoordinate))) },
+        { "LYC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::LcdYCompare))) },
+        { "STAT", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::LcdStatus))) },
+        { "SCX", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::ScrollX))) },
+        { "SCY", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::ScrollY))) },
+        { "WX", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::WindowX))) },
+        { "WY", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::WindowY))) },
+        { "BGP", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::BgPalette))) },
         { "Clock", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ppuDotClock)) },
         { "Mode", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ppuMode)) },
     };

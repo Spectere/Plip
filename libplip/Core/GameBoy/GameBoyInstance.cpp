@@ -54,13 +54,11 @@ GameBoyInstance::~GameBoyInstance() {
 }
 
 void GameBoyInstance::BootRomFlagHandler() {
-    if(m_memory->LastWrittenAddress != IoRegistersAddress + IOReg_BootRomDisable) return;
-    if(m_memory->LastWrittenValue == 0) return;
-
-    // Swap the boot ROM out for the cartridge ROM, then update the register.
+    if(!m_ioRegisters->GetBootRomDisabled()) return;
+    
+    // Swap the boot ROM out for the cartridge ROM.
     m_bootRomDisableFlag = true;
     m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
-    m_ioRegisters->SetByte(IOReg_BootRomDisable, 1);
 }
 
 void GameBoyInstance::Delta(const long ns) {
@@ -78,16 +76,13 @@ void GameBoyInstance::Delta(const long ns) {
         if(!m_bootRomDisableFlag) {
             // See if we need to disable the boot ROM.
             BootRomFlagHandler();
-        } else {
-            // Keep the register set.
-            m_ioRegisters->SetByte(IOReg_BootRomDisable, 1);
         }
 
         // Timer
         Timer_Cycle();
 
         // Input
-        InputRegisterHandler();
+        m_ioRegisters->SetJoypad(m_keypad);
 
         // MBC
         MBC_Cycle();
@@ -95,9 +90,6 @@ void GameBoyInstance::Delta(const long ns) {
         // PPU
         PPU_Cycle();
         
-        // Hold the I/O registers at expected values.
-        UndefinedRegisters();
-
         // Breakpoints
         if(!m_breakpoints.empty()) {
             auto bp = std::find(m_breakpoints.begin(), m_breakpoints.end(), m_cpu->GetPc());
@@ -186,20 +178,6 @@ void GameBoyInstance::InitCartridgeRam() {
     m_memory->AssignBlock(m_cartRam, CartRamAddress, 0x0000, 0x2000);
 }
 
-void GameBoyInstance::InputRegisterHandler() const {
-    auto inputRegister = m_ioRegisters->GetByte(IOReg_JoypadInput);
-
-    inputRegister |= 0b11001111;
-    if(!BIT_TEST(inputRegister, 5)) {
-        // Read button keys.
-        inputRegister ^= m_keypad & 0b1111;
-    } else if(!BIT_TEST(inputRegister, 4)) {
-        // Read d-pad.
-        inputRegister ^= m_keypad >> 4;
-    }
-    m_ioRegisters->SetByte(IOReg_JoypadInput, inputRegister);
-}
-
 void GameBoyInstance::ReadCartridgeFeatures() {
     const auto cartType = m_rom->GetByte(0x0147);
 
@@ -266,8 +244,8 @@ void GameBoyInstance::ReadCartridgeFeatures() {
 }
 
 void GameBoyInstance::RaiseInterrupt(const Cpu::SharpLr35902Interrupt interrupt) const {
-    const auto interruptFlag = m_ioRegisters->GetByte(IOReg_InterruptFlag);
-    m_ioRegisters->SetByte(IOReg_InterruptFlag, interruptFlag | static_cast<int>(interrupt));
+    const auto interruptFlag = m_ioRegisters->GetByte(IoRegister::InterruptFlag);
+    m_ioRegisters->SetByte(IoRegister::InterruptFlag, interruptFlag | static_cast<int>(interrupt));
 }
 
 void GameBoyInstance::ReadJoypad() {
@@ -347,30 +325,6 @@ void GameBoyInstance::Reset() {
     MBC_Init();
 
     // Reset I/O registers.
-    ResetIoRegisters();
+    m_ioRegisters->Reset();
     RegisterWriteServiced();
 }
-
-void GameBoyInstance::ResetIoRegisters() const {
-    m_ioRegisters->SetByte(IOReg_InterruptFlag, 0b11100000);
-}
-
-void GameBoyInstance::UndefinedRegisters() const {
-    /*
-     * Sets all undefined/unimplemented registers to the appropriate values.
-     */
-
-    // Serial
-    m_ioRegisters->SetByte(IOReg_SerialControl, 0b01111110);
-
-    // Undefined
-    m_ioRegisters->SetByte(0x03, 0b11111111);
-    m_ioRegisters->SetByte(0x08, 0b11111111);
-    m_ioRegisters->SetByte(0x09, 0b11111111);
-    m_ioRegisters->SetByte(0x0A, 0b11111111);
-    m_ioRegisters->SetByte(0x0B, 0b11111111);
-    m_ioRegisters->SetByte(0x0C, 0b11111111);
-    m_ioRegisters->SetByte(0x0D, 0b11111111);
-    m_ioRegisters->SetByte(0x0E, 0b11111111);
-}
-
