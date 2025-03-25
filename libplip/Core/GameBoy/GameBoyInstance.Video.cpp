@@ -1,6 +1,6 @@
 /* GameBoyInstance.Video.cpp
  *
- * Handles functions related to emulating the GameBoy's PPU.
+ * Handles functions related to emulating the Game Boy's PPU.
  */
 
 #include <cstring>

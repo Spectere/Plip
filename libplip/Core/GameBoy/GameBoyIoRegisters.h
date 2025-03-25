@@ -1,6 +1,6 @@
 /* GameBoyIoRegisters.h
  *
- * Implements the GameBoy's I/O registers.
+ * Implements the Game Boy's I/O registers.
  */
 
 #pragma once

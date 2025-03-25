@@ -1,6 +1,6 @@
 /* GameBoyInstance.h
  *
- * A GameBoy emulation core.
+ * A Game Boy emulation core.
  */
 
 #pragma once

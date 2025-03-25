@@ -1,6 +1,6 @@
 /* GameBoyIoRegisters.cpp
  *
- * Implements the GameBoy's I/O registers.
+ * Implements the Game Boy's I/O registers.
  */
 
 #include "GameBoyIoRegisters.h"

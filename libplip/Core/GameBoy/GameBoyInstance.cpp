@@ -1,6 +1,6 @@
 /* GameBoyInstance.cpp
  *
- * A GameBoy emulation core.
+ * A Game Boy emulation core.
  */
 
 #include "GameBoyInstance.h"

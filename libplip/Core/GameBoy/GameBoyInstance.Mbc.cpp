@@ -1,6 +1,6 @@
 /* GameBoyInstance.Mbc.cpp
  *
- * Emulates the GameBoy's various Memory Bank Controllers (MBC).
+ * Emulates the Game Boy's various Memory Bank Controllers (MBC).
  */
 
 #include "GameBoyInstance.h"

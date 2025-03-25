@@ -76,7 +76,7 @@ namespace Plip {
             {
                 "gameboy",
                 PlipValidCore::GameBoy,
-                "Nintendo(R) GameBoy(TM)"
+                "Nintendo(R) Game Boy(TM)"
             }
         };
     };

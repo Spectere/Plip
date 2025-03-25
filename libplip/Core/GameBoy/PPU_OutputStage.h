@@ -1,6 +1,6 @@
 /* PPU_OutputStage.h
 *
- * An enumeration of the GameBoy's pixel drawing stages.
+ * An enumeration of the Game Boy's pixel drawing stages.
  */
 
 #pragma once

@@ -1,6 +1,6 @@
 /* PPU_Mode.h
  *
- * An enumeration of the GameBoy's video modes.
+ * An enumeration of the Game Boy's video modes.
  */
 
 #pragma once

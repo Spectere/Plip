@@ -1,6 +1,6 @@
 /* MemoryBankController.h
  *
- * An enumeration containing a list of MBCs that can exist on GameBoy cartridges.
+ * An enumeration containing a list of MBCs that can exist on Game Boy cartridges.
  */
 
 #pragma once
