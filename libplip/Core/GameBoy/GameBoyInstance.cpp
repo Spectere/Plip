@@ -83,6 +83,9 @@ void GameBoyInstance::Delta(const long ns) {
             m_ioRegisters->SetByte(IOReg_BootRomDisable, 1);
         }
 
+        // Timer
+        Timer_Cycle();
+
         // Input
         InputRegisterHandler();
 
@@ -91,10 +94,7 @@ void GameBoyInstance::Delta(const long ns) {
 
         // PPU
         PPU_Cycle();
-
-        // Timer
-        Timer_Cycle();
-
+        
         // Hold the I/O registers at expected values.
         UndefinedRegisters();
 
@@ -119,7 +119,8 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "PPU", PPU_GetDebugInfo() },
         { "Timer", Timer_GetDebugInfo() },
         { "System", {
-            { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) }
+            { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) },
+            { "Boot ROM Enabled", DebugValue(!m_bootRomDisableFlag) },
         }}
     };
 }
@@ -300,7 +301,7 @@ void GameBoyInstance::RegisterWriteServiced() const {
 }
 
 void GameBoyInstance::Reset() {
-    // Clear RAM and I/O registers..
+    // Clear RAM and I/O registers.
     for(auto i = 0; i < m_workRam->GetLength(); i++)
         m_workRam->SetByte(i, 0);
 

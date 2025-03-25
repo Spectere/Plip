@@ -345,7 +345,7 @@ long SharpLr35902::DecodeAndExecute() {
 
             // According to PanDocs, no licensed DMG ROM uses STOP, so we're gonna leave
             // it like this for now. :)
-            throw "not yet implemented";
+            throw PlipEmulationException("STOP not yet implemented");
         }
 
         case 0x76: {

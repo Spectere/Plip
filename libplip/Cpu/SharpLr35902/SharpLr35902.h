@@ -63,8 +63,8 @@ namespace Plip::Cpu {
         void Push16ToStack(uint16_t value);
         void Push16ToStack(uint8_t high, uint8_t low);
         void ServiceInterrupt(int activeInterrupts);
-        bool TestConditional(int conditional) const;
+        [[nodiscard]] bool TestConditional(int conditional) const;
 
-        bool m_enableInterrupts = false;
+        bool m_enableInterrupts {};
     };
 }

@@ -52,10 +52,9 @@ namespace Plip::Core::GameBoy {
         // GameBoyInstance.Timer
         void Timer_Cycle();
         [[nodiscard]] std::map<std::string, DebugValue> Timer_GetDebugInfo() const;
+        static int Timer_GetFrequencyBit(int clockSelect);
         void Timer_Init();
-
-        uint16_t m_timerSystem {};
-
+        
         // GameBoyInstance.Video
         void PPU_Cycle();
         void PPU_DotClock(uint8_t lcdControl, uint8_t lcdStatus);
@@ -245,5 +244,10 @@ namespace Plip::Core::GameBoy {
         uint8_t m_ppuLcdXCoordinate {};
         uint8_t m_ppuLcdYCoordinate {};
         int m_ppuScrollX {};
+
+        // Timer
+        uint16_t m_timerSystem {};
+        bool m_timaQueueReload {};
+        bool m_timerBitLast {};
     };
 }

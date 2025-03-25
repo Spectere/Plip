@@ -8,34 +8,69 @@
 using Plip::Core::GameBoy::GameBoyInstance;
 
 void GameBoyInstance::Timer_Cycle() {
-    ++m_timerSystem;
+    // Read TAC
+    const auto timerControl = m_ioRegisters->GetByte(IOReg_TimerControl);
+    const auto timaEnabled = timerControl & 0b100;
+    const auto timaClock = timerControl & 0b11;
 
-    const auto lastWrittenValue = m_memory->LastWrittenValue;
-    switch(m_memory->LastWrittenAddress) {
-        case 0xFF04: {
-            m_timerSystem = 0;
-            break;
-        }
-
-        case 0xFF07: {
-            m_ioRegisters->SetByte(IOReg_TimerControl, 0b11111 | lastWrittenValue);
-            break;
-        }
-
-        default:  // There, CLion. Are you happy now?
-            break;
+    // TIMA Reload
+    if(m_timaQueueReload && m_memory->LastWrittenAddress == IoRegistersAddress + IOReg_TimerCounter) {
+        // Pretend that nothing happened, including the upcoming reload and interrupt.
+        m_timaQueueReload = false;
+        m_ioRegisters->SetByte(IOReg_TimerCounter, 0);
+        RegisterWriteServiced();
+    } else if(m_timaQueueReload) {
+        m_ioRegisters->SetByte(IOReg_TimerCounter, m_ioRegisters->GetByte(IOReg_TimerModulo));
+        RaiseInterrupt(Cpu::SharpLr35902Interrupt::Timer);
+        m_timaQueueReload = false;
     }
+    
+    // DIV
+    m_timerSystem += 4;
 
-    // Set DIV.
-    m_ioRegisters->SetByte(IOReg_Divider, m_timerSystem >> 6);
+    if(m_memory->LastWrittenAddress == IoRegistersAddress + IOReg_Divider) {
+        m_timerSystem = 0;
+        RegisterWriteServiced();
+    }
+    m_ioRegisters->SetByte(IOReg_Divider, m_timerSystem >> 8);
+    
+    // TIMA Increment
+    const auto frequencyBit = Timer_GetFrequencyBit(timaClock);
+    const auto thisBitResult = ((m_timerSystem >> frequencyBit) & 0b1) && timaEnabled;
+    if(m_timerBitLast && !thisBitResult) {
+        // Falling edge detected.
+        auto tima = m_ioRegisters->GetByte(IOReg_TimerCounter);
+        if(++tima == 0) m_timaQueueReload = true;
+        m_ioRegisters->SetByte(IOReg_TimerCounter, tima);
+    }
+    m_timerBitLast = thisBitResult;
+}
+
+int GameBoyInstance::Timer_GetFrequencyBit(const int clockSelect) {
+    switch(clockSelect) {
+        case 0b00: return 9;
+        case 0b01: return 3;
+        case 0b10: return 5;
+        case 0b11: return 7;
+        default: throw PlipEmulationException("Invalid timer clock.");
+    }
 }
 
 void GameBoyInstance::Timer_Init() {
     m_timerSystem = 0;
+
+    m_ioRegisters->SetByte(IOReg_Divider, 0x00);
+    m_ioRegisters->SetByte(IOReg_TimerCounter, 0x00);
+    m_ioRegisters->SetByte(IOReg_TimerControl, 0xF8);
+    m_ioRegisters->SetByte(IOReg_TimerModulo, 0x00);
 }
 
 std::map<std::string, Plip::DebugValue> GameBoyInstance::Timer_GetDebugInfo() const {
     return {
         { "DIV", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_Divider))) },
+        { "TIMA", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_TimerCounter))) },
+        { "TMA", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_TimerModulo))) },
+        { "TAC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IOReg_TimerControl))) },
+        { "TIMA Reload", DebugValue(m_timaQueueReload) },
     };
 }
