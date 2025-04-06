@@ -36,7 +36,7 @@ void GameBoyInstance::PPU_Cycle() {
         }
     }
 
-    m_ioRegisters->SetPpuYCoordinate(m_ppuLcdYCoordinate);
+    m_ioRegisters->Video_SetYCoordinate(m_ppuLcdYCoordinate);
     m_ppuLastLcdControl = currentLcdControl;
 
     // Update the LCD STAT register.
@@ -157,7 +157,7 @@ void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
             if(BIT_TEST(lcdStatus, 3)) {
-                RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+                m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
             }
             break;
 
@@ -181,12 +181,12 @@ void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) {
 
     if(BIT_TEST(lcdStatus, 5)) {
         // OAM interrupt.
-        RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+        m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
     }
 
     if(BIT_TEST(lcdStatus, 2) && m_ppuLyc) {
         // LYC == LY interrupt.
-        RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+        m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
         m_ioRegisters->SetByte(IoRegister::LcdStatus, BIT_SET(lcdStatus, 2));
     }
 }
@@ -199,9 +199,9 @@ void GameBoyInstance::PPU_FinishTransition_VBlank(const uint8_t lcdStatus) {
 
     m_ppuLcdOff = false;
 
-    RaiseInterrupt(Cpu::SharpLr35902Interrupt::VBlank);
+    m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::VBlank);
     if(BIT_TEST(lcdStatus, 4)) {
-        RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+        m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
     }
 }
 

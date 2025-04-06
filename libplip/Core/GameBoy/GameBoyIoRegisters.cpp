@@ -13,10 +13,10 @@ GameBoyIoRegisters::GameBoyIoRegisters() {
     Reset();
 }
 
-uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) {
+uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
     switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
         /* $FF00 */ case IoRegister::JoypadInput: { return m_regJoypad; }
-        /* $FF04 */ case IoRegister::Divider: { return m_regDivider; }
+        /* $FF04 */ case IoRegister::Divider: { return m_timerRegister >> 8; }
         /* $FF05 */ case IoRegister::TimerCounter: { return m_regTimerCounter; }
         /* $FF06 */ case IoRegister::TimerModulo: { return m_regTimerModulo; }
         /* $FF07 */ case IoRegister::TimerControl: { return m_regTimerControl; }
@@ -36,12 +36,16 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) {
     }
 }
 
+void GameBoyIoRegisters::RaiseInterrupt(const Cpu::SharpLr35902Interrupt interrupt) {
+    m_interruptFlag = m_interruptFlag | static_cast<int>(interrupt);
+}
+
 void GameBoyIoRegisters::Reset() {
     m_bootRomDisabled = false;
     m_interruptFlag = 0;
 
     // Timer
-    m_regDivider = 0;
+    m_timerRegister = 0;
     m_regTimerCounter = 0;
     m_regTimerControl = 0xF8;
     m_regTimerModulo = 0;
@@ -49,6 +53,7 @@ void GameBoyIoRegisters::Reset() {
 
 void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t value) {
     // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+    // ReSharper disable once CppIncompleteSwitchStatement
     switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
         // $FF00
         case IoRegister::JoypadInput: {
@@ -64,13 +69,25 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF04
         case IoRegister::Divider: {
-            m_regDivider = 0;
+            m_timerDividerReset = true;
             break;
         }
 
         // $FF05
         case IoRegister::TimerCounter: {
-            m_regTimerCounter = value;
+            switch(m_timerTimaReloadStatus) {
+                case NoReload:
+                    m_regTimerCounter = value;
+                    break;
+                case ReloadScheduled:
+                    // Abort TMA reload and prevent interrupt from being sent.
+                    m_regTimerCounter = value;
+                    m_timerTimaReloadStatus = NoReload;
+                    break;
+                case ReloadJustOccurred:
+                    // Cancel attempted write.
+                    break;
+            }
             break;
         }
 
@@ -149,5 +166,53 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             }
             break;
         }
+    }
+}
+
+void GameBoyIoRegisters::Timer_Cycle() {
+    // Perform TIMA reload if necessary.
+    if(m_timerTimaReloadStatus == ReloadScheduled) {
+        RaiseInterrupt(Cpu::SharpLr35902Interrupt::Timer);
+        m_regTimerControl = m_regTimerModulo;
+        m_timerTimaReloadStatus = ReloadJustOccurred;
+    } else if(m_timerTimaReloadStatus == ReloadJustOccurred) {
+        m_timerTimaReloadStatus = NoReload;
+    }
+
+    // Either reset or increment the timer.
+    if(m_timerDividerReset) {
+        m_timerRegister = 0;
+        m_timerDividerReset = false;
+    } else {
+        m_timerRegister += 4;
+    }
+
+    // Work out which bit should potentially increment TIMA.
+    const auto timerControl = m_regTimerControl;
+    const auto timaEnabled = timerControl & 0b100;
+    const auto timaClock = timerControl & 0b11;
+    
+    const auto frequencyBit = Timer_GetFrequencyBit(timaClock);
+    const bool thisBitResult = ((m_timerRegister >> frequencyBit) & 0b1) && timaEnabled;
+
+    Timer_FallingEdgeDetection(thisBitResult);
+    m_timerLastBitResult = thisBitResult;
+}
+
+void GameBoyIoRegisters::Timer_FallingEdgeDetection(const bool thisBit) {
+    if(!thisBit && m_timerLastBitResult) {
+        if(++m_regTimerCounter == 0) {
+            m_timerTimaReloadStatus = ReloadScheduled;
+        }
+    }
+}
+
+int GameBoyIoRegisters::Timer_GetFrequencyBit(const int clockSelect) {
+    switch(clockSelect) {
+        case 0b00: return 9;
+        case 0b01: return 3;
+        case 0b10: return 5;
+        case 0b11: return 7;
+        default: throw PlipEmulationException("Invalid timer clock.");
     }
 }

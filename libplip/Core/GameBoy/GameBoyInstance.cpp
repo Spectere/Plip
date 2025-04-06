@@ -71,6 +71,18 @@ void GameBoyInstance::Delta(const long ns) {
     do {
         // Run CPU for one cycle.
         m_cpu->Cycle();
+        
+        // Timer
+        m_ioRegisters->Timer_Cycle();
+
+        // Input
+        m_ioRegisters->Joypad_SetMatrix(m_keypad);
+
+        // MBC
+        MBC_Cycle();
+
+        // PPU
+        PPU_Cycle();
 
         // Handle ROM disable flag.
         if(!m_bootRomDisableFlag) {
@@ -78,18 +90,6 @@ void GameBoyInstance::Delta(const long ns) {
             BootRomFlagHandler();
         }
 
-        // Timer
-        Timer_Cycle();
-
-        // Input
-        m_ioRegisters->SetJoypad(m_keypad);
-
-        // MBC
-        MBC_Cycle();
-
-        // PPU
-        PPU_Cycle();
-        
         // Breakpoints
         if(!m_breakpoints.empty()) {
             auto bp = std::find(m_breakpoints.begin(), m_breakpoints.end(), m_cpu->GetPc());
@@ -109,10 +109,18 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "CPU (Other)", m_cpu->GetDebugInfo() },
         { "MBC", MBC_GetDebugInfo() },
         { "PPU", PPU_GetDebugInfo() },
-        { "Timer", Timer_GetDebugInfo() },
+        { "Timer", {
+            { "DIV", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::Divider))) },
+            { "TIMA", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::TimerCounter))) },
+            { "TMA", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::TimerModulo))) },
+            { "TAC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::TimerControl))) },
+            { "TIMA Reload", DebugValue(m_timaQueueReload) },
+        }},
         { "System", {
             { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) },
             { "Boot ROM Enabled", DebugValue(!m_bootRomDisableFlag) },
+            { "IE", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_highRam->GetByte(0x80))) },
+            { "IF", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::InterruptFlag))) },
         }}
     };
 }
@@ -243,11 +251,6 @@ void GameBoyInstance::ReadCartridgeFeatures() {
     m_hasSensor = cartType == 0x22;
 }
 
-void GameBoyInstance::RaiseInterrupt(const Cpu::SharpLr35902Interrupt interrupt) const {
-    const auto interruptFlag = m_ioRegisters->GetByte(IoRegister::InterruptFlag);
-    m_ioRegisters->SetByte(IoRegister::InterruptFlag, interruptFlag | static_cast<int>(interrupt));
-}
-
 void GameBoyInstance::ReadJoypad() {
     m_keypad = 0;
     READ_INPUT(InputRight);
@@ -289,9 +292,6 @@ void GameBoyInstance::Reset() {
     for(auto i = 0; i < m_oam->GetLength(); i++)
         m_oam->SetByte(i, 0);
 
-    for(auto i = 0; i < m_ioRegisters->GetLength(); i++)
-        m_ioRegisters->SetByte(i, 0);
-
     for(auto i = 0; i < m_highRam->GetLength(); i++)
         m_highRam->SetByte(i, 0);
 
@@ -317,9 +317,6 @@ void GameBoyInstance::Reset() {
 
     // Reset PPU.
     PPU_Reset();
-
-    // Reset timer.
-    Timer_Init();
 
     // Perform any necessary MBC initialization.
     MBC_Init();

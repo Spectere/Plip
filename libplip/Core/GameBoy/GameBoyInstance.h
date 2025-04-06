@@ -31,7 +31,6 @@ namespace Plip::Core::GameBoy {
         // GameBoyInstance
         void BootRomFlagHandler();
         void InitCartridgeRam();
-        void RaiseInterrupt(Cpu::SharpLr35902Interrupt interrupt) const;
         void ReadJoypad();
         void ReadCartridgeFeatures();
         void RegisterInput() const;
@@ -47,12 +46,6 @@ namespace Plip::Core::GameBoy {
         void MBC_Remap(bool remapRom, bool remapRam) const;
         [[nodiscard]] std::map<std::string, DebugValue> MBC_GetDebugInfo() const;
 
-        // GameBoyInstance.Timer
-        void Timer_Cycle();
-        [[nodiscard]] std::map<std::string, DebugValue> Timer_GetDebugInfo() const;
-        static int Timer_GetFrequencyBit(int clockSelect);
-        void Timer_Init();
-        
         // GameBoyInstance.Video
         void PPU_Cycle();
         void PPU_DotClock(uint8_t lcdControl, uint8_t lcdStatus);

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "../../Cpu/SharpLr35902/SharpLr35902.h"
 #include "../../Memory/PlipMemory.h"
 
 namespace Plip::Core::GameBoy {
@@ -82,41 +83,59 @@ namespace Plip::Core::GameBoy {
             SetByte(static_cast<IoRegister>(address), value);
         }
 
-        uint8_t GetByte(IoRegister ioRegister);
+        uint8_t GetByte(IoRegister ioRegister) const;
         uint32_t GetLength() override { return Length; }
         void Reset();
         void SetByte(IoRegister ioRegister, uint8_t value);
 
         bool GetBootRomDisabled() const { return m_bootRomDisabled; }
+        void RaiseInterrupt(Cpu::SharpLr35902Interrupt interrupt);
 
         // Joypad
-        void SetJoypad(const uint8_t inputsPressed) { m_inputsPressed = inputsPressed; }
+        void Joypad_SetMatrix(const uint8_t inputsPressed) { m_inputsPressed = inputsPressed; }
 
         // Timer
-        void SetTimerDivider(uint8_t value) { m_regDivider = value; }
+        void Timer_Cycle();
+        void Timer_FallingEdgeDetection(bool thisBit);
+        static int Timer_GetFrequencyBit(int clockSelect);
 
         // Video
-        void SetPpuYCoordinate(const uint8_t value) { m_regLcdYCoordinate = value; }
+        void Video_SetYCoordinate(const uint8_t value) { m_regLcdYCoordinate = value; }
 
     private:
         constexpr static uint32_t Length = 0x80;
 
         static uint8_t PadValue(const uint8_t value, const uint8_t bits) { return (0b11111111 << bits) | value; }  // Pull unused bits high.
 
-        // Internal data
+        /*
+         * Internal Data
+         */
         bool m_bootRomDisabled {};
         uint8_t m_interruptFlag {};
+
+        // Joypad
         uint8_t m_inputsPressed {};
 
+        // Timer
+        enum TimaReloadStatus {
+            NoReload,
+            ReloadScheduled,
+            ReloadJustOccurred,
+        };
+        
+        bool m_timerDividerReset {};
+        bool m_timerLastBitResult {};
+        TimaReloadStatus m_timerTimaReloadStatus {};
+        uint16_t m_timerRegister {};
+
         /*
-         * Register Values
+         * Register Values (if they aren't derived from the above)
          */
 
         // Joypad
         /* $FF00 */ uint8_t m_regJoypad {};
 
         // Timer
-        /* $FF04 */ uint8_t m_regDivider {};
         /* $FF05 */ uint8_t m_regTimerCounter {};
         /* $FF06 */ uint8_t m_regTimerModulo {};
         /* $FF07 */ uint8_t m_regTimerControl {};
