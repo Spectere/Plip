@@ -100,6 +100,10 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF07
         case IoRegister::TimerControl: {
             m_regTimerControl = PadValue(value, 3);
+
+            const auto thisBitResult = m_timerLastBitResult && m_regTimerControl & 0b100;
+            Timer_FallingEdgeDetection(thisBitResult);
+            
             break;
         }
 
@@ -184,7 +188,7 @@ void GameBoyIoRegisters::Timer_Cycle() {
         m_timerRegister = 0;
         m_timerDividerReset = false;
     } else {
-        m_timerRegister += 4;
+        m_timerRegister += 4;  // 4 T-cycles per M-cycle
     }
 
     // Work out which bit should potentially increment TIMA.
@@ -196,7 +200,6 @@ void GameBoyIoRegisters::Timer_Cycle() {
     const bool thisBitResult = ((m_timerRegister >> frequencyBit) & 0b1) && timaEnabled;
 
     Timer_FallingEdgeDetection(thisBitResult);
-    m_timerLastBitResult = thisBitResult;
 }
 
 void GameBoyIoRegisters::Timer_FallingEdgeDetection(const bool thisBit) {
@@ -205,6 +208,7 @@ void GameBoyIoRegisters::Timer_FallingEdgeDetection(const bool thisBit) {
             m_timerTimaReloadStatus = ReloadScheduled;
         }
     }
+    m_timerLastBitResult = thisBit;
 }
 
 int GameBoyIoRegisters::Timer_GetFrequencyBit(const int clockSelect) {
