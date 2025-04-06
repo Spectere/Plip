@@ -100,10 +100,6 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF07
         case IoRegister::TimerControl: {
             m_regTimerControl = PadValue(value, 3);
-
-            const auto thisBitResult = m_timerLastBitResult && m_regTimerControl & 0b100;
-            Timer_FallingEdgeDetection(thisBitResult);
-            
             break;
         }
 
