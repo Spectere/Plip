@@ -36,6 +36,17 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
     }
 }
 
+void GameBoyIoRegisters::Joypad_Cycle() {
+    m_regJoypad |= 0b11001111;
+    if(!BIT_TEST(m_regJoypad, 5)) {
+        // Read buttons.
+        m_regJoypad ^= m_inputsPressed & 0b1111;
+    } else if(!BIT_TEST(m_regJoypad, 4)) {
+        // Read d-pad.
+        m_regJoypad ^= m_inputsPressed >> 4;
+    }
+}
+
 void GameBoyIoRegisters::RaiseInterrupt(const Cpu::SharpLr35902Interrupt interrupt) {
     m_interruptFlag = m_interruptFlag | static_cast<int>(interrupt);
 }
@@ -57,13 +68,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
     switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
         // $FF00
         case IoRegister::JoypadInput: {
-            if(!BIT_TEST(value, 5)) {
-                // Buttons
-                m_regJoypad = PadValue(m_inputsPressed, 4);
-            } else if(!BIT_TEST(value, 4)) {
-                // D-pad
-                m_regJoypad = PadValue(m_inputsPressed >> 4, 4);
-            }
+            m_regJoypad = value;
             break;
         }
 
@@ -117,7 +122,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF41
         case IoRegister::LcdStatus: {
-            m_regLcdStatus = PadValue(value, 7);
+            m_regLcdStatus = PadValue(value & 0b11111000, 7);
             break;
         }
 

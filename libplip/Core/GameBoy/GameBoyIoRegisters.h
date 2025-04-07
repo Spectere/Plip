@@ -92,6 +92,7 @@ namespace Plip::Core::GameBoy {
         void RaiseInterrupt(Cpu::SharpLr35902Interrupt interrupt);
 
         // Joypad
+        void Joypad_Cycle();
         void Joypad_SetMatrix(const uint8_t inputsPressed) { m_inputsPressed = inputsPressed; }
 
         // Timer
@@ -115,6 +116,7 @@ namespace Plip::Core::GameBoy {
 
         // Joypad
         uint8_t m_inputsPressed {};
+        uint8_t m_inputsSelected {};
 
         // Timer
         enum TimaReloadStatus {

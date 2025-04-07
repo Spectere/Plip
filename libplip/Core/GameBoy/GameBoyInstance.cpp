@@ -77,6 +77,7 @@ void GameBoyInstance::Delta(const long ns) {
 
         // Input
         m_ioRegisters->Joypad_SetMatrix(m_keypad);
+        m_ioRegisters->Joypad_Cycle();
 
         // MBC
         MBC_Cycle();
