@@ -23,6 +23,8 @@ void GameBoyInstance::MBC_Cycle() {
             registerWriteServiced = MBC_Cycle_MBC2(lastWrittenAddress, lastWrittenValue);
             break;
         case MBC_Type::Mbc3:
+            registerWriteServiced = MBC_Cycle_MBC3(lastWrittenAddress, lastWrittenValue);
+            break;
         case MBC_Type::Mbc5:
         case MBC_Type::Mbc6:
         case MBC_Type::Mbc7:
@@ -106,6 +108,51 @@ bool GameBoyInstance::MBC_Cycle_MBC2(const uint16_t lastWrittenAddress, const ui
     } else {
         // RAM enable/disable.
         MBC_EnableRam((lastWrittenValue & 0xF) == 0xA);
+    }
+
+    return true;
+}
+
+bool GameBoyInstance::MBC_Cycle_MBC3(const uint16_t lastWrittenAddress, const uint8_t lastWrittenValue) {
+    bool bankSwitch = false;
+
+    if(lastWrittenAddress < 0x2000) {
+        // RAM enable.
+        MBC_EnableRam((lastWrittenValue & 0xF) == 0xA);
+    } else if(lastWrittenAddress < 0x4000) {
+        // Bank register 0 (ROM bank selector).
+        m_mbcBankRegister0 = lastWrittenValue & 0b01111111;
+        bankSwitch = true;
+    } else if(lastWrittenAddress < 0x6000) {
+        // Bank register 1 (RAM bank or RTC register selector).
+        if(lastWrittenValue < 0x08) {
+            m_mbcBankRegister1 = lastWrittenValue;
+            bankSwitch = true;
+        } else {
+            // RTC register.
+            // TODO: Implement RTC.
+        }
+    } else if(lastWrittenAddress < 0x8000) {
+        // Latch clock data.
+        // TODO: Implement RTC.
+    } else if(lastWrittenAddress >= 0xA000 && lastWrittenAddress < 0xC000) {
+        // RTC register 08-0C.
+        // TODO: Implement RTC.
+    } else {
+        return false;
+    }
+
+    // Swap banks if requested.
+    if(bankSwitch) {
+        m_mbcRom1Bank = m_mbcBankRegister0;
+
+        if(m_mbcRom1Bank == 0) {
+            // If register 0 is 0, automatically bump it to 1.
+            m_mbcRom1Bank = 1;
+        }
+        
+        // Remap memory.
+        MBC_Remap(true, true);
     }
 
     return true;

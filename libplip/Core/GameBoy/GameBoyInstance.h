@@ -51,6 +51,7 @@ namespace Plip::Core::GameBoy {
         void MBC_Cycle();
         bool MBC_Cycle_MBC1(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
         bool MBC_Cycle_MBC2(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
+        bool MBC_Cycle_MBC3(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
         void MBC_EnableRam(bool enable);
         void MBC_Init();
         void MBC_Init_MBC2();
