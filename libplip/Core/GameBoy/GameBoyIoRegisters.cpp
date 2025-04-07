@@ -27,7 +27,10 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF43 */ case IoRegister::ScrollX: { return m_regScrollX; }
         /* $FF44 */ case IoRegister::LcdYCoordinate: { return m_regLcdYCoordinate; }
         /* $FF45 */ case IoRegister::LcdYCompare: { return m_regLcdYCompare; }
+        /* $FF46 */ case IoRegister::OamDmaSourceAddress: { return m_regOamDmaAddress; }
         /* $FF47 */ case IoRegister::BgPalette: { return m_regBgPalette; }
+        /* $FF48 */ case IoRegister::Obj0Palette: { return m_regObj0Palette; }
+        /* $FF49 */ case IoRegister::Obj1Palette: { return m_regObj1Palette; }
         /* $FF4A */ case IoRegister::WindowY: { return m_regWindowY; }
         /* $FF4B */ case IoRegister::WindowX: { return m_regWindowX; }
         /* $FF50 */ case IoRegister::BootRomDisable: { return m_bootRomDisabled ? 0b1 : 0b0; }
@@ -146,9 +149,28 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             break;
         }
 
+        // $FF46
+        case IoRegister::OamDmaSourceAddress: {
+            m_videoPerformOamDmaCopy = true;
+            m_regOamDmaAddress = value;
+            break;
+        }
+
         // $FF47
         case IoRegister::BgPalette: {
             m_regBgPalette = value;
+            break;
+        }
+
+        // $FF48
+        case IoRegister::Obj0Palette: {
+            m_regObj0Palette = value;
+            break;
+        }
+
+        // $FF49
+        case IoRegister::Obj1Palette: {
+            m_regObj1Palette = value;
             break;
         }
 

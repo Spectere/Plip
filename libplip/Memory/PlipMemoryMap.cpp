@@ -66,11 +66,11 @@ std::tuple<Plip::PlipMemory*, uint32_t> PlipMemoryMap::FindAddress(const uint32_
     return { nullptr, 0 };
 }
 
-uint8_t PlipMemoryMap::GetByte(const uint32_t address) const {
+uint8_t PlipMemoryMap::GetByte(const uint32_t address, const bool privileged) const {
     auto [ memory, offset ] = FindAddress(address);
 
     if(memory == nullptr) return m_invalidByte;
-    return memory->GetByte(offset);
+    return memory->GetByte(offset, privileged);
 }
 
 uint32_t PlipMemoryMap::GetLength() {
@@ -91,14 +91,14 @@ PlipMemoryMap::BlockRangeResult PlipMemoryMap::IsBlockInRange(const PlipMemoryMa
     return PartiallyInRange;
 }
 
-void PlipMemoryMap::SetByte(const uint32_t address, const uint8_t value) {
+void PlipMemoryMap::SetByte(const uint32_t address, const uint8_t value, const bool privileged) {
     LastWrittenAddress = address;
     LastWrittenValue = value;
 
     auto [ memory, offset ] = FindAddress(address);
 
     if(memory == nullptr) return;
-    memory->SetByte(offset, value);
+    memory->SetByte(offset, value, privileged);
 }
 
 void PlipMemoryMap::SetInvalidByte(const uint8_t value) {

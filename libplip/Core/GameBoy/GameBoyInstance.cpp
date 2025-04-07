@@ -61,6 +61,23 @@ void GameBoyInstance::BootRomFlagHandler() {
     m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
 }
 
+void GameBoyInstance::CompleteOamDmaCopy() const {
+    // This is the cycle that the copy would normally complete. Flag the inaccessible
+    // memory as accessible again.
+    m_rom->SetReadable(true);
+
+    m_workRam->SetReadable(true);
+    m_workRam->SetWritable(true);
+
+    if(m_cartRamBanks > 0) {
+        m_cartRam->SetReadable(true);
+        m_cartRam->SetWritable(true);
+    }
+
+    m_oam->SetReadable(true);
+    m_oam->SetWritable(true);
+}
+
 void GameBoyInstance::Delta(const long ns) {
     auto timeRemaining = ns;
     const auto cycleTime = m_cpu->GetCycleTime();
@@ -74,6 +91,17 @@ void GameBoyInstance::Delta(const long ns) {
         
         // Timer
         m_ioRegisters->Timer_Cycle();
+
+        // OAM DMA Copy
+        if(const auto sourceAddress = m_ioRegisters->Video_GetOamDmaCopyAddress()
+            ; sourceAddress >= 0) {
+            m_ioRegisters->Video_AcknowledgeOamDmaCopy();
+            PerformOamDmaCopy(sourceAddress << 8);
+        }
+
+        if(m_ppuDmaCyclesRemaining-- == 0) {
+            CompleteOamDmaCopy();
+        }
 
         // Input
         m_ioRegisters->Joypad_SetMatrix(m_keypad);
@@ -185,6 +213,30 @@ void GameBoyInstance::InitCartridgeRam() {
 
     m_cartRam = new PlipMemoryRam(8192 * m_cartRamBanks, 0xFF);
     m_memory->AssignBlock(m_cartRam, CartRamAddress, 0x0000, 0x2000);
+}
+
+void GameBoyInstance::PerformOamDmaCopy(const int sourceAddress) {
+    m_ppuDmaCyclesRemaining = 160;  // passes Mooneye oam_dma_timing when set to 243?! wha?
+
+    // Flag ROM, WRAM, cart RAM, and OAM as inaccessible until the process is complete.
+    m_rom->SetReadable(false);
+
+    m_workRam->SetReadable(false);
+    m_workRam->SetWritable(false);
+
+    if(m_cartRamBanks > 0) {
+        m_cartRam->SetReadable(false);
+        m_cartRam->SetWritable(false);
+    }
+
+    m_oam->SetReadable(false);
+    m_oam->SetWritable(false);
+
+    // Perform the copy.
+    for(auto i = 0; i < 0xA0; ++i) {
+        const auto mem = m_memory->GetByte(sourceAddress | i, true);
+        m_oam->SetByte(i, mem, true);
+    }
 }
 
 void GameBoyInstance::ReadCartridgeFeatures() {

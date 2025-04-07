@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "GameBoyIoRegisters.h"
 #include "Mbc2Ram.h"
 #include "MBC_Type.h"
@@ -28,9 +30,18 @@ namespace Plip::Core::GameBoy {
         void Reset() override;
 
     private:
+        struct PPU_Object {
+            uint8_t Y;
+            uint8_t X;
+            uint8_t Index;
+            uint8_t Flags;
+        };
+
         // GameBoyInstance
         void BootRomFlagHandler();
+        void CompleteOamDmaCopy() const;
         void InitCartridgeRam();
+        void PerformOamDmaCopy(int sourceAddress);
         void ReadJoypad();
         void ReadCartridgeFeatures();
         void RegisterInput() const;
@@ -52,7 +63,8 @@ namespace Plip::Core::GameBoy {
         bool PPU_DotClock_OamScan();
         bool PPU_DotClock_Output(uint8_t lcdControl);
         void PPU_DotClock_Output_Drawing(uint8_t lcdControl) const;
-        void PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, uint8_t offsetX, uint8_t offsetY, uint16_t tileMapAddress, uint16_t tileDataAddress0, uint16_t tileDataAddress1) const;
+        int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, uint8_t offsetX, uint8_t offsetY, uint16_t tileMapAddress, uint16_t tileDataAddress0, uint16_t tileDataAddress1) const;
+        void PPU_DrawObjects(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor) const;
         void PPU_FinishTransition(uint8_t lcdStatus);
         void PPU_FinishTransition_OamScan(uint8_t lcdStatus);
         void PPU_FinishTransition_VBlank(uint8_t lcdStatus);
@@ -165,12 +177,18 @@ namespace Plip::Core::GameBoy {
         static constexpr auto PPU_MapTileCountX = 256 / PPU_TileSizeX;
         static constexpr auto PPU_MapTileCountY = 256 / PPU_TileSizeY;
 
+        static constexpr auto PPU_MaximumObjectCount = 40;
+        static constexpr auto PPU_ObjectsPerScanline = 10;
+
         int m_ppuDotClock {};
+        int m_ppuDmaCyclesRemaining = -1;
         int m_ppuDrawTime {};
         uint8_t m_ppuLastLcdControl {};
         bool m_ppuLcdOff = false;
         bool m_ppuLyc {};
         PPU_Mode m_ppuMode {};
+        bool m_ppuOamScanComplete = false;
+        std::vector<PPU_Object> m_ppuObjectDrawList {};
         int m_ppuOutputClock {};
         PPU_OutputStage m_ppuOutputStage {};
         uint8_t m_ppuLcdXCoordinate {};

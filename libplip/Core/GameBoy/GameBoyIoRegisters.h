@@ -101,6 +101,8 @@ namespace Plip::Core::GameBoy {
         static int Timer_GetFrequencyBit(int clockSelect);
 
         // Video
+        void Video_AcknowledgeOamDmaCopy() { m_videoPerformOamDmaCopy = false; }
+        int Video_GetOamDmaCopyAddress() const { return m_videoPerformOamDmaCopy ? m_regOamDmaAddress : -1; }
         void Video_SetLcdStatus(const uint8_t value) { m_regLcdStatus = (m_regLcdStatus & 0b11111000) | (value & 0b111); }
         void Video_SetYCoordinate(const uint8_t value) { m_regLcdYCoordinate = value; }
 
@@ -131,6 +133,9 @@ namespace Plip::Core::GameBoy {
         TimaReloadStatus m_timerTimaReloadStatus {};
         uint16_t m_timerRegister {};
 
+        // Video
+        bool m_videoPerformOamDmaCopy {};
+
         /*
          * Register Values (if they aren't derived from the above)
          */
@@ -150,7 +155,10 @@ namespace Plip::Core::GameBoy {
         /* $FF43 */ uint8_t m_regScrollX {};
         /* $FF44 */ uint8_t m_regLcdYCoordinate {};
         /* $FF45 */ uint8_t m_regLcdYCompare {};
+        /* $FF46 */ uint8_t m_regOamDmaAddress {};
         /* $FF47 */ uint8_t m_regBgPalette {};
+        /* $FF48 */ uint8_t m_regObj0Palette {};
+        /* $FF49 */ uint8_t m_regObj1Palette {};
         /* $FF4A */ uint8_t m_regWindowY {};
         /* $FF4B */ uint8_t m_regWindowX {};
     };

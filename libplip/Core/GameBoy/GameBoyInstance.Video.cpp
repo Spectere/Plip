@@ -3,6 +3,7 @@
  * Handles functions related to emulating the Game Boy's PPU.
  */
 
+#include <algorithm>
 #include <cstring>
 
 #include "GameBoyInstance.h"
@@ -77,7 +78,51 @@ void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdSt
 }
 
 bool GameBoyInstance::PPU_DotClock_OamScan() {
-    // TODO: Sprite support. In the meantime, just kill time.
+    if(!m_ppuOamScanComplete) {
+        std::vector<PPU_Object> candidates;
+
+        const auto lcdControl = m_ioRegisters->GetByte(IoRegister::LcdControl);
+        const bool tallSprites = BIT_TEST(lcdControl, 2);
+    
+        // Clear draw list array.
+        m_ppuObjectDrawList.clear();
+
+        // Determine drawing candidates for this scanline.
+        for(auto i = 0; i < PPU_MaximumObjectCount; ++i) {
+            const auto y = m_oam->GetByte(i * 4);
+
+            const auto minY = y - 16;
+            const auto maxY = minY + (tallSprites ? 16 : 8);
+
+            if((minY <= m_ppuLcdYCoordinate) && (m_ppuLcdYCoordinate < maxY)) {
+                // Object is a valid candidate.
+                candidates.push_back(PPU_Object {
+                    .Y = y,
+                    .X = m_oam->GetByte(i * 4 + 1),
+                    .Index = m_oam->GetByte(i * 4 + 2),
+                    .Flags = m_oam->GetByte(i * 4 + 3)
+                });
+            }
+        }
+
+        // Sort candidates by their X position.
+        std::sort(candidates.begin(), candidates.end(), [](const PPU_Object lhs, const PPU_Object rhs) {
+            return lhs.X < rhs.X;
+        });
+
+        // Copy up to PPU_ObjectsPerScanline objects into the drawing list.
+        int objectsCopied = 0;
+        for(auto candidate : candidates) {
+            m_ppuObjectDrawList.push_back(candidate);
+            if(++objectsCopied == PPU_ObjectsPerScanline) {
+                break;
+            }
+        }
+
+        // Done!
+        m_ppuOamScanComplete = true;
+    }
+    
     return m_ppuDotClock < PPU_OamScanTime;
 }
 
@@ -113,6 +158,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) cons
         PPU_Plot(255, pixelOffset);
     }
 
+    int lastBgColor = 0;
     if(BIT_TEST(lcdControl, 0)) {
         // Background/Window drawing is enabled.
         const auto backgroundPalette = m_ioRegisters->GetByte(IoRegister::BgPalette);
@@ -124,7 +170,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) cons
         const auto tileDataAddressLow = PPU_TileBase + (tilesUseBlock2 ? 0x1000 : 0);
         constexpr uint16_t tileDataAddressHigh = PPU_TileBase + 0x800;
 
-        PPU_DrawBackgroundOrWindow(pixelOffset, false, backgroundPalette, m_ppuScrollX, scrollY, backgroundTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
+        lastBgColor = PPU_DrawBackgroundOrWindow(pixelOffset, false, backgroundPalette, m_ppuScrollX, scrollY, backgroundTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
 
         if(BIT_TEST(lcdControl, 5)) {
             // Window drawing is enabled.
@@ -133,21 +179,29 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) cons
 
             const auto windowTileMapAddress = PPU_TileMapBase + (BIT_TEST(lcdControl, 6) ? PPU_TileMapBlockOffset : 0);
 
-            PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, windowX, windowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
+            const auto windowColor = PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, windowX, windowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
+            if(windowColor >= 0) lastBgColor = windowColor;
         }
     } else {
         // Background/Window drawing is disabled.
         PPU_Plot(0b00, pixelOffset);
     }
+
+    if(BIT_TEST(lcdControl, 1)) {
+        // Object drawing is enabled.
+        for(const auto object : m_ppuObjectDrawList) {
+            PPU_DrawObjects(pixelOffset, object, BIT_TEST(lcdControl, 2), lastBgColor);
+        }
+    }
 }
 
-void GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const uint8_t offsetX, const uint8_t offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1) const {
+int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const uint8_t offsetX, const uint8_t offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1) const {
     uint8_t surfacePixelX {};
     uint8_t surfacePixelY {};
 
     if(isWindow) {
-        if(offsetX > 166 || offsetY > 143) { return; }  // Window is off screen.
-        if(m_ppuLcdXCoordinate < offsetX || m_ppuLcdYCoordinate < offsetY) { return; }  // Current pixel is up/left of window.
+        if(offsetX > 166 || offsetY > 143) { return -1; }  // Window is off screen.
+        if(m_ppuLcdXCoordinate < offsetX || m_ppuLcdYCoordinate < offsetY) { return -1; }  // Current pixel is up/left of window.
 
         surfacePixelX = m_ppuLcdXCoordinate - offsetX;
         surfacePixelY = m_ppuLcdYCoordinate - offsetY;
@@ -175,6 +229,56 @@ void GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, con
                          | ((pixelDataLow >> tileShift) & 0b1);
     const auto pixelColor = (palette >> (pixelData * 2)) & 0b11;
 
+    PPU_Plot(pixelColor, pixelOffset);
+    return pixelColor;
+}
+
+void GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, const PPU_Object object, const bool tallSprites, const int thisBgColor) const {
+    const auto objX = object.X - 8;
+    const auto objY = object.Y - 16;
+
+    if((m_ppuLcdXCoordinate < objX) || (m_ppuLcdXCoordinate >= objX + 8)) {
+        // Sprite does not exist on the current X coordinate.
+        return;
+    }
+
+    auto objPixelX = m_ppuLcdXCoordinate - objX;
+    auto objPixelY = m_ppuLcdYCoordinate - objY;
+    const auto objPalette = m_ioRegisters->GetByte(BIT_TEST(object.Flags, 4) ? IoRegister::Obj1Palette : IoRegister::Obj0Palette);
+
+    auto tileIndex = object.Index;
+    if(tallSprites) {
+        if(objPixelY < 8) {
+            // The base tile for 8x16 sprites always has its LSB set to 0.
+            tileIndex &= 0b11111110;
+        } else {
+            // Its second tile always has its LSB set to 1.
+            tileIndex |= 0b1;
+        }
+    }
+
+    if(BIT_TEST(object.Flags, 5)) {
+        // Flip horizontally.
+        objPixelX = 7 - objPixelX;
+    }
+
+    if(BIT_TEST(object.Flags, 6)) {
+        // Flip vertically.
+        objPixelY = 7 - objPixelY;
+    }
+    
+    const auto lineOffset = objPixelY * 2;
+    const auto pixelDataLow = m_videoRam->GetByte(PPU_TileBase + (tileIndex * 16) + lineOffset, true);
+    const auto pixelDataHigh = m_videoRam->GetByte(PPU_TileBase + (tileIndex * 16) + lineOffset + 1, true);
+    const auto objShift = 7 - objPixelX;
+    const auto pixelData = (((pixelDataHigh >> objShift) & 0b1) << 1)
+                         | ((pixelDataLow >> objShift) & 0b1);
+    const auto pixelColor = (objPalette >> (pixelData * 2)) & 0b11;
+    
+    if(pixelColor == 0) return;  // Color 0b00 is always transparent.
+    if(BIT_TEST(object.Flags, 7) && thisBgColor) return;  // BG colors 1-3 have priority.
+
+    // Finally, draw the point!
     PPU_Plot(pixelColor, pixelOffset);
 }
 
@@ -206,6 +310,7 @@ void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
 
 void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) {
     m_ppuLyc = m_ppuLcdYCoordinate == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
+    m_ppuOamScanComplete = false;
 
     if(BIT_TEST(lcdStatus, 5)) {
         // OAM interrupt.
