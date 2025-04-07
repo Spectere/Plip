@@ -273,9 +273,10 @@ void GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, const PPU_Obje
     const auto objShift = 7 - objPixelX;
     const auto pixelData = (((pixelDataHigh >> objShift) & 0b1) << 1)
                          | ((pixelDataLow >> objShift) & 0b1);
+    if(pixelData == 0) return;  // Color 0b00 is always transparent.
+
     const auto pixelColor = (objPalette >> (pixelData * 2)) & 0b11;
     
-    if(pixelColor == 0) return;  // Color 0b00 is always transparent.
     if(BIT_TEST(object.Flags, 7) && thisBgColor) return;  // BG colors 1-3 have priority.
 
     // Finally, draw the point!
