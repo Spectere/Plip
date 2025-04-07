@@ -40,8 +40,7 @@ void GameBoyInstance::PPU_Cycle() {
     m_ppuLastLcdControl = currentLcdControl;
 
     // Update the LCD STAT register.
-    const auto lcdStatusNew = 0b10000000 | (m_ppuLyc ? 0b100 : 0) | static_cast<uint8_t>(m_ppuMode) | (currentLcdStatus & 0b111000);
-    m_ioRegisters->SetByte(IoRegister::LcdStatus, lcdStatusNew);
+    m_ioRegisters->Video_SetLcdStatus((m_ppuLyc ? 0b100 : 0) | static_cast<uint8_t>(m_ppuMode));
 }
 
 void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdStatus) {
@@ -107,7 +106,7 @@ bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
 }
 
 void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) const {
-    const auto pixelOffset = (m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate;
+    const uint32_t pixelOffset = (m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate;
 
     if(!BIT_TEST(lcdControl, 7)) {
         // The LCD should not be disabled here. Plot an error pixel.
@@ -118,36 +117,65 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) cons
         // Background/Window drawing is enabled.
         const auto backgroundPalette = m_ioRegisters->GetByte(IoRegister::BgPalette);
         const auto scrollY = m_ioRegisters->GetByte(IoRegister::ScrollY);
+        
+        const auto backgroundTileMapAddress = PPU_TileMapBase + (BIT_TEST(lcdControl, 3) ? PPU_TileMapBlockOffset : 0);
 
         const auto tilesUseBlock2 = (BIT_TEST(lcdControl, 4)) == 0;
+        const auto tileDataAddressLow = PPU_TileBase + (tilesUseBlock2 ? 0x1000 : 0);
+        constexpr uint16_t tileDataAddressHigh = PPU_TileBase + 0x800;
 
-        const auto tileMapAddrOffset = (BIT_TEST(lcdControl, 3)) ? PPU_TileMapBlockOffset : 0;
-        const auto tileMapAddr = PPU_TileMapBase + tileMapAddrOffset;
+        PPU_DrawBackgroundOrWindow(pixelOffset, false, backgroundPalette, m_ppuScrollX, scrollY, backgroundTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
 
-        const auto tileX = ((m_ppuScrollX + m_ppuLcdXCoordinate) / PPU_TileSizeX) % PPU_MapTileCountX;
-        const auto tileY = ((scrollY + m_ppuLcdYCoordinate) / PPU_TileSizeY) % PPU_MapTileCountY;
+        if(BIT_TEST(lcdControl, 5)) {
+            // Window drawing is enabled.
+            const auto windowX = m_ioRegisters->GetByte(IoRegister::WindowX) - 7;
+            const auto windowY = m_ioRegisters->GetByte(IoRegister::WindowY);
 
-        const auto tilePixelX = (m_ppuScrollX + m_ppuLcdXCoordinate) % PPU_TileSizeX;
-        const auto tilePixelY = (scrollY + m_ppuLcdYCoordinate) % PPU_TileSizeY;
+            const auto windowTileMapAddress = PPU_TileMapBase + (BIT_TEST(lcdControl, 6) ? PPU_TileMapBlockOffset : 0);
 
-        const auto mapIndex = (tileY * PPU_MapTileCountX) + tileX;
-        const auto tileIndex = m_videoRam->GetByte(tileMapAddr + mapIndex);
-
-        const auto lineOffset = tilePixelY * 2;
-
-        const auto tileStartAddr = PPU_TileBase | ((tilesUseBlock2 && tileIndex < 128) ? (1 << 12) : 0);
-        const auto pixelDataLow = m_videoRam->GetByte(tileStartAddr + (tileIndex * 16) + lineOffset, true);
-        const auto pixelDataHigh = m_videoRam->GetByte(tileStartAddr + (tileIndex * 16) + lineOffset + 1, true);
-        const auto tileShift = 7 - tilePixelX;
-        const auto pixelData = (((pixelDataHigh >> tileShift) & 0b1) << 1)
-                             | ((pixelDataLow >> tileShift) & 0b1);
-        const auto pixelColor = (backgroundPalette >> (pixelData * 2)) & 0b11;
-
-        PPU_Plot(pixelColor, pixelOffset);
+            PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, windowX, windowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
+        }
     } else {
         // Background/Window drawing is disabled.
         PPU_Plot(0b00, pixelOffset);
     }
+}
+
+void GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const uint8_t offsetX, const uint8_t offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1) const {
+    uint8_t surfacePixelX {};
+    uint8_t surfacePixelY {};
+
+    if(isWindow) {
+        if(offsetX > 166 || offsetY > 143) { return; }  // Window is off screen.
+        if(m_ppuLcdXCoordinate < offsetX || m_ppuLcdYCoordinate < offsetY) { return; }  // Current pixel is up/left of window.
+
+        surfacePixelX = m_ppuLcdXCoordinate - offsetX;
+        surfacePixelY = m_ppuLcdYCoordinate - offsetY;
+    } else {
+        surfacePixelX = m_ppuLcdXCoordinate + offsetX;
+        surfacePixelY = m_ppuLcdYCoordinate + offsetY;
+    }
+    
+    const auto tileX = (surfacePixelX / PPU_TileSizeX) % PPU_MapTileCountX;
+    const auto tileY = (surfacePixelY / PPU_TileSizeY) % PPU_MapTileCountY;
+
+    const auto tilePixelX = surfacePixelX % PPU_TileSizeX;
+    const auto tilePixelY = surfacePixelY % PPU_TileSizeY;
+
+    const auto mapIndex = (tileY * PPU_MapTileCountX) + tileX;
+    const auto tileIndex = m_videoRam->GetByte(tileMapAddress + mapIndex);
+
+    const auto lineOffset = tilePixelY * 2;
+
+    const auto tileDataAddress = (tileIndex < 128) ? tileDataAddress0 : tileDataAddress1; 
+    const auto pixelDataLow = m_videoRam->GetByte(tileDataAddress + (tileIndex % 128 * 16) + lineOffset, true);
+    const auto pixelDataHigh = m_videoRam->GetByte(tileDataAddress + (tileIndex % 128 * 16) + lineOffset + 1, true);
+    const auto tileShift = 7 - tilePixelX;
+    const auto pixelData = (((pixelDataHigh >> tileShift) & 0b1) << 1)
+                         | ((pixelDataLow >> tileShift) & 0b1);
+    const auto pixelColor = (palette >> (pixelData * 2)) & 0b11;
+
+    PPU_Plot(pixelColor, pixelOffset);
 }
 
 void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
@@ -184,10 +212,9 @@ void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) {
         m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
     }
 
-    if(BIT_TEST(lcdStatus, 2) && m_ppuLyc) {
+    if(BIT_TEST(lcdStatus, 6) && m_ppuLyc) {
         // LYC == LY interrupt.
         m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
-        m_ioRegisters->SetByte(IoRegister::LcdStatus, BIT_SET(lcdStatus, 2));
     }
 }
 

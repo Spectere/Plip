@@ -101,12 +101,13 @@ namespace Plip::Core::GameBoy {
         static int Timer_GetFrequencyBit(int clockSelect);
 
         // Video
+        void Video_SetLcdStatus(const uint8_t value) { m_regLcdStatus = (m_regLcdStatus & 0b11111000) | (value & 0b111); }
         void Video_SetYCoordinate(const uint8_t value) { m_regLcdYCoordinate = value; }
 
     private:
         constexpr static uint32_t Length = 0x80;
 
-        static uint8_t PadValue(const uint8_t value, const uint8_t bits) { return (0b11111111 << bits) | value; }  // Pull unused bits high.
+        static uint8_t PadValue(const uint8_t value, const uint8_t usedBits) { return (0b11111111 << usedBits) | value; }  // Pull unused bits high.
 
         /*
          * Internal Data
