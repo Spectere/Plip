@@ -15,7 +15,8 @@ void GameBoyInstance::PPU_Cycle() {
     const auto currentLcdStatus = m_ioRegisters->GetByte(IoRegister::LcdStatus);
 
     if(BIT_TEST(m_ppuLastLcdControl, 7) && !BIT_TEST(currentLcdControl, 7)) {
-        // LCD was disabled during this cycle. Flag all memory as writable and blank the screen.
+        // LCD was disabled during this cycle. Flag all memory as writable, blank the screen, and reset the PPU mode
+        // to 0 (HBlank).
         m_oam->SetWritable(true);
         m_videoRam->SetWritable(true);
 
@@ -23,6 +24,8 @@ void GameBoyInstance::PPU_Cycle() {
         m_video->BeginDraw();
         m_video->Draw(m_videoBuffer);
         m_video->EndDraw();
+
+        m_ppuMode = PPU_Mode::HBlank;
     } else if(!BIT_TEST(m_ppuLastLcdControl, 7) && BIT_TEST(currentLcdControl, 7)) {
         // LCD was enabled during this cycle. Reset VRAM permissions and signal for the
         // screen to be drawn during the next frame.
