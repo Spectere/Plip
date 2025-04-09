@@ -9,5 +9,7 @@ namespace Plip::Core::GameBoy {
     enum class PPU_OutputStage {
         BackgroundScrolling,
         Drawing,
+        WindowPreparation,
+        ObjectPenalty,
     };
 }

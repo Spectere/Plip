@@ -74,8 +74,9 @@ void GameBoyInstance::CompleteOamDmaCopy() const {
         m_cartRam->SetWritable(true);
     }
 
+    m_videoRam->SetReadable(true);
     m_oam->SetReadable(true);
-    m_oam->SetWritable(true);
+    PPU_SetMemoryPermissions();  // Sets the writable state of VRAM/OAM.
 }
 
 void GameBoyInstance::Delta(const long ns) {
@@ -228,6 +229,9 @@ void GameBoyInstance::PerformOamDmaCopy(const int sourceAddress) {
         m_cartRam->SetReadable(false);
         m_cartRam->SetWritable(false);
     }
+
+    m_videoRam->SetReadable(false);
+    m_videoRam->SetWritable(false);
 
     m_oam->SetReadable(false);
     m_oam->SetWritable(false);

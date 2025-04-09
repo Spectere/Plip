@@ -127,14 +127,36 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
 }
 
 bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
-    // The exact number of clocks this takes depends on the SCX register, so we need
-    // this to handle its own timing. This should only indicate that it's ready to
-    // transition to the next PPU mode when it's plotted the number of horizontal
-    // pixels on the system's screen (160).
+    // The exact number of clocks this takes depends on a number of factors and can range from
+    // 172 to 289.
+
+    // When the window is enabled, a 6-dot penalty is incurred while the BG fetcher is being set
+    // up for the window layer.
+    m_ppuWindowEnabled = BIT_TEST(lcdControl, 5);
+    if(m_ppuWindowEnabled) {
+        m_ppuWindowX = m_ioRegisters->GetByte(IoRegister::WindowX) - 7;
+        m_ppuWindowY = m_ioRegisters->GetByte(IoRegister::WindowY);
+
+        if(!m_ppuWindowSetUp && m_ppuLcdXCoordinate >= m_ppuWindowX && m_ppuLcdYCoordinate >= m_ppuWindowY) {
+            m_ppuWindowSetUp = true;
+            m_ppuOutputClock = 6;  // 6 dot penalty
+            m_ppuOutputStage = PPU_OutputStage::WindowPreparation;
+        }
+    }
+    
     switch(m_ppuOutputStage) {
         case PPU_OutputStage::BackgroundScrolling: {
+            // Background scrolling causes a delay of (SCX % 8) dot clocks.
             if(++m_ppuOutputClock > (m_ppuScrollX & 0b111)) {
                 m_ppuOutputClock = 0;
+                m_ppuOutputStage = PPU_OutputStage::Drawing;
+            }
+            break;
+        }
+
+        case PPU_OutputStage::WindowPreparation:
+        case PPU_OutputStage::ObjectPenalty: {
+            if(--m_ppuOutputClock == 0) {
                 m_ppuOutputStage = PPU_OutputStage::Drawing;
             }
             break;
@@ -150,7 +172,7 @@ bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
     return m_ppuLcdXCoordinate < ScreenWidth;
 }
 
-void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) const {
+void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
     const uint32_t pixelOffset = (m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate;
 
     if(!BIT_TEST(lcdControl, 7)) {
@@ -172,14 +194,11 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) cons
 
         lastBgColor = PPU_DrawBackgroundOrWindow(pixelOffset, false, backgroundPalette, m_ppuScrollX, scrollY, backgroundTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
 
-        if(BIT_TEST(lcdControl, 5)) {
+        if(m_ppuWindowEnabled) {
             // Window drawing is enabled.
-            const auto windowX = m_ioRegisters->GetByte(IoRegister::WindowX) - 7;
-            const auto windowY = m_ioRegisters->GetByte(IoRegister::WindowY);
-
             const auto windowTileMapAddress = PPU_TileMapBase + (BIT_TEST(lcdControl, 6) ? PPU_TileMapBlockOffset : 0);
 
-            const auto windowColor = PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, windowX, windowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
+            const auto windowColor = PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, m_ppuWindowX, m_ppuWindowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
             if(windowColor >= 0) lastBgColor = windowColor;
         }
     } else {
@@ -233,7 +252,8 @@ int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, cons
     return pixelColor;
 }
 
-void GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, const PPU_Object object, const bool tallSprites, const int thisBgColor) const {
+void GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, PPU_Object object, const bool tallSprites, const int thisBgColor) const {
+    // TODO: Object dot clock penalties. :(
     const auto objX = object.X - 8;
     const auto objY = object.Y - 16;
 
@@ -305,6 +325,7 @@ void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
         case PPU_Mode::Output:
             m_ppuOutputStage = PPU_OutputStage::BackgroundScrolling;
             m_ppuScrollX = m_ioRegisters->GetByte(IoRegister::ScrollX);
+            m_ppuWindowSetUp = false;
             break;
     }
 }
@@ -435,6 +456,7 @@ void GameBoyInstance::PPU_VideoModeTransition() {
 
         case PPU_Mode::Output:
             m_ppuMode = PPU_Mode::HBlank;
+            m_ppuWindowSetUp = false;
             break;
     }
 }
