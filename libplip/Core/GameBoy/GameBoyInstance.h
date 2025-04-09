@@ -165,7 +165,7 @@ namespace Plip::Core::GameBoy {
         static constexpr auto PPU_DotsPerCycle = 4;
 
         static constexpr auto PPU_OamScanTime = 80;
-        static constexpr auto PPU_ScanlineTime = 376;
+        static constexpr auto PPU_ScanlineTime = 456;
         static constexpr auto PPU_FrameTime = 4560;
 
         static constexpr auto PPU_TileBase = 0x0000;

@@ -14,8 +14,10 @@ PlipCpu::PlipCpu(const long hz, PlipMemoryMap* memoryMap) {
 
 void PlipCpu::Cycle() {
     if(m_remainingCycles > 0) {
-        --m_remainingCycles;
-    } else {
+        m_remainingCycles--;
+    }
+
+    if(m_remainingCycles == 0) {
         m_remainingCycles = Step();
     }
 }
