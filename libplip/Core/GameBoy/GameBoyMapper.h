@@ -31,7 +31,7 @@ namespace Plip::Core::GameBoy {
         PlipMemory* ConfigureMapper(MBC_Type mbcType, int cartRamBanks);
         void DisableBootRom();
         void EnableCartridgeRam(bool enable);
-        std::map<std::string, Plip::DebugValue> GetMbcDebugInfo() const;
+        std::map<std::string, DebugValue> GetMbcDebugInfo() const;
         void RemapMemory(bool remapRom, bool remapRam);
         void Reset();
         void SetByte(uint32_t address, uint8_t value, bool privileged = false) override;

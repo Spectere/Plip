@@ -88,14 +88,22 @@ void GameBoyInstance::Delta(const long ns) {
         m_ioRegisters->Timer_Cycle();
 
         // OAM DMA Copy
-        if(const auto sourceAddress = m_ioRegisters->Video_GetOamDmaCopyAddress()
-            ; sourceAddress >= 0) {
-            m_ioRegisters->Video_AcknowledgeOamDmaCopy();
-            PerformOamDmaCopy(sourceAddress << 8);
+        if(m_ppuDmaCyclesRemaining > 0) {
+            if(--m_ppuDmaCyclesRemaining == 0) {
+                CompleteOamDmaCopy();
+            }
         }
 
-        if(m_ppuDmaCyclesRemaining-- == 0) {
-            CompleteOamDmaCopy();
+        if(m_oamDmaDelayCycles > 0) {
+            if(--m_oamDmaDelayCycles == 0) {
+                PerformOamDmaCopy(m_oamDmaSourceAddress);
+            }
+        }
+        
+        if(const auto sourceAddress = m_ioRegisters->Video_GetOamDmaCopyAddress(); sourceAddress >= 0) {
+            m_ioRegisters->Video_AcknowledgeOamDmaCopy();
+            m_oamDmaDelayCycles = 2;
+            m_oamDmaSourceAddress = sourceAddress << 8;
         }
 
         // Input
@@ -210,7 +218,7 @@ int GameBoyInstance::GetCartridgeRamBankCount() const {
 }
 
 void GameBoyInstance::PerformOamDmaCopy(const int sourceAddress) {
-    m_ppuDmaCyclesRemaining = 160;  // passes Mooneye oam_dma_timing when set to 162?! better than it was, but there's still an issue
+    m_ppuDmaCyclesRemaining = 160;
 
     // Flag ROM, WRAM, cart RAM, and OAM as inaccessible until the process is complete.
     m_cartRom->SetReadable(false);

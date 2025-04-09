@@ -118,6 +118,10 @@ namespace Plip::Core::GameBoy {
         // System flags
         bool m_bootRomDisableFlag = false;
 
+        // DMA
+        int m_oamDmaDelayCycles = 0;
+        int m_oamDmaSourceAddress = 0;
+
         // PPU
         static constexpr auto PPU_Block0 = 0x0000;
         static constexpr auto PPU_Block1 = 0x0800;
