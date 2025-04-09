@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "GameBoyIoRegisters.h"
+#include "GameBoyMapper.h"
 #include "Mbc2Ram.h"
 #include "MBC_Type.h"
 #include "PPU_Mode.h"
@@ -40,23 +41,12 @@ namespace Plip::Core::GameBoy {
         // GameBoyInstance
         void BootRomFlagHandler();
         void CompleteOamDmaCopy() const;
-        void InitCartridgeRam();
+        int GetCartridgeRamBankCount() const;
         void PerformOamDmaCopy(int sourceAddress);
         void ReadJoypad();
         void ReadCartridgeFeatures();
         void RegisterInput() const;
         void RegisterWriteServiced() const;
-
-        // GameBoyInstance.Mbc
-        void MBC_Cycle();
-        bool MBC_Cycle_MBC1(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
-        bool MBC_Cycle_MBC2(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
-        bool MBC_Cycle_MBC3(uint16_t lastWrittenAddress, uint8_t lastWrittenValue);
-        void MBC_EnableRam(bool enable);
-        void MBC_Init();
-        void MBC_Init_MBC2();
-        void MBC_Remap(bool remapRom, bool remapRam) const;
-        [[nodiscard]] std::map<std::string, DebugValue> MBC_GetDebugInfo() const;
 
         // GameBoyInstance.Video
         void PPU_Cycle();
@@ -113,47 +103,20 @@ namespace Plip::Core::GameBoy {
 
         uint16_t m_cartRamBanks = 0;
 
-        // MBC
-        std::string m_mbcName {};  // purely for debugging purposes
-
-        bool m_mbcRamEnable {};
-        uint8_t m_mbcBankingMode {};
-        uint8_t m_mbcBankRegister0 {};
-        uint8_t m_mbcBankRegister1 {};
-        bool m_mbcRegister1SelectsRomBank {};
-        uint8_t m_mbcRom0Bank {};
-        uint8_t m_mbcRom1Bank {};
-        uint8_t m_mbcRamBank {};
-
-        Mbc2Ram* m_mbc2Ram = nullptr;
-
-        // Static memory addresses
-        static constexpr auto RomBank0Address = 0x0000;
-        static constexpr auto RomBank0Length = 0x4000;
-        static constexpr auto RomBank1Address = 0x4000;
-        static constexpr auto RomBank1Length = 0x4000;
-        static constexpr auto VideoRamAddress = 0x8000;
-        static constexpr auto WorkRamAddress = 0xC000;
-        static constexpr auto CartRamAddress = 0xA000;
-        static constexpr auto CartRamLength = 0x2000;
-        static constexpr auto EchoRamAddress = 0xE000;
-        static constexpr auto OamAddress = 0xFE00;
-        static constexpr auto UnusableAddress = 0xFEA0;
-        static constexpr auto IoRegistersAddress = 0xFF00;
-        static constexpr auto HighRamAddress = 0xFF80;
-
         // System memory map
         uint8_t m_unusableContents[0x60] {};
 
+        GameBoyMapper* m_gbMemory;
+
         PlipMemoryRom* m_bootRom;
-        PlipMemoryRom* m_rom = nullptr;
+        PlipMemoryRom* m_cartRom = nullptr;
         PlipMemoryRam* m_videoRam = new PlipMemoryRam(0x2000, 0xFF);
         PlipMemoryRam* m_workRam = new PlipMemoryRam(0x2000, 0xFF);
         PlipMemoryRam* m_oam = new PlipMemoryRam(0x100, 0xFF);
         PlipMemoryRom* m_unusable = new PlipMemoryRom(m_unusableContents, 0x60, 0xFF);
         GameBoyIoRegisters* m_ioRegisters = new GameBoyIoRegisters();
         PlipMemoryRam* m_highRam = new PlipMemoryRam(0x80, 0xFF);
-        PlipMemoryRam* m_cartRam = nullptr;
+        PlipMemory* m_cartRam = nullptr;
 
         // System flags
         bool m_bootRomDisableFlag = false;

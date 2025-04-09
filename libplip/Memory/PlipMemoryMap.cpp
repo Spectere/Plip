@@ -105,6 +105,9 @@ void PlipMemoryMap::SetInvalidByte(const uint8_t value) {
     m_invalidByte = value;
 }
 
+void PlipMemoryMap::UnassignAllBlocks() {
+    m_range.clear();
+}
 
 void PlipMemoryMap::UnassignBlock(const uint32_t address, const uint32_t length) {
     /* This function must handle the following cases:

@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "../../Memory/PlipMemory.h"
 #include "../../Memory/PlipMemoryRam.h"
 
 namespace Plip::Core::GameBoy {

@@ -40,12 +40,6 @@ GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *
 
     // Initialize input.
     RegisterInput();
-
-    // Invalid and unreadable memory values are generally pulled high.
-    m_memory->SetInvalidByte(0xFF);
-
-    // Create CPU.
-    m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory);
 }
 
 GameBoyInstance::~GameBoyInstance() {
@@ -58,13 +52,13 @@ void GameBoyInstance::BootRomFlagHandler() {
     
     // Swap the boot ROM out for the cartridge ROM.
     m_bootRomDisableFlag = true;
-    m_memory->AssignBlock(m_rom, 0x0000, 0x0000, 0x0100);
+    m_memory->AssignBlock(m_cartRom, 0x0000, 0x0000, 0x0100);
 }
 
 void GameBoyInstance::CompleteOamDmaCopy() const {
     // This is the cycle that the copy would normally complete. Flag the inaccessible
     // memory as accessible again.
-    m_rom->SetReadable(true);
+    m_cartRom->SetReadable(true);
 
     m_workRam->SetReadable(true);
     m_workRam->SetWritable(true);
@@ -108,9 +102,6 @@ void GameBoyInstance::Delta(const long ns) {
         m_ioRegisters->Joypad_SetMatrix(m_keypad);
         m_ioRegisters->Joypad_Cycle();
 
-        // MBC
-        MBC_Cycle();
-
         // PPU
         PPU_Cycle();
 
@@ -137,7 +128,7 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
     return {
         { "CPU Registers", m_cpu->GetRegisters() },
         { "CPU (Other)", m_cpu->GetDebugInfo() },
-        { "MBC", MBC_GetDebugInfo() },
+        { "MBC", m_gbMemory->GetMbcDebugInfo() },
         { "PPU", PPU_GetDebugInfo() },
         { "Timer", {
             { "DIV", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::Divider))) },
@@ -167,42 +158,47 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
     // Load the ROM.
     const auto size = PlipIo::GetSize(path);
     const auto data = PlipIo::ReadFile(path, size);
-    m_rom = new PlipMemoryRom(data.data(), size, 0xFF);
+    m_cartRom = new PlipMemoryRom(data.data(), size, 0xFF);
 
     // Read the ROM header.
     ReadCartridgeFeatures();
-    InitCartridgeRam();
 
     // Update titlebar.
     m_video->SetTitle("GameBoy: " + PlipIo::GetFilename(path));
 
+    // Set up memory (for real this time).
+    m_gbMemory = new GameBoyMapper(m_bootRom, m_cartRom, m_videoRam, m_workRam, m_oam, m_ioRegisters, m_highRam);
+    delete m_memory;
+    m_memory = m_gbMemory;
+
+    m_cartRam = m_gbMemory->ConfigureMapper(m_mbc, m_cartRamBanks);
+
+    // Create CPU.
+    m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory);
+    
     // Reset system.
     Reset();
 
     return PlipError::Success;
 }
 
-void GameBoyInstance::InitCartridgeRam() {
-    if(!m_hasCartRam) return;
+int GameBoyInstance::GetCartridgeRamBankCount() const {
+    if(!m_hasCartRam) return 0;
 
-    switch(const auto ramSize = m_rom->GetByte(CartRamSizeOffset)) {
+    switch(const auto ramSize = m_cartRom->GetByte(CartRamSizeOffset)) {
         case 0x00:  // 0KB
         case 0x01:  // 2KB
         case 0x02:  // 8KB
-            m_cartRamBanks = 1;
-            break;
+            return 1;
 
         case 0x03:  // 32KB
-            m_cartRamBanks = 4;
-            break;
+            return 4;
 
         case 0x04:  // 128KB
-            m_cartRamBanks = 16;
-            break;
+            return 16;
 
         case 0x05:  // 64KB
-            m_cartRamBanks = 8;
-            break;
+            return 8;
 
         default: {
             std::stringstream ex;
@@ -211,16 +207,13 @@ void GameBoyInstance::InitCartridgeRam() {
             throw PlipEmulationException(ex.str().c_str());
         }
     }
-
-    m_cartRam = new PlipMemoryRam(8192 * m_cartRamBanks, 0xFF);
-    m_memory->AssignBlock(m_cartRam, CartRamAddress, 0x0000, 0x2000);
 }
 
 void GameBoyInstance::PerformOamDmaCopy(const int sourceAddress) {
-    m_ppuDmaCyclesRemaining = 160;  // passes Mooneye oam_dma_timing when set to 243?! wha?
+    m_ppuDmaCyclesRemaining = 160;  // passes Mooneye oam_dma_timing when set to 162?! better than it was, but there's still an issue
 
     // Flag ROM, WRAM, cart RAM, and OAM as inaccessible until the process is complete.
-    m_rom->SetReadable(false);
+    m_cartRom->SetReadable(false);
 
     m_workRam->SetReadable(false);
     m_workRam->SetWritable(false);
@@ -244,7 +237,7 @@ void GameBoyInstance::PerformOamDmaCopy(const int sourceAddress) {
 }
 
 void GameBoyInstance::ReadCartridgeFeatures() {
-    const auto cartType = m_rom->GetByte(0x0147);
+    const auto cartType = m_cartRom->GetByte(0x0147);
 
     // MBC
     switch(cartType) {
@@ -283,6 +276,8 @@ void GameBoyInstance::ReadCartridgeFeatures() {
             m_hasCartRam = false;
             break;
     }
+
+    m_cartRamBanks = GetCartridgeRamBankCount();
 
     // Battery
     switch(cartType) {
@@ -360,27 +355,14 @@ void GameBoyInstance::Reset() {
         for(auto i = 0; i < m_cartRam->GetLength(); i++)
             m_cartRam->SetByte(i, 0);
 
-    // Initialize system memory map.
-    m_memory->AssignBlock(m_videoRam, VideoRamAddress);
-    m_memory->AssignBlock(m_workRam, WorkRamAddress);
-    m_memory->AssignBlock(m_oam, OamAddress);
-    m_memory->AssignBlock(m_unusable, UnusableAddress);
-    m_memory->AssignBlock(m_ioRegisters, IoRegistersAddress);
-    m_memory->AssignBlock(m_highRam, HighRamAddress);
-    m_memory->AssignBlock(m_rom, RomBank0Address, RomBank0Address, RomBank0Length + RomBank1Length);
-
-    // Load the boot ROM into 0x0000-0x00FF (overlaying the cartridge ROM).
-    m_memory->AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
-    m_bootRomDisableFlag = false;
+    // Initialize the mapper.
+    m_gbMemory->Reset();
 
     // Reset CPU.
     m_cpu->Reset(0x0000);
 
     // Reset PPU.
     PPU_Reset();
-
-    // Perform any necessary MBC initialization.
-    MBC_Init();
 
     // Reset I/O registers.
     m_ioRegisters->Reset();
