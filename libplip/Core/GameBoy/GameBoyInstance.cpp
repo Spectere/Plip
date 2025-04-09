@@ -64,8 +64,7 @@ void GameBoyInstance::CompleteOamDmaCopy() const {
     m_workRam->SetWritable(true);
 
     if(m_cartRamBanks > 0) {
-        m_cartRam->SetReadable(true);
-        m_cartRam->SetWritable(true);
+        m_gbMemory->RestoreCartridgeMemoryAccessibility();
     }
 
     m_videoRam->SetReadable(true);
@@ -348,20 +347,20 @@ void GameBoyInstance::RegisterWriteServiced() const {
 void GameBoyInstance::Reset() {
     // Clear RAM and I/O registers.
     for(auto i = 0; i < m_workRam->GetLength(); i++)
-        m_workRam->SetByte(i, 0);
+        m_workRam->SetByte(i, 0xFF, true);
 
     for(auto i = 0; i < m_videoRam->GetLength(); i++)
-        m_videoRam->SetByte(i, 0);
+        m_videoRam->SetByte(i, 0xFF, true);
 
     for(auto i = 0; i < m_oam->GetLength(); i++)
-        m_oam->SetByte(i, 0);
+        m_oam->SetByte(i, 0xFF, true);
 
     for(auto i = 0; i < m_highRam->GetLength(); i++)
-        m_highRam->SetByte(i, 0);
+        m_highRam->SetByte(i, 0xFF, true);
 
     if(m_cartRamBanks > 0)
         for(auto i = 0; i < m_cartRam->GetLength(); i++)
-            m_cartRam->SetByte(i, 0);
+            m_cartRam->SetByte(i, 0xFF, true);
 
     // Initialize the mapper.
     m_gbMemory->Reset();

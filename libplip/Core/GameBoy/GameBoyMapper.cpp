@@ -136,6 +136,13 @@ void GameBoyMapper::Reset() {
     AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
 }
 
+void GameBoyMapper::RestoreCartridgeMemoryAccessibility() const {
+    if(m_cartHasRam) {
+        m_cartRam->SetReadable(m_ramEnabled);
+        m_cartRam->SetWritable(m_ramEnabled);
+    }
+}
+
 void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const bool privileged) {
     bool mbcHandledWrite = false;
 
@@ -247,7 +254,8 @@ bool GameBoyMapper::SetByte_Mbc2(const uint32_t address, const uint8_t value) {
 }
 
 bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
-    bool bankSwitch = false;
+    bool bankSwitchRom = false;
+    bool bankSwitchRam = false;
 
     if(address < 0x2000) {
         // RAM enable.
@@ -255,12 +263,12 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
     } else if(address < 0x4000) {
         // Bank register 0 (ROM bank selector).
         m_bankRegister0 = value & 0b01111111;
-        bankSwitch = true;
+        bankSwitchRom = true;
     } else if(address < 0x6000) {
         // Bank register 1 (RAM bank or RTC register selector).
         if(value < 0x08) {
             m_bankRegister1 = value;
-            bankSwitch = true;
+            bankSwitchRam = true;
         } else {
             // RTC register.
             // TODO: Implement RTC.
@@ -271,21 +279,28 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
     } else if(address >= 0xA000 && address < 0xC000) {
         // RTC register 08-0C.
         // TODO: Implement RTC.
+        return false;
     } else {
         return false;
     }
 
     // Swap banks if requested.
-    if(bankSwitch) {
-        m_rom1Bank = m_bankRegister0;
+    if(bankSwitchRom || bankSwitchRam) {
+        if(bankSwitchRom) {
+            m_rom1Bank = m_bankRegister0;
 
-        if(m_rom1Bank == 0) {
-            // If register 0 is 0, automatically bump it to 1.
-            m_rom1Bank = 1;
+            if(m_rom1Bank == 0) {
+                // If register 0 is 0, automatically bump it to 1.
+                m_rom1Bank = 1;
+            }
+        }
+
+        if(bankSwitchRam) {
+            m_ramBank = m_bankRegister1;
         }
         
         // Remap memory.
-        RemapMemory(true, true);
+        RemapMemory(bankSwitchRom, bankSwitchRam);
     }
 
     return true;

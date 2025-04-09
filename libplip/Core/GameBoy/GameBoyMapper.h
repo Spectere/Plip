@@ -34,6 +34,7 @@ namespace Plip::Core::GameBoy {
         std::map<std::string, DebugValue> GetMbcDebugInfo() const;
         void RemapMemory(bool remapRom, bool remapRam);
         void Reset();
+        void RestoreCartridgeMemoryAccessibility() const;
         void SetByte(uint32_t address, uint8_t value, bool privileged = false) override;
         bool SetByte_Mbc1(uint32_t address, uint8_t value);
         bool SetByte_Mbc2(uint32_t address, uint8_t value);
