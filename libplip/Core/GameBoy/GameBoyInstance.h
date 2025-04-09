@@ -104,8 +104,6 @@ namespace Plip::Core::GameBoy {
         uint16_t m_cartRamBanks = 0;
 
         // System memory map
-        uint8_t m_unusableContents[0x60] {};
-
         GameBoyMapper* m_gbMemory;
 
         PlipMemoryRom* m_bootRom;
@@ -113,7 +111,6 @@ namespace Plip::Core::GameBoy {
         PlipMemoryRam* m_videoRam = new PlipMemoryRam(0x2000, 0xFF);
         PlipMemoryRam* m_workRam = new PlipMemoryRam(0x2000, 0xFF);
         PlipMemoryRam* m_oam = new PlipMemoryRam(0x100, 0xFF);
-        PlipMemoryRom* m_unusable = new PlipMemoryRom(m_unusableContents, 0x60, 0xFF);
         GameBoyIoRegisters* m_ioRegisters = new GameBoyIoRegisters();
         PlipMemoryRam* m_highRam = new PlipMemoryRam(0x80, 0xFF);
         PlipMemory* m_cartRam = nullptr;
