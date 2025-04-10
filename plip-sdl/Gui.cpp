@@ -252,7 +252,7 @@ void Gui::SetEnabled(const bool enable) {
 }
 
 void Gui::Update() {
-    if(!ImGui::Begin("Debug", &State.GuiShown, ImGuiWindowFlags_None)) {
+    if(!ImGui::Begin("Debug", &State.GuiShown, ImGuiWindowFlags_NoNavInputs)) {
         State.PerformRead = false;
         ImGui::End();
         return;
