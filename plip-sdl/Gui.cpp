@@ -74,8 +74,8 @@ void Gui::DrawBreakpointControls() {
         }
 
         if(removeBp) {
-            State.Breakpoints.insert(address);
-            State.BreakpointsUpdated = false;
+            State.Breakpoints.erase(removeBpVal);
+            State.BreakpointsUpdated = true;
         }
     }
 }
