@@ -5,8 +5,6 @@
 
 #include "GameBoyMapper.h"
 
-#include <iostream>
-
 #include "Mbc2Ram.h"
 
 using Plip::Core::GameBoy::GameBoyMapper;
@@ -23,6 +21,7 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const i
 
     // Catch unimplemented mappers.
     // ReSharper disable once CppIncompleteSwitchStatement
+    // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
     switch(m_mbcType) {
         case MBC_Type::Mbc5: throw PlipEmulationException("Unsupported mapper: MBC5");
         case MBC_Type::Mbc6: throw PlipEmulationException("Unsupported mapper: MBC6");
