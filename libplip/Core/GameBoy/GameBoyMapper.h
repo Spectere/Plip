@@ -43,6 +43,7 @@ namespace Plip::Core::GameBoy {
         bool SetByte_Mbc1(uint32_t address, uint8_t value);
         bool SetByte_Mbc2(uint32_t address, uint8_t value);
         bool SetByte_Mbc3(uint32_t address, uint8_t value);
+        bool SetByte_Mbc5(uint32_t address, uint8_t value);
 
         void RTC_Clock();
         void RTC_Dump(std::fstream& file) const;
@@ -77,6 +78,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_bankingMode {};
         uint8_t m_bankRegister0 {};
         uint8_t m_bankRegister1 {};
+        uint8_t m_bankRegister2 {};
         bool m_cartHasRam {};
         int m_cartRamBanks {};
         bool m_hasRtc {};
@@ -85,7 +87,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_ramBank {};
         bool m_ramEnabled {};
         uint8_t m_rom0Bank {};
-        uint8_t m_rom1Bank {};
+        uint16_t m_rom1Bank {};
         bool m_register1SelectsRomBank {};
 
         // RTC

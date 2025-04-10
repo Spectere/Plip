@@ -26,7 +26,6 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
     // ReSharper disable once CppIncompleteSwitchStatement
     // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
     switch(m_mbcType) {
-        case MBC_Type::Mbc5: throw PlipEmulationException("Unsupported mapper: MBC5");
         case MBC_Type::Mbc6: throw PlipEmulationException("Unsupported mapper: MBC6");
         case MBC_Type::Mbc7: throw PlipEmulationException("Unsupported mapper: MBC7");
         case MBC_Type::Mmm01: throw PlipEmulationException("Unsupported mapper: MMM01");
@@ -118,11 +117,12 @@ std::map<std::string, Plip::DebugValue> GameBoyMapper::GetMbcDebugInfo() const {
         { "Banking Mode", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankingMode)) },
         { "Bank Register 0", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister0)) },
         { "Bank Register 1", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister1)) },
+        { "Bank Register 2", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister2)) },
         { "RAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ramBank)) },
         { "RAM Bank Count", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_cartRamBanks)) },
         { "RAM Enabled", DebugValue(m_ramEnabled) },
         { "ROM $0000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom0Bank)) },
-        { "ROM $4000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom1Bank)) },
+        { "ROM $4000 Bank", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_rom1Bank)) },
     };
 
     if(m_hasRtc) {
@@ -363,6 +363,8 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
             mbcHandledWrite = SetByte_Mbc3(address, value);
             break;
         case MBC_Type::Mbc5:
+            mbcHandledWrite = SetByte_Mbc5(address, value);
+            break;
         case MBC_Type::Mbc6:
         case MBC_Type::Mbc7:
         case MBC_Type::Mmm01:
@@ -502,3 +504,40 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
 
     return true;
 }
+
+bool GameBoyMapper::SetByte_Mbc5(const uint32_t address, const uint8_t value) {
+    bool bankSwitchRom = false;
+    bool bankSwitchRam = false;
+
+    if(address >= 0x6000) return false;
+
+    if(address < 0x2000) {
+        // RAM enable.
+        EnableCartridgeRam((value & 0xF) == 0xA);
+    } else if(address < 0x3000) {
+        // Bank register 0 (ROM bank low bits).
+        m_bankRegister0 = value;
+        bankSwitchRom = true;
+    } else if(address < 0x4000) {
+        // Bank register 1 (ROM bank high bit).
+        m_bankRegister1 = value & 0b1;
+        bankSwitchRom = true;
+    } else {
+        // RAM bank selector.
+        m_bankRegister2 = value & 0b1111;
+        bankSwitchRam = true;
+    }
+
+    // Swap banks if requested.
+    if(bankSwitchRom || bankSwitchRam) {
+        if(bankSwitchRom) {
+            m_rom1Bank = (m_bankRegister1 << 8) | m_bankRegister0;
+        }
+        
+        // Remap memory.
+        RemapMemory(bankSwitchRom, bankSwitchRam);
+    }
+
+    return true;
+}
+

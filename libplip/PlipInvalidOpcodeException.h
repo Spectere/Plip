@@ -22,6 +22,6 @@ namespace Plip {
 
         template<typename T>
         explicit PlipInvalidOpcodeException(const T opcode)
-            : std::runtime_error("Invalid opcode: " + integerToHexString(opcode)) {}
+            : std::runtime_error("Invalid opcode: " + integerToHexString(static_cast<uint16_t>(opcode))) {}
     };
 }
