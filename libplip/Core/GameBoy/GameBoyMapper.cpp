@@ -3,6 +3,8 @@
  * A custom PlipMemoryMap that emulates the Game Boy's MBC chips.
  */
 
+#include <ctime>
+
 #include "GameBoyMapper.h"
 
 #include "Mbc2Ram.h"
@@ -15,8 +17,9 @@ GameBoyMapper::GameBoyMapper(PlipMemory* bootRom, PlipMemory* cartRom, PlipMemor
     SetInvalidByte(0xFF);
 }
 
-Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const int cartRamBanks) {
+Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const bool hasRtc, const int cartRamBanks) {
     m_mbcType = mbcType;
+    m_hasRtc = hasRtc;
     m_cartRamBanks = cartRamBanks;
 
     // Catch unimplemented mappers.
@@ -81,18 +84,57 @@ void GameBoyMapper::EnableCartridgeRam(const bool enable) {
     }
 }
 
+uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) const {
+    switch(m_mbcType) {
+        case MBC_Type::Mbc3:
+            return GetByte_Mbc3(address, privileged);
+        case MBC_Type::None:
+        case MBC_Type::Mbc1:
+        case MBC_Type::Mbc2:
+        case MBC_Type::Mbc5:
+        case MBC_Type::Mbc6:
+        case MBC_Type::Mbc7:
+        case MBC_Type::Mmm01:
+        case MBC_Type::PocketCamera:
+        case MBC_Type::BandaiTama5:
+        case MBC_Type::HuC1:
+        case MBC_Type::HuC3:
+        default:
+            return PlipMemoryMap::GetByte(address, privileged);
+    }
+}
+
+uint8_t GameBoyMapper::GetByte_Mbc3(const uint32_t address, const bool privileged) const {
+    if((address >= 0xA000 && address <= 0xBFFF) && (m_ramBank >= 0x08 && m_ramBank <= 0x0C)) {
+        return RTC_RegisterGet(m_ramBank);
+    }
+
+    return PlipMemoryMap::GetByte(address, privileged);
+}
+
 std::map<std::string, Plip::DebugValue> GameBoyMapper::GetMbcDebugInfo() const {
-    return {
-            { "Type", DebugValue(m_mbcName) },
-            { "Banking Mode", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankingMode)) },
-            { "Bank Register 0", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister0)) },
-            { "Bank Register 1", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister1)) },
-            { "RAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ramBank)) },
-            { "RAM Bank Count", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_cartRamBanks)) },
-            { "RAM Enabled", DebugValue(m_ramEnabled) },
-            { "ROM $0000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom0Bank)) },
-            { "ROM $4000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom1Bank)) },
-        };
+    std::map<std::string, DebugValue> debugList {
+        { "Type", DebugValue(m_mbcName) },
+        { "Banking Mode", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankingMode)) },
+        { "Bank Register 0", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister0)) },
+        { "Bank Register 1", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister1)) },
+        { "RAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ramBank)) },
+        { "RAM Bank Count", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_cartRamBanks)) },
+        { "RAM Enabled", DebugValue(m_ramEnabled) },
+        { "ROM $0000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom0Bank)) },
+        { "ROM $4000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom1Bank)) },
+    };
+
+    if(m_hasRtc) {
+        debugList.insert(std::pair{"RTC Sub-Seconds", DebugValue(DebugValueType::Int32Le, static_cast<uint64_t>(m_rtcMachineCycles))});
+        debugList.insert(std::pair{"RTC $08 - Seconds", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rtcRegisters.Seconds))});
+        debugList.insert(std::pair{"RTC $09 - Minutes", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rtcRegisters.Minutes))});
+        debugList.insert(std::pair{"RTC $0A - Hours", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rtcRegisters.Hours))});
+        debugList.insert(std::pair{"RTC $0B - Days", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rtcRegisters.Days))});
+        debugList.insert(std::pair{"RTC $0C - Flags", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rtcRegisters.Flags))});
+    }
+
+    return debugList;
 }
 
 void GameBoyMapper::RemapMemory(const bool remapRom, const bool remapRam) {
@@ -153,6 +195,158 @@ void GameBoyMapper::RestoreCartridgeMemoryAccessibility() const {
         m_cartRam->SetReadable(m_ramEnabled);
         m_cartRam->SetWritable(m_ramEnabled);
     }
+}
+
+void GameBoyMapper::RTC_Clock() {
+    if(BIT_TEST(m_rtcRegisters.Flags, 6)) return;  // RTC is halted.
+
+    if(--m_rtcMachineCycles == 0) {
+        RTC_ResetSubSecondClock();
+        RTC_Increment();
+    }
+}
+
+void GameBoyMapper::RTC_Dump(std::fstream &file) const {
+    auto timestamp = std::time(nullptr);
+    file.write(reinterpret_cast<std::istream::char_type*>(&timestamp), sizeof(timestamp));
+    file.put(m_rtcRegisters.Seconds);
+    file.put(m_rtcRegisters.Minutes);
+    file.put(m_rtcRegisters.Hours);
+    file.put(m_rtcRegisters.Days);
+    file.put(m_rtcRegisters.Flags);
+    file.flush();
+}
+
+void GameBoyMapper::RTC_Increment() {
+    if(++m_rtcRegisters.Seconds == 60) {
+        m_rtcRegisters.Seconds = 0;
+        
+        if(++m_rtcRegisters.Minutes == 60) {
+            m_rtcRegisters.Minutes = 0;
+            
+            if(++m_rtcRegisters.Hours == 24) {
+                m_rtcRegisters.Hours = 0;
+                
+                if(++m_rtcRegisters.Days == 0) {
+                    // The low days counter wrapped around.
+                    m_rtcRegisters.Flags ^= 0b1;
+
+                    if((m_rtcRegisters.Flags & 0b1) == 0) {
+                        // The days counter overflowed. Set the carry bit.
+                        m_rtcRegisters.Flags |= 0b10000000;
+                    }
+                }
+            }
+        }
+    }
+
+    // Normalize the registers (ensure that they don't exceed their intended bit size, and that they roll around
+    // to zero at 64/32 instead of 256).
+    m_rtcRegisters.Seconds &= 0b00111111;
+    m_rtcRegisters.Minutes &= 0b00111111;
+    m_rtcRegisters.Hours   &= 0b00011111;
+}
+
+void GameBoyMapper::RTC_LatchRegisters() {
+    m_rtcLatchedRegisters.Days = m_rtcRegisters.Days;
+    m_rtcLatchedRegisters.Flags = m_rtcRegisters.Flags;
+    m_rtcLatchedRegisters.Hours = m_rtcRegisters.Hours;
+    m_rtcLatchedRegisters.Minutes = m_rtcRegisters.Minutes;
+    m_rtcLatchedRegisters.Seconds = m_rtcRegisters.Seconds;
+}
+
+void GameBoyMapper::RTC_Load(std::fstream &file) {
+    const auto now = std::time(nullptr);
+    time_t savedTimestamp;
+    uint8_t rtcSeconds, rtcMinutes, rtcHours, rtcDays, rtcFlags;
+
+    file.read(reinterpret_cast<std::istream::char_type*>(&savedTimestamp), sizeof(savedTimestamp));
+    file.get(reinterpret_cast<std::istream::char_type&>(rtcSeconds));
+    file.get(reinterpret_cast<std::istream::char_type&>(rtcMinutes));
+    file.get(reinterpret_cast<std::istream::char_type&>(rtcHours));
+    file.get(reinterpret_cast<std::istream::char_type&>(rtcDays));
+    file.get(reinterpret_cast<std::istream::char_type&>(rtcFlags));
+
+    // If the timer halt bit is set, don't attempt to catch up. Just write the values into the
+    // registers as-is.
+    if(BIT_TEST(rtcFlags, 6)) {
+        m_rtcRegisters.Seconds = rtcSeconds;
+        m_rtcRegisters.Minutes = rtcMinutes;
+        m_rtcRegisters.Hours = rtcHours;
+        m_rtcRegisters.Days = rtcDays;
+        m_rtcRegisters.Flags = rtcFlags;
+        return;
+    }
+
+    // Figure out how much time passed between the RTC dump and now, create a timestamp from the GB's RTC,
+    // and work out what the final timestamp should be.
+    const auto diff = now - savedTimestamp;
+    const auto gbRtcTotalDays = ((rtcFlags & 0b1) << 8) | rtcDays;
+    auto gbRtcTimestamp = (gbRtcTotalDays * 60 * 60 * 24)
+                        + (rtcHours * 60 * 60)
+                        + (rtcMinutes * 60)
+                        + rtcSeconds
+                        + diff;
+
+    // Stuff the final value into the RTC fields.
+    const uint16_t days = gbRtcTimestamp / 60 / 60 / 24;
+    m_rtcRegisters.Days = days & 0xFF;
+    m_rtcRegisters.Flags = (rtcFlags & 0b11111110) | ((days >> 8) & 0b1);
+    gbRtcTimestamp -= days * 60 * 60 * 24;
+
+    m_rtcRegisters.Hours = gbRtcTimestamp / 60 / 60;
+    gbRtcTimestamp -= m_rtcRegisters.Hours * 60 * 60;
+
+    m_rtcRegisters.Minutes = gbRtcTimestamp / 60;
+    gbRtcTimestamp -= m_rtcRegisters.Minutes * 60;
+
+    m_rtcRegisters.Seconds = gbRtcTimestamp;
+}
+
+uint8_t GameBoyMapper::RTC_RegisterGet(const int index) const {
+    switch(index) {
+        case 0x08: return m_rtcLatchedRegisters.Seconds;
+        case 0x09: return m_rtcLatchedRegisters.Minutes;
+        case 0x0A: return m_rtcLatchedRegisters.Hours;
+        case 0x0B: return m_rtcLatchedRegisters.Days;
+        case 0x0C: return m_rtcLatchedRegisters.Flags;
+        default: return 0xFF;
+    }
+}
+
+void GameBoyMapper::RTC_RegisterSet(const int index, const uint8_t value) {
+    switch(index) {
+        case 0x08:
+            m_rtcLatchedRegisters.Seconds = m_rtcRegisters.Seconds = value & 0b00111111;
+            RTC_ResetSubSecondClock();
+            break;
+
+        case 0x09:
+            m_rtcLatchedRegisters.Minutes = m_rtcRegisters.Minutes = value & 0b00111111;
+            break;
+
+        case 0x0A:
+            m_rtcLatchedRegisters.Hours = m_rtcRegisters.Hours = value & 0b00011111;
+            break;
+
+        case 0x0B:
+            m_rtcLatchedRegisters.Days = m_rtcRegisters.Days = value & 0b11111111;
+            break;
+
+        case 0x0C:
+            m_rtcLatchedRegisters.Flags = m_rtcRegisters.Flags = value & 0b11000001;
+            break;
+        
+        default: break;
+    }
+}
+
+void GameBoyMapper::RTC_ResetSubSecondClock() {
+    m_rtcMachineCycles = m_rtcCpuClockRate;
+}
+
+void GameBoyMapper::RTC_SetCpuClockRate(const int clockRate) {
+    m_rtcCpuClockRate = clockRate;
 }
 
 void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const bool privileged) {
@@ -270,20 +464,23 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
         bankSwitchRom = true;
     } else if(address < 0x6000) {
         // Bank register 1 (RAM bank or RTC register selector).
-        if(value < 0x08) {
-            m_bankRegister1 = value;
+        m_bankRegister1 = value;
+        m_ramBank = m_bankRegister1;
+        if(value < 0x04) {
             bankSwitchRam = true;
-        } else {
-            // RTC register.
-            // TODO: Implement RTC.
         }
     } else if(address < 0x8000) {
-        // Latch clock data.
-        // TODO: Implement RTC.
+        // RTC register latch.
+        if(value == 1 && m_rtcLatchLastValueWritten == 0) {
+            RTC_LatchRegisters();
+        }
     } else if(address >= 0xA000 && address < 0xC000) {
         // RTC register 08-0C.
-        // TODO: Implement RTC.
-        return false;
+        if(m_ramBank >= 0x08 && m_ramBank <= 0x0C) {
+            RTC_RegisterSet(m_ramBank, value);
+        } else {
+            return false;
+        }
     } else {
         return false;
     }
@@ -297,10 +494,6 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
                 // If register 0 is 0, automatically bump it to 1.
                 m_rom1Bank = 1;
             }
-        }
-
-        if(bankSwitchRam) {
-            m_ramBank = m_bankRegister1;
         }
         
         // Remap memory.

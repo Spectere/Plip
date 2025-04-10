@@ -97,6 +97,7 @@ namespace Plip::Core::GameBoy {
 
         std::filesystem::path m_cartPath {};
         std::filesystem::path m_batteryPath {};
+        std::filesystem::path m_rtcDataPath {};
 
         MBC_Type m_mbc = MBC_Type::None;
         bool m_hasBattery = false;

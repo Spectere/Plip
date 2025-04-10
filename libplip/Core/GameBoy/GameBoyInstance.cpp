@@ -112,6 +112,11 @@ void GameBoyInstance::Delta(const long ns) {
         // PPU
         PPU_Cycle();
 
+        // RTC
+        if(m_hasRtc) {
+            m_gbMemory->RTC_Clock();
+        }
+
         // Handle ROM disable flag.
         if(!m_bootRomDisableFlag) {
             // See if we need to disable the boot ROM.
@@ -174,12 +179,12 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
     // Update titlebar.
     m_video->SetTitle("GameBoy: " + PlipIo::GetFilename(m_cartPath));
 
-    // Set up memory (for real this time).
+    // Set up the memory map.
     m_gbMemory = new GameBoyMapper(m_bootRom, m_cartRom, m_videoRam, m_workRam, m_oam, m_ioRegisters, m_highRam);
     delete m_memory;
     m_memory = m_gbMemory;
 
-    m_cartRam = m_gbMemory->ConfigureMapper(m_mbc, m_cartRamBanks);
+    m_cartRam = m_gbMemory->ConfigureMapper(m_mbc, m_hasRtc, m_cartRamBanks);
 
     // Create CPU.
     m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory);
@@ -201,6 +206,18 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
                     m_cartRam->SetByte(i, sramData[i], true);
                 }
             }
+        }
+    }
+
+    // Load the RTC clock data.
+    if(m_hasRtc) {
+        m_rtcDataPath = m_cartPath;
+        m_rtcDataPath.replace_extension(".rtc");
+
+        if(PlipIo::FileExists(m_rtcDataPath)) {
+            auto rtcDataFile = PlipIo::LoadFile(m_rtcDataPath);
+            m_gbMemory->RTC_Load(rtcDataFile);
+            rtcDataFile.close();
         }
     }
 
@@ -409,6 +426,12 @@ void GameBoyInstance::Reset() {
     // Reset PPU.
     PPU_Reset();
 
+    // Initialize RTC counter (if applicable).
+    if(m_hasRtc) {
+        m_gbMemory->RTC_SetCpuClockRate(m_cpu->GetHz());
+        m_gbMemory->RTC_ResetSubSecondClock();
+    }
+
     // Reset I/O registers.
     m_ioRegisters->Reset();
     RegisterWriteServiced();
@@ -418,5 +441,12 @@ void GameBoyInstance::Shutdown() {
     // Save SRAM (if applicable).
     if(m_hasBattery) {
         PlipIo::DumpMemoryToDisk(m_batteryPath, m_cartRam);
+    }
+
+    // Save RTC data (if applicable).
+    if(m_hasRtc) {
+        auto rtcDataFile = PlipIo::CreateFile(m_rtcDataPath);
+        m_gbMemory->RTC_Dump(rtcDataFile);
+        rtcDataFile.close();
     }
 }
