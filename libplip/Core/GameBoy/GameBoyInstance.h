@@ -5,11 +5,11 @@
 
 #pragma once
 
+#include <filesystem>
 #include <vector>
 
 #include "GameBoyIoRegisters.h"
 #include "GameBoyMapper.h"
-#include "Mbc2Ram.h"
 #include "MBC_Type.h"
 #include "PPU_Mode.h"
 #include "PPU_OutputStage.h"
@@ -29,6 +29,7 @@ namespace Plip::Core::GameBoy {
         std::vector<uint64_t> GetPcs() const override;
         PlipError Load(const std::string &path) override;
         void Reset() override;
+        void Shutdown() override;
 
     private:
         struct PPU_Object {
@@ -93,6 +94,9 @@ namespace Plip::Core::GameBoy {
 
         // Cartridge features
         static constexpr auto CartRamSizeOffset = 0x0149;
+
+        std::filesystem::path m_cartPath {};
+        std::filesystem::path m_batteryPath {};
 
         MBC_Type m_mbc = MBC_Type::None;
         bool m_hasBattery = false;

@@ -158,20 +158,21 @@ std::vector<uint64_t> GameBoyInstance::GetPcs() const {
 }
 
 Plip::PlipError GameBoyInstance::Load(const std::string &path) {
-    if(!PlipIo::FileExists(path)) {
+    m_cartPath = path;
+    if(!PlipIo::FileExists(m_cartPath)) {
         return PlipError::FileNotFound;
     }
 
     // Load the ROM.
-    const auto size = PlipIo::GetSize(path);
-    const auto data = PlipIo::ReadFile(path, size);
+    const auto size = PlipIo::GetSize(m_cartPath);
+    const auto data = PlipIo::ReadFile(m_cartPath, size);
     m_cartRom = new PlipMemoryRom(data.data(), size, 0xFF);
 
     // Read the ROM header.
     ReadCartridgeFeatures();
 
     // Update titlebar.
-    m_video->SetTitle("GameBoy: " + PlipIo::GetFilename(path));
+    m_video->SetTitle("GameBoy: " + PlipIo::GetFilename(m_cartPath));
 
     // Set up memory (for real this time).
     m_gbMemory = new GameBoyMapper(m_bootRom, m_cartRom, m_videoRam, m_workRam, m_oam, m_ioRegisters, m_highRam);
@@ -185,6 +186,23 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
     
     // Reset system.
     Reset();
+
+    // Load the battery file if necessary.
+    if(m_hasBattery) {
+        m_batteryPath = m_cartPath;
+        m_batteryPath.replace_extension(".sav");
+
+        if(PlipIo::FileExists(m_batteryPath)) {
+            if(const auto sramSize = PlipIo::GetSize(m_batteryPath); sramSize == m_cartRam->GetLength()) {
+                // Only load SRAM if the file is the correct size.
+                const auto sramData = PlipIo::ReadFile(m_batteryPath, sramSize);
+
+                for(auto i = 0; i < sramSize; ++i) {
+                    m_cartRam->SetByte(i, sramData[i], true);
+                }
+            }
+        }
+    }
 
     return PlipError::Success;
 }
@@ -374,4 +392,11 @@ void GameBoyInstance::Reset() {
     // Reset I/O registers.
     m_ioRegisters->Reset();
     RegisterWriteServiced();
+}
+
+void GameBoyInstance::Shutdown() {
+    // Save SRAM (if applicable).
+    if(m_hasBattery) {
+        PlipIo::DumpMemoryToDisk(m_batteryPath, m_cartRam);
+    }
 }

@@ -149,6 +149,7 @@ void Game::Run() const {
         }
     }
 
+    m_plip->GetCore()->Shutdown();
     audio->DequeueAll();
 }
 

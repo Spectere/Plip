@@ -46,6 +46,7 @@ namespace Plip {
         virtual PlipError Load(const std::string &path) = 0;
         virtual void Reset() = 0;
         void SetBreakpoints(const std::set<uint64_t> &breakpoints) { m_breakpoints = breakpoints; }
+        virtual void Shutdown() {}
 
     protected:
         explicit PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKeyValuePairCollection config);

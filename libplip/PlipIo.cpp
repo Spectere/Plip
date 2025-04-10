@@ -9,6 +9,25 @@
 
 using Plip::PlipIo;
 
+std::fstream PlipIo::CreateFile(const std::string &path) {
+    return std::fstream(path.c_str(), std::ios_base::in | std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
+}
+
+void PlipIo::DumpMemoryToDisk(std::fstream &file, PlipMemory *memory) {
+    const auto memoryLength = memory->GetLength();
+    
+    for(auto i = 0; i < memoryLength; i++) {
+        file.put(memory->GetByte(i, true));
+    }
+    file.flush();
+}
+
+void PlipIo::DumpMemoryToDisk(const std::string &path, PlipMemory *memory) {
+    auto file = CreateFile(path);
+    DumpMemoryToDisk(file, memory);
+    file.close();
+}
+
 bool PlipIo::FileExists(const std::string &path) {
     std::ifstream file(path.c_str());
     const bool success = file.good();
@@ -27,11 +46,16 @@ uintmax_t PlipIo::GetSize(const std::string &path) {
     return file_size(fs::path(path));
 }
 
-std::ifstream PlipIo::LoadFile(const std::string &path) {
-    return std::ifstream(path.c_str());
+std::fstream PlipIo::LoadFile(const std::string &path, bool writable) {
+    return std::fstream(
+        path.c_str(),
+        writable
+            ? std::ios_base::in | std::ios_base::out | std::ios_base::binary
+            : std::ios_base::in | std::ios_base::binary
+    );
 }
 
-std::vector<char> PlipIo::ReadFile(std::ifstream &file, const uintmax_t size) {
+std::vector<char> PlipIo::ReadFile(std::fstream &file, const uintmax_t size) {
     std::vector<char> data(size);
 
     // Unlikely, but let's handle it anyway.
@@ -46,5 +70,7 @@ std::vector<char> PlipIo::ReadFile(std::ifstream &file, const uintmax_t size) {
 
 std::vector<char> PlipIo::ReadFile(const std::string &path, const uintmax_t size) {
     auto file = LoadFile(path);
-    return ReadFile(file, size);
+    const auto contents = ReadFile(file, size);
+    file.close();
+    return contents;
 }
