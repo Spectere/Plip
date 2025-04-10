@@ -269,19 +269,39 @@ void GameBoyInstance::ReadCartridgeFeatures() {
         case 0x00: case 0x08: case 0x09:
             m_mbc = MBC_Type::None;
             break;
-
         case 0x01: case 0x02: case 0x03:
             m_mbc = MBC_Type::Mbc1;
             break;
-
         case 0x05: case 0x06:
             m_mbc = MBC_Type::Mbc2;
             break;
-
         case 0x0F: case 0x10: case 0x11: case 0x12: case 0x13:
             m_mbc = MBC_Type::Mbc3;
             break;
-
+        case 0x0B: case 0x0C: case 0x0D:
+            m_mbc = MBC_Type::Mmm01;
+            break;
+        case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E:
+            m_mbc = MBC_Type::Mbc5;
+            break;
+        case 0x20:
+            m_mbc = MBC_Type::Mbc6;
+            break;
+        case 0x22:
+            m_mbc = MBC_Type::Mbc7;
+            break;
+        case 0xFC:
+            m_mbc = MBC_Type::PocketCamera;
+            break;
+        case 0xFD:
+            m_mbc = MBC_Type::BandaiTama5;
+            break;
+        case 0xFE:
+            m_mbc = MBC_Type::HuC3;
+            break;
+        case 0xFF:
+            m_mbc = MBC_Type::HuC1;
+            break;
         default: {
             std::stringstream ex;
             ex << "invalid/unsupported memory bank controller: "
