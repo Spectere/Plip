@@ -77,7 +77,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF04
         case IoRegister::Divider: {
-            m_timerDividerReset = true;
+            m_timerRegister = 0;
             break;
         }
 
@@ -207,12 +207,7 @@ void GameBoyIoRegisters::Timer_Cycle() {
     }
 
     // Either reset or increment the timer.
-    if(m_timerDividerReset) {
-        m_timerRegister = 0;
-        m_timerDividerReset = false;
-    } else {
-        m_timerRegister += 4;  // 4 T-cycles per M-cycle
-    }
+    m_timerRegister += 4;  // 4 T-cycles per M-cycle
 
     // Work out which bit should potentially increment TIMA.
     const auto timerControl = m_regTimerControl;

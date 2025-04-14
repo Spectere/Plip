@@ -70,7 +70,7 @@ namespace Plip::Core::GameBoy {
         BootRomDisable = 0x50,
     };
     
-    class GameBoyIoRegisters : public PlipMemory {
+    class GameBoyIoRegisters final : public PlipMemory {
     public:
         GameBoyIoRegisters();
         ~GameBoyIoRegisters() = default;
@@ -128,7 +128,6 @@ namespace Plip::Core::GameBoy {
             ReloadJustOccurred,
         };
         
-        bool m_timerDividerReset {};
         bool m_timerLastBitResult {};
         TimaReloadStatus m_timerTimaReloadStatus {};
         uint16_t m_timerRegister {};

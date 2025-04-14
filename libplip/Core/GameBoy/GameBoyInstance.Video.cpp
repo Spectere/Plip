@@ -17,7 +17,9 @@ void GameBoyInstance::PPU_Cycle() {
     if(BIT_TEST(m_ppuLastLcdControl, 7) && !BIT_TEST(currentLcdControl, 7)) {
         // LCD was disabled during this cycle. Flag all memory as writable, blank the screen, and reset the PPU mode
         // to 0 (HBlank).
+        m_oam->SetReadable(true);
         m_oam->SetWritable(true);
+        m_videoRam->SetReadable(true);
         m_videoRam->SetWritable(true);
 
         memset(m_videoBuffer, 0xFF, m_videoBufferSize);
@@ -92,7 +94,7 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
 
         // Determine drawing candidates for this scanline.
         for(auto i = 0; i < PPU_MaximumObjectCount; ++i) {
-            const auto y = m_oam->GetByte(i * 4);
+            const auto y = m_oam->GetByte(i * 4, true);
 
             const auto minY = y - 16;
             const auto maxY = minY + (tallSprites ? 16 : 8);
@@ -101,9 +103,9 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
                 // Object is a valid candidate.
                 candidates.push_back(PPU_Object {
                     .Y = y,
-                    .X = m_oam->GetByte(i * 4 + 1),
-                    .Index = m_oam->GetByte(i * 4 + 2),
-                    .Flags = m_oam->GetByte(i * 4 + 3)
+                    .X = m_oam->GetByte(i * 4 + 1, true),
+                    .Index = m_oam->GetByte(i * 4 + 2, true),
+                    .Flags = m_oam->GetByte(i * 4 + 3, true)
                 });
             }
         }
@@ -240,7 +242,7 @@ int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, cons
     const auto tilePixelY = surfacePixelY % PPU_TileSizeY;
 
     const auto mapIndex = (tileY * PPU_MapTileCountX) + tileX;
-    const auto tileIndex = m_videoRam->GetByte(tileMapAddress + mapIndex);
+    const auto tileIndex = m_videoRam->GetByte(tileMapAddress + mapIndex, true);
 
     const auto lineOffset = tilePixelY * 2;
 
@@ -420,15 +422,21 @@ void GameBoyInstance::PPU_SetMemoryPermissions() const {
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
         case PPU_Mode::VBlank:
+            m_oam->SetReadable(true);
             m_oam->SetWritable(true);
+            m_videoRam->SetReadable(true);
             m_videoRam->SetWritable(true);
             break;
         case PPU_Mode::OamScan:
+            m_oam->SetReadable(false);
             m_oam->SetWritable(false);
+            m_videoRam->SetReadable(true);
             m_videoRam->SetWritable(true);
             break;
         case PPU_Mode::Output:
+            m_oam->SetReadable(false);
             m_oam->SetWritable(false);
+            m_videoRam->SetReadable(false);
             m_videoRam->SetWritable(false);
             break;
     }
