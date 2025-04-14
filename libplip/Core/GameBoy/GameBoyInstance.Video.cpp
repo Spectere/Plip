@@ -212,7 +212,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
     if(BIT_TEST(lcdControl, 1)) {
         // Object drawing is enabled.
         for(const auto object : m_ppuObjectDrawList) {
-            if(PPU_DrawObjects(pixelOffset, object, BIT_TEST(lcdControl, 2), lastBgColor))
+            if(PPU_DrawObject(pixelOffset, object, BIT_TEST(lcdControl, 2), lastBgColor))
                 break;  // An object pixel has already been drawn on this position.
         }
     }
@@ -256,7 +256,7 @@ int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, cons
     return pixelColor;
 }
 
-bool GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, PPU_Object object, const bool tallSprites, const int thisBgColor) const {
+bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Object object, const bool tallSprites, const int thisBgColor) const {
     // TODO: Object dot clock penalties. :(
     const auto objX = object.X - 8;
     const auto objY = object.Y - 16;
@@ -272,13 +272,8 @@ bool GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, PPU_Object obj
 
     auto tileIndex = object.Index;
     if(tallSprites) {
-        if(objPixelY < 8) {
-            // The base tile for 8x16 sprites always has its LSB set to 0.
-            tileIndex &= 0b11111110;
-        } else {
-            // Its second tile always has its LSB set to 1.
-            tileIndex |= 0b1;
-        }
+        // The base tile for 8x16 sprites always has its LSB set to 0.
+        tileIndex &= 0b11111110;
     }
 
     if(BIT_TEST(object.Flags, 5)) {
