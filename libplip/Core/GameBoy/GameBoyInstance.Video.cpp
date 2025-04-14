@@ -220,7 +220,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
     }
 }
 
-int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const uint8_t offsetX, const uint8_t offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1) const {
+int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const int offsetX, const int offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1) const {
     uint8_t surfacePixelX {};
     uint8_t surfacePixelY {};
 
