@@ -108,11 +108,6 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
             }
         }
 
-        // Sort candidates by their X position.
-        std::sort(candidates.begin(), candidates.end(), [](const PPU_Object lhs, const PPU_Object rhs) {
-            return lhs.X < rhs.X;
-        });
-
         // Copy up to PPU_ObjectsPerScanline objects into the drawing list.
         int objectsCopied = 0;
         for(auto candidate : candidates) {
@@ -121,6 +116,11 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
                 break;
             }
         }
+
+        // DMG prioritizes candidates with a lower X position.
+        std::sort(m_ppuObjectDrawList.begin(), m_ppuObjectDrawList.end(), [](const PPU_Object lhs, const PPU_Object rhs) {
+            return lhs.X < rhs.X;
+        });
 
         // Done!
         m_ppuOamScanComplete = true;
@@ -212,7 +212,8 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
     if(BIT_TEST(lcdControl, 1)) {
         // Object drawing is enabled.
         for(const auto object : m_ppuObjectDrawList) {
-            PPU_DrawObjects(pixelOffset, object, BIT_TEST(lcdControl, 2), lastBgColor);
+            if(PPU_DrawObjects(pixelOffset, object, BIT_TEST(lcdControl, 2), lastBgColor))
+                break;  // An object pixel has already been drawn on this position.
         }
     }
 }
@@ -255,14 +256,14 @@ int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, cons
     return pixelColor;
 }
 
-void GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, PPU_Object object, const bool tallSprites, const int thisBgColor) const {
+bool GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, PPU_Object object, const bool tallSprites, const int thisBgColor) const {
     // TODO: Object dot clock penalties. :(
     const auto objX = object.X - 8;
     const auto objY = object.Y - 16;
 
     if((m_ppuLcdXCoordinate < objX) || (m_ppuLcdXCoordinate >= objX + 8)) {
         // Sprite does not exist on the current X coordinate.
-        return;
+        return false;
     }
 
     auto objPixelX = m_ppuLcdXCoordinate - objX;
@@ -296,14 +297,15 @@ void GameBoyInstance::PPU_DrawObjects(const uint32_t pixelOffset, PPU_Object obj
     const auto objShift = 7 - objPixelX;
     const auto pixelData = (((pixelDataHigh >> objShift) & 0b1) << 1)
                          | ((pixelDataLow >> objShift) & 0b1);
-    if(pixelData == 0) return;  // Color 0b00 is always transparent.
+    if(pixelData == 0) return false;  // Color 0b00 is always transparent.
 
     const auto pixelColor = (objPalette >> (pixelData * 2)) & 0b11;
     
-    if(BIT_TEST(object.Flags, 7) && thisBgColor) return;  // BG colors 1-3 have priority.
+    if(BIT_TEST(object.Flags, 7) && thisBgColor) return false;  // BG colors 1-3 have priority.
 
     // Finally, draw the point!
     PPU_Plot(pixelColor, pixelOffset);
+    return true;
 }
 
 void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {

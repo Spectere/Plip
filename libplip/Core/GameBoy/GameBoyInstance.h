@@ -56,7 +56,7 @@ namespace Plip::Core::GameBoy {
         bool PPU_DotClock_Output(uint8_t lcdControl);
         void PPU_DotClock_Output_Drawing(uint8_t lcdControl);
         int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, uint8_t offsetX, uint8_t offsetY, uint16_t tileMapAddress, uint16_t tileDataAddress0, uint16_t tileDataAddress1) const;
-        void PPU_DrawObjects(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor) const;
+        bool PPU_DrawObjects(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor) const;
         void PPU_FinishTransition(uint8_t lcdStatus);
         void PPU_FinishTransition_OamScan(uint8_t lcdStatus);
         void PPU_FinishTransition_VBlank(uint8_t lcdStatus);
