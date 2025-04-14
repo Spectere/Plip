@@ -130,7 +130,7 @@ namespace Plip::Core::GameBoy {
         
         bool m_timerLastBitResult {};
         TimaReloadStatus m_timerTimaReloadStatus {};
-        uint16_t m_timerRegister {};
+        uint16_t m_timerInternal {};
 
         // Video
         bool m_videoPerformOamDmaCopy {};

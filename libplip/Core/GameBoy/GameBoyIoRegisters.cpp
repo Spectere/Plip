@@ -16,7 +16,7 @@ GameBoyIoRegisters::GameBoyIoRegisters() {
 uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
     switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
         /* $FF00 */ case IoRegister::JoypadInput: { return m_regJoypad; }
-        /* $FF04 */ case IoRegister::Divider: { return m_timerRegister >> 8; }
+        /* $FF04 */ case IoRegister::Divider: { return m_timerInternal >> 8; }
         /* $FF05 */ case IoRegister::TimerCounter: { return m_regTimerCounter; }
         /* $FF06 */ case IoRegister::TimerModulo: { return m_regTimerModulo; }
         /* $FF07 */ case IoRegister::TimerControl: { return m_regTimerControl; }
@@ -59,7 +59,7 @@ void GameBoyIoRegisters::Reset() {
     m_interruptFlag = 0;
 
     // Timer
-    m_timerRegister = 0;
+    m_timerInternal = 0;
     m_regTimerCounter = 0;
     m_regTimerControl = 0xF8;
     m_regTimerModulo = 0;
@@ -77,7 +77,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF04
         case IoRegister::Divider: {
-            m_timerRegister = 0;
+            m_timerInternal = 0;
             break;
         }
 
@@ -102,6 +102,12 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF06
         case IoRegister::TimerModulo: {
             m_regTimerModulo = value;
+
+            if(m_timerTimaReloadStatus == ReloadJustOccurred) {
+                // If TMA is written to on the cycle that the reload occurs, the new
+                // value will be loaded into TIMA.
+                m_regTimerCounter = m_regTimerModulo;
+            }
             break;
         }
 
@@ -196,18 +202,19 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
     }
 }
 
+#include <iostream>
 void GameBoyIoRegisters::Timer_Cycle() {
     // Perform TIMA reload if necessary.
     if(m_timerTimaReloadStatus == ReloadScheduled) {
         RaiseInterrupt(Cpu::SharpLr35902Interrupt::Timer);
-        m_regTimerControl = m_regTimerModulo;
+        m_regTimerCounter = m_regTimerModulo;
         m_timerTimaReloadStatus = ReloadJustOccurred;
     } else if(m_timerTimaReloadStatus == ReloadJustOccurred) {
         m_timerTimaReloadStatus = NoReload;
     }
 
     // Either reset or increment the timer.
-    m_timerRegister += 4;  // 4 T-cycles per M-cycle
+    m_timerInternal += 4;  // 4 T-cycles per M-cycle
 
     // Work out which bit should potentially increment TIMA.
     const auto timerControl = m_regTimerControl;
@@ -215,7 +222,7 @@ void GameBoyIoRegisters::Timer_Cycle() {
     const auto timaClock = timerControl & 0b11;
     
     const auto frequencyBit = Timer_GetFrequencyBit(timaClock);
-    const bool thisBitResult = ((m_timerRegister >> frequencyBit) & 0b1) && timaEnabled;
+    const bool thisBitResult = ((m_timerInternal >> frequencyBit) & 0b1) && timaEnabled;
 
     Timer_FallingEdgeDetection(thisBitResult);
 }
