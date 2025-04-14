@@ -285,7 +285,7 @@ bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Objec
 
     if(BIT_TEST(object.Flags, 6)) {
         // Flip vertically.
-        objPixelY = 7 - objPixelY;
+        objPixelY = (tallSprites ? 15 : 7) - objPixelY;
     }
     
     const auto lineOffset = objPixelY * 2;
