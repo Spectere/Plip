@@ -18,6 +18,7 @@
 #include "Config.h"
 #include "Game.h"
 #include "Gui.h"
+#include "NullAudio.h"
 #include "Sdl/SdlAudio.h"
 #include "Sdl/SdlEvent.h"
 #include "Sdl/SdlWindow.h"
@@ -174,10 +175,12 @@ int main(int argc, char **argv) {
     }
 
     // Audio Settings
+    const auto audioEnabled = config->GetValue<bool>("audio", "enabled", true);
     const auto sampleRate = config->GetValue<int>("audio", "sample-rate", 48000);
     const auto bufferLength = config->GetValue<int>("audio", "buffer-length", 8192);
 
-    auto audio = new PlipSdl::SdlAudio(sampleRate, bufferLength);
+    Plip::PlipAudio* audio = audioEnabled ? static_cast<Plip::PlipAudio*>(new PlipSdl::SdlAudio(sampleRate, bufferLength))
+                                          : static_cast<Plip::PlipAudio*>(new PlipSdl::NullAudio());
 
     // Video Settings
     auto videoScale = config->GetValue<int>("video", "scale", 1);

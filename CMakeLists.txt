@@ -181,6 +181,7 @@ add_executable(${gui_name}
     plip-sdl/Game.cpp                   plip-sdl/Game.h
     plip-sdl/Gui.cpp                    plip-sdl/Gui.h
                                         plip-sdl/GuiState.h
+                                        plip-sdl/NullAudio.h
                                         plip-sdl/PlipUiEvent.h
 
     plip-sdl/Sdl/SdlAudio.cpp           plip-sdl/Sdl/SdlAudio.h
