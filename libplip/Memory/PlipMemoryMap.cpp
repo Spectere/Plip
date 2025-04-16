@@ -167,9 +167,10 @@ void PlipMemoryMap::UnassignBlock(const uint32_t address, const uint32_t length)
                     // with an adjusted offset/length.
                     it->length = address - it->startAddress;
 
+                    const auto oldOffset = it->offset;
                     const auto newStart = endAddress + 1;
                     const auto newLength = blockEnd - endAddress;
-                    const auto offset = endAddress - it->startAddress + 1;
+                    const auto offset = endAddress - it->startAddress + 1 + oldOffset;
                     AssignBlockDirect(it->memory, newStart, offset, newLength);
 
                     // There's no way there are any block beyond this, so
