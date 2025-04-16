@@ -250,25 +250,25 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
             // $FF51
             case IoRegister::VramDmaSourceHigh: {
-                m_videoHdmaSourceAddress = value << 8 | (m_videoHdmaSourceAddress & 0b11111111);
+                m_videoHdmaSourceAddress = (value << 8) | (m_videoHdmaSourceAddress & 0xFF);
                 break;
             }
 
             // $FF52
             case IoRegister::VramDmaSourceLow: {
-                m_videoHdmaSourceAddress = m_videoHdmaSourceAddress | (value & 0b11110000);
+                m_videoHdmaSourceAddress = (m_videoHdmaSourceAddress & 0xFF00) | (value & 0xF0);
                 break;
             }
 
             // $FF53
             case IoRegister::VramDmaDestinationHigh: {
-                m_videoHdmaDestinationAddress = (value & 0b00001111) << 8 | (m_videoHdmaDestinationAddress & 0b11111111);
+                m_videoHdmaDestinationAddress = ((value & 0x0F) << 8) | (m_videoHdmaDestinationAddress & 0xFF);
                 break;
             }
 
             // $FF54
             case IoRegister::VramDmaDestinationLow: {
-                m_videoHdmaDestinationAddress = m_videoHdmaDestinationAddress | (value & 0b11110000);
+                m_videoHdmaDestinationAddress = (m_videoHdmaDestinationAddress & 0xFF00) | (value & 0xF0);
                 break;
             }
 
