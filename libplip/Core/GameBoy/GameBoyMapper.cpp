@@ -6,7 +6,6 @@
 #include <ctime>
 
 #include "GameBoyMapper.h"
-
 #include "Mbc2Ram.h"
 
 using Plip::Core::GameBoy::GameBoyMapper;
@@ -71,7 +70,9 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
 }
 
 void GameBoyMapper::DisableBootRom() {
-    AssignBlock(m_cartRom, 0x0000, 0x0000, 0x0100);
+    // Remap bank 0. This allows this to work with all models with no muss or fuss.
+    UnassignBlock(0x0000, RomBank0Length);
+    AssignBlock(m_cartRom, 0x0000, 0x0000, RomBank0Length);
 }
 
 void GameBoyMapper::EnableCartridgeRam(const bool enable) {
@@ -123,6 +124,8 @@ std::map<std::string, Plip::DebugValue> GameBoyMapper::GetMbcDebugInfo() const {
         { "RAM Enabled", DebugValue(m_ramEnabled) },
         { "ROM $0000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom0Bank)) },
         { "ROM $4000 Bank", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_rom1Bank)) },
+        { "VRAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_vramBank) )},
+        { "WRAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_wramBank) )},
     };
 
     if(m_hasRtc) {
@@ -186,8 +189,21 @@ void GameBoyMapper::Reset() {
         EnableCartridgeRam(false);
     }
 
-    // Load the boot ROM into 0x0000-0x00FF (overlaying the cartridge ROM).
+    // Load the boot ROM into 0x0000-0x00FF (and 0x0200-0x08FF for CGB) (overlaying the cartridge ROM).
     AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
+    m_largeBootRom = m_bootRom->GetLength() > 0x0100;
+
+    if(m_largeBootRom) {
+        // Boot ROM is extended. Map the rest of it to 0x0200.
+
+        if(m_bootRom->GetLength() > 0x0800) {
+            // 0x0100-0x0200 are probably 0x00. Skip those and map from 0x0200-0x08FF.
+            AssignBlock(m_bootRom, 0x0200, 0x0200, 0x0700);
+        } else {
+            // The ROM is (hopefully) 2048 bytes long. Translate 0x0100-0x07FF to 0x0200-0x08FF.
+            AssignBlock(m_bootRom, 0x0200, 0x0100, 0x0700);
+        }
+    }
 }
 
 void GameBoyMapper::RestoreCartridgeMemoryAccessibility() const {
@@ -541,3 +557,16 @@ bool GameBoyMapper::SetByte_Mbc5(const uint32_t address, const uint8_t value) {
     return true;
 }
 
+void GameBoyMapper::SetVideoRamBank(const int bank) {
+    m_vramBank = bank;
+
+    UnassignBlock(VideoRamAddress, VideoRamLength);
+    AssignBlock(m_videoRam, VideoRamAddress, VideoRamLength * m_vramBank, VideoRamLength);
+}
+
+void GameBoyMapper::SetWorkRamBank(const int bank) {
+    m_wramBank = bank;
+    
+    UnassignBlock(WorkRamAddress, WorkRamLength);
+    AssignBlock(m_workRam, WorkRamAddress, WorkRamLength * m_wramBank, WorkRamLength);
+}

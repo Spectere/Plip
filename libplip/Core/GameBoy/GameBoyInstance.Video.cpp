@@ -36,8 +36,9 @@ void GameBoyInstance::PPU_Cycle() {
     }
 
     if(BIT_TEST(currentLcdControl, 7)) {
-        // Run 4 dot clock cycles per CPU cycle.
-        for(auto dotCycle = 0; dotCycle < PPU_DotsPerCycle; dotCycle++) {
+        // Run 2/4 dot clock cycles per CPU cycle.
+        const auto dotClocks = m_doubleSpeed ? PPU_DotsPerCycleHighSpeed : PPU_DotsPerCycleLowSpeed; 
+        for(auto dotCycle = 0; dotCycle < dotClocks; dotCycle++) {
             PPU_DotClock(currentLcdControl, currentLcdStatus);
         }
     }
@@ -120,9 +121,11 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
         }
 
         // DMG prioritizes candidates with a lower X position.
-        std::sort(m_ppuObjectDrawList.begin(), m_ppuObjectDrawList.end(), [](const PPU_Object lhs, const PPU_Object rhs) {
-            return lhs.X < rhs.X;
-        });
+        if(!m_cgbMode) {
+            std::sort(m_ppuObjectDrawList.begin(), m_ppuObjectDrawList.end(), [](const PPU_Object lhs, const PPU_Object rhs) {
+                return lhs.X < rhs.X;
+            });
+        }
 
         // Done!
         m_ppuOamScanComplete = true;
@@ -182,12 +185,13 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
 
     if(!BIT_TEST(lcdControl, 7)) {
         // The LCD should not be disabled here. Plot an error pixel.
-        PPU_Plot(255, pixelOffset);
+        PPU_Plot_DMG(255, pixelOffset);
     }
 
     int lastBgColor = 0;
-    if(BIT_TEST(lcdControl, 0)) {
-        // Background/Window drawing is enabled.
+    const bool lcdcEnabledOrPriority = BIT_TEST(lcdControl, 0);
+    if(lcdcEnabledOrPriority || m_cgbMode) {
+        // Background/Window drawing is enabled (or we're in CGB mode).
         const auto backgroundPalette = m_ioRegisters->GetByte(IoRegister::BgPalette);
         const auto scrollY = m_ioRegisters->GetByte(IoRegister::ScrollY);
         
@@ -197,35 +201,36 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
         const auto tileDataAddressLow = PPU_TileBase + (tilesUseBlock2 ? 0x1000 : 0);
         constexpr uint16_t tileDataAddressHigh = PPU_TileBase + 0x800;
 
-        lastBgColor = PPU_DrawBackgroundOrWindow(pixelOffset, false, backgroundPalette, m_ppuScrollX, scrollY, backgroundTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
+        lastBgColor = PPU_DrawBackgroundOrWindow(pixelOffset, false, backgroundPalette, m_ppuScrollX, scrollY, backgroundTileMapAddress, tileDataAddressLow, tileDataAddressHigh, lcdcEnabledOrPriority);
 
         if(m_ppuWindowEnabled) {
             // Window drawing is enabled.
             const auto windowTileMapAddress = PPU_TileMapBase + (BIT_TEST(lcdControl, 6) ? PPU_TileMapBlockOffset : 0);
 
-            const auto windowColor = PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, m_ppuWindowX, m_ppuWindowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
+            const auto windowColor = PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, m_ppuWindowX, m_ppuWindowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh, lcdcEnabledOrPriority);
             if(windowColor >= 0) lastBgColor = windowColor;
         }
     } else {
         // Background/Window drawing is disabled.
-        PPU_Plot(0b00, pixelOffset);
+        PPU_Plot_DMG(0b00, pixelOffset);
     }
 
     if(BIT_TEST(lcdControl, 1)) {
-        // Object drawing is enabled.
+        // Object drawing is enabled and can potentially have priority.
         for(const auto object : m_ppuObjectDrawList) {
-            if(PPU_DrawObject(pixelOffset, object, BIT_TEST(lcdControl, 2), lastBgColor))
-                break;  // An object pixel has already been drawn on this position.
+            if(PPU_DrawObject(pixelOffset, object, BIT_TEST(lcdControl, 2), lastBgColor, lcdcEnabledOrPriority)) {
+                break;  // An object pixel has already been considered for this position.
+            }
         }
     }
 }
 
-int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const int offsetX, const int offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1) const {
+int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const int offsetX, const int offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1, const bool lcdcPriority) const {
     uint8_t surfacePixelX {};
     uint8_t surfacePixelY {};
-
+    
     if(isWindow) {
-        if(offsetX > 166 || offsetY > 143) { return -1; }  // Window is off screen.
+        if(offsetX > 166 || offsetY > 143) { return -1; }  // Window is off-screen.
         if(m_ppuLcdXCoordinate < offsetX || m_ppuLcdYCoordinate < offsetY) { return -1; }  // Current pixel is up/left of window.
 
         surfacePixelX = m_ppuLcdXCoordinate - offsetX;
@@ -237,40 +242,76 @@ int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, cons
     
     const auto tileX = (surfacePixelX / PPU_TileSizeX) % PPU_MapTileCountX;
     const auto tileY = (surfacePixelY / PPU_TileSizeY) % PPU_MapTileCountY;
-
-    const auto tilePixelX = surfacePixelX % PPU_TileSizeX;
-    const auto tilePixelY = surfacePixelY % PPU_TileSizeY;
-
     const auto mapIndex = (tileY * PPU_MapTileCountX) + tileX;
-    const auto tileIndex = m_videoRam->GetByte(tileMapAddress + mapIndex, true);
 
+    bool priority = false;
+    bool flipX = false;
+    bool flipY = false;
+    bool bank1 = false;
+    int cgbPalette = 0;
+    if(m_cgbMode) {
+        const auto cgbBgMapAttributes = m_videoRam->GetByte(GameBoyMapper::VideoRamLength + tileMapAddress + mapIndex, true);
+        priority = BIT_TEST(cgbBgMapAttributes, 7);
+        flipY = BIT_TEST(cgbBgMapAttributes, 6);
+        flipX = BIT_TEST(cgbBgMapAttributes, 5);
+        bank1 = BIT_TEST(cgbBgMapAttributes, 3);
+        cgbPalette = cgbBgMapAttributes & 0b111;
+    }
+
+    auto tilePixelX = surfacePixelX % PPU_TileSizeX;
+    auto tilePixelY = surfacePixelY % PPU_TileSizeY;
+
+    if(flipX) {
+        tilePixelX = 7 - tilePixelX;
+    }
+
+    if(flipY) {
+        tilePixelY = 7 - tilePixelY;
+    }
+
+    const auto tileIndex = m_videoRam->GetByte(tileMapAddress + mapIndex, true);
+    
     const auto lineOffset = tilePixelY * 2;
 
-    const auto tileDataAddress = (tileIndex < 128) ? tileDataAddress0 : tileDataAddress1; 
+    const auto tileDataAddress = (tileIndex < 128) ? tileDataAddress0 : tileDataAddress1 + (bank1 ? GameBoyMapper::VideoRamLength : 0); 
     const auto pixelDataLow = m_videoRam->GetByte(tileDataAddress + (tileIndex % 128 * 16) + lineOffset, true);
     const auto pixelDataHigh = m_videoRam->GetByte(tileDataAddress + (tileIndex % 128 * 16) + lineOffset + 1, true);
     const auto tileShift = 7 - tilePixelX;
     const auto pixelData = (((pixelDataHigh >> tileShift) & 0b1) << 1)
                          | ((pixelDataLow >> tileShift) & 0b1);
     const auto pixelColor = (palette >> (pixelData * 2)) & 0b11;
-
-    PPU_Plot(pixelColor, pixelOffset);
-    return pixelColor;
+    
+    if(m_model == GameBoyModel::DMG) {
+        PPU_Plot_DMG(pixelColor, pixelOffset);
+        return pixelColor;
+    }
+    
+    PPU_Plot_CGB(false, cgbPalette, m_cgbMode ? pixelData : pixelColor, pixelOffset);
+    return pixelData | (priority ? (1 << 7) : 0);
 }
 
-bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Object object, const bool tallSprites, const int thisBgColor) const {
-    // TODO: Object dot clock penalties. :(
+bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Object object, const bool tallSprites, const int thisBgColor, const bool lcdcPriority) const {
+    // TODO: Emulate object dot clock penalties. :(
     const auto objX = object.X - 8;
     const auto objY = object.Y - 16;
-
+    
     if((m_ppuLcdXCoordinate < objX) || (m_ppuLcdXCoordinate >= objX + 8)) {
         // Sprite does not exist on the current X coordinate.
         return false;
     }
 
+    // Handle BG/OBJ priorities.
+    if(!m_cgbMode) {
+        if(BIT_TEST(object.Flags, 7) && (thisBgColor & 0b11)) return true;
+    } else {
+        const auto bgColor = thisBgColor & 0b11;
+        const bool bgPriority = BIT_TEST(thisBgColor, 7);
+        if(lcdcPriority && (BIT_TEST(object.Flags, 7) || bgPriority) && bgColor) return true;
+    }
+
     auto objPixelX = m_ppuLcdXCoordinate - objX;
     auto objPixelY = m_ppuLcdYCoordinate - objY;
-    const auto objPalette = m_ioRegisters->GetByte(BIT_TEST(object.Flags, 4) ? IoRegister::Obj1Palette : IoRegister::Obj0Palette);
+    const auto cgbPalette = m_cgbMode ? object.Flags & 0b111 : (BIT_TEST(object.Flags, 4) ? 1 : 0);
 
     auto tileIndex = object.Index;
     if(tallSprites) {
@@ -295,13 +336,16 @@ bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Objec
     const auto pixelData = (((pixelDataHigh >> objShift) & 0b1) << 1)
                          | ((pixelDataLow >> objShift) & 0b1);
     if(pixelData == 0) return false;  // Color 0b00 is always transparent.
-
-    const auto pixelColor = (objPalette >> (pixelData * 2)) & 0b11;
     
-    if(BIT_TEST(object.Flags, 7) && thisBgColor) return false;  // BG colors 1-3 have priority.
+    const auto objPalette = m_ioRegisters->GetByte(BIT_TEST(object.Flags, 4) ? IoRegister::Obj1Palette : IoRegister::Obj0Palette);
+    const auto pixelColor = (objPalette >> (pixelData * 2)) & 0b11;
 
     // Finally, draw the point!
-    PPU_Plot(pixelColor, pixelOffset);
+    if(m_model == GameBoyModel::DMG) {
+        PPU_Plot_DMG(pixelColor, pixelOffset);
+    } else {
+        PPU_Plot_CGB(true, cgbPalette, m_cgbMode ? pixelData : pixelColor, pixelOffset);
+    }
     return true;
 }
 
@@ -377,7 +421,23 @@ std::map<std::string, Plip::DebugValue> GameBoyInstance::PPU_GetDebugInfo() cons
     };
 }
 
-void GameBoyInstance::PPU_Plot(int color, const int pos) const {
+void GameBoyInstance::PPU_Plot_CGB(const bool objPalette, const int palette, const int color, const int pos) const {
+    if(m_ppuLcdOff) {
+        m_videoFormat.plot(m_videoBuffer, pos, 0, 0, 0);
+        return;
+    }
+
+    const auto paletteRam = objPalette ? m_ppuCgbObjPaletteRam : m_ppuCgbBgPaletteRam;
+    const auto index = (((palette & 0b111) * 4) + (color & 0b11)) * 2;
+    const uint16_t colorDefinition = (paletteRam->GetByte(index + 1, true) << 8)
+                                   | paletteRam->GetByte(index, true);
+    const uint8_t red = (colorDefinition & 0b11111) * 8;
+    const uint8_t green = ((colorDefinition & 0b11111 << 5) >> 5) * 8;
+    const uint8_t blue = ((colorDefinition & 0b11111 << 10) >> 10) * 8;
+    m_videoFormat.plot(m_videoBuffer, pos, red, green, blue);
+}
+
+void GameBoyInstance::PPU_Plot_DMG(int color, const int pos) const {
     if(m_ppuLcdOff) color = 0b00;
 
     switch(color) {
@@ -421,24 +481,39 @@ void GameBoyInstance::PPU_Reset() {
 void GameBoyInstance::PPU_SetMemoryPermissions() const {
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
-        case PPU_Mode::VBlank:
+        case PPU_Mode::VBlank: {
             m_oam->SetReadable(true);
             m_oam->SetWritable(true);
             m_videoRam->SetReadable(true);
             m_videoRam->SetWritable(true);
+            m_ppuCgbBgPaletteRam->SetReadable(true);
+            m_ppuCgbBgPaletteRam->SetWritable(true);
+            m_ppuCgbObjPaletteRam->SetReadable(true);
+            m_ppuCgbObjPaletteRam->SetWritable(true);
             break;
-        case PPU_Mode::OamScan:
+        }
+        case PPU_Mode::OamScan: {
             m_oam->SetReadable(false);
             m_oam->SetWritable(false);
             m_videoRam->SetReadable(true);
             m_videoRam->SetWritable(true);
+            m_ppuCgbBgPaletteRam->SetReadable(true);
+            m_ppuCgbBgPaletteRam->SetWritable(true);
+            m_ppuCgbObjPaletteRam->SetReadable(true);
+            m_ppuCgbObjPaletteRam->SetWritable(true);
             break;
-        case PPU_Mode::Output:
+        }
+        case PPU_Mode::Output: {
             m_oam->SetReadable(false);
             m_oam->SetWritable(false);
             m_videoRam->SetReadable(false);
             m_videoRam->SetWritable(false);
+            m_ppuCgbBgPaletteRam->SetReadable(false);
+            m_ppuCgbBgPaletteRam->SetWritable(false);
+            m_ppuCgbObjPaletteRam->SetReadable(false);
+            m_ppuCgbObjPaletteRam->SetWritable(false);
             break;
+        }
     }
 }
 

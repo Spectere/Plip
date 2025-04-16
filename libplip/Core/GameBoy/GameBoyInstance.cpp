@@ -32,6 +32,24 @@ GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *
     const auto bootRomData = PlipIo::ReadFile(bootRomPath, bootRomSize);
     m_bootRom = new PlipMemoryRom(bootRomData.data(), bootRomSize, 0xFF);
 
+    // Get the model that we should emulate and set up its I/O registers.
+    if(const auto gbModel = m_config.GetValue("Model"); gbModel == "cgb") {
+        m_model = GameBoyModel::CGB;
+        m_cgbMode = true;
+    } else {
+        m_model = GameBoyModel::DMG;
+    }
+
+    // Set up memory objects.
+    if(m_model == GameBoyModel::CGB) {
+        m_videoRam = new PlipMemoryRam(0x4000, 0xFF);
+        m_workRam = new PlipMemoryRam(0x8000, 0xFF);
+    } else {
+        m_videoRam = new PlipMemoryRam(0x2000, 0xFF);
+        m_workRam = new PlipMemoryRam(0x2000, 0xFF);
+    }
+    m_ioRegisters = new GameBoyIoRegisters(m_model, m_ppuCgbBgPaletteRam, m_ppuCgbObjPaletteRam);
+
     // Initialize framebuffer and video subsystem.
     m_video->ResizeOutput(ScreenWidth, ScreenHeight, 1.0, 1.0);
     m_videoFormat = PlipVideo::GetFormatInfo(video->GetFormat());
@@ -52,7 +70,10 @@ void GameBoyInstance::BootRomFlagHandler() {
     
     // Swap the boot ROM out for the cartridge ROM.
     m_bootRomDisableFlag = true;
-    m_memory->AssignBlock(m_cartRom, 0x0000, 0x0000, 0x0100);
+    m_gbMemory->DisableBootRom();
+
+    // If we're emulating a CGB, check KEY0 to see if we should set the system to full CGB mode.
+    m_cgbMode = m_model == GameBoyModel::CGB && !BIT_TEST(m_ioRegisters->GetByte(IoRegister::CpuModeSelect), 2);
 }
 
 void GameBoyInstance::CompleteOamDmaCopy() const {
@@ -74,17 +95,26 @@ void GameBoyInstance::CompleteOamDmaCopy() const {
 
 void GameBoyInstance::Delta(const long ns) {
     auto timeRemaining = ns;
-    const auto cycleTime = m_cpu->GetCycleTime();
+    auto cycleTime = m_cpu->GetCycleTime();
 
     ReadJoypad();
     ClearActiveBreakpoint();
 
     do {
         // Run CPU for one cycle.
-        m_cpu->Cycle();
+        if(!m_dmaBlockCpu)
+            m_cpu->Cycle();
+
+        if(const auto cpuDoubleSpeed = m_cpu->IsDoubleSpeed(); m_doubleSpeed != cpuDoubleSpeed) {
+            m_doubleSpeed = cpuDoubleSpeed;
+            m_ioRegisters->SetDoubleSpeed(m_doubleSpeed);
+            cycleTime = m_cpu->GetCycleTime();
+            m_ioRegisters->Timer_Reset();
+        }
         
         // Timer
-        m_ioRegisters->Timer_Cycle();
+        if(!m_dmaBlockCpu && !m_cpu->IsChangingSpeed())
+            m_ioRegisters->Timer_Cycle();
 
         // OAM DMA Copy
         if(m_ppuDmaCyclesRemaining > 0) {
@@ -105,6 +135,13 @@ void GameBoyInstance::Delta(const long ns) {
             m_oamDmaSourceAddress = sourceAddress << 8;
         }
 
+        // NEW DMA (TODO: Replace OAM DMA routine with this)
+        if(m_dmaState == DmaState::Inactive) {
+            DmaCheck();
+        } else {
+            DmaCycle();
+        }
+
         // Input
         m_ioRegisters->Joypad_SetMatrix(m_keypad);
         m_ioRegisters->Joypad_Cycle();
@@ -115,6 +152,20 @@ void GameBoyInstance::Delta(const long ns) {
         // RTC
         if(m_hasRtc) {
             m_gbMemory->RTC_Clock();
+        }
+
+        // CGB-specific Operations
+        if(m_model == GameBoyModel::CGB) {
+            // VRAM/WRAM Bank Switches
+            if(const auto wramBank = m_ioRegisters->GetPerformWorkRamBankSwitch(); wramBank >= 0) {
+                m_gbMemory->SetWorkRamBank(wramBank);
+                m_ioRegisters->AcknowledgeWorkRamBankSwitch();
+            }
+
+            if(const auto vramBank = m_ioRegisters->Video_GetPerformVramBankSwitch(); vramBank >= 0) {
+                m_gbMemory->SetVideoRamBank(vramBank);
+                m_ioRegisters->Video_AcknowledgeVideoRamBankSwitch();
+            }
         }
 
         // Handle ROM disable flag.
@@ -136,6 +187,103 @@ void GameBoyInstance::Delta(const long ns) {
     } while(cycleTime < timeRemaining);
 }
 
+void GameBoyInstance::DmaCheck() {
+    if(const auto transferMode = m_ioRegisters->Video_GetHdmaTransferMode(); transferMode != HdmaTransferMode::Inactive) {
+        DmaInitCgb(transferMode);
+    }
+}
+
+void GameBoyInstance::DmaCycle() {
+    if(m_cpu->IsHalted()) return;
+
+    switch(m_dmaState) {
+        case DmaState::Preparing: {
+            if(--m_dmaPreparationCycles == 0) {
+                m_dmaState = DmaState::Transferring;
+            }
+            break;
+        }
+
+        case DmaState::WaitingForHBlank: {
+            if(m_ppuMode != PPU_Mode::HBlank || m_batchLastPpuMode == PPU_Mode::HBlank) {
+                m_batchLastPpuMode = m_ppuMode;
+                break;
+            }
+            
+            m_batchLastPpuMode = m_ppuMode;
+            m_dmaState = DmaState::Preparing;
+            m_dmaBatchLength = HBlankDmaBatchLength;
+            m_dmaBlockCpu = m_dmaCgb;
+            break;
+        }
+        
+        case DmaState::Transferring: {
+            if(m_ioRegisters->Video_GetHdmaTransferCancelled()) {
+                m_ioRegisters->Video_AcknowledgeHdmaCancellation();
+                m_dmaState = DmaState::Inactive;
+                break;
+            }
+
+            const auto thisByte = m_dmaCopyInvalidBytes
+                ? 0xFF
+                : m_memory->GetByte(m_dmaSourceAddress + m_dmaCurrentOffset, true);
+            
+            m_memory->SetByte(m_dmaDestinationAddress + m_dmaCurrentOffset, thisByte, true);
+            m_ioRegisters->Video_SetHdmaTransferRemaining(m_dmaCopyLength - m_dmaCurrentOffset);
+
+            if(++m_dmaCurrentOffset >= m_dmaCopyLength) {
+                m_dmaState = DmaState::Inactive;
+                m_dmaBlockCpu = false;
+
+                if(m_dmaCgb) {
+                    m_ioRegisters->Video_SetHdmaTransferComplete();
+                }
+            }
+
+            if(m_dmaBatched && --m_dmaBatchLength == 0) {
+                m_dmaState = DmaState::WaitingForHBlank;
+            }
+            
+            break;
+        }
+        
+        case DmaState::Inactive:
+        default:
+            break;
+    }
+}
+
+void GameBoyInstance::DmaInitCgb(const HdmaTransferMode transferMode) {
+    // Common initialization.
+    m_dmaState = DmaState::Preparing;
+    m_dmaPreparationCycles = 1;
+    m_dmaBlockCpu = m_dmaCgb = true;
+    m_dmaSourceAddress = m_ioRegisters->Video_GetHdmaSourceAddress();
+    m_dmaDestinationAddress = m_gbMemory->VideoRamAddress | m_ioRegisters->Video_GetHdmaDestinationAddress();
+    m_dmaCopyLength = m_ioRegisters->Video_GetHdmaTransferLength();
+    m_dmaCurrentOffset = 0;
+
+    // GDMA/HDMA can only copy from certain locations.
+    m_dmaCopyInvalidBytes = (m_dmaSourceAddress >= 0x8000 && m_dmaSourceAddress < 0xA000) || m_dmaSourceAddress > 0xE000;
+
+    switch(transferMode) {
+        case HdmaTransferMode::GeneralPurpose: {
+            break;
+        }
+        
+        case HdmaTransferMode::HBlank: {
+            m_dmaBatched = true;
+            m_dmaBatchLength = HBlankDmaBatchLength;
+            m_dmaState = DmaState::WaitingForHBlank;
+            break;
+        }
+        
+        case HdmaTransferMode::Inactive:
+        default:
+            break;
+    }
+}
+
 std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::GetDebugInfo() const {
     return {
         { "CPU Registers", m_cpu->GetRegisters() },
@@ -152,9 +300,11 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "System", {
             { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) },
             { "Boot ROM Enabled", DebugValue(!m_bootRomDisableFlag) },
+            { "DMA State", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_dmaState)) },
             { "IE", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_highRam->GetByte(0x80))) },
             { "IF", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::InterruptFlag))) },
-        }}
+            { "CGB Mode", DebugValue(m_cgbMode) },
+        }},
     };
 }
 
@@ -187,7 +337,7 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
     m_cartRam = m_gbMemory->ConfigureMapper(m_mbc, m_hasRtc, m_cartRamBanks);
 
     // Create CPU.
-    m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory);
+    m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory, m_model == GameBoyModel::CGB);
     
     // Reset system.
     Reset();

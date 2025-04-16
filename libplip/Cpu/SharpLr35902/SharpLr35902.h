@@ -25,9 +25,12 @@ namespace Plip::Cpu {
 
     class SharpLr35902 : public PlipCpu {
     public:
-        SharpLr35902(long hz, PlipMemoryMap* memoryMap);
+        SharpLr35902(long hz, PlipMemoryMap* memoryMap, bool gbcMode);
         virtual ~SharpLr35902() = default;
 
+        bool IsChangingSpeed() const { return m_changingSpeed; }
+        bool IsDoubleSpeed() const { return m_doubleSpeed; }
+        bool IsHalted() const { return m_halt; }
         long Step() override;
         [[nodiscard]] unsigned long GetPc() const override;
         [[nodiscard]] std::map<std::string, DebugValue> GetDebugInfo() const;
@@ -39,8 +42,15 @@ namespace Plip::Cpu {
         bool m_holdPc = false;
         SharpLr35902Registers m_registers {};
         SharpLr35902ImeState m_ime = SharpLr35902ImeState::Enabled;
+        long m_baseSpeed {};
+        bool m_gbcMode {};
+        bool m_doubleSpeed {};
+        bool m_changingSpeed {};
+        int m_speedChangeTimer {};
 
     private:
+        static constexpr int SpeedSwitchDelay = 2050;  // In M-cycles
+        
         long DecodeAndExecute();
         void DecodeAndExecuteCb();
         uint16_t GetPointerAddress(int pointerIndex);

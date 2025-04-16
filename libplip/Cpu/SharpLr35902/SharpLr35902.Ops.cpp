@@ -343,9 +343,22 @@ long SharpLr35902::DecodeAndExecute() {
             // STOP imm8
             // 2 cycles, - - - -
 
-            // According to PanDocs, no licensed DMG ROM uses STOP, so we're gonna leave
-            // it like this for now. :)
-            throw PlipEmulationException("STOP not yet implemented");
+            if(!m_gbcMode) {
+                // According to PanDocs, no licensed DMG ROM uses STOP, so we're gonna leave
+                // it like this for now. :)
+                throw PlipEmulationException("STOP not yet implemented for the DMG CPU");
+            }
+
+            // In CGB mode, STOP is used to put the CPU into double speed mode.
+            if(!BIT_TEST(m_memory->GetByte(0xFF4D), 0)) {
+                ++cycleCount;
+                break;
+            }
+            
+            // Switch speed.
+            m_changingSpeed = true;
+            m_speedChangeTimer = SpeedSwitchDelay;
+            break;
         }
 
         case 0x76: {

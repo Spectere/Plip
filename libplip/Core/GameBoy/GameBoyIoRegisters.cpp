@@ -9,7 +9,10 @@
 
 using Plip::Core::GameBoy::GameBoyIoRegisters;
 
-GameBoyIoRegisters::GameBoyIoRegisters() {
+#define CGB_SUPPORT (m_model == GameBoyModel::CGB)
+
+GameBoyIoRegisters::GameBoyIoRegisters(const GameBoyModel gbModel, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam)
+                                     : m_model(gbModel), m_videoCgbBgPaletteRam(cgbBgPaletteRam), m_videoCgbObjPaletteRam(cgbObjPaletteRam) {
     Reset();
 }
 
@@ -28,15 +31,37 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF44 */ case IoRegister::LcdYCoordinate: { return m_regLcdYCoordinate; }
         /* $FF45 */ case IoRegister::LcdYCompare: { return m_regLcdYCompare; }
         /* $FF46 */ case IoRegister::OamDmaSourceAddress: { return m_regOamDmaAddress; }
-        /* $FF47 */ case IoRegister::BgPalette: { return m_regBgPalette; }
-        /* $FF48 */ case IoRegister::Obj0Palette: { return m_regObj0Palette; }
-        /* $FF49 */ case IoRegister::Obj1Palette: { return m_regObj1Palette; }
+        /* $FF47 */ case IoRegister::BgPalette: { return m_regDmgBgPalette; }
+        /* $FF48 */ case IoRegister::Obj0Palette: { return m_regDmgObj0Palette; }
+        /* $FF49 */ case IoRegister::Obj1Palette: { return m_regDmgObj1Palette; }
         /* $FF4A */ case IoRegister::WindowY: { return m_regWindowY; }
         /* $FF4B */ case IoRegister::WindowX: { return m_regWindowX; }
         /* $FF50 */ case IoRegister::BootRomDisable: { return m_bootRomDisabled ? 0b1 : 0b0; }
 
-        default: { return 0b11111111; };
+        default: break;
     }
+
+    if(CGB_SUPPORT) {
+        switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
+            /* $FF4C */ case IoRegister::CpuModeSelect: { return !m_dmgCompatibility ? 0b11111011 : 0b11111111; }
+            /* $FF4D */ case IoRegister::SpeedSwitch: { return 0b01111110 | (m_doubleSpeedActive ? 0b10000000 : 0) | (m_speedSwitchArmed ? 0b1 : 0); }
+            /* $FF4F */ case IoRegister::VramBank: { return m_regVramBank; }
+            /* $FF55 */ case IoRegister::VramDmaLengthModeStart: {
+                return (m_videoHdmaTransferMode != HdmaTransferMode::Inactive ? 0b10000000 : 0)
+                     | ((m_videoHdmaTransferRemaining >> 4) & 0b01111111);
+            }
+            /* $FF68 */ case IoRegister::BackgroundPaletteIndex: { return (m_videoBgPaletteAutoIncrement ? 0b10000000 : 0) | 0b01000000 | (m_videoBgPaletteIndex & 0b111111); }
+            /* $FF69 */ case IoRegister::BackgroundPaletteData: { return m_videoCgbBgPaletteRam->GetByte(m_videoBgPaletteIndex); }
+            /* $FF6A */ case IoRegister::ObjectPaletteIndex: { return (m_videoObjPaletteAutoIncrement ? 0b10000000 : 0) | 0b01000000 | (m_videoObjPaletteIndex & 0b111111); }
+            /* $FF6B */ case IoRegister::ObjectPaletteData: { return m_videoCgbObjPaletteRam->GetByte(m_videoObjPaletteIndex); }
+            /* $FF6C */ case IoRegister::ObjectPriorityMode: { return 0xFF ^ (m_videoCgbObjectPriority ? 1 : 0); }
+            /* $FF70 */ case IoRegister::WramBank: { return m_regWramBank; }
+            
+            default: break;
+        }
+    }
+
+    return 0xFF;
 }
 
 void GameBoyIoRegisters::Joypad_Cycle() {
@@ -66,9 +91,7 @@ void GameBoyIoRegisters::Reset() {
 }
 
 void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t value) {
-    // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
-    // ReSharper disable once CppIncompleteSwitchStatement
-    switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
+    switch(ioRegister) {
         // $FF00
         case IoRegister::JoypadInput: {
             m_regJoypad = value;
@@ -164,19 +187,19 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF47
         case IoRegister::BgPalette: {
-            m_regBgPalette = value;
+            m_regDmgBgPalette = value;
             break;
         }
 
         // $FF48
         case IoRegister::Obj0Palette: {
-            m_regObj0Palette = value;
+            m_regDmgObj0Palette = value;
             break;
         }
 
         // $FF49
         case IoRegister::Obj1Palette: {
-            m_regObj1Palette = value;
+            m_regDmgObj1Palette = value;
             break;
         }
 
@@ -191,7 +214,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             m_regWindowX = value;
             break;
         }
-
+        
         // $FF50
         case IoRegister::BootRomDisable: {
             if(!m_bootRomDisabled) {
@@ -199,10 +222,118 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             }
             break;
         }
+
+        default: break;
+    }
+
+    if(CGB_SUPPORT) {
+        switch(ioRegister) {
+            // $FF4C
+            case IoRegister::CpuModeSelect: {
+                if(!m_bootRomDisabled) {
+                    m_dmgCompatibility = BIT_TEST(value, 2);
+                }
+                break;
+            }
+
+            // $FF4D
+            case IoRegister::SpeedSwitch: {
+                m_speedSwitchArmed = BIT_TEST(value, 0);
+                break;
+            }
+
+            // $FF4F
+            case IoRegister::VramBank: {
+                m_videoPerformVideoRamBankSwitch = m_regVramBank = value & 0b1;
+                break;
+            }
+
+            // $FF51
+            case IoRegister::VramDmaSourceHigh: {
+                m_videoHdmaSourceAddress = value << 8 | (m_videoHdmaSourceAddress & 0b11111111);
+                break;
+            }
+
+            // $FF52
+            case IoRegister::VramDmaSourceLow: {
+                m_videoHdmaSourceAddress = m_videoHdmaSourceAddress | (value & 0b11110000);
+                break;
+            }
+
+            // $FF53
+            case IoRegister::VramDmaDestinationHigh: {
+                m_videoHdmaDestinationAddress = (value & 0b00001111) << 8 | (m_videoHdmaDestinationAddress & 0b11111111);
+                break;
+            }
+
+            // $FF54
+            case IoRegister::VramDmaDestinationLow: {
+                m_videoHdmaDestinationAddress = m_videoHdmaDestinationAddress | (value & 0b11110000);
+                break;
+            }
+
+            // $FF55
+            case IoRegister::VramDmaLengthModeStart: {
+                if(m_videoHdmaTransferMode == HdmaTransferMode::HBlank && BIT_TEST(value, 7)) {
+                    // Writing to $FF55 bit 7 while performing an HBlank transfer will abort the transfer.
+                    m_videoHdmaTransferMode = HdmaTransferMode::Inactive;
+                    m_videoHdmaTransferCancelled = true;
+                } else {
+                    m_videoHdmaTransferMode = BIT_TEST(value, 7) ? HdmaTransferMode::HBlank : HdmaTransferMode::GeneralPurpose;
+                    m_videoHdmaTransferLength = (value & 0b01111111) << 4;
+                }
+                break;
+            }
+
+            // $FF68
+            case IoRegister::BackgroundPaletteIndex: {
+                m_videoBgPaletteIndex = value & 0b111111;
+                m_videoBgPaletteAutoIncrement = BIT_TEST(value, 7);
+                break;
+            }
+
+            // $FF69
+            case IoRegister::BackgroundPaletteData: {
+                m_videoCgbBgPaletteRam->SetByte(m_videoBgPaletteIndex, value | 0b1);
+                if(m_videoBgPaletteAutoIncrement) {
+                    m_videoBgPaletteIndex = (m_videoBgPaletteIndex + 1) & 0b111111;
+                }
+                break;
+            }
+
+            // $FF6A
+            case IoRegister::ObjectPaletteIndex: {
+                m_videoObjPaletteIndex = value & 0b111111;
+                m_videoObjPaletteAutoIncrement = BIT_TEST(value, 7);
+                break;
+            }
+
+            // $FF6B
+            case IoRegister::ObjectPaletteData: {
+                m_videoCgbObjPaletteRam->SetByte(m_videoObjPaletteIndex, value | 0b1);
+                if(m_videoObjPaletteAutoIncrement) {
+                    m_videoObjPaletteIndex = (m_videoObjPaletteIndex + 1) & 0b111111;
+                }
+                break;
+            }
+
+            // $FF6C
+            case IoRegister::ObjectPriorityMode: {
+                m_videoCgbObjectPriority = !BIT_TEST(value, 0);
+                break;
+            }
+        
+            // $FF70
+            case IoRegister::WramBank: {
+                m_performWorkRamBankSwitch = m_regWramBank = value & 0b111;
+                break;
+            }
+
+            default: break;
+        }
     }
 }
 
-#include <iostream>
 void GameBoyIoRegisters::Timer_Cycle() {
     // Perform TIMA reload if necessary.
     if(m_timerTimaReloadStatus == ReloadScheduled) {

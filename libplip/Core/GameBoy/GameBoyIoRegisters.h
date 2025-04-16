@@ -5,10 +5,17 @@
 
 #pragma once
 
+#include "GameBoyModel.h"
 #include "../../Cpu/SharpLr35902/SharpLr35902.h"
 #include "../../Memory/PlipMemory.h"
 
 namespace Plip::Core::GameBoy {
+    enum class HdmaTransferMode {
+        Inactive,
+        GeneralPurpose,
+        HBlank,
+    };
+    
     enum class IoRegister {
         JoypadInput = 0x00,
         SerialData = 0x01,
@@ -67,12 +74,29 @@ namespace Plip::Core::GameBoy {
         Obj1Palette = 0x49,
         WindowY = 0x4A,
         WindowX = 0x4B,
+        CpuModeSelect = 0x4C,           // CGB
+        SpeedSwitch = 0x4D,             // CGB
+        VramBank = 0x4F,                // CGB
         BootRomDisable = 0x50,
+        VramDmaSourceHigh = 0x51,       // CGB
+        VramDmaSourceLow = 0x52,        // CGB
+        VramDmaDestinationHigh = 0x53,  // CGB
+        VramDmaDestinationLow = 0x54,   // CGB
+        VramDmaLengthModeStart = 0x55,  // CGB
+        InfraredPort = 0x56,            // CGB
+        BackgroundPaletteIndex = 0x68,  // CGB
+        BackgroundPaletteData = 0x69,   // CGB
+        ObjectPaletteIndex = 0x6A,      // CGB
+        ObjectPaletteData = 0x6B,       // CGB
+        ObjectPriorityMode = 0x6C,      // CGB
+        WramBank = 0x70,                // CGB
+        AudioDigitalOutput12 = 0x76,    // CGB
+        AudioDigitalOutput34 = 0x77,    // CGB
     };
     
     class GameBoyIoRegisters final : public PlipMemory {
     public:
-        GameBoyIoRegisters();
+        GameBoyIoRegisters(GameBoyModel gbModel, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam);
         ~GameBoyIoRegisters() = default;
 
         uint8_t GetByte(const uint32_t address, const bool privileged = false) override {
@@ -88,8 +112,16 @@ namespace Plip::Core::GameBoy {
         void Reset();
         void SetByte(IoRegister ioRegister, uint8_t value);
 
+        // Core
+        void AcknowledgeWorkRamBankSwitch() { m_performWorkRamBankSwitch = -1; }
         bool GetBootRomDisabled() const { return m_bootRomDisabled; }
+        bool GetIsDoubleSpeedArmed() const { return m_speedSwitchArmed; }
+        int GetPerformWorkRamBankSwitch() const { return m_performWorkRamBankSwitch; }
         void RaiseInterrupt(Cpu::SharpLr35902Interrupt interrupt);
+        void SetDoubleSpeed(const bool doubleSpeed) {
+            m_doubleSpeedActive = doubleSpeed;
+            m_speedSwitchArmed = false;
+        }
 
         // Joypad
         void Joypad_Cycle();
@@ -99,10 +131,24 @@ namespace Plip::Core::GameBoy {
         void Timer_Cycle();
         void Timer_FallingEdgeDetection(bool thisBit);
         static int Timer_GetFrequencyBit(int clockSelect);
+        void Timer_Reset() { m_timerInternal = 0; }
 
         // Video
         void Video_AcknowledgeOamDmaCopy() { m_videoPerformOamDmaCopy = false; }
+        void Video_AcknowledgeHdmaCancellation() { m_videoHdmaTransferCancelled = false; }
+        void Video_AcknowledgeVideoRamBankSwitch() { m_videoPerformVideoRamBankSwitch = -1; }
         int Video_GetOamDmaCopyAddress() const { return m_videoPerformOamDmaCopy ? m_regOamDmaAddress : -1; }
+        int Video_GetHdmaDestinationAddress() const { return m_videoHdmaDestinationAddress; }
+        int Video_GetHdmaSourceAddress() const { return m_videoHdmaSourceAddress; }
+        bool Video_GetHdmaTransferCancelled() const { return m_videoHdmaTransferCancelled; }
+        int Video_GetHdmaTransferLength() const { return m_videoHdmaTransferLength; }
+        HdmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
+        int Video_GetPerformVramBankSwitch() const { return m_videoPerformVideoRamBankSwitch; }
+        void Video_SetHdmaTransferComplete() {
+            m_videoHdmaTransferMode = HdmaTransferMode::Inactive;
+            m_videoHdmaTransferRemaining = 0xFF;
+        }
+        void Video_SetHdmaTransferRemaining(const int remaining) { m_videoHdmaTransferRemaining = remaining; }
         void Video_SetLcdStatus(const uint8_t value) { m_regLcdStatus = (m_regLcdStatus & 0b11111000) | (value & 0b111); }
         void Video_SetYCoordinate(const uint8_t value) { m_regLcdYCoordinate = value; }
 
@@ -114,8 +160,15 @@ namespace Plip::Core::GameBoy {
         /*
          * Internal Data
          */
+
+        // Core
         bool m_bootRomDisabled {};
         uint8_t m_interruptFlag {};
+        GameBoyModel m_model {};
+        bool m_dmgCompatibility = true;                 // CGB
+        int m_performWorkRamBankSwitch = -1;            // CGB
+        bool m_doubleSpeedActive = false;               // CGB
+        bool m_speedSwitchArmed = false;                // CGB
 
         // Joypad
         uint8_t m_inputsPressed {};
@@ -134,10 +187,28 @@ namespace Plip::Core::GameBoy {
 
         // Video
         bool m_videoPerformOamDmaCopy {};
+        PlipMemory* m_videoCgbBgPaletteRam {};          // CGB
+        PlipMemory* m_videoCgbObjPaletteRam {};         // CGB
+        bool m_videoPerformHdmaCopy {};                 // CGB
+        int m_videoPerformVideoRamBankSwitch = -1;      // CGB
+        uint16_t m_videoHdmaDestinationAddress {};      // CGB
+        uint16_t m_videoHdmaSourceAddress {};           // CGB
+        bool m_videoHdmaTransferCancelled {};           // CGB
+        int m_videoHdmaTransferLength {};               // CGB
+        HdmaTransferMode m_videoHdmaTransferMode {};    // CGB
+        int m_videoHdmaTransferRemaining {};            // CGB
+        bool m_videoCgbObjectPriority {};               // CGB
+        bool m_videoBgPaletteAutoIncrement {};          // CGB
+        int m_videoBgPaletteIndex {};                   // CGB
+        bool m_videoObjPaletteAutoIncrement {};         // CGB
+        int m_videoObjPaletteIndex {};                  // CGB
 
         /*
          * Register Values (if they aren't derived from the above)
          */
+
+        // Core
+        /* $FF70 */ uint8_t m_regWramBank {};           // CGB
 
         // Joypad
         /* $FF00 */ uint8_t m_regJoypad {};
@@ -155,10 +226,11 @@ namespace Plip::Core::GameBoy {
         /* $FF44 */ uint8_t m_regLcdYCoordinate {};
         /* $FF45 */ uint8_t m_regLcdYCompare {};
         /* $FF46 */ uint8_t m_regOamDmaAddress {};
-        /* $FF47 */ uint8_t m_regBgPalette {};
-        /* $FF48 */ uint8_t m_regObj0Palette {};
-        /* $FF49 */ uint8_t m_regObj1Palette {};
+        /* $FF47 */ uint8_t m_regDmgBgPalette {};
+        /* $FF48 */ uint8_t m_regDmgObj0Palette {};
+        /* $FF49 */ uint8_t m_regDmgObj1Palette {};
         /* $FF4A */ uint8_t m_regWindowY {};
         /* $FF4B */ uint8_t m_regWindowX {};
+        /* $FF4F */ uint8_t m_regVramBank {};           // CGB
     };
 }

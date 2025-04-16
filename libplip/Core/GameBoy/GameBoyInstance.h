@@ -8,8 +8,10 @@
 #include <filesystem>
 #include <vector>
 
+#include "DmaState.h"
 #include "GameBoyIoRegisters.h"
 #include "GameBoyMapper.h"
+#include "GameBoyModel.h"
 #include "MBC_Type.h"
 #include "PPU_Mode.h"
 #include "PPU_OutputStage.h"
@@ -42,6 +44,9 @@ namespace Plip::Core::GameBoy {
         // GameBoyInstance
         void BootRomFlagHandler();
         void CompleteOamDmaCopy() const;
+        void DmaCheck();
+        void DmaCycle();
+        void DmaInitCgb(HdmaTransferMode transferMode);
         int GetCartridgeRamBankCount() const;
         void PerformOamDmaCopy(int sourceAddress);
         void ReadJoypad();
@@ -55,13 +60,14 @@ namespace Plip::Core::GameBoy {
         bool PPU_DotClock_OamScan();
         bool PPU_DotClock_Output(uint8_t lcdControl);
         void PPU_DotClock_Output_Drawing(uint8_t lcdControl);
-        int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, int offsetX, int offsetY, uint16_t tileMapAddress, uint16_t tileDataAddress0, uint16_t tileDataAddress1) const;
-        bool PPU_DrawObject(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor) const;
+        int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, int offsetX, int offsetY, uint16_t tileMapAddress, uint16_t tileDataAddress0, uint16_t tileDataAddress1, bool lcdcPriority) const;
+        bool PPU_DrawObject(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor, bool lcdcPriority) const;
         void PPU_FinishTransition(uint8_t lcdStatus);
         void PPU_FinishTransition_OamScan(uint8_t lcdStatus);
         void PPU_FinishTransition_VBlank(uint8_t lcdStatus);
         [[nodiscard]] std::map<std::string, DebugValue> PPU_GetDebugInfo() const;
-        void PPU_Plot(int color, int pos) const;
+        void PPU_Plot_CGB(bool objPalette, int palette, int color, int pos) const;
+        void PPU_Plot_DMG(int color, int pos) const;
         void PPU_Reset();
         void PPU_SetMemoryPermissions() const;
         void PPU_VideoModeTransition();
@@ -74,8 +80,12 @@ namespace Plip::Core::GameBoy {
         static constexpr uint32_t BaseClockRate = 4194304;
         static constexpr uint32_t ScreenWidth = 160;
         static constexpr uint32_t ScreenHeight = 144;
+        static constexpr int HBlankDmaBatchLength = 0x10;
 
+        bool m_cgbMode {};
         Cpu::SharpLr35902 *m_cpu;
+        bool m_doubleSpeed {};
+        GameBoyModel m_model;
         PlipVideoFormatInfo m_videoFormat {};
         uint8_t *m_videoBuffer;
         size_t m_videoBufferSize;
@@ -113,25 +123,40 @@ namespace Plip::Core::GameBoy {
 
         PlipMemoryRom* m_bootRom;
         PlipMemoryRom* m_cartRom = nullptr;
-        PlipMemoryRam* m_videoRam = new PlipMemoryRam(0x2000, 0xFF);
-        PlipMemoryRam* m_workRam = new PlipMemoryRam(0x2000, 0xFF);
+        PlipMemoryRam* m_videoRam;
+        PlipMemoryRam* m_workRam;
         PlipMemoryRam* m_oam = new PlipMemoryRam(0x100, 0xFF);
-        GameBoyIoRegisters* m_ioRegisters = new GameBoyIoRegisters();
+        GameBoyIoRegisters* m_ioRegisters;
         PlipMemoryRam* m_highRam = new PlipMemoryRam(0x80, 0xFF);
         PlipMemory* m_cartRam = nullptr;
 
         // System flags
         bool m_bootRomDisableFlag = false;
 
-        // DMA
+        // OAM DMA
         int m_oamDmaDelayCycles = 0;
         int m_oamDmaSourceAddress = 0;
+
+        // New DMA (TODO: Replace old OAM DMA routine)
+        bool m_dmaBatched {};
+        PPU_Mode m_batchLastPpuMode {};
+        int m_dmaBatchLength {};
+        bool m_dmaBlockCpu {};
+        bool m_dmaCgb {};
+        bool m_dmaCopyInvalidBytes {};
+        int m_dmaCopyLength {};
+        int m_dmaCurrentOffset {};
+        int m_dmaDestinationAddress {};
+        int m_dmaPreparationCycles {};
+        int m_dmaSourceAddress {};
+        DmaState m_dmaState {};
 
         // PPU
         static constexpr auto PPU_Block0 = 0x0000;
         static constexpr auto PPU_Block1 = 0x0800;
         static constexpr auto PPU_Block2 = 0x1000;
-        static constexpr auto PPU_DotsPerCycle = 4;
+        static constexpr auto PPU_DotsPerCycleLowSpeed = 4;
+        static constexpr auto PPU_DotsPerCycleHighSpeed = 2;
 
         static constexpr auto PPU_OamScanTime = 80;
         static constexpr auto PPU_ScanlineTime = 456;
@@ -150,6 +175,8 @@ namespace Plip::Core::GameBoy {
         static constexpr auto PPU_MaximumObjectCount = 40;
         static constexpr auto PPU_ObjectsPerScanline = 10;
 
+        PlipMemoryRam* m_ppuCgbBgPaletteRam = new PlipMemoryRam(64, 0xFF);
+        PlipMemoryRam* m_ppuCgbObjPaletteRam = new PlipMemoryRam(64, 0xFF);
         int m_ppuDotClock {};
         int m_ppuDmaCyclesRemaining = -1;
         int m_ppuDrawTime {};

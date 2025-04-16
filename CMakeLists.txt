@@ -153,10 +153,12 @@ add_library(${lib_name}
     libplip/Core/Chip8/Chip8Instance.cpp            libplip/Core/Chip8/Chip8Instance.h
 
     # GameBoy
+                                                    libplip/Core/GameBoy/DmaState.h
     libplip/Core/GameBoy/GameBoyInstance.cpp        libplip/Core/GameBoy/GameBoyInstance.h
     libplip/Core/GameBoy/GameBoyInstance.Video.cpp
     libplip/Core/GameBoy/GameBoyIoRegisters.cpp     libplip/Core/GameBoy/GameBoyIoRegisters.h
     libplip/Core/GameBoy/GameBoyMapper.cpp          libplip/Core/GameBoy/GameBoyMapper.h
+                                                    libplip/Core/GameBoy/GameBoyModel.h
     libplip/Core/GameBoy/Mbc2Ram.cpp                libplip/Core/GameBoy/Mbc2Ram.h
                                                     libplip/Core/GameBoy/MBC_Type.h
                                                     libplip/Core/GameBoy/PPU_Mode.h

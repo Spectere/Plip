@@ -20,7 +20,9 @@ namespace Plip::Core::GameBoy {
         static constexpr auto RomBank1Address = 0x4000;
         static constexpr auto RomBank1Length = 0x4000;
         static constexpr auto VideoRamAddress = 0x8000;
+        static constexpr auto VideoRamLength = 0x2000;
         static constexpr auto WorkRamAddress = 0xC000;
+        static constexpr auto WorkRamLength = 0x2000;
         static constexpr auto CartRamAddress = 0xA000;
         static constexpr auto CartRamLength = 0x2000;
         static constexpr auto EchoRamAddress = 0xE000;
@@ -44,6 +46,8 @@ namespace Plip::Core::GameBoy {
         bool SetByte_Mbc2(uint32_t address, uint8_t value);
         bool SetByte_Mbc3(uint32_t address, uint8_t value);
         bool SetByte_Mbc5(uint32_t address, uint8_t value);
+        void SetVideoRamBank(int bank);
+        void SetWorkRamBank(int bank);
 
         void RTC_Clock();
         void RTC_Dump(std::fstream& file) const;
@@ -63,6 +67,8 @@ namespace Plip::Core::GameBoy {
             uint8_t Minutes;
             uint8_t Seconds;
         };
+
+        bool m_largeBootRom {};
         
         static constexpr uint8_t UnusableContents[0x60] {};
         PlipMemory* m_bootRom = nullptr;
@@ -89,6 +95,8 @@ namespace Plip::Core::GameBoy {
         uint8_t m_rom0Bank {};
         uint16_t m_rom1Bank {};
         bool m_register1SelectsRomBank {};
+        int m_vramBank {};
+        int m_wramBank {};
 
         // RTC
         RtcRegisters m_rtcRegisters {};
