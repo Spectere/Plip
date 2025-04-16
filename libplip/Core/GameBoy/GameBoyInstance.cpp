@@ -269,11 +269,6 @@ void GameBoyInstance::DmaCycle() {
 void GameBoyInstance::DmaFinishPreparations() const {
     if(m_dmaTransferMode == DmaTransferMode::Oam) {
         // Flag ROM, WRAM, cart RAM, and OAM as inaccessible until the process is complete.
-        m_cartRom->SetReadable(false);
-
-        m_workRam->SetReadable(false);
-        m_workRam->SetWritable(false);
-
         if(m_cartRamBanks > 0) {
             m_cartRam->SetReadable(false);
             m_cartRam->SetWritable(false);
@@ -284,6 +279,21 @@ void GameBoyInstance::DmaFinishPreparations() const {
 
         m_oam->SetReadable(false);
         m_oam->SetWritable(false);
+
+        if(m_model == GameBoyModel::CGB) {
+            // On CGB, cart ROM and WRAM are on separate buses, so flag them selectively.
+            if(m_dmaSourceAddress < 0x8000) {
+                m_cartRom->SetReadable(false);
+            } else if(m_dmaSourceAddress >= 0xC000 && m_dmaSourceAddress < 0xFE00) {
+                m_workRam->SetReadable(false);
+                m_workRam->SetWritable(false);
+            }
+        } else {
+            m_cartRom->SetReadable(false);
+
+            m_workRam->SetReadable(false);
+            m_workRam->SetWritable(false);
+        }
     }
 }
 
