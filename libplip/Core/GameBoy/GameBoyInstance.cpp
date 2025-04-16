@@ -328,6 +328,8 @@ void GameBoyInstance::DmaInitOam(const int sourceAddress) {
     m_dmaCopyLength = OamDmaLength;
     m_dmaTransferMode = DmaTransferMode::Oam;
     m_dmaCurrentOffset = 0;
+    m_dmaBatched = false;
+    m_dmaCopyInvalidBytes = false;
 }
 
 std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::GetDebugInfo() const {
