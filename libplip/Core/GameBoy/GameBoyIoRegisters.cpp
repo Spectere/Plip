@@ -47,7 +47,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
             /* $FF4D */ case IoRegister::SpeedSwitch: { return 0b01111110 | (m_doubleSpeedActive ? 0b10000000 : 0) | (m_speedSwitchArmed ? 0b1 : 0); }
             /* $FF4F */ case IoRegister::VramBank: { return m_regVramBank; }
             /* $FF55 */ case IoRegister::VramDmaLengthModeStart: {
-                return (m_videoHdmaTransferMode != HdmaTransferMode::Inactive ? 0b10000000 : 0)
+                return (m_videoHdmaTransferMode != DmaTransferMode::Inactive ? 0b10000000 : 0)
                      | ((m_videoHdmaTransferRemaining >> 4) & 0b01111111);
             }
             /* $FF68 */ case IoRegister::BackgroundPaletteIndex: { return (m_videoBgPaletteAutoIncrement ? 0b10000000 : 0) | 0b01000000 | (m_videoBgPaletteIndex & 0b111111); }
@@ -274,12 +274,12 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
             // $FF55
             case IoRegister::VramDmaLengthModeStart: {
-                if(m_videoHdmaTransferMode == HdmaTransferMode::HBlank && BIT_TEST(value, 7)) {
+                if(m_videoHdmaTransferMode == DmaTransferMode::HBlank && BIT_TEST(value, 7)) {
                     // Writing to $FF55 bit 7 while performing an HBlank transfer will abort the transfer.
-                    m_videoHdmaTransferMode = HdmaTransferMode::Inactive;
+                    m_videoHdmaTransferMode = DmaTransferMode::Inactive;
                     m_videoHdmaTransferCancelled = true;
                 } else {
-                    m_videoHdmaTransferMode = BIT_TEST(value, 7) ? HdmaTransferMode::HBlank : HdmaTransferMode::GeneralPurpose;
+                    m_videoHdmaTransferMode = BIT_TEST(value, 7) ? DmaTransferMode::HBlank : DmaTransferMode::GeneralPurpose;
                     m_videoHdmaTransferLength = (value & 0b01111111) << 4;
                 }
                 break;

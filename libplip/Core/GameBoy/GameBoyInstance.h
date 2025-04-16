@@ -43,12 +43,14 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance
         void BootRomFlagHandler();
-        void CompleteOamDmaCopy() const;
         void DmaCheck();
+        void DmaComplete() const;
+        void DmaCompleteOam() const;
         void DmaCycle();
-        void DmaInitCgb(HdmaTransferMode transferMode);
+        void DmaFinishPreparations() const;
+        void DmaInitCgb(DmaTransferMode transferMode);
+        void DmaInitOam(int sourceAddress);
         int GetCartridgeRamBankCount() const;
-        void PerformOamDmaCopy(int sourceAddress);
         void ReadJoypad();
         void ReadCartridgeFeatures();
         void RegisterInput() const;
@@ -81,6 +83,7 @@ namespace Plip::Core::GameBoy {
         static constexpr uint32_t ScreenWidth = 160;
         static constexpr uint32_t ScreenHeight = 144;
         static constexpr int HBlankDmaBatchLength = 0x10;
+        static constexpr int OamDmaLength = 160;
 
         bool m_cgbMode {};
         Cpu::SharpLr35902 *m_cpu;
@@ -133,11 +136,7 @@ namespace Plip::Core::GameBoy {
         // System flags
         bool m_bootRomDisableFlag = false;
 
-        // OAM DMA
-        int m_oamDmaDelayCycles = 0;
-        int m_oamDmaSourceAddress = 0;
-
-        // New DMA (TODO: Replace old OAM DMA routine)
+        // DMA
         bool m_dmaBatched {};
         PPU_Mode m_batchLastPpuMode {};
         int m_dmaBatchLength {};
@@ -150,6 +149,7 @@ namespace Plip::Core::GameBoy {
         int m_dmaPreparationCycles {};
         int m_dmaSourceAddress {};
         DmaState m_dmaState {};
+        DmaTransferMode m_dmaTransferMode {};
 
         // PPU
         static constexpr auto PPU_Block0 = 0x0000;

@@ -11,5 +11,6 @@ namespace Plip::Core::GameBoy {
         Preparing,
         Transferring,
         WaitingForHBlank,
+        Finalize,
     };
 }

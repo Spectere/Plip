@@ -76,23 +76,6 @@ void GameBoyInstance::BootRomFlagHandler() {
     m_cgbMode = m_model == GameBoyModel::CGB && !BIT_TEST(m_ioRegisters->GetByte(IoRegister::CpuModeSelect), 2);
 }
 
-void GameBoyInstance::CompleteOamDmaCopy() const {
-    // This is the cycle that the copy would normally complete. Flag the inaccessible
-    // memory as accessible again.
-    m_cartRom->SetReadable(true);
-
-    m_workRam->SetReadable(true);
-    m_workRam->SetWritable(true);
-
-    if(m_cartRamBanks > 0) {
-        m_gbMemory->RestoreCartridgeMemoryAccessibility();
-    }
-
-    m_videoRam->SetReadable(true);
-    m_oam->SetReadable(true);
-    PPU_SetMemoryPermissions();  // Sets the writable state of VRAM/OAM.
-}
-
 void GameBoyInstance::Delta(const long ns) {
     auto timeRemaining = ns;
     auto cycleTime = m_cpu->GetCycleTime();
@@ -116,29 +99,11 @@ void GameBoyInstance::Delta(const long ns) {
         if(!m_dmaBlockCpu && !m_cpu->IsChangingSpeed())
             m_ioRegisters->Timer_Cycle();
 
-        // OAM DMA Copy
-        if(m_ppuDmaCyclesRemaining > 0) {
-            if(--m_ppuDmaCyclesRemaining == 0) {
-                CompleteOamDmaCopy();
-            }
-        }
-
-        if(m_oamDmaDelayCycles > 0) {
-            if(--m_oamDmaDelayCycles == 0) {
-                PerformOamDmaCopy(m_oamDmaSourceAddress);
-            }
-        }
-        
-        if(const auto sourceAddress = m_ioRegisters->Video_GetOamDmaCopyAddress(); sourceAddress >= 0) {
-            m_ioRegisters->Video_AcknowledgeOamDmaCopy();
-            m_oamDmaDelayCycles = 2;
-            m_oamDmaSourceAddress = sourceAddress << 8;
-        }
-
-        // NEW DMA (TODO: Replace OAM DMA routine with this)
+        // DMA
         if(m_dmaState == DmaState::Inactive) {
             DmaCheck();
         } else {
+            if(m_dmaTransferMode == DmaTransferMode::Oam) DmaCheck();  // OAM DMA transfers can be restarted.
             DmaCycle();
         }
 
@@ -188,9 +153,44 @@ void GameBoyInstance::Delta(const long ns) {
 }
 
 void GameBoyInstance::DmaCheck() {
-    if(const auto transferMode = m_ioRegisters->Video_GetHdmaTransferMode(); transferMode != HdmaTransferMode::Inactive) {
-        DmaInitCgb(transferMode);
+    // OAM DMA
+    if(const auto oamDmaSourceAddress = m_ioRegisters->Video_GetOamDmaCopyAddress(); oamDmaSourceAddress >= 0) {
+        DmaInitOam(oamDmaSourceAddress);
+        m_ioRegisters->Video_AcknowledgeOamDmaCopy();
     }
+
+    if(m_model == GameBoyModel::CGB) {
+        // HDMA/GDMA
+        if(const auto transferMode = m_ioRegisters->Video_GetHdmaTransferMode(); transferMode != DmaTransferMode::Inactive) {
+            DmaInitCgb(transferMode);
+        }
+    }
+}
+
+void GameBoyInstance::DmaComplete() const {
+    switch(m_dmaTransferMode) {
+        case DmaTransferMode::Oam: {
+            DmaCompleteOam();
+            break;
+        }
+        
+        default: break;
+    }
+}
+
+void GameBoyInstance::DmaCompleteOam() const {
+    // This is the cycle that the copy would normally complete. Flag the inaccessible
+    // memory as accessible again.
+    m_cartRom->SetReadable(true);
+
+    m_workRam->SetReadable(true);
+    m_workRam->SetWritable(true);
+
+    if(m_cartRamBanks > 0) {
+        m_gbMemory->RestoreCartridgeMemoryAccessibility();
+    }
+
+    PPU_SetMemoryPermissions();  // Sets the writable state of VRAM/OAM.
 }
 
 void GameBoyInstance::DmaCycle() {
@@ -200,6 +200,7 @@ void GameBoyInstance::DmaCycle() {
         case DmaState::Preparing: {
             if(--m_dmaPreparationCycles == 0) {
                 m_dmaState = DmaState::Transferring;
+                DmaFinishPreparations();
             }
             break;
         }
@@ -218,7 +219,7 @@ void GameBoyInstance::DmaCycle() {
         }
         
         case DmaState::Transferring: {
-            if(m_ioRegisters->Video_GetHdmaTransferCancelled()) {
+            if(m_dmaTransferMode != DmaTransferMode::Oam && m_ioRegisters->Video_GetHdmaTransferCancelled()) {
                 m_ioRegisters->Video_AcknowledgeHdmaCancellation();
                 m_dmaState = DmaState::Inactive;
                 break;
@@ -229,10 +230,14 @@ void GameBoyInstance::DmaCycle() {
                 : m_memory->GetByte(m_dmaSourceAddress + m_dmaCurrentOffset, true);
             
             m_memory->SetByte(m_dmaDestinationAddress + m_dmaCurrentOffset, thisByte, true);
-            m_ioRegisters->Video_SetHdmaTransferRemaining(m_dmaCopyLength - m_dmaCurrentOffset);
+
+            if(m_dmaCgb) {
+                m_ioRegisters->Video_SetHdmaTransferRemaining(m_dmaCopyLength - m_dmaCurrentOffset);
+            }
 
             if(++m_dmaCurrentOffset >= m_dmaCopyLength) {
-                m_dmaState = DmaState::Inactive;
+                m_dmaState = DmaState::Finalize;
+                m_dmaPreparationCycles = 1;
                 m_dmaBlockCpu = false;
 
                 if(m_dmaCgb) {
@@ -246,6 +251,14 @@ void GameBoyInstance::DmaCycle() {
             
             break;
         }
+
+        case DmaState::Finalize: {
+            if(--m_dmaPreparationCycles == 0) {
+                m_dmaState = DmaState::Inactive;
+                DmaComplete();
+            }
+            break;
+        }
         
         case DmaState::Inactive:
         default:
@@ -253,7 +266,28 @@ void GameBoyInstance::DmaCycle() {
     }
 }
 
-void GameBoyInstance::DmaInitCgb(const HdmaTransferMode transferMode) {
+void GameBoyInstance::DmaFinishPreparations() const {
+    if(m_dmaTransferMode == DmaTransferMode::Oam) {
+        // Flag ROM, WRAM, cart RAM, and OAM as inaccessible until the process is complete.
+        m_cartRom->SetReadable(false);
+
+        m_workRam->SetReadable(false);
+        m_workRam->SetWritable(false);
+
+        if(m_cartRamBanks > 0) {
+            m_cartRam->SetReadable(false);
+            m_cartRam->SetWritable(false);
+        }
+
+        m_videoRam->SetReadable(false);
+        m_videoRam->SetWritable(false);
+
+        m_oam->SetReadable(false);
+        m_oam->SetWritable(false);
+    }
+}
+
+void GameBoyInstance::DmaInitCgb(const DmaTransferMode transferMode) {
     // Common initialization.
     m_dmaState = DmaState::Preparing;
     m_dmaPreparationCycles = 1;
@@ -266,22 +300,34 @@ void GameBoyInstance::DmaInitCgb(const HdmaTransferMode transferMode) {
     // GDMA/HDMA can only copy from certain locations.
     m_dmaCopyInvalidBytes = (m_dmaSourceAddress >= 0x8000 && m_dmaSourceAddress < 0xA000) || m_dmaSourceAddress > 0xE000;
 
-    switch(transferMode) {
-        case HdmaTransferMode::GeneralPurpose: {
+    m_dmaTransferMode = transferMode;
+    switch(m_dmaTransferMode) {
+        case DmaTransferMode::GeneralPurpose: {
             break;
         }
         
-        case HdmaTransferMode::HBlank: {
+        case DmaTransferMode::HBlank: {
             m_dmaBatched = true;
             m_dmaBatchLength = HBlankDmaBatchLength;
             m_dmaState = DmaState::WaitingForHBlank;
             break;
         }
         
-        case HdmaTransferMode::Inactive:
+        case DmaTransferMode::Inactive:
         default:
             break;
     }
+}
+
+void GameBoyInstance::DmaInitOam(const int sourceAddress) {
+    m_dmaState = DmaState::Preparing;
+    m_dmaPreparationCycles = 1;
+    m_dmaBlockCpu = m_dmaCgb = false;
+    m_dmaSourceAddress = sourceAddress << 8;
+    m_dmaDestinationAddress = GameBoyMapper::OamAddress;
+    m_dmaCopyLength = OamDmaLength;
+    m_dmaTransferMode = DmaTransferMode::Oam;
+    m_dmaCurrentOffset = 0;
 }
 
 std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::GetDebugInfo() const {
@@ -398,33 +444,6 @@ int GameBoyInstance::GetCartridgeRamBankCount() const {
                << PlipUtility::FormatHex(ramSize, 2);
             throw PlipEmulationException(ex.str().c_str());
         }
-    }
-}
-
-void GameBoyInstance::PerformOamDmaCopy(const int sourceAddress) {
-    m_ppuDmaCyclesRemaining = 160;
-
-    // Flag ROM, WRAM, cart RAM, and OAM as inaccessible until the process is complete.
-    m_cartRom->SetReadable(false);
-
-    m_workRam->SetReadable(false);
-    m_workRam->SetWritable(false);
-
-    if(m_cartRamBanks > 0) {
-        m_cartRam->SetReadable(false);
-        m_cartRam->SetWritable(false);
-    }
-
-    m_videoRam->SetReadable(false);
-    m_videoRam->SetWritable(false);
-
-    m_oam->SetReadable(false);
-    m_oam->SetWritable(false);
-
-    // Perform the copy.
-    for(auto i = 0; i < 0xA0; ++i) {
-        const auto mem = m_memory->GetByte(sourceAddress | i, true);
-        m_oam->SetByte(i, mem, true);
     }
 }
 

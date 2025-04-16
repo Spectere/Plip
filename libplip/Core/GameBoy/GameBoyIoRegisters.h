@@ -10,8 +10,9 @@
 #include "../../Memory/PlipMemory.h"
 
 namespace Plip::Core::GameBoy {
-    enum class HdmaTransferMode {
+    enum class DmaTransferMode {
         Inactive,
+        Oam,
         GeneralPurpose,
         HBlank,
     };
@@ -142,10 +143,10 @@ namespace Plip::Core::GameBoy {
         int Video_GetHdmaSourceAddress() const { return m_videoHdmaSourceAddress; }
         bool Video_GetHdmaTransferCancelled() const { return m_videoHdmaTransferCancelled; }
         int Video_GetHdmaTransferLength() const { return m_videoHdmaTransferLength; }
-        HdmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
+        DmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
         int Video_GetPerformVramBankSwitch() const { return m_videoPerformVideoRamBankSwitch; }
         void Video_SetHdmaTransferComplete() {
-            m_videoHdmaTransferMode = HdmaTransferMode::Inactive;
+            m_videoHdmaTransferMode = DmaTransferMode::Inactive;
             m_videoHdmaTransferRemaining = 0xFF;
         }
         void Video_SetHdmaTransferRemaining(const int remaining) { m_videoHdmaTransferRemaining = remaining; }
@@ -195,7 +196,7 @@ namespace Plip::Core::GameBoy {
         uint16_t m_videoHdmaSourceAddress {};           // CGB
         bool m_videoHdmaTransferCancelled {};           // CGB
         int m_videoHdmaTransferLength {};               // CGB
-        HdmaTransferMode m_videoHdmaTransferMode {};    // CGB
+        DmaTransferMode m_videoHdmaTransferMode {};    // CGB
         int m_videoHdmaTransferRemaining {};            // CGB
         bool m_videoCgbObjectPriority {};               // CGB
         bool m_videoBgPaletteAutoIncrement {};          // CGB
