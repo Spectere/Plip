@@ -24,6 +24,9 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF06 */ case IoRegister::TimerModulo: { return m_regTimerModulo; }
         /* $FF07 */ case IoRegister::TimerControl: { return m_regTimerControl; }
         /* $FF0F */ case IoRegister::InterruptFlag: { return m_interruptFlag; }
+        /* $FF24 */ case IoRegister::SoundVolume: { return m_audioVinPanning | m_audioMasterVolume; }
+        /* $FF25 */ case IoRegister::SoundPanning: { return m_audioChannelPanning; }
+        /* $FF26 */ case IoRegister::SoundEnable: { return (m_audioEnabled ? 0b10000000 : 0) | m_audioChannelState; }
         /* $FF40 */ case IoRegister::LcdControl: { return m_regLcdControl; }
         /* $FF41 */ case IoRegister::LcdStatus: { return m_regLcdStatus; }
         /* $FF42 */ case IoRegister::ScrollY: { return m_regScrollY; }
@@ -143,6 +146,27 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF0F
         case IoRegister::InterruptFlag: {
             m_interruptFlag = PadValue(value, 5);
+            break;
+        }
+
+        // $FF24
+        case IoRegister::SoundVolume: {
+            if(!m_audioEnabled) break;
+
+            m_audioMasterVolume = value & 0b01110111;
+            m_audioVinPanning = value & 0b10001000;
+            break;
+        }
+
+        // $FF25
+        case IoRegister::SoundPanning: {
+            if(m_audioEnabled) m_audioChannelPanning = value;
+            break;
+        }
+
+        // $FF26
+        case IoRegister::SoundEnable: {
+            m_audioEnabled = BIT_TEST(value, 7);
             break;
         }
 

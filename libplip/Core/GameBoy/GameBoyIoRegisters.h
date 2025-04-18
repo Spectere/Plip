@@ -134,6 +134,13 @@ namespace Plip::Core::GameBoy {
         static int Timer_GetFrequencyBit(int clockSelect);
         void Timer_Reset() { m_timerInternal = 0; }
 
+        // Audio
+        bool Audio_GetEnabled() const { return m_audioEnabled; }
+        uint8_t Audio_GetChannelPanning() const { return m_audioChannelPanning; }
+        uint8_t Audio_GetMasterVolume() const { return m_audioMasterVolume; }
+        uint8_t Audio_GetVinPanning() const { return m_audioVinPanning; }
+        void Audio_SetChannelState(const uint8_t state) { m_audioChannelState = state & 0xF; }
+
         // Video
         void Video_AcknowledgeOamDmaCopy() { m_videoPerformOamDmaCopy = false; }
         void Video_AcknowledgeHdmaCancellation() { m_videoHdmaTransferCancelled = false; }
@@ -185,6 +192,14 @@ namespace Plip::Core::GameBoy {
         bool m_timerLastBitResult {};
         TimaReloadStatus m_timerTimaReloadStatus {};
         uint16_t m_timerInternal {};
+
+        // Audio
+        bool m_audioEnabled {};
+        uint8_t m_audioChannelPanning {};
+        uint8_t m_audioChannelState {};
+        uint8_t m_audioMasterVolume {};
+        uint8_t m_audioVinPanning {};
+        uint8_t m_audioWaveRam[16] {};
 
         // Video
         bool m_videoPerformOamDmaCopy {};
