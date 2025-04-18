@@ -30,7 +30,6 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
         case MBC_Type::Mmm01: throw PlipEmulationException("Unsupported mapper: MMM01");
         case MBC_Type::PocketCamera: throw PlipEmulationException("Unsupported mapper: Pocket Camera");
         case MBC_Type::BandaiTama5: throw PlipEmulationException("Unsupported mapper: Bandai TAMA5");
-        case MBC_Type::HuC1: throw PlipEmulationException("Unsupported mapper: HuC1");
         case MBC_Type::HuC3: throw PlipEmulationException("Unsupported mapper: HuC3");
     }
 
@@ -50,10 +49,12 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
         case MBC_Type::HuC3: m_mbcName = "HuC3"; break;
         default: m_mbcName = "UNKNOWN"; break;
     }
-
-    // Not sure if these apply to all MBCs yet.
-    m_register1SelectsRomBank = m_cartRom->GetLength() > 512 * 1024;
     if(m_cartRom->GetLength() > 16 * 1024) m_rom1Bank = 1;
+
+    // MBC1 allows the second register to act as high bits for the ROM bank selection.
+    if(m_mbcType == MBC_Type::Mbc1) {
+        m_register1SelectsRomBank = m_cartRom->GetLength() > 512 * 1024;
+    }
 
     // Create cartridge RAM (if applicable).
     if(m_mbcType == MBC_Type::Mbc2) {
@@ -64,6 +65,9 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
         m_cartHasRam = true;
         m_cartRam = new PlipMemoryRam(0x2000 * cartRamBanks, 0xFF);
     }
+
+    // Cartridge RAM for HuC1 is always writable.
+    if(m_mbcType == MBC_Type::HuC1 && m_cartHasRam) m_ramEnabled = true;
 
     // Return the created cart RAM, or null.
     return m_cartHasRam ? m_cartRam : nullptr;
@@ -88,6 +92,8 @@ uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) co
     switch(m_mbcType) {
         case MBC_Type::Mbc3:
             return GetByte_Mbc3(address, privileged);
+        case MBC_Type::HuC1:
+            return GetByte_HuC1(address, privileged);
         case MBC_Type::None:
         case MBC_Type::Mbc1:
         case MBC_Type::Mbc2:
@@ -97,11 +103,18 @@ uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) co
         case MBC_Type::Mmm01:
         case MBC_Type::PocketCamera:
         case MBC_Type::BandaiTama5:
-        case MBC_Type::HuC1:
         case MBC_Type::HuC3:
         default:
             return PlipMemoryMap::GetByte(address, privileged);
     }
+}
+
+uint8_t GameBoyMapper::GetByte_HuC1(uint32_t address, bool privileged) const {
+    if(m_hucIrMode && address >= 0xA000 && address < 0xC000) {
+        return 0xC0;  // IR receiver does not see light.
+    }
+
+    return PlipMemoryMap::GetByte(address, privileged);
 }
 
 uint8_t GameBoyMapper::GetByte_Mbc3(const uint32_t address, const bool privileged) const {
@@ -173,7 +186,7 @@ void GameBoyMapper::Reset() {
     AssignBlock(m_highRam, HighRamAddress);
     AssignBlock(m_cartRom, RomBank0Address, 0, RomBank0Length + RomBank1Length);
 
-    // Map cartridge memory (if it exists) and disable it by default.
+    // Map cartridge memory (if it exists) and disable it by default (unless we're using HuC1).
     if(m_cartHasRam) {
         if(m_mbcType == MBC_Type::Mbc2) {
             // MBC2 has a very limited amount of memory, so it's expected to repeatedly
@@ -185,8 +198,8 @@ void GameBoyMapper::Reset() {
         } else {
             AssignBlock(m_cartRam, CartRamAddress, 0, CartRamLength);
         }
-        
-        EnableCartridgeRam(false);
+
+        if(m_mbcType != MBC_Type::HuC1) EnableCartridgeRam(false);
     }
 
     // Load the boot ROM into 0x0000-0x00FF (and 0x0200-0x08FF for CGB) (overlaying the cartridge ROM).
@@ -381,12 +394,14 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
         case MBC_Type::Mbc5:
             mbcHandledWrite = SetByte_Mbc5(address, value);
             break;
+        case MBC_Type::HuC1:
+            mbcHandledWrite = SetByte_HuC1(address, value);
+            break;
         case MBC_Type::Mbc6:
         case MBC_Type::Mbc7:
         case MBC_Type::Mmm01:
         case MBC_Type::PocketCamera:
         case MBC_Type::BandaiTama5:
-        case MBC_Type::HuC1:
         case MBC_Type::HuC3:
         case MBC_Type::None:
         default:
@@ -396,6 +411,39 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
     if(!mbcHandledWrite) {
         PlipMemoryMap::SetByte(address, value, privileged);
     }
+}
+
+bool GameBoyMapper::SetByte_HuC1(const uint32_t address, const uint8_t value) {
+    bool bankSwitchRam = false;
+    bool bankSwitchRom = false;
+
+    if(address < 0x2000) {
+        // IR select. Enable IR with $0E and disable (allow RAM access) with anything else.
+        m_hucIrMode = (value & 0xF) == 0xE;
+        m_ramEnabled = !m_hucIrMode;
+    } else if(address < 0x4000) {
+        // ROM bank selection.
+        bankSwitchRom = true;
+        m_rom1Bank = m_bankRegister0 = value & 0b111111;
+    } else if(address < 0x6000) {
+        // RAM bank selection.
+        bankSwitchRam = true;
+        m_ramBank = m_bankRegister1 = value & 0b11;
+    } else if(address < 0x8000) {
+        // Unknown--does not appear to do anything. Ignore this write.
+    } else if(m_hucIrMode && address >= 0xA000 && address < 0xC000) {
+        // IR register. Ignore this write.
+        return false;
+    } else {
+        return false;
+    }
+
+    // Swap banks if requested.
+    if(bankSwitchRom || bankSwitchRam) {
+        RemapMemory(bankSwitchRom, bankSwitchRam);
+    }
+    
+    return true;
 }
 
 bool GameBoyMapper::SetByte_Mbc1(const uint32_t address, const uint8_t value) {

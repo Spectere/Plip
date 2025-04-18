@@ -18,6 +18,7 @@ namespace Plip::Core::GameBoy {
         PocketCamera,
         BandaiTama5,
         HuC1,
-        HuC3
+        HuC3,
+        Unknown,
     };
 }

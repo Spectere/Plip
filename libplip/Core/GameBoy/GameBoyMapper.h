@@ -36,12 +36,14 @@ namespace Plip::Core::GameBoy {
         void DisableBootRom();
         void EnableCartridgeRam(bool enable);
         uint8_t GetByte(uint32_t address, bool privileged) const override;
+        uint8_t GetByte_HuC1(uint32_t address, bool privileged) const;
         uint8_t GetByte_Mbc3(uint32_t address, bool privileged) const;
         std::map<std::string, DebugValue> GetMbcDebugInfo() const;
         void RemapMemory(bool remapRom, bool remapRam);
         void Reset();
         void RestoreCartridgeMemoryAccessibility() const;
         void SetByte(uint32_t address, uint8_t value, bool privileged = false) override;
+        bool SetByte_HuC1(uint32_t address, uint8_t value);
         bool SetByte_Mbc1(uint32_t address, uint8_t value);
         bool SetByte_Mbc2(uint32_t address, uint8_t value);
         bool SetByte_Mbc3(uint32_t address, uint8_t value);
@@ -88,6 +90,7 @@ namespace Plip::Core::GameBoy {
         bool m_cartHasRam {};
         int m_cartRamBanks {};
         bool m_hasRtc {};
+        bool m_hucIrMode {};
         std::string m_mbcName = "UNKNOWN";
         MBC_Type m_mbcType = MBC_Type::None;
         uint8_t m_ramBank {};
