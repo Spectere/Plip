@@ -151,6 +151,12 @@ namespace Plip::Core::GameBoy {
         DmaState m_dmaState {};
         DmaTransferMode m_dmaTransferMode {};
 
+        // APU
+        static constexpr auto APU_CyclesLowSpeed = 4;
+        static constexpr auto APU_CyclesHighSpeed = 2;
+
+        int m_apuCycles = APU_CyclesLowSpeed;
+
         // PPU
         static constexpr auto PPU_Block0 = 0x0000;
         static constexpr auto PPU_Block1 = 0x0800;

@@ -200,6 +200,24 @@ namespace Plip::Core::GameBoy {
         uint8_t m_audioMasterVolume {};
         uint8_t m_audioVinPanning {};
         uint8_t m_audioWaveRam[16] {};
+        uint8_t m_audioCh1Sweep {};
+        uint8_t m_audioCh1LengthAndDutyCycle {};
+        uint8_t m_audioCh1VolumeAndEnvelope {};
+        uint8_t m_audioCh1PeriodLow {};
+        uint8_t m_audioCh1PeriodHighAndControl {};
+        uint8_t m_audioCh2LengthAndDutyCycle {};
+        uint8_t m_audioCh2VolumeAndEnvelope {};
+        uint8_t m_audioCh2PeriodLow {};
+        uint8_t m_audioCh2PeriodHighAndControl {};
+        bool m_audioCh3DacEnable {};
+        uint8_t m_audioCh3LengthTimer {};
+        uint8_t m_audioCh3OutputLevel {};
+        uint8_t m_audioCh3PeriodLow {};
+        uint8_t m_audioCh3PeriodHighAndControl {};
+        uint8_t m_audioCh4LengthTimer {};
+        uint8_t m_audioCh4VolumeAndEnvelope {};
+        uint8_t m_audioCh4FrequencyAndRandomness {};
+        uint8_t m_audioCh4Control {};
 
         // Video
         bool m_videoPerformOamDmaCopy {};

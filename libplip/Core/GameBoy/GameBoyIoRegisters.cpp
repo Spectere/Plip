@@ -17,6 +17,12 @@ GameBoyIoRegisters::GameBoyIoRegisters(const GameBoyModel gbModel, PlipMemory* c
 }
 
 uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
+    if(ioRegister >= IoRegister::WaveRam0 && ioRegister <= IoRegister::WaveRamF) {
+        // Wave RAM is basically an array, so treat it as such.
+        // TODO: Implement wave RAM (in)accessibility.
+        return m_audioWaveRam[static_cast<int>(ioRegister) - static_cast<int>(IoRegister::WaveRam0)];
+    }
+
     switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
         /* $FF00 */ case IoRegister::JoypadInput: { return m_regJoypad; }
         /* $FF04 */ case IoRegister::Divider: { return m_timerInternal >> 8; }
@@ -24,6 +30,24 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF06 */ case IoRegister::TimerModulo: { return m_regTimerModulo; }
         /* $FF07 */ case IoRegister::TimerControl: { return m_regTimerControl; }
         /* $FF0F */ case IoRegister::InterruptFlag: { return m_interruptFlag; }
+        /* $FF10 */ case IoRegister::SoundCh1Sweep: { return m_audioCh1Sweep; }
+        /* $FF11 */ case IoRegister::SoundCh1LengthDuty: { return m_audioCh1LengthAndDutyCycle; }
+        /* $FF12 */ case IoRegister::SoundCh1VolumeEnvelope: { return m_audioCh1VolumeAndEnvelope | 0b00111111; }
+        /* $FF13 */ case IoRegister::SoundCh1PeriodLow: { return m_audioCh1PeriodLow; }
+        /* $FF14 */ case IoRegister::SoundCh1PeriodHighControl: { return m_audioCh1PeriodHighAndControl; }
+        /* $FF16 */ case IoRegister::SoundCh2LengthDuty: { return m_audioCh2LengthAndDutyCycle; }
+        /* $FF17 */ case IoRegister::SoundCh2VolumeEnvelope: { return m_audioCh2VolumeAndEnvelope | 0b00111111; }
+        /* $FF18 */ case IoRegister::SoundCh2PeriodLow: { return m_audioCh2PeriodLow; }
+        /* $FF19 */ case IoRegister::SoundCh2PeriodHighControl: { return m_audioCh2PeriodHighAndControl; }
+        /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return m_audioCh3DacEnable ? 0b10000000 : 0; }
+        /* $FF1B - write-only */
+        /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return m_audioCh3OutputLevel << 5; }
+        /* $FF1D */ case IoRegister::SoundCh3PeriodLow: { return m_audioCh3PeriodLow; }
+        /* $FF1E */ case IoRegister::SoundCh3PeriodHighControl: { return m_audioCh3PeriodHighAndControl; }
+        /* $FF20 - write-only */
+        /* $FF21 */ case IoRegister::SoundCh4VolumeEnvelope: { return m_audioCh4VolumeAndEnvelope; }
+        /* $FF22 */ case IoRegister::SoundCh4FrequencyRandomness: { return m_audioCh4FrequencyAndRandomness; }
+        /* $FF23 */ case IoRegister::SoundCh4Control: { return m_audioCh4Control; }
         /* $FF24 */ case IoRegister::SoundVolume: { return m_audioVinPanning | m_audioMasterVolume; }
         /* $FF25 */ case IoRegister::SoundPanning: { return m_audioChannelPanning; }
         /* $FF26 */ case IoRegister::SoundEnable: { return (m_audioEnabled ? 0b10000000 : 0) | m_audioChannelState; }
@@ -94,6 +118,13 @@ void GameBoyIoRegisters::Reset() {
 }
 
 void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t value) {
+    if(ioRegister >= IoRegister::WaveRam0 && ioRegister <= IoRegister::WaveRamF) {
+        // Wave RAM is basically an array, so treat it as such.
+        // TODO: Implement wave RAM (in)accessibility.
+        m_audioWaveRam[static_cast<int>(ioRegister) - static_cast<int>(IoRegister::WaveRam0)] = value;
+        return;
+    }
+    
     switch(ioRegister) {
         // $FF00
         case IoRegister::JoypadInput: {
@@ -146,6 +177,114 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF0F
         case IoRegister::InterruptFlag: {
             m_interruptFlag = PadValue(value, 5);
+            break;
+        }
+
+        // $FF10
+        case IoRegister::SoundCh1Sweep: {
+            m_audioCh1Sweep = PadValue(value, 6);
+            break;
+        }
+
+        // $FF11
+        case IoRegister::SoundCh1LengthDuty: {
+            m_audioCh1LengthAndDutyCycle = value;
+            break;
+        }
+
+        // $FF12
+        case IoRegister::SoundCh1VolumeEnvelope: {
+            m_audioCh1VolumeAndEnvelope = value;
+            break;
+        }
+
+        // $FF13
+        case IoRegister::SoundCh1PeriodLow: {
+            m_audioCh1PeriodLow = value;
+            break;
+        }
+
+        // $FF14
+        case IoRegister::SoundCh1PeriodHighControl: {
+            m_audioCh1PeriodHighAndControl = value | 0b00111000;
+            break;
+        }
+
+        // $FF16
+        case IoRegister::SoundCh2LengthDuty: {
+            m_audioCh2LengthAndDutyCycle = value;
+            break;
+        }
+
+        // $FF17
+        case IoRegister::SoundCh2VolumeEnvelope: {
+            m_audioCh2VolumeAndEnvelope = value;
+            break;
+        }
+
+        // $FF18
+        case IoRegister::SoundCh2PeriodLow: {
+            m_audioCh2PeriodLow = value;
+            break;
+        }
+
+        // $FF19
+        case IoRegister::SoundCh2PeriodHighControl: {
+            m_audioCh2PeriodHighAndControl = value | 0b00111000;
+            break;
+        }
+
+        // $FF1A
+        case IoRegister::SoundCh3DacEnable: {
+            m_audioCh3DacEnable = BIT_TEST(value, 7);
+            break;
+        }
+
+        // $FF1B
+        case IoRegister::SoundCh3Length: {
+            m_audioCh3LengthTimer = value;
+            break;
+        }
+
+        // $FF1C
+        case IoRegister::SoundCh3OutputLevel: {
+            m_audioCh3OutputLevel = (value & 0b01100000) >> 5;
+            break;
+        }
+
+        // $FF1D
+        case IoRegister::SoundCh3PeriodLow: {
+            m_audioCh3PeriodLow = value;
+            break;
+        }
+
+        // $FF1E
+        case IoRegister::SoundCh3PeriodHighControl: {
+            m_audioCh3PeriodHighAndControl = value & 0b11000111;
+            break;
+        }
+
+        // $FF20
+        case IoRegister::SoundCh4Length: {
+            m_audioCh4LengthTimer = value & 0b00111111;
+            break;
+        }
+
+        // $FF21
+        case IoRegister::SoundCh4VolumeEnvelope: {
+            m_audioCh4VolumeAndEnvelope = value;
+            break;
+        }
+
+        // $FF22
+        case IoRegister::SoundCh4FrequencyRandomness: {
+            m_audioCh4FrequencyAndRandomness = value;
+            break;
+        }
+
+        // $FF23
+        case IoRegister::SoundCh4Control: {
+            m_audioCh4Control = value & 0b11000000;
             break;
         }
 
