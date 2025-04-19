@@ -73,11 +73,13 @@ void Chip8Instance::Delta(const long ns) {
     do {
         m_cycleRemaining -= m_cpu->Step();
 
-        if(const auto audioQueueFilled = m_audio->GetQueueSize(); audioQueueFilled < m_audioBufferFillThreshold) {
-            if(m_cpu->IsAudioPlaying()) {
-                m_audio->Enqueue(m_waveform == 0 ? GenerateSine() : GenerateSquare());
-            } else {
-                m_audio->Enqueue(GenerateSilence());
+        if(m_audio->IsActive()) {
+            if(const auto audioQueueFilled = m_audio->GetQueueSize(); audioQueueFilled < m_audioBufferFillThreshold) {
+                if(m_cpu->IsAudioPlaying()) {
+                    m_audio->Enqueue(m_waveform == 0 ? GenerateSine() : GenerateSquare());
+                } else {
+                    m_audio->Enqueue(GenerateSilence());
+                }
             }
         }
 
