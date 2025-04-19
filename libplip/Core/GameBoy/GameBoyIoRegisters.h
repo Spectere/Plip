@@ -108,16 +108,16 @@ namespace Plip::Core::GameBoy {
             SetByte(static_cast<IoRegister>(address), value);
         }
 
-        uint8_t GetByte(IoRegister ioRegister) const;
+        [[nodiscard]] uint8_t GetByte(IoRegister ioRegister) const;
         uint32_t GetLength() override { return Length; }
         void Reset();
         void SetByte(IoRegister ioRegister, uint8_t value);
 
         // Core
         void AcknowledgeWorkRamBankSwitch() { m_performWorkRamBankSwitch = -1; }
-        bool GetBootRomDisabled() const { return m_bootRomDisabled; }
-        bool GetIsDoubleSpeedArmed() const { return m_speedSwitchArmed; }
-        int GetPerformWorkRamBankSwitch() const { return m_performWorkRamBankSwitch; }
+        [[nodiscard]] bool GetBootRomDisabled() const { return m_bootRomDisabled; }
+        [[nodiscard]] bool GetIsDoubleSpeedArmed() const { return m_speedSwitchArmed; }
+        [[nodiscard]] int GetPerformWorkRamBankSwitch() const { return m_performWorkRamBankSwitch; }
         void RaiseInterrupt(Cpu::SharpLr35902Interrupt interrupt);
         void SetDoubleSpeed(const bool doubleSpeed) {
             m_doubleSpeedActive = doubleSpeed;
@@ -135,23 +135,23 @@ namespace Plip::Core::GameBoy {
         void Timer_Reset() { m_timerInternal = 0; }
 
         // Audio
-        bool Audio_GetEnabled() const { return m_audioEnabled; }
-        uint8_t Audio_GetChannelPanning() const { return m_audioChannelPanning; }
-        uint8_t Audio_GetMasterVolume() const { return m_audioMasterVolume; }
-        uint8_t Audio_GetVinPanning() const { return m_audioVinPanning; }
+        [[nodiscard]] bool Audio_GetEnabled() const { return m_audioEnabled; }
+        [[nodiscard]] uint8_t Audio_GetChannelPanning() const { return m_audioChannelPanning; }
+        [[nodiscard]] uint8_t Audio_GetMasterVolume() const { return m_audioMasterVolume; }
+        [[nodiscard]] uint8_t Audio_GetVinPanning() const { return m_audioVinPanning; }
         void Audio_SetChannelState(const uint8_t state) { m_audioChannelState = state & 0xF; }
 
         // Video
         void Video_AcknowledgeOamDmaCopy() { m_videoPerformOamDmaCopy = false; }
         void Video_AcknowledgeHdmaCancellation() { m_videoHdmaTransferCancelled = false; }
         void Video_AcknowledgeVideoRamBankSwitch() { m_videoPerformVideoRamBankSwitch = -1; }
-        int Video_GetOamDmaCopyAddress() const { return m_videoPerformOamDmaCopy ? m_regOamDmaAddress : -1; }
-        int Video_GetHdmaDestinationAddress() const { return m_videoHdmaDestinationAddress; }
-        int Video_GetHdmaSourceAddress() const { return m_videoHdmaSourceAddress; }
-        bool Video_GetHdmaTransferCancelled() const { return m_videoHdmaTransferCancelled; }
-        int Video_GetHdmaTransferLength() const { return m_videoHdmaTransferLength; }
-        DmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
-        int Video_GetPerformVramBankSwitch() const { return m_videoPerformVideoRamBankSwitch; }
+        [[nodiscard]] int Video_GetOamDmaCopyAddress() const { return m_videoPerformOamDmaCopy ? m_regOamDmaAddress : -1; }
+        [[nodiscard]] int Video_GetHdmaDestinationAddress() const { return m_videoHdmaDestinationAddress; }
+        [[nodiscard]] int Video_GetHdmaSourceAddress() const { return m_videoHdmaSourceAddress; }
+        [[nodiscard]] bool Video_GetHdmaTransferCancelled() const { return m_videoHdmaTransferCancelled; }
+        [[nodiscard]] int Video_GetHdmaTransferLength() const { return m_videoHdmaTransferLength; }
+        [[nodiscard]] DmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
+        [[nodiscard]] int Video_GetPerformVramBankSwitch() const { return m_videoPerformVideoRamBankSwitch; }
         void Video_SetHdmaTransferComplete() {
             m_videoHdmaTransferMode = DmaTransferMode::Inactive;
             m_videoHdmaTransferRemaining = 0xFF;
