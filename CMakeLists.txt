@@ -155,7 +155,6 @@ add_library(${lib_name}
     # GameBoy
                                                     libplip/Core/GameBoy/DmaState.h
     libplip/Core/GameBoy/GameBoyInstance.cpp        libplip/Core/GameBoy/GameBoyInstance.h
-    libplip/Core/GameBoy/GameBoyInstance.Audio.cpp
     libplip/Core/GameBoy/GameBoyInstance.Video.cpp
     libplip/Core/GameBoy/GameBoyIoRegisters.cpp     libplip/Core/GameBoy/GameBoyIoRegisters.h
     libplip/Core/GameBoy/GameBoyMapper.cpp          libplip/Core/GameBoy/GameBoyMapper.h
