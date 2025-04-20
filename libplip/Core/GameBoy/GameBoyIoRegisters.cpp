@@ -39,9 +39,9 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF17 */ case IoRegister::SoundCh2VolumeEnvelope: { return m_audioCh2VolumeAndEnvelope | 0b00111111; }
         /* $FF18 */ case IoRegister::SoundCh2PeriodLow: { return m_audioCh2PeriodLow; }
         /* $FF19 */ case IoRegister::SoundCh2PeriodHighControl: { return m_audioCh2PeriodHighAndControl; }
-        /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return m_audioCh3DacEnable ? 0b10000000 : 0; }
+        /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return (m_audioCh3DacEnable ? 0b10000000 : 0) | 0b01111111; }
         /* $FF1B - write-only */
-        /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return m_audioCh3OutputLevel << 5; }
+        /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return (m_audioCh3OutputLevel << 5) | 0b10011111; }
         /* $FF1D */ case IoRegister::SoundCh3PeriodLow: { return m_audioCh3PeriodLow; }
         /* $FF1E */ case IoRegister::SoundCh3PeriodHighControl: { return m_audioCh3PeriodHighAndControl; }
         /* $FF20 - write-only */
@@ -50,7 +50,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF23 */ case IoRegister::SoundCh4Control: { return m_audioCh4Control; }
         /* $FF24 */ case IoRegister::SoundVolume: { return m_audioVinPanning | m_audioMasterVolume; }
         /* $FF25 */ case IoRegister::SoundPanning: { return m_audioChannelPanning; }
-        /* $FF26 */ case IoRegister::SoundEnable: { return (m_audioEnabled ? 0b10000000 : 0) | m_audioChannelState; }
+        /* $FF26 */ case IoRegister::SoundEnable: { return (m_audioEnabled ? 0b10000000 : 0) | m_audioChannelState | 0b01110000; }
         /* $FF40 */ case IoRegister::LcdControl: { return m_regLcdControl; }
         /* $FF41 */ case IoRegister::LcdStatus: { return m_regLcdStatus; }
         /* $FF42 */ case IoRegister::ScrollY: { return m_regScrollY; }
@@ -63,7 +63,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF49 */ case IoRegister::Obj1Palette: { return m_regDmgObj1Palette; }
         /* $FF4A */ case IoRegister::WindowY: { return m_regWindowY; }
         /* $FF4B */ case IoRegister::WindowX: { return m_regWindowX; }
-        /* $FF50 */ case IoRegister::BootRomDisable: { return m_bootRomDisabled ? 0b1 : 0b0; }
+        /* $FF50 - write-only */
 
         default: break;
     }
@@ -284,7 +284,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF23
         case IoRegister::SoundCh4Control: {
-            m_audioCh4Control = value & 0b11000000;
+            m_audioCh4Control = (value & 0b11000000) | 0b00111111;
             break;
         }
 
