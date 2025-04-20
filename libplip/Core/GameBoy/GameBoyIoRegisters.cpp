@@ -4,9 +4,11 @@
  */
 
 #include "GameBoyIoRegisters.h"
-
 #include "../../PlipSupport.h"
 
+using Plip::Core::GameBoy::AudioNoiseDefinition;
+using Plip::Core::GameBoy::AudioPulseDefinition;
+using Plip::Core::GameBoy::AudioWaveDefinition;
 using Plip::Core::GameBoy::GameBoyIoRegisters;
 
 #define CGB_SUPPORT (m_model == GameBoyModel::CGB)
@@ -14,6 +16,111 @@ using Plip::Core::GameBoy::GameBoyIoRegisters;
 GameBoyIoRegisters::GameBoyIoRegisters(const GameBoyModel gbModel, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam)
                                      : m_model(gbModel), m_videoCgbBgPaletteRam(cgbBgPaletteRam), m_videoCgbObjPaletteRam(cgbObjPaletteRam) {
     Reset();
+}
+
+void GameBoyIoRegisters::Audio_DivApuIncrementCheck() {
+    const int bitCheck = m_doubleSpeedActive ? 13 : 12;
+    const bool thisBit = m_timerInternal & (0b1 << bitCheck);
+
+    if((m_audioDivApuIncremented = !thisBit && m_audioDivApuLastBit)) {
+        ++m_audioDivApu;
+    }
+    m_audioDivApuLastBit = thisBit;
+}
+
+AudioPulseDefinition GameBoyIoRegisters::Audio_GetCh1Data() {
+    m_audioCh1Triggered = false;
+    return {
+        .PeriodSweepPace = (m_audioCh1Sweep & 0b01110000) >> 4,
+        .PeriodSweepStep = (m_audioCh1Sweep & 0b00000111) * ((m_audioCh1Sweep & 0b00001000) ? -1 : 1),
+        .DutyCycle = m_audioCh1LengthAndDutyCycle >> 6,
+        .InitialLengthTimer = m_audioCh1LengthAndDutyCycle & 0b00111111,
+        .InitialVolume = m_audioCh1VolumeAndEnvelope >> 4,
+        .EnvelopeSweepPace = (m_audioCh1VolumeAndEnvelope & 0b00000111) * ((m_audioCh1VolumeAndEnvelope & 0b00001000) ? -1 : 1),
+        .Period = ((m_audioCh1PeriodHighAndControl & 0b00000111) << 8) | m_audioCh1PeriodLow,
+        .LengthEnable = (m_audioCh1PeriodHighAndControl & 0b01000000) != 0
+    };
+}
+
+AudioPulseDefinition GameBoyIoRegisters::Audio_GetCh2Data() {
+    m_audioCh2Triggered = false;
+    return {
+        .PeriodSweepPace = 0,
+        .PeriodSweepStep = 0,
+        .DutyCycle = m_audioCh2LengthAndDutyCycle >> 6,
+        .InitialLengthTimer = m_audioCh2LengthAndDutyCycle & 0b00111111,
+        .InitialVolume = m_audioCh2VolumeAndEnvelope >> 4,
+        .EnvelopeSweepPace = (m_audioCh2VolumeAndEnvelope & 0b00000111) * ((m_audioCh2VolumeAndEnvelope & 0b00001000) ? -1 : 1),
+        .Period = ((m_audioCh2PeriodHighAndControl & 0b00000111) << 8) | m_audioCh2PeriodLow,
+        .LengthEnable = (m_audioCh2PeriodHighAndControl & 0b01000000) != 0
+    };
+}
+
+AudioWaveDefinition GameBoyIoRegisters::Audio_GetCh3Data() {
+    m_audioCh3Triggered = false;
+    return {
+        .InitialLengthTimer = m_audioCh3LengthTimer,
+        .OutputVolume = (m_audioCh3OutputLevel & 0b01100000) >> 5,
+        .Period = ((m_audioCh3PeriodHighAndControl & 0b00000111) << 8) | m_audioCh3PeriodLow,
+        .LengthEnable = (m_audioCh3PeriodHighAndControl & 0b01000000) != 0
+    };
+}
+
+AudioNoiseDefinition GameBoyIoRegisters::Audio_GetCh4Data() {
+    m_audioCh4Triggered = false;
+    return {
+        .InitialLengthTimer = m_audioCh4LengthTimer & 0b00111111,
+        .InitialVolume = m_audioCh4VolumeAndEnvelope >> 4,
+        .EnvelopeSweepPace = (m_audioCh4VolumeAndEnvelope & 0b00000111) * ((m_audioCh4VolumeAndEnvelope & 0b00001000) ? -1 : 1),
+        .ClockShift = m_audioCh4FrequencyAndRandomness >> 4,
+        .LfsrWidthWide = (m_audioCh4FrequencyAndRandomness & 0b00001000) != 0,
+        .ClockDivider = m_audioCh4FrequencyAndRandomness & 0b00000111,
+        .LengthEnable = (m_audioCh4Control & 0b01000000) != 0
+    };
+}
+
+bool GameBoyIoRegisters::Audio_IsChannelTriggered(const int channel) const {
+    switch(channel) {
+        case 1: return m_audioCh1Triggered;
+        case 2: return m_audioCh2Triggered;
+        case 3: return m_audioCh3Triggered;
+        case 4: return m_audioCh4Triggered;
+        default: return false;
+    }
+}
+
+void GameBoyIoRegisters::Audio_ResetRegisters() {
+    constexpr auto resetValue = 0xFF;
+
+    /*
+     * Clear all audio registers (except for wave RAM).
+     */
+
+    // Channel 1
+    m_audioCh1Sweep = resetValue;
+    m_audioCh1LengthAndDutyCycle = resetValue;
+    m_audioCh1VolumeAndEnvelope = resetValue;
+    m_audioCh1PeriodLow = resetValue;
+    m_audioCh1PeriodHighAndControl = resetValue;
+
+    // Channel 2
+    m_audioCh2LengthAndDutyCycle = resetValue;
+    m_audioCh2VolumeAndEnvelope = resetValue;
+    m_audioCh2PeriodLow = resetValue;
+    m_audioCh2PeriodHighAndControl = resetValue;
+
+    // Channel 3
+    m_audioCh3DacEnable = false;
+    m_audioCh3LengthTimer = resetValue;
+    m_audioCh3OutputLevel = resetValue;
+    m_audioCh3PeriodLow = resetValue;
+    m_audioCh3PeriodHighAndControl = resetValue;
+
+    // Channel 4
+    m_audioCh4LengthTimer = resetValue;
+    m_audioCh4VolumeAndEnvelope = resetValue;
+    m_audioCh4FrequencyAndRandomness = resetValue;
+    m_audioCh4Control = resetValue;
 }
 
 uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
@@ -33,17 +140,17 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF10 */ case IoRegister::SoundCh1Sweep: { return m_audioCh1Sweep; }
         /* $FF11 */ case IoRegister::SoundCh1LengthDuty: { return m_audioCh1LengthAndDutyCycle; }
         /* $FF12 */ case IoRegister::SoundCh1VolumeEnvelope: { return m_audioCh1VolumeAndEnvelope | 0b00111111; }
-        /* $FF13 */ case IoRegister::SoundCh1PeriodLow: { return m_audioCh1PeriodLow; }
-        /* $FF14 */ case IoRegister::SoundCh1PeriodHighControl: { return m_audioCh1PeriodHighAndControl; }
+        /* $FF13 - write-only */
+        /* $FF14 */ case IoRegister::SoundCh1PeriodHighControl: { return m_audioCh1PeriodHighAndControl | 0b10000111; }
         /* $FF16 */ case IoRegister::SoundCh2LengthDuty: { return m_audioCh2LengthAndDutyCycle; }
         /* $FF17 */ case IoRegister::SoundCh2VolumeEnvelope: { return m_audioCh2VolumeAndEnvelope | 0b00111111; }
         /* $FF18 */ case IoRegister::SoundCh2PeriodLow: { return m_audioCh2PeriodLow; }
-        /* $FF19 */ case IoRegister::SoundCh2PeriodHighControl: { return m_audioCh2PeriodHighAndControl; }
+        /* $FF19 */ case IoRegister::SoundCh2PeriodHighControl: { return m_audioCh2PeriodHighAndControl | 0b10000111; }
         /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return m_audioCh3DacEnable ? 0b10000000 : 0; }
         /* $FF1B - write-only */
         /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return m_audioCh3OutputLevel << 5; }
         /* $FF1D */ case IoRegister::SoundCh3PeriodLow: { return m_audioCh3PeriodLow; }
-        /* $FF1E */ case IoRegister::SoundCh3PeriodHighControl: { return m_audioCh3PeriodHighAndControl; }
+        /* $FF1E */ case IoRegister::SoundCh3PeriodHighControl: { return m_audioCh3PeriodHighAndControl | 0b10000111; }
         /* $FF20 - write-only */
         /* $FF21 */ case IoRegister::SoundCh4VolumeEnvelope: { return m_audioCh4VolumeAndEnvelope; }
         /* $FF22 */ case IoRegister::SoundCh4FrequencyRandomness: { return m_audioCh4FrequencyAndRandomness; }
@@ -188,7 +295,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF11
         case IoRegister::SoundCh1LengthDuty: {
-            m_audioCh1LengthAndDutyCycle = value;
+            m_audioCh1LengthAndDutyCycle = value | 0b00111111;
             break;
         }
 
@@ -207,12 +314,13 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF14
         case IoRegister::SoundCh1PeriodHighControl: {
             m_audioCh1PeriodHighAndControl = value | 0b00111000;
+            m_audioCh1Triggered = BIT_TEST(value, 7);
             break;
         }
 
         // $FF16
         case IoRegister::SoundCh2LengthDuty: {
-            m_audioCh2LengthAndDutyCycle = value;
+            m_audioCh2LengthAndDutyCycle = value | 0b00111111;
             break;
         }
 
@@ -231,6 +339,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF19
         case IoRegister::SoundCh2PeriodHighControl: {
             m_audioCh2PeriodHighAndControl = value | 0b00111000;
+            m_audioCh2Triggered = BIT_TEST(value, 7);
             break;
         }
 
@@ -261,6 +370,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF1E
         case IoRegister::SoundCh3PeriodHighControl: {
             m_audioCh3PeriodHighAndControl = value & 0b11000111;
+            m_audioCh3Triggered = BIT_TEST(value, 7);
             break;
         }
 
@@ -285,6 +395,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF23
         case IoRegister::SoundCh4Control: {
             m_audioCh4Control = value & 0b11000000;
+            m_audioCh4Triggered = BIT_TEST(value, 7);
             break;
         }
 
@@ -305,7 +416,9 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF26
         case IoRegister::SoundEnable: {
-            m_audioEnabled = BIT_TEST(value, 7);
+            if((m_audioEnabled = BIT_TEST(value, 7)) == false) {
+                Audio_ResetRegisters();
+            }
             break;
         }
 
@@ -519,6 +632,7 @@ void GameBoyIoRegisters::Timer_Cycle() {
     const bool thisBitResult = ((m_timerInternal >> frequencyBit) & 0b1) && timaEnabled;
 
     Timer_FallingEdgeDetection(thisBitResult);
+    Audio_DivApuIncrementCheck();
 }
 
 void GameBoyIoRegisters::Timer_FallingEdgeDetection(const bool thisBit) {

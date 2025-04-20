@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include "AudioNoiseDefinition.h"
+#include "AudioPulseDefinition.h"
+#include "AudioWaveDefinition.h"
 #include "GameBoyModel.h"
 #include "../../Cpu/SharpLr35902/SharpLr35902.h"
 #include "../../Memory/PlipMemory.h"
@@ -94,7 +97,7 @@ namespace Plip::Core::GameBoy {
         AudioDigitalOutput12 = 0x76,    // CGB
         AudioDigitalOutput34 = 0x77,    // CGB
     };
-    
+
     class GameBoyIoRegisters final : public PlipMemory {
     public:
         GameBoyIoRegisters(GameBoyModel gbModel, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam);
@@ -135,10 +138,18 @@ namespace Plip::Core::GameBoy {
         void Timer_Reset() { m_timerInternal = 0; }
 
         // Audio
+        [[nodiscard]] uint8_t Audio_GetDivApu() const { return m_audioDivApu; }
         [[nodiscard]] bool Audio_GetEnabled() const { return m_audioEnabled; }
         [[nodiscard]] uint8_t Audio_GetChannelPanning() const { return m_audioChannelPanning; }
+        [[nodiscard]] AudioPulseDefinition Audio_GetCh1Data();
+        [[nodiscard]] AudioPulseDefinition Audio_GetCh2Data();
+        [[nodiscard]] AudioWaveDefinition Audio_GetCh3Data();
+        [[nodiscard]] AudioNoiseDefinition Audio_GetCh4Data();
+        [[nodiscard]] bool Audio_GetDivApuIncremented() const { return m_audioDivApuIncremented; }
         [[nodiscard]] uint8_t Audio_GetMasterVolume() const { return m_audioMasterVolume; }
         [[nodiscard]] uint8_t Audio_GetVinPanning() const { return m_audioVinPanning; }
+        [[nodiscard]] bool Audio_IsChannelTriggered(int channel) const;
+        void Audio_ResetRegisters();
         void Audio_SetChannelState(const uint8_t state) { m_audioChannelState = state & 0xF; }
 
         // Video
@@ -194,30 +205,39 @@ namespace Plip::Core::GameBoy {
         uint16_t m_timerInternal {};
 
         // Audio
+        void Audio_DivApuIncrementCheck();
+        
         bool m_audioEnabled {};
         uint8_t m_audioChannelPanning {};
         uint8_t m_audioChannelState {};
         uint8_t m_audioMasterVolume {};
         uint8_t m_audioVinPanning {};
         uint8_t m_audioWaveRam[16] {};
+        bool m_audioCh1Triggered {};
         uint8_t m_audioCh1Sweep {};
         uint8_t m_audioCh1LengthAndDutyCycle {};
         uint8_t m_audioCh1VolumeAndEnvelope {};
         uint8_t m_audioCh1PeriodLow {};
         uint8_t m_audioCh1PeriodHighAndControl {};
+        bool m_audioCh2Triggered {};
         uint8_t m_audioCh2LengthAndDutyCycle {};
         uint8_t m_audioCh2VolumeAndEnvelope {};
         uint8_t m_audioCh2PeriodLow {};
         uint8_t m_audioCh2PeriodHighAndControl {};
+        bool m_audioCh3Triggered {};
         bool m_audioCh3DacEnable {};
         uint8_t m_audioCh3LengthTimer {};
         uint8_t m_audioCh3OutputLevel {};
         uint8_t m_audioCh3PeriodLow {};
         uint8_t m_audioCh3PeriodHighAndControl {};
+        bool m_audioCh4Triggered {};
         uint8_t m_audioCh4LengthTimer {};
         uint8_t m_audioCh4VolumeAndEnvelope {};
         uint8_t m_audioCh4FrequencyAndRandomness {};
         uint8_t m_audioCh4Control {};
+        uint8_t m_audioDivApu {};
+        bool m_audioDivApuIncremented {};
+        bool m_audioDivApuLastBit {};
 
         // Video
         bool m_videoPerformOamDmaCopy {};
@@ -229,7 +249,7 @@ namespace Plip::Core::GameBoy {
         uint16_t m_videoHdmaSourceAddress {};           // CGB
         bool m_videoHdmaTransferCancelled {};           // CGB
         int m_videoHdmaTransferLength {};               // CGB
-        DmaTransferMode m_videoHdmaTransferMode {};    // CGB
+        DmaTransferMode m_videoHdmaTransferMode {};     // CGB
         int m_videoHdmaTransferRemaining {};            // CGB
         bool m_videoCgbObjectPriority {};               // CGB
         bool m_videoBgPaletteAutoIncrement {};          // CGB

@@ -56,6 +56,21 @@ GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *
     m_videoBufferSize = m_videoFormat.pixelWidth * ScreenWidth * ScreenHeight;
     m_videoBuffer = new uint8_t[m_videoBufferSize];
 
+    // Initialize audio.
+    if(m_audio->IsActive()) {
+        m_apuAudioChannels = PlipAudio::Channels;
+        m_apuSampleRate = m_audio->GetSampleRate();
+        m_apuAudioBufferLength = m_audio->GetBufferLength();
+
+        const auto apuTotalBufferSize = m_apuAudioBufferLength * m_apuAudioChannels;
+        m_apuAudioBufferFillThreshold = apuTotalBufferSize;
+        m_apuAudioBuffer.reserve(apuTotalBufferSize);
+        m_apuCh1Buffer.reserve(apuTotalBufferSize);
+        m_apuCh2Buffer.reserve(apuTotalBufferSize);
+        m_apuCh3Buffer.reserve(apuTotalBufferSize);
+        m_apuCh4Buffer.reserve(apuTotalBufferSize);
+    }
+
     // Initialize input.
     RegisterInput();
 }
@@ -93,6 +108,9 @@ void GameBoyInstance::Delta(const long ns) {
             m_ioRegisters->SetDoubleSpeed(m_doubleSpeed);
             cycleTime = m_cpu->GetCycleTime();
             m_ioRegisters->Timer_Reset();
+
+            m_apuPulseCycles = m_doubleSpeed ? APU_PulseClocksPerCycleHighSpeed : APU_PulseClocksPerCycleLowSpeed;
+            m_apuWaveCycles = m_doubleSpeed ? APU_WaveClocksPerCycleHighSpeed : APU_WaveClocksPerCycleLowSpeed;
         }
         
         // Timer
@@ -117,6 +135,11 @@ void GameBoyInstance::Delta(const long ns) {
         // RTC
         if(m_hasRtc) {
             m_gbMemory->RTC_Clock();
+        }
+
+        // APU
+        if(m_audio->IsActive()) {
+            APU_Clock();
         }
 
         // CGB-specific Operations
@@ -350,6 +373,7 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "PPU", PPU_GetDebugInfo() },
         { "Timer", {
             { "DIV", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::Divider))) },
+            { "DIV-APU", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->Audio_GetDivApu())) },
             { "TIMA", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::TimerCounter))) },
             { "TMA", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::TimerModulo))) },
             { "TAC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::TimerControl))) },

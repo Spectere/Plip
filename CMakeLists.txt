@@ -153,6 +153,9 @@ add_library(${lib_name}
     libplip/Core/Chip8/Chip8Instance.cpp            libplip/Core/Chip8/Chip8Instance.h
 
     # GameBoy
+                                                    libplip/Core/GameBoy/AudioNoiseDefinition.h
+                                                    libplip/Core/GameBoy/AudioPulseDefinition.h
+                                                    libplip/Core/GameBoy/AudioWaveDefinition.h
                                                     libplip/Core/GameBoy/DmaState.h
     libplip/Core/GameBoy/GameBoyInstance.cpp        libplip/Core/GameBoy/GameBoyInstance.h
     libplip/Core/GameBoy/GameBoyInstance.Audio.cpp

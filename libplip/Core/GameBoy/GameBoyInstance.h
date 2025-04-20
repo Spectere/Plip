@@ -8,6 +8,9 @@
 #include <filesystem>
 #include <vector>
 
+#include "AudioNoiseDefinition.h"
+#include "AudioPulseDefinition.h"
+#include "AudioWaveDefinition.h"
 #include "DmaState.h"
 #include "GameBoyIoRegisters.h"
 #include "GameBoyMapper.h"
@@ -55,6 +58,17 @@ namespace Plip::Core::GameBoy {
         void ReadCartridgeFeatures();
         void RegisterInput() const;
         void RegisterWriteServiced() const;
+
+        // GameBoyInstance.Audio
+        void APU_Clock();
+        void APU_ConfigureNoise(const AudioNoiseDefinition& definition);
+        void APU_ConfigurePulse(int channel, const AudioPulseDefinition& definition);
+        void APU_ConfigureWave(const AudioWaveDefinition& definition);
+        void APU_Mix();
+        void APU_Output();
+        void APU_GenerateNoise();
+        void APU_GeneratePulse(int channel);
+        void APU_GenerateWave();
 
         // GameBoyInstance.Video
         void PPU_Cycle();
@@ -152,10 +166,30 @@ namespace Plip::Core::GameBoy {
         DmaTransferMode m_dmaTransferMode {};
 
         // APU
-        static constexpr auto APU_CyclesLowSpeed = 4;
-        static constexpr auto APU_CyclesHighSpeed = 2;
+        static constexpr auto APU_PulseClocksPerCycleLowSpeed = 4;
+        static constexpr auto APU_PulseClocksPerCycleHighSpeed = 2;
+        static constexpr auto APU_WaveClocksPerCycleLowSpeed = 2;
+        static constexpr auto APU_WaveClocksPerCycleHighSpeed = 1;
 
-        int m_apuCycles = APU_CyclesLowSpeed;
+        int m_apuActiveChannels {};
+        int m_apuPulseCycles = APU_PulseClocksPerCycleLowSpeed;
+        int m_apuWaveCycles = APU_WaveClocksPerCycleLowSpeed;
+        std::vector<float> m_apuAudioBuffer {};
+        std::vector<float> m_apuCh1Buffer {};
+        std::vector<float> m_apuCh2Buffer {};
+        std::vector<float> m_apuCh3Buffer {};
+        std::vector<float> m_apuCh4Buffer {};
+        int m_apuAudioChannels {};
+        int m_apuAudioBufferLength {};
+        int m_apuAudioBufferFillThreshold {};
+        int m_apuCh1DutyStep {};
+        int m_apuCh2DutyStep {};
+        int m_apuSampleRate {};
+
+        AudioPulseDefinition m_apuCh1 {};
+        AudioPulseDefinition m_apuCh2 {};
+        AudioWaveDefinition m_apuCh3 {};
+        AudioNoiseDefinition m_apuCh4 {};
 
         // PPU
         static constexpr auto PPU_Block0 = 0x0000;
