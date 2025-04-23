@@ -60,7 +60,7 @@ void Gui::DrawBreakpointControls() {
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bpHitHighlight);
                 }
 
-                ImGui::Text("0x%.8X", bp);
+                ImGui::Text("0x%.8llX", bp);
 
                 ImGui::TableNextColumn();
                 ImGui::PushID(bp);
@@ -88,7 +88,7 @@ void Gui::DrawCoreDebugInfo() {
             for(const auto &[key, value] : values) {
                 ImGui::TableNextRow();
 
-                ImGui::TableNextColumn(); ImGui::Text(key.c_str());
+                ImGui::TableNextColumn(); ImGui::Text("%s", key.c_str());
                 ImGui::TableNextColumn();
                 switch(value.Type) {
                     case Plip::DebugValueType::Float32Le:
@@ -99,22 +99,22 @@ void Gui::DrawCoreDebugInfo() {
                         break;
 
                     case Plip::DebugValueType::Int8:
-                        ImGui::Text("0x%.2X (%d)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.2llX (%llu)", value.ValueInt, value.ValueInt);
                         break;
 
                     case Plip::DebugValueType::Int16Le:
                     case Plip::DebugValueType::Int16Be:
-                        ImGui::Text("0x%.4X (%d)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.4llX (%llu)", value.ValueInt, value.ValueInt);
                         break;
 
                     case Plip::DebugValueType::Int32Le:
                     case Plip::DebugValueType::Int32Be:
-                        ImGui::Text("0x%.8X (%d)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.8llX (%llu)", value.ValueInt, value.ValueInt);
                         break;
 
                     case Plip::DebugValueType::Int64Le:
                     case Plip::DebugValueType::Int64Be:
-                        ImGui::Text("0x%.16X (%d)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.16llX (%llu)", value.ValueInt, value.ValueInt);
                         break;
 
                     case Plip::DebugValueType::String:
