@@ -38,7 +38,7 @@ public:
     static constexpr int RegIndexHl = 0b110;
     static constexpr int RegIndexA  = 0b111;
 
-    MockSharpLr35902(const long hz, PlipMemoryMap* memoryMap) : SharpLr35902(hz, memoryMap) { }
+    MockSharpLr35902(const long hz, PlipMemoryMap* memoryMap) : SharpLr35902(hz, memoryMap, false) { }
 
     void ClearCarryFlag() { m_registers.ClearCarryFlag(); }
     [[nodiscard]] bool GetCarryFlag() const { return m_registers.GetCarryFlag(); }

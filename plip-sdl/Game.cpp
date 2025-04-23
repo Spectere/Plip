@@ -70,8 +70,8 @@ void Game::Run() const {
             if(m_gui->State.PerformRead) {
                 auto memoryBase = m_gui->State.ReadAddress;
                 const auto coreMemoryAmount = m_plip->GetCore()->GetMemoryMap()->GetLength();
-                constexpr auto displayColumns = m_gui->State.MemoryDisplayColumns;
-                constexpr auto displayRows = m_gui->State.MemoryDisplayRows;
+                constexpr auto displayColumns = GuiState::MemoryDisplayColumns;
+                constexpr auto displayRows = GuiState::MemoryDisplayRows;
 
                 // Clamp the memory base.
                 if(memoryBase >= coreMemoryAmount) {
