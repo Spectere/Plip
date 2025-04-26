@@ -138,6 +138,11 @@ add_library(${lib_name}
     libplip/Cpu/Chip8/Chip8.cpp                     libplip/Cpu/Chip8/Chip8.h
     libplip/Cpu/Chip8/Chip8.Ops.cpp
 
+    # MOS 6502
+    libplip/Cpu/Mos6502/Mos6502.cpp                 libplip/Cpu/Mos6502/Mos6502.h
+    libplip/Cpu/Mos6502/Mos6502Registers.h
+    libplip/Cpu/Mos6502/Mos6502.Ops.cpp
+
     # Sharp LR35902
     libplip/Cpu/SharpLr35902/SharpLr35902.cpp       libplip/Cpu/SharpLr35902/SharpLr35902.h
                                                     libplip/Cpu/SharpLr35902/SharpLr35902Registers.h
@@ -233,6 +238,10 @@ add_executable(${test_name}
 
     # CHIP-8
     test/Cpu/Chip8/Chip8Ops.cpp
+
+    # MOS 6502
+    test/Cpu/Mos6502/Mos6502Common.h
+    test/Cpu/Mos6502/Mos6502.LoadStore.cpp
 
     # Sharp LR35902
     test/Cpu/SharpLr35902/SharpLr35902Common.h
