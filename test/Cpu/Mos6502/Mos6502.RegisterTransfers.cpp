@@ -20,7 +20,7 @@ TEST("TAX", "TAX") {  // 0xAA
     auto cycles = cpu->Step();
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
-    CHECK(cpu->GetRegisterX() == 0x12);
+    CHECK_X(0x12);
     CHECK(cycles == 2);
 
     // N+ Z-
@@ -29,7 +29,7 @@ TEST("TAX", "TAX") {  // 0xAA
     cycles = cpu->Step();
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
-    CHECK(cpu->GetRegisterX() == 0x8A);
+    CHECK_X(0x8A);
     CHECK(cycles == 2);
 
     // N- Z+
@@ -38,7 +38,7 @@ TEST("TAX", "TAX") {  // 0xAA
     cycles = cpu->Step();
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cpu->GetRegisterX() == 0x00);
+    CHECK_X(0x00);
     CHECK(cycles == 2);
 }
 
@@ -55,7 +55,7 @@ TEST("TAY", "TAY") {  // 0xA8
     auto cycles = cpu->Step();
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
-    CHECK(cpu->GetRegisterY() == 0x12);
+    CHECK_Y(0x12);
     CHECK(cycles == 2);
 
     // N+ Z-
@@ -64,7 +64,7 @@ TEST("TAY", "TAY") {  // 0xA8
     cycles = cpu->Step();
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
-    CHECK(cpu->GetRegisterY() == 0x8A);
+    CHECK_Y(0x8A);
     CHECK(cycles == 2);
 
     // N- Z+
@@ -73,7 +73,7 @@ TEST("TAY", "TAY") {  // 0xA8
     cycles = cpu->Step();
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK(cycles == 2);
 }
 
@@ -90,7 +90,7 @@ TEST("TXA", "TXA") {  // 0x8A
     auto cycles = cpu->Step();
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK(cycles == 2);
 
     // N+ Z-
@@ -99,7 +99,7 @@ TEST("TXA", "TXA") {  // 0x8A
     cycles = cpu->Step();
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
-    CHECK(cpu->GetRegisterA() == 0x8A);
+    CHECK_A(0x8A);
     CHECK(cycles == 2);
 
     // N- Z+
@@ -108,7 +108,7 @@ TEST("TXA", "TXA") {  // 0x8A
     cycles = cpu->Step();
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK(cycles == 2);
 }
 
@@ -125,7 +125,7 @@ TEST("TYA", "TYA") {  // 0x98
     auto cycles = cpu->Step();
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
-    CHECK(cpu->GetRegisterY() == 0x12);
+    CHECK_Y(0x12);
     CHECK(cycles == 2);
 
     // N+ Z-
@@ -134,7 +134,7 @@ TEST("TYA", "TYA") {  // 0x98
     cycles = cpu->Step();
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
-    CHECK(cpu->GetRegisterY() == 0x8A);
+    CHECK_Y(0x8A);
     CHECK(cycles == 2);
 
     // N- Z+
@@ -143,6 +143,6 @@ TEST("TYA", "TYA") {  // 0x98
     cycles = cpu->Step();
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK(cycles == 2);
 }

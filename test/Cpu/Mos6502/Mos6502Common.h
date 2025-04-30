@@ -16,6 +16,11 @@ using namespace Plip;
 #define OP(op) "[mos6502cpu][" op "]"
 #define TEST(name, op) TEST_CASE_METHOD(MockCpu<MockMos6502>, TEST_NAME(name), OP(op))
 
+#define CHECK_A(val) CHECK(cpu->GetRegisterA() == val);
+#define CHECK_X(val) CHECK(cpu->GetRegisterX() == val);
+#define CHECK_Y(val) CHECK(cpu->GetRegisterY() == val);
+#define CHECK_S(val) CHECK(cpu->GetRegisterS() == val);
+
 #define CHECK_BREAK_CLEAR CHECK(cpu->GetBreakCommand() == false);
 #define CHECK_BREAK_SET CHECK(cpu->GetBreakCommand() == true);
 

@@ -15,19 +15,19 @@ TEST("LDA imm8", "LDA-imm8") {  // 0xA9
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 2);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
@@ -47,19 +47,19 @@ TEST("LDA zp", "LDA-zp") {  // 0xA5
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 3);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 3);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 3);
@@ -83,42 +83,42 @@ TEST("LDA zp, X", "LDA-zp,X") {  // 0xB5
 
     cpu->SetRegisterX(0x41);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x42);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x43);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0xE1);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0xE2);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0xE3);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
@@ -138,19 +138,19 @@ TEST("LDA abs16", "LDA-abs16") {  // 0xAD
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
@@ -180,42 +180,42 @@ TEST("LDA abs16, X", "LDA-abs16,X") {  // 0xBD
 
     cpu->SetRegisterX(0x02);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x04);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x06);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x12);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x24);
+    CHECK_A(0x24);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
 
     cpu->SetRegisterX(0x14);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 5);
 
     cpu->SetRegisterX(0x16);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x99);
+    CHECK_A(0x99);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
@@ -245,42 +245,42 @@ TEST("LDA abs16, Y", "LDA-abs16,Y") {  // 0xB9
 
     cpu->SetRegisterY(0x02);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0x04);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0x06);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0x12);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x24);
+    CHECK_A(0x24);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
 
     cpu->SetRegisterY(0x14);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 5);
 
     cpu->SetRegisterY(0x16);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x99);
+    CHECK_A(0x99);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
@@ -322,42 +322,42 @@ TEST("LDA (imm8, X)", "LDA-(imm8,X)") {  // 0xA1
 
     cpu->SetRegisterX(0x00);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 6);
 
     cpu->SetRegisterX(0x02);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 6);
 
     cpu->SetRegisterX(0x04);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 6);
 
     cpu->SetRegisterX(0x06);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x24);
+    CHECK_A(0x24);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 6);
 
     cpu->SetRegisterX(0x08);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 6);
 
     cpu->SetRegisterX(0x0A);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x99);
+    CHECK_A(0x99);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 6);
@@ -390,42 +390,42 @@ TEST("LDA (imm8), Y", "LDA-(imm8),Y") {  // 0xB1
 
     cpu->SetRegisterY(0x02);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x12);
+    CHECK_A(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
 
     cpu->SetRegisterY(0x04);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 5);
 
     cpu->SetRegisterY(0x06);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x88);
+    CHECK_A(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
 
     cpu->SetRegisterY(0x12);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x24);
+    CHECK_A(0x24);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 6);
 
     cpu->SetRegisterY(0x14);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x00);
+    CHECK_A(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 6);
 
     cpu->SetRegisterY(0x16);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterA() == 0x99);
+    CHECK_A(0x99);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 6);
@@ -439,19 +439,19 @@ TEST("LDX imm8", "LDX-imm8") {  // 0xA2
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x12);
+    CHECK_X(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x00);
+    CHECK_X(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 2);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x88);
+    CHECK_X(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
@@ -471,19 +471,19 @@ TEST("LDX zp", "LDX-zp") {  // 0xA6
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x12);
+    CHECK_X(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 3);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x00);
+    CHECK_X(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 3);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x88);
+    CHECK_X(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 3);
@@ -507,42 +507,42 @@ TEST("LDX zp, Y", "LDX-zp,y") {  // 0xB6
 
     cpu->SetRegisterY(0x41);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x12);
+    CHECK_X(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0x42);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x00);
+    CHECK_X(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0x43);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x88);
+    CHECK_X(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0xE1);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x12);
+    CHECK_X(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0xE2);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x00);
+    CHECK_X(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0xE3);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x88);
+    CHECK_X(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
@@ -562,19 +562,19 @@ TEST("LDX abs16", "LDX-abs16") {  // 0xAE
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x12);
+    CHECK_X(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x00);
+    CHECK_X(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x88);
+    CHECK_X(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
@@ -604,42 +604,42 @@ TEST("LDX abs16, Y", "LDX-abs16,Y") {  // 0xBE
 
     cpu->SetRegisterY(0x02);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x12);
+    CHECK_X(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0x04);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x00);
+    CHECK_X(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0x06);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x88);
+    CHECK_X(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterY(0x12);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x24);
+    CHECK_X(0x24);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
 
     cpu->SetRegisterY(0x14);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x00);
+    CHECK_X(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 5);
 
     cpu->SetRegisterY(0x16);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterX() == 0x99);
+    CHECK_X(0x99);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
@@ -653,19 +653,19 @@ TEST("LDY imm8", "LDY-imm8") {  // 0xA0
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x12);
+    CHECK_Y(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 2);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x88);
+    CHECK_Y(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 2);
@@ -685,19 +685,19 @@ TEST("LDY zp", "LDY-zp") {  // 0xA4
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x12);
+    CHECK_Y(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 3);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 3);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x88);
+    CHECK_Y(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 3);
@@ -721,42 +721,42 @@ TEST("LDY zp, X", "LDY-zp,X") {  // 0xB4
 
     cpu->SetRegisterX(0x41);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x12);
+    CHECK_Y(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x42);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x43);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x88);
+    CHECK_Y(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0xE1);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x12);
+    CHECK_Y(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0xE2);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0xE3);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x88);
+    CHECK_Y(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
@@ -776,19 +776,19 @@ TEST("LDY abs16", "LDY-abs16") {  // 0xAC
     });
 
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x12);
+    CHECK_Y(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x88);
+    CHECK_Y(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
@@ -818,42 +818,42 @@ TEST("LDY abs16, X", "LDY-abs16,X") {  // 0xBC
 
     cpu->SetRegisterX(0x02);
     auto cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x12);
+    CHECK_Y(0x12);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x04);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x06);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x88);
+    CHECK_Y(0x88);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 4);
 
     cpu->SetRegisterX(0x12);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x24);
+    CHECK_Y(0x24);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
 
     cpu->SetRegisterX(0x14);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x00);
+    CHECK_Y(0x00);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK(cycles == 5);
 
     cpu->SetRegisterX(0x16);
     cycles = cpu->Step();
-    CHECK(cpu->GetRegisterY() == 0x99);
+    CHECK_Y(0x99);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
