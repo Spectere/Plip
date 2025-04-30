@@ -38,11 +38,7 @@ private:
     static Plip::PlipMemoryMap* CreateMockMemoryMap() {
         const auto memoryMap = new Plip::PlipMemoryMap();
         memoryMap->AddBlock(new Plip::PlipMemoryRam(0x10000), 0);
-
-        // Set reset vector to 0x200.
-        memoryMap->SetByte(0xFFFD, 0x02);
-        memoryMap->SetByte(0xFFFC, 0x00);
-
+        
         return memoryMap;
     }
 

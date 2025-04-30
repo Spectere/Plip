@@ -39,7 +39,11 @@ using namespace Plip;
 
 class MockMos6502 final : public Cpu::Mos6502 {
 public:
-    MockMos6502(const long hz, PlipMemoryMap* memoryMap) : Mos6502(hz, memoryMap, Cpu::Mos6502Version::Mos6502) { }
+    MockMos6502(const long hz, PlipMemoryMap* memoryMap) : Mos6502(hz, memoryMap, Cpu::Mos6502Version::Mos6502) {
+        // Set reset vector to 0x200.
+        memoryMap->SetByte(0xFFFD, 0x02);
+        memoryMap->SetByte(0xFFFC, 0x00);
+    }
 
     void SetVersion(const Cpu::Mos6502Version version) { m_version = version; }
 
