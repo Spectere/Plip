@@ -17,29 +17,26 @@ TEST("TSX", "TSX") {  // 0xBA
     // N- Z-
     cpu->SetRegisterS(0x12);
     cpu->SetRegisterX(0xFF);
-    auto cycles = cpu->Step();
+    EXECUTE(2);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_X(0x12);
-    CHECK(cycles == 2);
 
     // N+ Z-
     cpu->SetRegisterS(0x8A);
     cpu->SetRegisterX(0xFF);
-    cycles = cpu->Step();
+    EXECUTE(2);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK_X(0x8A);
-    CHECK(cycles == 2);
 
     // N- Z+
     cpu->SetRegisterS(0x00);
     cpu->SetRegisterX(0xFF);
-    cycles = cpu->Step();
+    EXECUTE(2);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK_X(0x00);
-    CHECK(cycles == 2);
 }
 
 TEST("TXS", "TXS") {  // 0x9A
@@ -52,29 +49,26 @@ TEST("TXS", "TXS") {  // 0x9A
     // N- Z-
     cpu->SetRegisterX(0x12);
     cpu->SetRegisterS(0xFF);
-    auto cycles = cpu->Step();
+    EXECUTE(2);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_S(0x12);
-    CHECK(cycles == 2);
 
     // N+ Z-
     cpu->SetRegisterX(0x8A);
     cpu->SetRegisterS(0xFF);
-    cycles = cpu->Step();
+    EXECUTE(2);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
     CHECK_S(0x8A);
-    CHECK(cycles == 2);
 
     // N- Z+
     cpu->SetRegisterX(0x00);
     cpu->SetRegisterS(0xFF);
-    cycles = cpu->Step();
+    EXECUTE(2);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
     CHECK_S(0x00);
-    CHECK(cycles == 2);
 }
 
 TEST("PHA", "PHA") {  // 0x48
@@ -84,10 +78,9 @@ TEST("PHA", "PHA") {  // 0x48
 
     cpu->SetRegisterA(0x12);
     CHECK_S(0xFF);
-    const auto cycles = cpu->Step();
+    EXECUTE(3);
     CHECK_S(0xFE);
     CHECK_RAM(0x01FF, 0x12);
-    CHECK(cycles == 3);
 }
 
 TEST("PHP", "PHP") {  // 0x08
@@ -98,10 +91,9 @@ TEST("PHP", "PHP") {  // 0x08
     });
 
     CHECK_S(0xFF);
-    auto cycles = cpu->Step();
+    EXECUTE(3);
     CHECK_S(0xFE);
     CHECK_RAM(0x01FF, 0b00110100);
-    CHECK(cycles == 3);
 
     cpu->ClearBreakCommand();
     cpu->ClearCarryFlag();
@@ -110,10 +102,9 @@ TEST("PHP", "PHP") {  // 0x08
     cpu->ClearNegativeFlag();
     cpu->ClearOverflowFlag();
     cpu->ClearZeroFlag();
-    cycles = cpu->Step();
+    EXECUTE(3);
     CHECK_S(0xFD);
     CHECK_RAM(0x01FE, 0b00100000);
-    CHECK(cycles == 3);
 
     cpu->SetBreakCommand();
     cpu->SetCarryFlag();
@@ -122,10 +113,9 @@ TEST("PHP", "PHP") {  // 0x08
     cpu->SetNegativeFlag();
     cpu->SetOverflowFlag();
     cpu->SetZeroFlag();
-    cycles = cpu->Step();
+    EXECUTE(3);
     CHECK_S(0xFC);
     CHECK_RAM(0x01FD, 0b11111111);
-    CHECK(cycles == 3);
 }
 
 TEST("PLA", "PLA") {  // 0x68
@@ -144,28 +134,25 @@ TEST("PLA", "PLA") {  // 0x68
     cpu->SetRegisterS(0xFC);
 
     // N- Z-
-    auto cycles = cpu->Step();
+    EXECUTE(4);
     CHECK_A(0x12);
     CHECK_S(0xFD);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_CLEAR;
-    CHECK(cycles == 4);
 
     // N- Z+
-    cycles = cpu->Step();
+    EXECUTE(4);
     CHECK_A(0x00);
     CHECK_S(0xFE);
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
-    CHECK(cycles == 4);
 
     // N+ Z-
-    cycles = cpu->Step();
+    EXECUTE(4);
     CHECK_A(0x8A);
     CHECK_S(0xFF);
     CHECK_NEGATIVE_SET;
     CHECK_ZERO_CLEAR;
-    CHECK(cycles == 4);
 }
 
 TEST("PLP", "PLP") {  // 0x28
@@ -182,7 +169,7 @@ TEST("PLP", "PLP") {  // 0x28
     cpu->SetRegisterS(0xFD);
 
     // All-
-    auto cycles = cpu->Step();
+    EXECUTE(4);
     CHECK_S(0xFE);
     CHECK_BREAK_CLEAR;
     CHECK_CARRY_CLEAR;
@@ -191,10 +178,9 @@ TEST("PLP", "PLP") {  // 0x28
     CHECK_NEGATIVE_CLEAR;
     CHECK_OVERFLOW_CLEAR;
     CHECK_ZERO_CLEAR;
-    CHECK(cycles == 4);
 
     // All+
-    cycles = cpu->Step();
+    EXECUTE(4);
     CHECK_S(0xFF);
     CHECK_BREAK_SET;
     CHECK_CARRY_SET;
@@ -203,7 +189,6 @@ TEST("PLP", "PLP") {  // 0x28
     CHECK_NEGATIVE_SET;
     CHECK_OVERFLOW_SET;
     CHECK_ZERO_SET;
-    CHECK(cycles == 4);
 }
 
 TEST("PLP-Zero", "PLP-Zero") {  // 0x28
