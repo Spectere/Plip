@@ -483,6 +483,63 @@ long Mos6502::DecodeAndExecute() {
             break;
         }
 
+        //
+        // Stack Operations
+        //
+        case 0xBA: {
+            // TSX
+            // 2 cycles, ZN
+            m_registers.X = m_registers.S;
+            CHECK_NEGATIVE(m_registers.X);
+            CHECK_ZERO(m_registers.X);
+            cycleCount++;
+            break;
+        }
+
+        case 0x9A: {
+            // TXS
+            // 2 cycles, ZN
+            m_registers.S = m_registers.X;
+            CHECK_NEGATIVE(m_registers.S);
+            CHECK_ZERO(m_registers.S);
+            cycleCount++;
+            break;
+        }
+
+        case 0x48: {
+            // PHA
+            // 3 cycle
+            m_memory->SetByte(StackLocation | m_registers.S--, m_registers.A);
+            cycleCount += 2;
+            break;
+        }
+
+        case 0x08: {
+            // PHP
+            // 3 cycle
+            m_memory->SetByte(StackLocation | m_registers.S--, m_registers.F);
+            cycleCount += 2;
+            break;
+        }
+
+        case 0x68: {
+            // PLA
+            // 4 cycles
+            m_registers.A = m_memory->GetByte(StackLocation | ++m_registers.S);
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            cycleCount += 3;
+            break;
+        }
+
+        case 0x28: {
+            // PLP
+            // 4 cycles
+            m_registers.F = m_memory->GetByte(StackLocation | ++m_registers.S) | 0b00100000;
+            cycleCount += 3;
+            break;
+        }
+
         default: {
             throw PlipInvalidOpcodeException(op);
         }

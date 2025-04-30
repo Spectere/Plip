@@ -22,11 +22,11 @@ using namespace Plip;
 #define CHECK_CARRY_CLEAR CHECK(cpu->GetCarryFlag() == false);
 #define CHECK_CARRY_SET CHECK(cpu->GetCarryFlag() == true);
 
-#define CHECK_DECIMAL_MODE_ENABLED CHECK(cpu->GetDecimalMode() == false);
-#define CHECK_DECIMAL_MODE_DISABLED CHECK(cpu->GetDecimalMode() == true);
+#define CHECK_DECIMAL_MODE_DISABLED CHECK(cpu->GetDecimalMode() == false);
+#define CHECK_DECIMAL_MODE_ENABLED CHECK(cpu->GetDecimalMode() == true);
 
-#define CHECK_INTERRUPT_ENABLED CHECK(cpu->GetInterruptDisable() == false);
-#define CHECK_INTERRUPT_DISABLED CHECK(cpu->GetInterruptDisable() == true);
+#define CHECK_INTERRUPT_DISABLED CHECK(cpu->GetInterruptDisable() == false);
+#define CHECK_INTERRUPT_ENABLED CHECK(cpu->GetInterruptDisable() == true);
 
 #define CHECK_NEGATIVE_CLEAR CHECK(cpu->GetNegativeFlag() == false);
 #define CHECK_NEGATIVE_SET CHECK(cpu->GetNegativeFlag() == true);
@@ -56,8 +56,8 @@ public:
     [[nodiscard]] uint8_t GetRegisterY() const { return m_registers.Y; }
     void SetRegisterY(const uint8_t value) { m_registers.Y = value; }
 
-    [[nodiscard]] uint8_t GetStackPointer() const { return m_registers.SP; }
-    void SetStackPointer(const uint8_t value) { m_registers.SP = value; }
+    [[nodiscard]] uint8_t GetRegisterS() const { return m_registers.S; }
+    void SetRegisterS(const uint8_t value) { m_registers.S = value; }
 
     void ClearBreakCommand() { m_registers.ClearBreakCommand(); }
     [[nodiscard]] bool GetBreakCommand() const { return m_registers.GetBreakCommand(); }

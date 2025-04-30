@@ -21,7 +21,7 @@ std::map<std::string, Plip::DebugValue> Mos6502::GetRegisters() const {
         { "A", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.A)) },
         { "X", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.X)) },
         { "Y", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.Y)) },
-        { "SP", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.SP)) },
+        { "S", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.S)) },
         { "PC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.PC)) },
         { "CF", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::CarryFlagBit))) },
         { "ZF", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::ZeroFlagBit))) },
@@ -35,11 +35,11 @@ std::map<std::string, Plip::DebugValue> Mos6502::GetRegisters() const {
 
 void Mos6502::Reset([[maybe_unused]] const uint32_t pc) {
     m_registers.A = 0;
-    m_registers.F = 0b00100000;
+    m_registers.F = 0b00110100;
     m_registers.X = 0;
     m_registers.Y = 0;
 
-    m_registers.SP = 0;
+    m_registers.S = 0xFF;
 
     // The 6502 gets its reset vector from memory. Ignore the function parameter.
     m_registers.PC = GetResetVector();

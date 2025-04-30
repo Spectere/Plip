@@ -33,6 +33,7 @@ namespace Plip::Cpu {
         void Reset(uint32_t pc) override;
 
     protected:
+        static constexpr uint16_t StackLocation = 0x0100;
         static constexpr uint16_t NmiVectorHigh = 0xFFFB;
         static constexpr uint16_t NmiVectorLow = 0xFFFA;
         static constexpr uint16_t ResetVectorHigh = 0xFFFD;
