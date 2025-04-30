@@ -11,6 +11,8 @@
 #include "Memory/PlipMemoryMap.h"
 #include "Memory/PlipMemoryRam.h"
 
+#define CHECK_RAM(addr, val) CHECK(memory->GetByte(addr) == val);
+
 template<class CpuType>
 class MockCpu {
     static_assert(std::is_base_of_v<Plip::Cpu::PlipCpu, CpuType>, "CpuType must be a subclass of PlipCpu");

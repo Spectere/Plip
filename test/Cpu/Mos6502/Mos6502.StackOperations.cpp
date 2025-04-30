@@ -86,7 +86,7 @@ TEST("PHA", "PHA") {  // 0x48
     CHECK(cpu->GetRegisterS() == 0xFF);
     const auto cycles = cpu->Step();
     CHECK(cpu->GetRegisterS() == 0xFE);
-    CHECK(memory->GetByte(0x01FF) == 0x12);
+    CHECK_RAM(0x01FF, 0x12);
     CHECK(cycles == 3);
 }
 
@@ -100,7 +100,7 @@ TEST("PHP", "PHP") {  // 0x08
     CHECK(cpu->GetRegisterS() == 0xFF);
     auto cycles = cpu->Step();
     CHECK(cpu->GetRegisterS() == 0xFE);
-    CHECK(memory->GetByte(0x01FF) == 0b00110100);
+    CHECK_RAM(0x01FF, 0b00110100);
     CHECK(cycles == 3);
 
     cpu->ClearBreakCommand();
@@ -112,7 +112,7 @@ TEST("PHP", "PHP") {  // 0x08
     cpu->ClearZeroFlag();
     cycles = cpu->Step();
     CHECK(cpu->GetRegisterS() == 0xFD);
-    CHECK(memory->GetByte(0x01FE) == 0b00100000);
+    CHECK_RAM(0x01FE, 0b00100000);
     CHECK(cycles == 3);
 
     cpu->SetBreakCommand();
@@ -124,7 +124,7 @@ TEST("PHP", "PHP") {  // 0x08
     cpu->SetZeroFlag();
     cycles = cpu->Step();
     CHECK(cpu->GetRegisterS() == 0xFC);
-    CHECK(memory->GetByte(0x01FD) == 0b11111111);
+    CHECK_RAM(0x01FD, 0b11111111);
     CHECK(cycles == 3);
 }
 
@@ -219,5 +219,5 @@ TEST("PLP-Zero", "PLP-Zero") {  // 0x28
 
     cpu->Step();
     cpu->Step();
-    CHECK(memory->GetByte(0x01FF, 0b00100000));
+    CHECK_RAM(0x01FF, 0b00100000);
 }

@@ -866,7 +866,7 @@ TEST("STA zp", "STA-zp") {  // 0x85
 
     cpu->SetRegisterA(0x12);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x80) == 0x12);
+    CHECK_RAM(0x80, 0x12);
     CHECK(cycles == 3);
 }
 
@@ -878,7 +878,7 @@ TEST("STA zp, X", "STA-zp,X") {  // 0x95
     cpu->SetRegisterA(0x12);
     cpu->SetRegisterX(0x10);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x90) == 0x12);
+    CHECK_RAM(0x90, 0x12);
     CHECK(cycles == 4);
 }
 
@@ -889,7 +889,7 @@ TEST("STA abs16", "STA-abs16") {  // 0x8D
 
     cpu->SetRegisterA(0x8A);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1234) == 0x8A);
+    CHECK_RAM(0x1234, 0x8A);
     CHECK(cycles == 4);
 }
 
@@ -902,12 +902,12 @@ TEST("STA abs16, X", "STA-abs16,X") {  // 0x9D
     cpu->SetRegisterA(0x8A);
     cpu->SetRegisterX(0x10);
     auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1244) == 0x8A);
+    CHECK_RAM(0x1244, 0x8A);
     CHECK(cycles == 5);
 
     cpu->SetRegisterX(0x02);
     cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1301) == 0x8A);
+    CHECK_RAM(0x1301, 0x8A);
     CHECK(cycles == 5);
 }
 
@@ -920,12 +920,12 @@ TEST("STA abs16, Y", "STA-abs16,Y") {  // 0x99
     cpu->SetRegisterA(0xA8);
     cpu->SetRegisterY(0x10);
     auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1244) == 0xA8);
+    CHECK_RAM(0x1244, 0xA8);
     CHECK(cycles == 5);
 
     cpu->SetRegisterY(0x02);
     cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1301) == 0xA8);
+    CHECK_RAM(0x1301, 0xA8);
     CHECK(cycles == 5);
 }
 
@@ -941,13 +941,13 @@ TEST("STA (imm8, X)", "STA-(imm8,X)") {  // 0x81
     cpu->SetRegisterA(0x8A);
     cpu->SetRegisterX(0x10);
     auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x3456) == 0x8A);
+    CHECK_RAM(0x3456, 0x8A);
     CHECK(cycles == 6);
 
     cpu->SetRegisterA(0x8B);
     cpu->SetRegisterX(0x20);
     cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1234) == 0x8B);
+    CHECK_RAM(0x1234, 0x8B);
     CHECK(cycles == 6);
 }
 
@@ -962,13 +962,13 @@ TEST("STA (imm8), Y", "STA-(imm8),Y") {  // 0x91
     cpu->SetRegisterA(0xA8);
     cpu->SetRegisterY(0x00);
     auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1234) == 0xA8);
+    CHECK_RAM(0x1234, 0xA8);
     CHECK(cycles == 6);
 
     cpu->SetRegisterA(0xA9);
     cpu->SetRegisterY(0x02);
     cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1236) == 0xA9);
+    CHECK_RAM(0x1236, 0xA9);
     CHECK(cycles == 6);
 }
 
@@ -979,7 +979,7 @@ TEST("STX zp", "STX-zp") {  // 0x86
 
     cpu->SetRegisterX(0x8A);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x80) == 0x8A);
+    CHECK_RAM(0x80, 0x8A);
     CHECK(cycles == 3);
 }
 
@@ -991,7 +991,7 @@ TEST("STX zp, Y", "STX-zp,Y") {  // 0x96
     cpu->SetRegisterX(0x8A);
     cpu->SetRegisterY(0x10);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x90) == 0x8A);
+    CHECK_RAM(0x90, 0x8A);
     CHECK(cycles == 4);
 }
 
@@ -1002,7 +1002,7 @@ TEST("STX abs16", "STX-abs16") {  // 0x8E
 
     cpu->SetRegisterX(0x8A);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1234) == 0x8A);
+    CHECK_RAM(0x1234, 0x8A);
     CHECK(cycles == 4);
 }
 
@@ -1013,7 +1013,7 @@ TEST("STY zp", "STY-zp") {  // 0x84
 
     cpu->SetRegisterY(0x8A);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x80) == 0x8A);
+    CHECK_RAM(0x80, 0x8A);
     CHECK(cycles == 3);
 }
 
@@ -1025,7 +1025,7 @@ TEST("STY zp, X", "STY-zp,X") {  // 0x94
     cpu->SetRegisterY(0x8A);
     cpu->SetRegisterX(0x10);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x90) == 0x8A);
+    CHECK_RAM(0x90, 0x8A);
     CHECK(cycles == 4);
 }
 
@@ -1036,6 +1036,6 @@ TEST("STY abs16", "STY-abs16") {  // 0x8C
 
     cpu->SetRegisterY(0x8A);
     const auto cycles = cpu->Step();
-    CHECK(memory->GetByte(0x1234) == 0x8A);
+    CHECK_RAM(0x1234, 0x8A);
     CHECK(cycles == 4);
 }
