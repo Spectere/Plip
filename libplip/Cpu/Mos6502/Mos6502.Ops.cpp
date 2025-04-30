@@ -440,6 +440,49 @@ long Mos6502::DecodeAndExecute() {
             break;
         }
 
+        //
+        // Register Transfers
+        //
+        case 0xAA: {
+            // TAX
+            // 2 cycles, ZN
+            m_registers.X = m_registers.A;
+            CHECK_NEGATIVE(m_registers.X);
+            CHECK_ZERO(m_registers.X);
+            cycleCount++;
+            break;
+        }
+
+        case 0xA8: {
+            // TAY
+            // 2 cycles, ZN
+            m_registers.Y = m_registers.A;
+            CHECK_NEGATIVE(m_registers.Y);
+            CHECK_ZERO(m_registers.Y);
+            cycleCount++;
+            break;
+        }
+
+        case 0x8A: {
+            // TXA
+            // 2 cycles, ZN
+            m_registers.A = m_registers.X;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            cycleCount++;
+            break;
+        }
+
+        case 0x98: {
+            // TYA
+            // 2 cycles, ZN
+            m_registers.A = m_registers.Y;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            cycleCount++;
+            break;
+        }
+
         default: {
             throw PlipInvalidOpcodeException(op);
         }
