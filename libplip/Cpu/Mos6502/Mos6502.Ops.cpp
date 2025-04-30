@@ -36,11 +36,26 @@ static uint8_t op;
     ++cycleCount; \
 }
 
+#define STORE_ZERO_PAGE(val) { \
+    uint8_t offset; \
+    FETCH_PC(offset); \
+    m_memory->SetByte(offset, val); \
+    ++cycleCount; \
+}
+
 #define FETCH_ZERO_PAGE_X(var) { \
     uint8_t offset; \
     FETCH_PC(offset); \
     offset += m_registers.X; \
     var = m_memory->GetByte(offset); \
+    cycleCount += 2; \
+}
+
+#define STORE_ZERO_PAGE_X(val) { \
+    uint8_t offset; \
+    FETCH_PC(offset); \
+    offset += m_registers.X; \
+    m_memory->SetByte(offset, val); \
     cycleCount += 2; \
 }
 
@@ -52,11 +67,29 @@ static uint8_t op;
     cycleCount += 2; \
 }
 
+#define STORE_ZERO_PAGE_Y(val) { \
+    uint8_t offset; \
+    FETCH_PC(offset); \
+    offset += m_registers.Y; \
+    m_memory->SetByte(offset, val); \
+    cycleCount += 2; \
+}
+
 #define FETCH_ABSOLUTE(var) { \
     uint8_t low, high; \
     FETCH_PC(low); \
     FETCH_PC(high); \
-    var = m_memory->GetByte((high << 8) | low); \
+    const uint16_t addr = (high << 8) | low; \
+    var = m_memory->GetByte(addr); \
+    cycleCount++; \
+}
+
+#define STORE_ABSOLUTE(val) { \
+    uint8_t low, high; \
+    FETCH_PC(low); \
+    FETCH_PC(high); \
+    const uint16_t addr = (high << 8) | low; \
+    m_memory->SetByte(addr, val); \
     cycleCount++; \
 }
 
@@ -69,6 +102,15 @@ static uint8_t op;
     cycleCount += ((addr >> 8) != high) ? 2 : 1; \
 }
 
+#define STORE_ABSOLUTE_X(val) { \
+    uint8_t low, high; \
+    FETCH_PC(low); \
+    FETCH_PC(high); \
+    const uint16_t addr = ((high << 8) | low) + m_registers.X; \
+    m_memory->SetByte(addr, val); \
+    cycleCount += 2; \
+}
+
 #define FETCH_ABSOLUTE_Y(var) { \
     uint8_t low, high; \
     FETCH_PC(low); \
@@ -78,6 +120,15 @@ static uint8_t op;
     cycleCount += ((addr >> 8) != high) ? 2 : 1; \
 }
 
+#define STORE_ABSOLUTE_Y(val) { \
+    uint8_t low, high; \
+    FETCH_PC(low); \
+    FETCH_PC(high); \
+    const uint16_t addr = ((high << 8) | low) + m_registers.Y; \
+    m_memory->SetByte(addr, val); \
+    cycleCount += 2; \
+}
+
 #define FETCH_INDIRECT_X(var) { \
     uint8_t index, low, high; \
     FETCH_PC(index); \
@@ -85,7 +136,20 @@ static uint8_t op;
     /* This MUST be done like this to ensure that zero page wraparound occurs. */ \
     FETCH_ADDR(low, index); \
     FETCH_ADDR(high, ++index); \
-    var = m_memory->GetByte((high << 8) | low); \
+    const uint16_t addr = (high << 8) | low; \
+    var = m_memory->GetByte(addr); \
+    cycleCount += 2; \
+}
+
+#define STORE_INDIRECT_X(val) { \
+    uint8_t index, low, high; \
+    FETCH_PC(index); \
+    index += m_registers.X; \
+    /* This MUST be done like this to ensure that zero page wraparound occurs. */ \
+    FETCH_ADDR(low, index); \
+    FETCH_ADDR(high, ++index); \
+    const uint16_t addr = (high << 8) | low; \
+    m_memory->SetByte(addr, val); \
     cycleCount += 2; \
 }
 
@@ -98,6 +162,17 @@ static uint8_t op;
     const uint16_t addr = ((high << 8) | low) + m_registers.Y; \
     var = m_memory->GetByte(addr); \
     cycleCount += ((addr >> 8) != high) ? 2 : 1; \
+}
+
+#define STORE_INDIRECT_Y(val) { \
+    uint8_t index, low, high; \
+    FETCH_PC(index); \
+    /* This MUST be done like this to ensure that zero page wraparound occurs. */ \
+    FETCH_ADDR(low, index); \
+    FETCH_ADDR(high, ++index); \
+    const uint16_t addr = ((high << 8) | low) + m_registers.Y; \
+    m_memory->SetByte(addr, val); \
+    cycleCount += 2; \
 }
 
 #define CHECK_NEGATIVE(val) { BIT_TEST(val, 7) ? m_registers.SetNegativeFlag() : m_registers.ClearNegativeFlag(); }
@@ -271,6 +346,97 @@ long Mos6502::DecodeAndExecute() {
             FETCH_ABSOLUTE_X(m_registers.Y);
             CHECK_NEGATIVE(m_registers.Y);
             CHECK_ZERO(m_registers.Y);
+            break;
+        }
+
+        case 0x85: {
+            // STA zp
+            // 3 cycles
+            STORE_ZERO_PAGE(m_registers.A);
+            break;
+        }
+
+        case 0x95: {
+            // STA zp, X
+            // 4 cycles
+            STORE_ZERO_PAGE_X(m_registers.A);
+            break;
+        }
+
+        case 0x8D: {
+            // STA abs16
+            // 4 cycles
+            STORE_ABSOLUTE(m_registers.A);
+            break;
+        }
+
+        case 0x9D: {
+            // STA abs16, X
+            // 5 cycles
+            STORE_ABSOLUTE_X(m_registers.A);
+            break;
+        }
+
+        case 0x99: {
+            // STA abs16, Y
+            // 5 cycles
+            STORE_ABSOLUTE_Y(m_registers.A);
+            break;
+        }
+
+        case 0x81: {
+            // STA (imm8, X)
+            // 6 cycles
+            STORE_INDIRECT_X(m_registers.A);
+            break;
+        }
+
+        case 0x91: {
+            // STA (imm8), Y
+            // 6 cycles
+            STORE_INDIRECT_Y(m_registers.A);
+            break;
+        }
+
+        case 0x86: {
+            // STX zp
+            // 3 cycles
+            STORE_ZERO_PAGE(m_registers.X);
+            break;
+        }
+
+        case 0x96: {
+            // STX zp, Y
+            // 4 cycles
+            STORE_ZERO_PAGE_Y(m_registers.X);
+            break;
+        }
+
+        case 0x8E: {
+            // STX abs16
+            // 4 cycles
+            STORE_ABSOLUTE(m_registers.X);
+            break;
+        }
+
+        case 0x84: {
+            // STY zp
+            // 3 cycles
+            STORE_ZERO_PAGE(m_registers.Y);
+            break;
+        }
+
+        case 0x94: {
+            // STY zp, X
+            // 4 cycles
+            STORE_ZERO_PAGE_X(m_registers.Y);
+            break;
+        }
+
+        case 0x8C: {
+            // STY abs16
+            // 4 cycles
+            STORE_ABSOLUTE(m_registers.Y);
             break;
         }
 

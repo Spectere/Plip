@@ -858,3 +858,184 @@ TEST("LDY abs16, X", "LDY-abs16,X") {  // 0xBC
     CHECK_ZERO_CLEAR;
     CHECK(cycles == 5);
 }
+
+TEST("STA zp", "STA-zp") {  // 0x85
+    LoadData(0x200, {
+        0x85, 0x80,
+    });
+
+    cpu->SetRegisterA(0x12);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x80) == 0x12);
+    CHECK(cycles == 3);
+}
+
+TEST("STA zp, X", "STA-zp,X") {  // 0x95
+    LoadData(0x200, {
+        0x95, 0x80,
+    });
+
+    cpu->SetRegisterA(0x12);
+    cpu->SetRegisterX(0x10);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x90) == 0x12);
+    CHECK(cycles == 4);
+}
+
+TEST("STA abs16", "STA-abs16") {  // 0x8D
+    LoadData(0x200, {
+        0x8D, 0x34, 0x12,
+    });
+
+    cpu->SetRegisterA(0x8A);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1234) == 0x8A);
+    CHECK(cycles == 4);
+}
+
+TEST("STA abs16, X", "STA-abs16,X") {  // 0x9D
+    LoadData(0x200, {
+        0x9D, 0x34, 0x12,  // X: 0x10, addr: 0x1244
+        0x9D, 0xFF, 0x12,  // X: 0x02, addr: 0x1301
+    });
+
+    cpu->SetRegisterA(0x8A);
+    cpu->SetRegisterX(0x10);
+    auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1244) == 0x8A);
+    CHECK(cycles == 5);
+
+    cpu->SetRegisterX(0x02);
+    cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1301) == 0x8A);
+    CHECK(cycles == 5);
+}
+
+TEST("STA abs16, Y", "STA-abs16,Y") {  // 0x99
+    LoadData(0x200, {
+        0x99, 0x34, 0x12,  // Y: 0x10, addr: 0x1244
+        0x99, 0xFF, 0x12,  // Y: 0x02, addr: 0x1301
+    });
+
+    cpu->SetRegisterA(0xA8);
+    cpu->SetRegisterY(0x10);
+    auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1244) == 0xA8);
+    CHECK(cycles == 5);
+
+    cpu->SetRegisterY(0x02);
+    cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1301) == 0xA8);
+    CHECK(cycles == 5);
+}
+
+TEST("STA (imm8, X)", "STA-(imm8,X)") {  // 0x81
+    LoadData(0x200, {
+        0x81, 0xA0,  // X: 0x10, zp: 0xB0
+        0x81, 0xF0,  // X: 0x20, zp: 0x10
+    });
+
+    LoadData(0xB0, { 0x56, 0x34 });
+    LoadData(0x10, { 0x34, 0x12 });
+
+    cpu->SetRegisterA(0x8A);
+    cpu->SetRegisterX(0x10);
+    auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x3456) == 0x8A);
+    CHECK(cycles == 6);
+
+    cpu->SetRegisterA(0x8B);
+    cpu->SetRegisterX(0x20);
+    cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1234) == 0x8B);
+    CHECK(cycles == 6);
+}
+
+TEST("STA (imm8), Y", "STA-(imm8),Y") {  // 0x91
+    LoadData(0x200, {
+        0x91, 0xA0,  // Y: 0x00
+        0x91, 0xA0,  // Y: 0x02
+    });
+
+    LoadData(0xA0, { 0x34, 0x12 });
+
+    cpu->SetRegisterA(0xA8);
+    cpu->SetRegisterY(0x00);
+    auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1234) == 0xA8);
+    CHECK(cycles == 6);
+
+    cpu->SetRegisterA(0xA9);
+    cpu->SetRegisterY(0x02);
+    cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1236) == 0xA9);
+    CHECK(cycles == 6);
+}
+
+TEST("STX zp", "STX-zp") {  // 0x86
+    LoadData(0x200, {
+        0x86, 0x80,
+    });
+
+    cpu->SetRegisterX(0x8A);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x80) == 0x8A);
+    CHECK(cycles == 3);
+}
+
+TEST("STX zp, Y", "STX-zp,Y") {  // 0x96
+    LoadData(0x200, {
+        0x96, 0x80,
+    });
+
+    cpu->SetRegisterX(0x8A);
+    cpu->SetRegisterY(0x10);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x90) == 0x8A);
+    CHECK(cycles == 4);
+}
+
+TEST("STX abs16", "STX-abs16") {  // 0x8E
+    LoadData(0x200, {
+        0x8E, 0x34, 0x12,
+    });
+
+    cpu->SetRegisterX(0x8A);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1234) == 0x8A);
+    CHECK(cycles == 4);
+}
+
+TEST("STY zp", "STY-zp") {  // 0x84
+    LoadData(0x200, {
+        0x84, 0x80,
+    });
+
+    cpu->SetRegisterY(0x8A);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x80) == 0x8A);
+    CHECK(cycles == 3);
+}
+
+TEST("STY zp, X", "STY-zp,X") {  // 0x94
+    LoadData(0x200, {
+        0x94, 0x80,
+    });
+
+    cpu->SetRegisterY(0x8A);
+    cpu->SetRegisterX(0x10);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x90) == 0x8A);
+    CHECK(cycles == 4);
+}
+
+TEST("STY abs16", "STY-abs16") {  // 0x8C
+    LoadData(0x200, {
+        0x8C, 0x34, 0x12,
+    });
+
+    cpu->SetRegisterY(0x8A);
+    const auto cycles = cpu->Step();
+    CHECK(memory->GetByte(0x1234) == 0x8A);
+    CHECK(cycles == 4);
+}
