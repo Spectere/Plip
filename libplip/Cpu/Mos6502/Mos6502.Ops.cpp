@@ -5,6 +5,7 @@
  */
 
 #include "Mos6502.h"
+#include "../../PlipEmulationException.h"
 #include "../../PlipInvalidOpcodeException.h"
 
 using Plip::Cpu::Mos6502;
@@ -22,158 +23,7 @@ static uint8_t op;
     ++cycleCount; \
 }
 
-#define FETCH_ADDR16(var, addr) { \
-    uint8_t low, high; \
-    low = m_memory->GetByte(addr); \
-    high = m_memory->GetByte(addr + 1); \
-    cycleCount += 2; \
-}
-
-#define FETCH_ZERO_PAGE(var) { \
-    uint8_t offset; \
-    FETCH_PC(offset); \
-    var = m_memory->GetByte(offset); \
-    ++cycleCount; \
-}
-
-#define STORE_ZERO_PAGE(val) { \
-    uint8_t offset; \
-    FETCH_PC(offset); \
-    m_memory->SetByte(offset, val); \
-    ++cycleCount; \
-}
-
-#define FETCH_ZERO_PAGE_X(var) { \
-    uint8_t offset; \
-    FETCH_PC(offset); \
-    offset += m_registers.X; \
-    var = m_memory->GetByte(offset); \
-    cycleCount += 2; \
-}
-
-#define STORE_ZERO_PAGE_X(val) { \
-    uint8_t offset; \
-    FETCH_PC(offset); \
-    offset += m_registers.X; \
-    m_memory->SetByte(offset, val); \
-    cycleCount += 2; \
-}
-
-#define FETCH_ZERO_PAGE_Y(var) { \
-    uint8_t offset; \
-    FETCH_PC(offset); \
-    offset += m_registers.Y; \
-    var = m_memory->GetByte(offset); \
-    cycleCount += 2; \
-}
-
-#define STORE_ZERO_PAGE_Y(val) { \
-    uint8_t offset; \
-    FETCH_PC(offset); \
-    offset += m_registers.Y; \
-    m_memory->SetByte(offset, val); \
-    cycleCount += 2; \
-}
-
-#define FETCH_ABSOLUTE(var) { \
-    uint8_t low, high; \
-    FETCH_PC(low); \
-    FETCH_PC(high); \
-    const uint16_t addr = (high << 8) | low; \
-    var = m_memory->GetByte(addr); \
-    cycleCount++; \
-}
-
-#define STORE_ABSOLUTE(val) { \
-    uint8_t low, high; \
-    FETCH_PC(low); \
-    FETCH_PC(high); \
-    const uint16_t addr = (high << 8) | low; \
-    m_memory->SetByte(addr, val); \
-    cycleCount++; \
-}
-
-#define FETCH_ABSOLUTE_X(var) { \
-    uint8_t low, high; \
-    FETCH_PC(low); \
-    FETCH_PC(high); \
-    const uint16_t addr = ((high << 8) | low) + m_registers.X; \
-    var = m_memory->GetByte(addr); \
-    cycleCount += ((addr >> 8) != high) ? 2 : 1; \
-}
-
-#define STORE_ABSOLUTE_X(val) { \
-    uint8_t low, high; \
-    FETCH_PC(low); \
-    FETCH_PC(high); \
-    const uint16_t addr = ((high << 8) | low) + m_registers.X; \
-    m_memory->SetByte(addr, val); \
-    cycleCount += 2; \
-}
-
-#define FETCH_ABSOLUTE_Y(var) { \
-    uint8_t low, high; \
-    FETCH_PC(low); \
-    FETCH_PC(high); \
-    const uint16_t addr = ((high << 8) | low) + m_registers.Y; \
-    var = m_memory->GetByte(addr); \
-    cycleCount += ((addr >> 8) != high) ? 2 : 1; \
-}
-
-#define STORE_ABSOLUTE_Y(val) { \
-    uint8_t low, high; \
-    FETCH_PC(low); \
-    FETCH_PC(high); \
-    const uint16_t addr = ((high << 8) | low) + m_registers.Y; \
-    m_memory->SetByte(addr, val); \
-    cycleCount += 2; \
-}
-
-#define FETCH_INDIRECT_X(var) { \
-    uint8_t index, low, high; \
-    FETCH_PC(index); \
-    index += m_registers.X; \
-    /* This MUST be done like this to ensure that zero page wraparound occurs. */ \
-    FETCH_ADDR(low, index); \
-    FETCH_ADDR(high, ++index); \
-    const uint16_t addr = (high << 8) | low; \
-    var = m_memory->GetByte(addr); \
-    cycleCount += 2; \
-}
-
-#define STORE_INDIRECT_X(val) { \
-    uint8_t index, low, high; \
-    FETCH_PC(index); \
-    index += m_registers.X; \
-    /* This MUST be done like this to ensure that zero page wraparound occurs. */ \
-    FETCH_ADDR(low, index); \
-    FETCH_ADDR(high, ++index); \
-    const uint16_t addr = (high << 8) | low; \
-    m_memory->SetByte(addr, val); \
-    cycleCount += 2; \
-}
-
-#define FETCH_INDIRECT_Y(var) { \
-    uint8_t index, low, high; \
-    FETCH_PC(index); \
-    /* This MUST be done like this to ensure that zero page wraparound occurs. */ \
-    FETCH_ADDR(low, index); \
-    FETCH_ADDR(high, ++index); \
-    const uint16_t addr = ((high << 8) | low) + m_registers.Y; \
-    var = m_memory->GetByte(addr); \
-    cycleCount += ((addr >> 8) != high) ? 2 : 1; \
-}
-
-#define STORE_INDIRECT_Y(val) { \
-    uint8_t index, low, high; \
-    FETCH_PC(index); \
-    /* This MUST be done like this to ensure that zero page wraparound occurs. */ \
-    FETCH_ADDR(low, index); \
-    FETCH_ADDR(high, ++index); \
-    const uint16_t addr = ((high << 8) | low) + m_registers.Y; \
-    m_memory->SetByte(addr, val); \
-    cycleCount += 2; \
-}
+#define ADDR_MODE(opcode) (opcode & 0b00011100)
 
 #define CHECK_NEGATIVE(val) { BIT_TEST(val, 7) ? m_registers.SetNegativeFlag() : m_registers.ClearNegativeFlag(); }
 
@@ -187,256 +37,55 @@ long Mos6502::DecodeAndExecute() {
         //
         // Load/Store Operations
         //
-        case 0xA9: {
-            // LDA imm8
-            // 2 cycles, ZN
-            FETCH_PC(m_registers.A);
+        case 0xA9: case 0xA5: case 0xB5: case 0xAD: case 0xBD: case 0xB9: case 0xA1: case 0xB1: {
+            // LDA
+            m_registers.A = FetchFromMemory(ADDR_MODE(op));
             CHECK_NEGATIVE(m_registers.A);
             CHECK_ZERO(m_registers.A);
             break;
         }
 
-        case 0xA5: {
-            // LDA zp
-            // 3 cycles, ZN
-            FETCH_ZERO_PAGE(m_registers.A);
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0xB5: {
-            // LDA zp, X
-            // 4 cycles, ZN
-            FETCH_ZERO_PAGE_X(m_registers.A);
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0xAD: {
-            // LDA abs16
-            // 4 cycles, ZN
-            FETCH_ABSOLUTE(m_registers.A);
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0xBD: {
-            // LDA abs16, X
-            // 4(+1) cycles, ZN
-            FETCH_ABSOLUTE_X(m_registers.A);
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0xB9: {
-            // LDA abs16, Y
-            // 4(+1) cycles, ZN
-            FETCH_ABSOLUTE_Y(m_registers.A);
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0xA1: {
-            // LDA (imm8, X)
-            // 6 cycles, ZN
-            FETCH_INDIRECT_X(m_registers.A);
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0xB1: {
-            // LDA (imm8), Y
-            // 5(+1) cycles, ZN
-            FETCH_INDIRECT_Y(m_registers.A);
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0xA2: {
-            // LDX imm8
-            // 2 cycles, ZN
-            FETCH_PC(m_registers.X);
+        case 0xA2: case 0xA6: case 0xB6: case 0xAE: case 0xBE: {
+            // LDX
+            if(op == 0xA2) {
+                // LDX/LDY use 0b000 for the immediate addressing mode index for some reason.
+                FETCH_PC(m_registers.X);
+            } else {
+                m_registers.X = FetchFromMemory(ADDR_MODE(op), true);
+            }
             CHECK_NEGATIVE(m_registers.X);
             CHECK_ZERO(m_registers.X);
             break;
         }
 
-        case 0xA6: {
-            // LDX zp
-            // 3 cycles, ZN
-            FETCH_ZERO_PAGE(m_registers.X);
-            CHECK_NEGATIVE(m_registers.X);
-            CHECK_ZERO(m_registers.X);
-            break;
-        }
-
-        case 0xB6: {
-            // LDX zp, Y
-            // 4 cycles, ZN
-            FETCH_ZERO_PAGE_Y(m_registers.X);
-            CHECK_NEGATIVE(m_registers.X);
-            CHECK_ZERO(m_registers.X);
-            break;
-        }
-
-        case 0xAE: {
-            // LDX abs16
-            // 4 cycles, ZN
-            FETCH_ABSOLUTE(m_registers.X);
-            CHECK_NEGATIVE(m_registers.X);
-            CHECK_ZERO(m_registers.X);
-            break;
-        }
-
-        case 0xBE: {
-            // LDX abs16, Y
-            // 4(+1) cycles, ZN
-            FETCH_ABSOLUTE_Y(m_registers.X);
-            CHECK_NEGATIVE(m_registers.X);
-            CHECK_ZERO(m_registers.X);
-            break;
-        }
-
-        case 0xA0: {
-            // LDY imm8
-            // 2 cycles, ZN
-            FETCH_PC(m_registers.Y);
+        case 0xA0: case 0xA4: case 0xB4: case 0xAC: case 0xBC: {
+            // LDY
+            if(op == 0xA0) {
+                // LDX/LDY use 0b000 for the immediate addressing mode index for some reason.
+                FETCH_PC(m_registers.Y);
+            } else {
+                m_registers.Y = FetchFromMemory(ADDR_MODE(op));
+            }
             CHECK_NEGATIVE(m_registers.Y);
             CHECK_ZERO(m_registers.Y);
             break;
         }
 
-        case 0xA4: {
-            // LDY zp
-            // 3 cycles, ZN
-            FETCH_ZERO_PAGE(m_registers.Y);
-            CHECK_NEGATIVE(m_registers.Y);
-            CHECK_ZERO(m_registers.Y);
+        case 0x85: case 0x95: case 0x8D: case 0x9D: case 0x99: case 0x81: case 0x91: {
+            // STA
+            StoreToMemory(ADDR_MODE(op), m_registers.A);
             break;
         }
 
-        case 0xB4: {
-            // LDY zp, X
-            // 4 cycles, ZN
-            FETCH_ZERO_PAGE_X(m_registers.Y);
-            CHECK_NEGATIVE(m_registers.Y);
-            CHECK_ZERO(m_registers.Y);
+        case 0x86: case 0x96: case 0x8E: {
+            // STX
+            StoreToMemory(ADDR_MODE(op), m_registers.X, true);
             break;
         }
 
-        case 0xAC: {
-            // LDY abs16
-            // 4 cycles, ZN
-            FETCH_ABSOLUTE(m_registers.Y);
-            CHECK_NEGATIVE(m_registers.Y);
-            CHECK_ZERO(m_registers.Y);
-            break;
-        }
-
-        case 0xBC: {
-            // LDY abs16, X
-            // 4(+1) cycles, ZN
-            FETCH_ABSOLUTE_X(m_registers.Y);
-            CHECK_NEGATIVE(m_registers.Y);
-            CHECK_ZERO(m_registers.Y);
-            break;
-        }
-
-        case 0x85: {
-            // STA zp
-            // 3 cycles
-            STORE_ZERO_PAGE(m_registers.A);
-            break;
-        }
-
-        case 0x95: {
-            // STA zp, X
-            // 4 cycles
-            STORE_ZERO_PAGE_X(m_registers.A);
-            break;
-        }
-
-        case 0x8D: {
-            // STA abs16
-            // 4 cycles
-            STORE_ABSOLUTE(m_registers.A);
-            break;
-        }
-
-        case 0x9D: {
-            // STA abs16, X
-            // 5 cycles
-            STORE_ABSOLUTE_X(m_registers.A);
-            break;
-        }
-
-        case 0x99: {
-            // STA abs16, Y
-            // 5 cycles
-            STORE_ABSOLUTE_Y(m_registers.A);
-            break;
-        }
-
-        case 0x81: {
-            // STA (imm8, X)
-            // 6 cycles
-            STORE_INDIRECT_X(m_registers.A);
-            break;
-        }
-
-        case 0x91: {
-            // STA (imm8), Y
-            // 6 cycles
-            STORE_INDIRECT_Y(m_registers.A);
-            break;
-        }
-
-        case 0x86: {
-            // STX zp
-            // 3 cycles
-            STORE_ZERO_PAGE(m_registers.X);
-            break;
-        }
-
-        case 0x96: {
-            // STX zp, Y
-            // 4 cycles
-            STORE_ZERO_PAGE_Y(m_registers.X);
-            break;
-        }
-
-        case 0x8E: {
-            // STX abs16
-            // 4 cycles
-            STORE_ABSOLUTE(m_registers.X);
-            break;
-        }
-
-        case 0x84: {
-            // STY zp
-            // 3 cycles
-            STORE_ZERO_PAGE(m_registers.Y);
-            break;
-        }
-
-        case 0x94: {
-            // STY zp, X
-            // 4 cycles
-            STORE_ZERO_PAGE_X(m_registers.Y);
-            break;
-        }
-
-        case 0x8C: {
-            // STY abs16
-            // 4 cycles
-            STORE_ABSOLUTE(m_registers.Y);
+        case 0x84: case 0x94: case 0x8C: {
+            // STY
+            StoreToMemory(ADDR_MODE(op), m_registers.Y);
             break;
         }
 
@@ -445,7 +94,6 @@ long Mos6502::DecodeAndExecute() {
         //
         case 0xAA: {
             // TAX
-            // 2 cycles, ZN
             m_registers.X = m_registers.A;
             CHECK_NEGATIVE(m_registers.X);
             CHECK_ZERO(m_registers.X);
@@ -455,7 +103,6 @@ long Mos6502::DecodeAndExecute() {
 
         case 0xA8: {
             // TAY
-            // 2 cycles, ZN
             m_registers.Y = m_registers.A;
             CHECK_NEGATIVE(m_registers.Y);
             CHECK_ZERO(m_registers.Y);
@@ -465,7 +112,6 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x8A: {
             // TXA
-            // 2 cycles, ZN
             m_registers.A = m_registers.X;
             CHECK_NEGATIVE(m_registers.A);
             CHECK_ZERO(m_registers.A);
@@ -475,7 +121,6 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x98: {
             // TYA
-            // 2 cycles, ZN
             m_registers.A = m_registers.Y;
             CHECK_NEGATIVE(m_registers.A);
             CHECK_ZERO(m_registers.A);
@@ -488,7 +133,6 @@ long Mos6502::DecodeAndExecute() {
         //
         case 0xBA: {
             // TSX
-            // 2 cycles, ZN
             m_registers.X = m_registers.S;
             CHECK_NEGATIVE(m_registers.X);
             CHECK_ZERO(m_registers.X);
@@ -498,7 +142,6 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x9A: {
             // TXS
-            // 2 cycles, ZN
             m_registers.S = m_registers.X;
             CHECK_NEGATIVE(m_registers.S);
             CHECK_ZERO(m_registers.S);
@@ -508,7 +151,6 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x48: {
             // PHA
-            // 3 cycle
             m_memory->SetByte(StackLocation | m_registers.S--, m_registers.A);
             cycleCount += 2;
             break;
@@ -516,7 +158,6 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x08: {
             // PHP
-            // 3 cycle
             m_memory->SetByte(StackLocation | m_registers.S--, m_registers.F);
             cycleCount += 2;
             break;
@@ -524,7 +165,6 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x68: {
             // PLA
-            // 4 cycles
             m_registers.A = m_memory->GetByte(StackLocation | ++m_registers.S);
             CHECK_NEGATIVE(m_registers.A);
             CHECK_ZERO(m_registers.A);
@@ -543,88 +183,10 @@ long Mos6502::DecodeAndExecute() {
         //
         // Logical
         //
-        case 0x29: {
+        case 0x29: case 0x25: case 0x35: case 0x2D: case 0x3D: case 0x39: case 0x21: case 0x31: {
             // AND imm8
             // 2 cycles, ZN
-            uint8_t value;
-            FETCH_PC(value);
-            m_registers.A &= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0x25: {
-            // AND zp
-            // 3 cycles, ZN
-            uint8_t value;
-            FETCH_ZERO_PAGE(value);
-            m_registers.A &= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0x35: {
-            // AND zp, X
-            // 4 cycles, ZN
-            uint8_t value;
-            FETCH_ZERO_PAGE_X(value);
-            m_registers.A &= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0x2D: {
-            // AND abs16
-            // 4 cycles, ZN
-            uint8_t value;
-            FETCH_ABSOLUTE(value);
-            m_registers.A &= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0x3D: {
-            // AND abs16, X
-            // 4(+1) cycles, ZN
-            uint8_t value;
-            FETCH_ABSOLUTE_X(value);
-            m_registers.A &= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0x39: {
-            // AND abs16, Y
-            // 4(+1) cycles, ZN
-            uint8_t value;
-            FETCH_ABSOLUTE_Y(value);
-            m_registers.A &= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0x21: {
-            // AND (imm8, X)
-            // 6 cycles, ZN
-            uint8_t value;
-            FETCH_INDIRECT_X(value);
-            m_registers.A &= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
-            break;
-        }
-
-        case 0x31: {
-            // AND (imm8), Y
-            // 5(+1) cycles, ZN
-            uint8_t value;
-            FETCH_INDIRECT_Y(value);
+            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
             m_registers.A &= value;
             CHECK_NEGATIVE(m_registers.A);
             CHECK_ZERO(m_registers.A);
@@ -637,4 +199,153 @@ long Mos6502::DecodeAndExecute() {
     }
 
     return cycleCount;
+}
+
+uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, const bool useAccumulator) {
+    if(alwaysUseY && (addressingMode == ModeAbsoluteX)) {
+        addressingMode = ModeAbsoluteY;
+    }
+
+    switch(addressingMode) {
+        case ModeIndexedIndirect: {
+            uint8_t index, low, high;
+            FETCH_PC(index);
+            index += m_registers.X;
+            FETCH_ADDR(low, index);
+            FETCH_ADDR(high, ++index);  // Abuse integer overflows to simulate zero page wraparound.
+            const uint16_t addr = (high << 8) | low;
+            cycleCount += 2;
+            return m_memory->GetByte(addr);
+        }
+        case ModeZeroPage: {
+            uint8_t offset;
+            FETCH_PC(offset);
+            ++cycleCount;
+            return m_memory->GetByte(offset);
+        }
+        case ModeImmediate: {
+            if(useAccumulator) {
+                return m_registers.A;
+            }
+
+            uint8_t value;
+            FETCH_PC(value);
+            return value;
+        }
+        case ModeAbsolute: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = (high << 8) | low;
+            ++cycleCount;
+            return m_memory->GetByte(addr);
+        }
+        case ModeIndirectIndexed: {
+            uint8_t index, low, high;
+            FETCH_PC(index);
+            FETCH_ADDR(low, index);
+            FETCH_ADDR(high, ++index);  // Abuse integer overflows to simulate zero page wraparound.
+            const uint16_t addr = ((high << 8) | low) + m_registers.Y;
+            cycleCount += ((addr >> 8) != high) ? 2 : 1;
+            return m_memory->GetByte(addr);
+        }
+        case ModeZeroPageReg: {
+            uint8_t offset;
+            FETCH_PC(offset);
+            offset += alwaysUseY ? m_registers.Y : m_registers.X;
+            cycleCount += 2;
+            return m_memory->GetByte(offset);
+        }
+        case ModeAbsoluteY: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = ((high << 8) | low) + m_registers.Y;
+            cycleCount += ((addr >> 8) != high) ? 2 : 1;
+            return m_memory->GetByte(addr);
+        }
+        case ModeAbsoluteX: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = ((high << 8) | low) + m_registers.X;
+            cycleCount += ((addr >> 8) != high) ? 2 : 1;
+            return m_memory->GetByte(addr);
+        }
+        default:
+            throw PlipEmulationException("6502: Unknown addressing mode");
+    }
+}
+
+void Mos6502::StoreToMemory(const int addressingMode, const uint8_t value, const bool swapXY) {
+    switch(addressingMode) {
+        case ModeIndexedIndirect: {
+            uint8_t index, low, high;
+            FETCH_PC(index);
+            index += m_registers.X;
+            FETCH_ADDR(low, index);
+            FETCH_ADDR(high, ++index);  // Abuse integer overflows to simulate zero page wraparound.
+            const uint16_t addr = (high << 8) | low;
+            cycleCount += 2;
+            m_memory->SetByte(addr, value);
+            break;
+        }
+        case ModeZeroPage: {
+            uint8_t offset;
+            FETCH_PC(offset);
+            ++cycleCount;
+            m_memory->SetByte(offset, value);
+            break;
+        }
+        case ModeImmediate: {
+            throw PlipEmulationException("6502: Immediate addressing is not valid on stores");
+        }
+        case ModeAbsolute: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = (high << 8) | low;
+            ++cycleCount;
+            m_memory->SetByte(addr, value);
+            break;
+        }
+        case ModeIndirectIndexed: {
+            uint8_t index, low, high;
+            FETCH_PC(index);
+            FETCH_ADDR(low, index);
+            FETCH_ADDR(high, ++index);  // Abuse integer overflows to simulate zero page wraparound.
+            const uint16_t addr = ((high << 8) | low) + m_registers.Y;
+            cycleCount += 2;
+            m_memory->SetByte(addr, value);
+            break;
+        }
+        case ModeZeroPageReg: {
+            uint8_t offset;
+            FETCH_PC(offset);
+            offset += swapXY ? m_registers.Y : m_registers.X;
+            cycleCount += 2;
+            m_memory->SetByte(offset, value);
+            break;
+        }
+        case ModeAbsoluteY: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = ((high << 8) | low) + m_registers.Y;
+            cycleCount += 2;
+            m_memory->SetByte(addr, value);
+            break;
+        }
+        case ModeAbsoluteX: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = ((high << 8) | low) + m_registers.X;
+            cycleCount += 2;
+            m_memory->SetByte(addr, value);
+            break;
+        }
+        default:
+            throw PlipEmulationException("6502: Unknown addressing mode");
+    }
 }

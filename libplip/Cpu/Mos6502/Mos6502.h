@@ -49,6 +49,17 @@ namespace Plip::Cpu {
         Mos6502Version m_version {};
 
     private:
+        static constexpr auto ModeIndexedIndirect = 0b000 << 2;
+        static constexpr auto ModeZeroPage = 0b001 << 2;
+        static constexpr auto ModeImmediate = 0b010 << 2;
+        static constexpr auto ModeAbsolute = 0b011 << 2;
+        static constexpr auto ModeIndirectIndexed = 0b100 << 2;
+        static constexpr auto ModeZeroPageReg = 0b101 << 2;
+        static constexpr auto ModeAbsoluteY = 0b110 << 2;
+        static constexpr auto ModeAbsoluteX = 0b111 << 2;
+
         long DecodeAndExecute();
+        [[nodiscard]] uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false);
+        void StoreToMemory(int addressingMode, uint8_t value, bool swapXY = false);
     };
 }
