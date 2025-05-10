@@ -242,6 +242,7 @@ add_executable(${test_name}
     # MOS 6502
     test/Cpu/Mos6502/Mos6502Common.h
     test/Cpu/Mos6502/Mos6502.LoadStore.cpp
+    test/Cpu/Mos6502/Mos6502.Logical.cpp
     test/Cpu/Mos6502/Mos6502.RegisterTransfers.cpp
     test/Cpu/Mos6502/Mos6502.StackOperations.cpp
 

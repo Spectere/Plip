@@ -540,6 +540,97 @@ long Mos6502::DecodeAndExecute() {
             break;
         }
 
+        //
+        // Logical
+        //
+        case 0x29: {
+            // AND imm8
+            // 2 cycles, ZN
+            uint8_t value;
+            FETCH_PC(value);
+            m_registers.A &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x25: {
+            // AND zp
+            // 3 cycles, ZN
+            uint8_t value;
+            FETCH_ZERO_PAGE(value);
+            m_registers.A &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x35: {
+            // AND zp, X
+            // 4 cycles, ZN
+            uint8_t value;
+            FETCH_ZERO_PAGE_X(value);
+            m_registers.A &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x2D: {
+            // AND abs16
+            // 4 cycles, ZN
+            uint8_t value;
+            FETCH_ABSOLUTE(value);
+            m_registers.A &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x3D: {
+            // AND abs16, X
+            // 4(+1) cycles, ZN
+            uint8_t value;
+            FETCH_ABSOLUTE_X(value);
+            m_registers.A &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x39: {
+            // AND abs16, Y
+            // 4(+1) cycles, ZN
+            uint8_t value;
+            FETCH_ABSOLUTE_Y(value);
+            m_registers.A &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x21: {
+            // AND (imm8, X)
+            // 6 cycles, ZN
+            uint8_t value;
+            FETCH_INDIRECT_X(value);
+            m_registers.A &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x31: {
+            // AND (imm8), Y
+            // 5(+1) cycles, ZN
+            uint8_t value;
+            FETCH_INDIRECT_Y(value);
+            m_registers.A &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
         default: {
             throw PlipInvalidOpcodeException(op);
         }
