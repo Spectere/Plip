@@ -174,7 +174,6 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x28: {
             // PLP
-            // 4 cycles
             m_registers.F = m_memory->GetByte(StackLocation | ++m_registers.S) | 0b00100000;
             cycleCount += 3;
             break;
@@ -184,12 +183,40 @@ long Mos6502::DecodeAndExecute() {
         // Logical
         //
         case 0x29: case 0x25: case 0x35: case 0x2D: case 0x3D: case 0x39: case 0x21: case 0x31: {
-            // AND imm8
-            // 2 cycles, ZN
+            // AND
             const uint8_t value = FetchFromMemory(ADDR_MODE(op));
             m_registers.A &= value;
             CHECK_NEGATIVE(m_registers.A);
             CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x49: case 0x45: case 0x55: case 0x4D: case 0x5D: case 0x59: case 0x41: case 0x51: {
+            // EOR
+            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
+            m_registers.A ^= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x09: case 0x05: case 0x15: case 0x0D: case 0x1D: case 0x19: case 0x01: case 0x11: {
+            // ORA
+            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
+            m_registers.A |= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
+
+        case 0x24: case 0x2C: {
+            // BIT
+            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
+            const uint8_t result = value & m_registers.A;
+            CHECK_ZERO(result);
+
+            // Copy the high bits into the flag register (N/V).
+            m_registers.F = (m_registers.F & 0b00111111) | (result & 0b11000000);
             break;
         }
 

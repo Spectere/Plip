@@ -400,3 +400,400 @@ TEST("AND (imm8), Y", "AND-(imm8),Y") {  // 0x31
     CHECK_NEGATIVE_CLEAR;
     CHECK_ZERO_SET;
 }
+
+TEST("EOR imm8", "EOR-imm8") {  // 0x49
+    LoadData(0x200, {
+        0x49, 0b10101010,  // N- Z-
+        0x49, 0b01010101,  // N+ Z-
+        0x49, 0b01010101,  // N- Z+
+    });
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(2);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(2);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(2);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+}
+
+TEST("EOR zp", "EOR-zp") {  // 0x45
+    LoadData(0x200, {
+        0x45, 0x80,  // N- Z-
+        0x45, 0x82,  // N+ Z-
+        0x45, 0x84,  // N- Z+
+    });
+
+    LoadData(0x80, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(3);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(3);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(3);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+}
+
+TEST("EOR zp, X", "EOR-zp,X") {  // 0x55
+    LoadData(0x200, {
+        0x55, 0x80,  // X: $00, N- Z-
+        0x55, 0x80,  // X: $02, N+ Z-
+        0x55, 0x80,  // X: $04, N- Z+
+    });
+
+    LoadData(0x80, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(4);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(4);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x04);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(4);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+}
+
+TEST("EOR abs16", "EOR-abs16") {  // 0x4D
+    LoadData(0x200, {
+        0x4D, 0x34, 0x12,  // N- Z-
+        0x4D, 0x36, 0x12,  // N+ Z-
+        0x4D, 0x38, 0x12,  // N- Z+
+    });
+
+    LoadData(0x1234, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(4);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(4);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(4);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+}
+
+TEST("EOR abs16, X", "EOR-abs16, X") {  // 0x5D
+    LoadData(0x200, {
+        0x5D, 0x34, 0x12,  // X: $00, N- Z-
+        0x5D, 0x34, 0x12,  // X: $02, N+ Z-
+        0x5D, 0x34, 0x12,  // X: $04, N- Z+
+
+        0x5D, 0xF0, 0x20,  // +1 X: $30, N- Z-
+        0x5D, 0xF0, 0x20,  // +1 X: $32, N+ Z-
+        0x5D, 0xF0, 0x20,  // +1 X: $34, N- Z+
+    });
+
+    LoadData(0x1234, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    LoadData(0x2120, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(4);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(4);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x04);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(4);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+
+    cpu->SetRegisterX(0x30);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(5);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x32);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(5);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x34);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(5);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+}
+
+TEST("EOR abs16, Y", "EOR-abs16, Y") {  // 0x59
+    LoadData(0x200, {
+        0x59, 0x34, 0x12,  // Y: $00, N- Z-
+        0x59, 0x34, 0x12,  // Y: $02, N+ Z-
+        0x59, 0x34, 0x12,  // Y: $04, N- Z+
+
+        0x59, 0xF0, 0x20,  // +1 Y: $30, N- Z-
+        0x59, 0xF0, 0x20,  // +1 Y: $32, N+ Z-
+        0x59, 0xF0, 0x20,  // +1 Y: $34, N- Z+
+    });
+
+    LoadData(0x1234, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    LoadData(0x2120, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(4);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(4);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterY(0x04);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(4);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+
+    cpu->SetRegisterY(0x30);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(5);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterY(0x32);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(5);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterY(0x34);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(5);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+}
+
+TEST("EOR (imm8, X)", "EOR-(imm8, X)") {  // 0x41
+    LoadData(0x200, {
+        0x41, 0x80,  // X: $00, N- Z-
+        0x41, 0x80,  // X: $02, N+ Z-
+        0x41, 0x80,  // X: $04, N- Z+
+
+        0x41, 0xF0,  // X: $20, N- Z-
+        0x41, 0xF0,  // X: $22, N+ Z-
+        0x41, 0xF0,  // X: $24, N- Z+
+    });
+
+    LoadData(0x80, {
+        0x34, 0x12,
+        0x36, 0x12,
+        0x38, 0x12,
+    });
+
+    LoadData(0x10, {
+        0x34, 0x12,
+        0x36, 0x12,
+        0x38, 0x12,
+    });
+
+    LoadData(0x1234, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(6);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(6);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x04);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(6);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+
+    cpu->SetRegisterX(0x20);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(6);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x22);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(6);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterX(0x24);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(6);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+}
+
+TEST("EOR (imm8), Y", "EOR-(imm8),Y") {  // 0x51
+    LoadData(0x200, {
+        0x51, 0x80,  // Y: $00, N- Z-
+        0x51, 0x80,  // Y: $02, N+ Z-
+        0x51, 0x80,  // Y: $04, N- Z+
+
+        0x51, 0x82,  // +1 Y: $80, N- Z-
+        0x51, 0x82,  // +1 Y: $82, N+ Z-
+        0x51, 0x82,  // +1 Y: $84, N- Z+
+    });
+
+    LoadData(0x80, {
+        0x40, 0x12,
+        0xC0, 0x11,
+    });
+
+    LoadData(0x1240, {
+        0b10101010, 0,
+        0b01010101, 0,
+        0b01010101,
+    });
+
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(5);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(5);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterY(0x04);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(5);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+
+    cpu->SetRegisterY(0x80);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(6);
+    CHECK_A(0b01011010);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterY(0x82);
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(6);
+    CHECK_A(0b10100101);
+    CHECK_NEGATIVE_SET;
+    CHECK_ZERO_CLEAR;
+
+    cpu->SetRegisterY(0x84);
+    cpu->SetRegisterA(0b01010101);
+    EXECUTE(6);
+    CHECK_A(0);
+    CHECK_NEGATIVE_CLEAR;
+    CHECK_ZERO_SET;
+}
+
+// TODO: Test cases for ORA
+// TODO: Test cases for BIT
