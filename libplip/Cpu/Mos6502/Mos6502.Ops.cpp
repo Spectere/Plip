@@ -215,6 +215,9 @@ long Mos6502::DecodeAndExecute() {
             const uint8_t result = value & m_registers.A;
             CHECK_ZERO(result);
 
+            // Adjust the cycle count.
+            --cycleCount;
+
             // Copy the high bits into the flag register (N/V).
             m_registers.F = (m_registers.F & 0b00111111) | (result & 0b11000000);
             break;
