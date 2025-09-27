@@ -34,7 +34,7 @@ set(CXXOPTS_DIR ${CMAKE_BINARY_DIR}/lib/cxxopts)
 FetchContent_Populate(
     cxxopts
     GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
-    GIT_TAG        4bf61f08697b110d9e3991864650a405b3dd515d  # v3.2.1
+    GIT_TAG        44380e5a44706ab7347f400698c703eb2a196202  # v3.3.1
     SOURCE_DIR     ${CXXOPTS_DIR}
 )
 
