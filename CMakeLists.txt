@@ -24,7 +24,7 @@ endif()
 FetchContent_Declare(
     catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        914aeecfe23b1e16af6ea675a4fb5dbd5a5b8d0a  # v3.8.0
+    GIT_TAG        25319fd3047c6bdcf3c0170e76fa526c77f99ca9  # v3.10.0
 )
 FetchContent_MakeAvailable(catch2)
 
