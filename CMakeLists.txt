@@ -24,7 +24,7 @@ endif()
 FetchContent_Declare(
     catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        914aeecfe23b1e16af6ea675a4fb5dbd5a5b8d0a  # v3.8.0
+    GIT_TAG        25319fd3047c6bdcf3c0170e76fa526c77f99ca9  # v3.10.0
 )
 FetchContent_MakeAvailable(catch2)
 
@@ -34,7 +34,7 @@ set(CXXOPTS_DIR ${CMAKE_BINARY_DIR}/lib/cxxopts)
 FetchContent_Populate(
     cxxopts
     GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
-    GIT_TAG        4bf61f08697b110d9e3991864650a405b3dd515d  # v3.2.1
+    GIT_TAG        44380e5a44706ab7347f400698c703eb2a196202  # v3.3.1
     SOURCE_DIR     ${CXXOPTS_DIR}
 )
 
@@ -45,7 +45,7 @@ set(IMGUI_DIR ${CMAKE_BINARY_DIR}/lib/imgui)
 FetchContent_Populate(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG        dbb5eeaadffb6a3ba6a60de1290312e5802dba5a  # v1.91.8
+    GIT_TAG        bf75bfec48fc00f532af8926130b70c0e26eb099  # v1.92.3
     SOURCE_DIR     ${IMGUI_DIR}
 )
 
@@ -80,7 +80,7 @@ target_compile_definitions(imgui PUBLIC
 FetchContent_Declare(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG        877399b2b2cf21e67554ed9046410f268ce1d1b2  # 3.2.10
+    GIT_TAG        a96677bdf6b4acb84af4ec294e5f60a4e8cbbe03  # 3.2.22
     GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(SDL3)
