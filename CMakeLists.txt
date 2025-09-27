@@ -80,7 +80,7 @@ target_compile_definitions(imgui PUBLIC
 FetchContent_Declare(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG        877399b2b2cf21e67554ed9046410f268ce1d1b2  # 3.2.10
+    GIT_TAG        a96677bdf6b4acb84af4ec294e5f60a4e8cbbe03  # 3.2.22
     GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(SDL3)
