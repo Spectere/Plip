@@ -246,6 +246,7 @@ add_executable(${test_name}
     test/Cpu/Mos6502/Mos6502.LoadStore.cpp
     test/Cpu/Mos6502/Mos6502.Logical.cpp
     test/Cpu/Mos6502/Mos6502.RegisterTransfers.cpp
+    test/Cpu/Mos6502/Mos6502.Shifts.cpp
     test/Cpu/Mos6502/Mos6502.StackOperations.cpp
 
     # Sharp LR35902

@@ -469,6 +469,113 @@ long Mos6502::DecodeAndExecute() {
             break;
         }
 
+        //
+        // Shifts and Rotates
+        //
+        case 0x0A: case 0x06: case 0x16: case 0x0E: case 0x1E: {
+            // ASL
+            uint8_t value;
+            uint16_t addr = 0;
+            if(op == 0x0A) {
+                value = m_registers.A;
+            } else {
+                addr = FetchAddress(ADDR_MODE(op));
+                FETCH_ADDR(value, addr);
+            }
+
+            if(value & 0x80) m_registers.SetCarryFlag(); else m_registers.ClearCarryFlag();
+            value <<= 1;
+            CHECK_ZERO(value);
+            CHECK_NEGATIVE(value);
+
+            if(op == 0x0A) {
+                m_registers.A = value;
+                ++cycleCount;
+            } else {
+                m_memory->SetByte(addr, value);
+            }
+            break;
+        }
+
+        case 0x4A: case 0x46: case 0x56: case 0x4E: case 0x5E: {
+            // LSR
+            uint8_t value;
+            uint16_t addr = 0;
+            if(op == 0x4A) {
+                value = m_registers.A;
+            } else {
+                addr = FetchAddress(ADDR_MODE(op));
+                FETCH_ADDR(value, addr);
+            }
+
+            if(value & 0x01) m_registers.SetCarryFlag(); else m_registers.ClearCarryFlag();
+            value >>= 1;
+            CHECK_ZERO(value);
+            CHECK_NEGATIVE(value);  // Should never be set.
+
+            if(op == 0x4A) {
+                m_registers.A = value;
+                ++cycleCount;
+            } else {
+                m_memory->SetByte(addr, value);
+            }
+            break;
+        }
+
+        case 0x2A: case 0x26: case 0x36: case 0x2E: case 0x3E: {
+            // ROL
+            uint8_t value;
+            uint16_t addr = 0;
+            if(op == 0x2A) {
+                value = m_registers.A;
+            } else {
+                addr = FetchAddress(ADDR_MODE(op));
+                FETCH_ADDR(value, addr);
+            }
+
+            const uint8_t carry = m_registers.GetCarryFlag() ? 0x01 : 0x00;
+            if(value & 0x80) m_registers.SetCarryFlag(); else m_registers.ClearCarryFlag();
+            value <<= 1;
+            value |= carry;
+            CHECK_ZERO(value);
+            CHECK_NEGATIVE(value);
+
+            if(op == 0x2A) {
+                m_registers.A = value;
+                ++cycleCount;
+            } else {
+                m_memory->SetByte(addr, value);
+            }
+            break;
+        }
+
+        case 0x6A: case 0x66: case 0x76: case 0x6E: case 0x7E: {
+            // ROR
+            uint8_t value;
+            uint16_t addr = 0;
+            if(op == 0x6A) {
+                value = m_registers.A;
+            } else {
+                addr = FetchAddress(ADDR_MODE(op));
+                FETCH_ADDR(value, addr);
+            }
+
+            const uint8_t carry = m_registers.GetCarryFlag() ? 0x80 : 0x00;
+            if(value & 0x01) m_registers.SetCarryFlag(); else m_registers.ClearCarryFlag();
+            value >>= 1;
+            value |= carry;
+            CHECK_ZERO(value);
+            CHECK_NEGATIVE(value);
+
+            if(op == 0x6A) {
+                m_registers.A = value;
+                ++cycleCount;
+            } else {
+                m_memory->SetByte(addr, value);
+            }
+            break;
+        }
+
         default: {
             throw PlipInvalidOpcodeException(op);
         }
