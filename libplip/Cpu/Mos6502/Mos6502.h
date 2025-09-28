@@ -63,6 +63,7 @@ namespace Plip::Cpu {
         uint8_t SubDecimal(uint8_t value);
         [[nodiscard]] bool AluIsInDecimalMode() const { return m_version != Mos6502Version::Ricoh2A03 && m_registers.GetDecimalMode(); }
         long DecodeAndExecute();
+        [[nodiscard]] uint16_t FetchAddress(int addressingMode);
         [[nodiscard]] uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false);
         void StoreToMemory(int addressingMode, uint8_t value, bool swapXY = false);
     };

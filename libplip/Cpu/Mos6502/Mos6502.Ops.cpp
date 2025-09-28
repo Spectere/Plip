@@ -406,12 +406,118 @@ long Mos6502::DecodeAndExecute() {
             break;
         }
 
+        //
+        // Increments and Decrements
+        //
+        case 0xE6: case 0xF6: case 0xEE: case 0xFE: {
+            // INC
+            const uint16_t addr = FetchAddress(ADDR_MODE(op));
+            uint8_t value;
+            FETCH_ADDR(value, addr);
+            ++value;
+            CHECK_ZERO(value);
+            CHECK_NEGATIVE(value);
+            m_memory->SetByte(addr, value);
+            break;
+        }
+
+        case 0xE8: {
+            // INX
+            ++m_registers.X;
+            CHECK_ZERO(m_registers.X);
+            CHECK_NEGATIVE(m_registers.X);
+            ++cycleCount;
+            break;
+        }
+
+        case 0xC8: {
+            // INY
+            ++m_registers.Y;
+            CHECK_ZERO(m_registers.Y);
+            CHECK_NEGATIVE(m_registers.Y);
+            ++cycleCount;
+            break;
+        }
+
+        case 0xC6: case 0xD6: case 0xCE: case 0xDE: {
+            // DEC
+            const uint16_t addr = FetchAddress(ADDR_MODE(op));
+            uint8_t value;
+            FETCH_ADDR(value, addr);
+            --value;
+            CHECK_ZERO(value);
+            CHECK_NEGATIVE(value);
+            m_memory->SetByte(addr, value);
+            break;
+        }
+
+        case 0xCA: {
+            // DEX
+            --m_registers.X;
+            CHECK_ZERO(m_registers.X);
+            CHECK_NEGATIVE(m_registers.X);
+            ++cycleCount;
+            break;
+        }
+
+        case 0x88: {
+            // DEY
+            --m_registers.Y;
+            CHECK_ZERO(m_registers.Y);
+            CHECK_NEGATIVE(m_registers.Y);
+            ++cycleCount;
+            break;
+        }
+
         default: {
             throw PlipInvalidOpcodeException(op);
         }
     }
 
     return cycleCount;
+}
+
+uint16_t Mos6502::FetchAddress(int addressingMode) {
+    switch(addressingMode) {
+        case ModeZeroPage: {
+            uint8_t offset, low, high;
+            FETCH_PC(offset);
+            FETCH_ADDR(low, offset);
+            FETCH_ADDR(high, ++offset);  // Abuse integer overflows to simulate zero page wraparound.
+            return (high << 8) | low;
+        }
+
+        case ModeZeroPageReg: {
+            uint8_t offset, low, high;
+            FETCH_PC(offset);
+            offset += m_registers.X;
+            FETCH_ADDR(low, offset);
+            FETCH_ADDR(high, ++offset);  // Abuse integer overflows to simulate zero page wraparound.
+            ++cycleCount;
+            return (high << 8) | low;
+        }
+
+        case ModeAbsolute: {
+            uint16_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            cycleCount += 2;
+            return (high << 8) | low;
+        }
+
+        case ModeAbsoluteX: {
+            uint16_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            uint16_t addr = (high << 8) | low;
+            addr += m_registers.X;
+            cycleCount += 3;
+            return addr;
+        }
+        
+        default:
+            throw PlipEmulationException("6502: Invalid addressing mode in this context");
+    }
 }
 
 uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, const bool useAccumulator) {
