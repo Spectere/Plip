@@ -40,6 +40,10 @@ static uint8_t op;
 
 #define CHECK_ZERO(val) { (val) == 0 ? m_registers.SetZeroFlag() : m_registers.ClearZeroFlag(); }
 
+#define STACK_POP() (m_memory->GetByte(StackLocation | ++m_registers.S))
+
+#define STACK_PUSH(val) { m_memory->SetByte(StackLocation | m_registers.S--, (val)); }
+
 uint8_t Mos6502::AddBinary(const uint8_t value) {
     const uint8_t result = (m_registers.A + value + (m_registers.GetCarryFlag() ? 1 : 0)) & 0xFF;
 
@@ -250,21 +254,21 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x48: {
             // PHA
-            m_memory->SetByte(StackLocation | m_registers.S--, m_registers.A);
+            STACK_PUSH(m_registers.A);
             cycleCount += 2;
             break;
         }
 
         case 0x08: {
             // PHP
-            m_memory->SetByte(StackLocation | m_registers.S--, m_registers.F);
+            STACK_PUSH(m_registers.F);
             cycleCount += 2;
             break;
         }
 
         case 0x68: {
             // PLA
-            m_registers.A = m_memory->GetByte(StackLocation | ++m_registers.S);
+            m_registers.A = STACK_POP();
             CHECK_NEGATIVE(m_registers.A);
             CHECK_ZERO(m_registers.A);
             cycleCount += 3;
@@ -273,7 +277,7 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x28: {
             // PLP
-            m_registers.F = m_memory->GetByte(StackLocation | ++m_registers.S) | 0b00100000;
+            m_registers.F = STACK_POP() | 0b00100000;
             cycleCount += 3;
             break;
         }
@@ -573,6 +577,51 @@ long Mos6502::DecodeAndExecute() {
             } else {
                 m_memory->SetByte(addr, value);
             }
+            break;
+        }
+
+        //
+        // Jumps and Calls
+        //
+        case 0x4C: {
+            // JMP (absolute)
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            m_registers.PC = (high << 8) | low;
+            break;
+        }
+
+        case 0x6C: {
+            // JMP (indirect)
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = (high << 8) | low;
+            FETCH_ADDR(low, addr);
+            FETCH_ADDR(high, addr + 1);
+            m_registers.PC = (high << 8) | low;
+            break;
+        }
+
+        case 0x20: {
+            // JSR
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t pc = m_registers.PC - 1;
+            STACK_PUSH(pc >> 8);
+            STACK_PUSH(pc & 0xFF);
+            m_registers.PC = (high << 8) | low;
+            break;
+        }
+
+        case 0x60: {
+            // RTS
+            const uint8_t low = STACK_POP();
+            const uint8_t high = STACK_POP();
+            m_registers.PC = (high << 8) | low;
+            cycleCount += 5;
             break;
         }
 

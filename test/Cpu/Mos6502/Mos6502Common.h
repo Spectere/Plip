@@ -20,6 +20,7 @@ using namespace Plip;
 #define CHECK_X(val) CHECK(cpu->GetRegisterX() == val);
 #define CHECK_Y(val) CHECK(cpu->GetRegisterY() == val);
 #define CHECK_S(val) CHECK(cpu->GetRegisterS() == val);
+#define CHECK_PC(val) CHECK(cpu->GetPc() == val);
 
 #define CHECK_BREAK_CLEAR CHECK(cpu->GetBreakCommand() == false);
 #define CHECK_BREAK_SET CHECK(cpu->GetBreakCommand() == true);
