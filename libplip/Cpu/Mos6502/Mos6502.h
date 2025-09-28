@@ -14,12 +14,12 @@ namespace Plip::Cpu {
         Mos6502,
 
         /** The Ricoh 2A03. This version lacks decimal mode. */
-        //Ricoh2A03,
+        Ricoh2A03,
 
         /** The CMOS version by Western Design Center. This is a newer revision that
          *  supports some additional instructions, but does not support the unofficial
          *  opcodes from the NMOS versions. */
-        //Wdc65C02,
+        Wdc65C02,
     };
 
     class Mos6502 : public PlipCpu {
@@ -58,6 +58,10 @@ namespace Plip::Cpu {
         static constexpr auto ModeAbsoluteY = 0b110 << 2;
         static constexpr auto ModeAbsoluteX = 0b111 << 2;
 
+        uint8_t AddBinary(uint8_t value);
+        uint8_t AddDecimal(uint8_t value);
+        uint8_t SubDecimal(uint8_t value);
+        [[nodiscard]] bool AluIsInDecimalMode() const { return m_version != Mos6502Version::Ricoh2A03 && m_registers.GetDecimalMode(); }
         long DecodeAndExecute();
         [[nodiscard]] uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false);
         void StoreToMemory(int addressingMode, uint8_t value, bool swapXY = false);

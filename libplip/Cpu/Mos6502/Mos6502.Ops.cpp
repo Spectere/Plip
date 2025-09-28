@@ -25,9 +25,108 @@ static uint8_t op;
 
 #define ADDR_MODE(opcode) (opcode & 0b00011100)
 
+#define CHECK_ADD_CARRY(left, right) { \
+    if(((uint16_t)(left)) + ((uint16_t)(right)) + ((uint16_t)(m_registers.GetCarryFlag() ? 1 : 0)) > 0xFF) m_registers.SetCarryFlag(); \
+    else m_registers.ClearCarryFlag(); \
+}
+
 #define CHECK_NEGATIVE(val) { BIT_TEST(val, 7) ? m_registers.SetNegativeFlag() : m_registers.ClearNegativeFlag(); }
 
-#define CHECK_ZERO(val) { val == 0 ? m_registers.SetZeroFlag() : m_registers.ClearZeroFlag(); }
+#define CHECK_OVERFLOW(left, right) { \
+    const uint8_t checkOverflowAddition = (left) + (right) + (m_registers.GetCarryFlag() ? 1 : 0); \
+    const uint8_t checkOverflowResult = ((left) ^ checkOverflowAddition) & ((right) ^ checkOverflowAddition) & 0x80; \
+    if(checkOverflowResult != 0) m_registers.SetOverflowFlag(); else m_registers.ClearOverflowFlag(); \
+}
+
+#define CHECK_ZERO(val) { (val) == 0 ? m_registers.SetZeroFlag() : m_registers.ClearZeroFlag(); }
+
+uint8_t Mos6502::AddBinary(const uint8_t value) {
+    const uint8_t result = (m_registers.A + value + (m_registers.GetCarryFlag() ? 1 : 0)) & 0xFF;
+
+    CHECK_OVERFLOW(m_registers.A, value);
+    CHECK_ADD_CARRY(m_registers.A, value);
+    CHECK_ZERO(result);
+    CHECK_NEGATIVE(result);
+
+    return result;
+}
+
+uint8_t Mos6502::AddDecimal(const uint8_t value) {
+    // Decimal addition. First, add the low nibble and adjust if necessary.
+    uint16_t result = (m_registers.A & 0x0F) + (value & 0x0F) + (m_registers.GetCarryFlag() ? 1 : 0);
+    if(result > 0x09) result += 0x06;
+
+    // Add in the high nibble, figure out the adjustment value, check for overflow, then perform the adjustment.
+    result += (m_registers.A & 0xF0) + (value & 0xF0);
+    const uint8_t highAdjustment = ((result & 0xFFF0) > 0x90) ? 0x60 : 0;
+
+    // Check for overflow, then perform the high nibble adjustment.
+    if((m_registers.A ^ result) & (value ^ result) & 0x80) {
+        m_registers.SetOverflowFlag();
+    } else {
+        m_registers.ClearOverflowFlag();
+    }
+        
+    result += highAdjustment;
+
+    // Set carry flag based on the high nibble adjustment.
+    if(highAdjustment) m_registers.SetCarryFlag(); else m_registers.ClearCarryFlag();
+
+    if(m_version == Mos6502Version::Wdc65C02) {
+        // The WDC 65C02 sets the zero flag correctly, based on the result of BCD addition. This causes this
+        // instruction to use an additional cycle.
+        CHECK_ZERO(result & 0xFF);
+        ++cycleCount;
+    } else {
+        // Buggy NMOS 6502 behavior. Set the zero flag based on the result of binary addition.
+        CHECK_ZERO(m_registers.A + value + (m_registers.GetCarryFlag() ? 1 : 0));
+    }
+
+    CHECK_NEGATIVE(result);
+
+    return result & 0xFF;
+}
+
+uint8_t Mos6502::SubDecimal(const uint8_t value) {
+    const int carry = m_registers.GetCarryFlag() ? 0 : 1;
+    const int result = m_registers.A - value - carry;
+    
+    // Set the carry and overflow flags based on the binary result.
+    if(result & 0xFF00) {
+        m_registers.ClearCarryFlag();
+    } else {
+        m_registers.SetCarryFlag();
+    }
+
+    if((m_registers.A ^ value) & (m_registers.A ^ result) & 0x80) {
+        m_registers.SetOverflowFlag();
+    } else {
+        m_registers.ClearOverflowFlag();
+    }
+    
+    // Perform arithmetic on each nibble and perform adjustments as necessary.
+    int lowNibble = (m_registers.A & 0x0F) - (value & 0x0F) - carry;
+    int highNibble = (m_registers.A & 0xF0) - (value & 0xF0);
+
+    // If we carry into bit 4, adjust the low nibble. Borrow from the high nibble if necessary. 
+    if(lowNibble & 0xF0) lowNibble -= 0x06;
+    if(lowNibble & 0x80) highNibble -= 0x10;
+    if(highNibble & 0x0F00) highNibble -= 0x60;
+
+    // Put the final result together, check for negative and zero.
+    const uint8_t final = (lowNibble & 0x0F) | (highNibble & 0xF0);
+    CHECK_NEGATIVE(final);
+    CHECK_ZERO(final);
+
+    // If we're emulating a WDC 65C02, add a cycle.
+    // TODO: Apparently the 65C02 will also perform additional adjustments in some circumstances. Find out more and implement them.
+    if(m_version == Mos6502Version::Wdc65C02) {
+        ++cycleCount;
+    }
+
+    // Whew!
+    return final;
+}
 
 long Mos6502::DecodeAndExecute() {
     cycleCount = 0;
@@ -220,6 +319,32 @@ long Mos6502::DecodeAndExecute() {
 
             // Copy the high bits into the flag register (N/V).
             m_registers.F = (m_registers.F & 0b00111111) | (result & 0b11000000);
+            break;
+        }
+
+        //
+        // Arithmetic
+        //
+        case 0x69: case 0x65: case 0x75: case 0x6D: case 0x7D: case 0x79: case 0x61: case 0x71: {
+            // ADC
+            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
+            if(AluIsInDecimalMode()) {
+                m_registers.A = AddDecimal(value);
+            } else {
+                m_registers.A = AddBinary(value);
+            }
+            break;
+        }
+
+        case 0xE9: case 0xE5: case 0xF5: case 0xED: case 0xFD: case 0xF9: case 0xE1: case 0xF1: {
+            // SBC
+            uint8_t value = FetchFromMemory(ADDR_MODE(op));
+            if(AluIsInDecimalMode()) {
+                m_registers.A = SubDecimal(value);
+            } else {
+                value ^= 0xFF;
+                m_registers.A = AddBinary(value);
+            }
             break;
         }
 

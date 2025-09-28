@@ -1,5 +1,5 @@
 /* Mos6502.Logical.cpp
-*
+ *
  * Tests the CPU core's ability to perform logical bitwise operations.
  */
 

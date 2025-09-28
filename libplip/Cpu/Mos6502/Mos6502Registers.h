@@ -34,6 +34,7 @@ namespace Plip::Cpu {
         void ClearCarryFlag() { F = BIT_CLEAR(F, CarryFlagBit); }
         [[nodiscard]] bool GetCarryFlag() const { return BIT_TEST(F, CarryFlagBit); }
         void SetCarryFlag() { F = BIT_SET(F, CarryFlagBit); }
+        void FlipCarryFlag() { F = BIT_FLIP(F, CarryFlagBit); }
 
         void ClearDecimalMode() { F = BIT_CLEAR(F, DecimalModeBit); }
         [[nodiscard]] bool GetDecimalMode() const { return BIT_TEST(F, DecimalModeBit); }
