@@ -4326,16 +4326,16 @@ TEST("SBC (imm8), Y", "SBC-(imm8),Y") {  // 0xF1
         0xF1, 0x80,  // Y: $02, C+ Z+ V- N-
         0xF1, 0x80,  // Y: $01, C- Z- V- N+
 
-        0xF1, 0x82,  // Y: $20, C+ Z- V- N-
-        0xF1, 0x82,  // Y: $20, C- Z- V- N+
-        0xF1, 0x82,  // Y: $20, C+ Z- V+ N-
-        0xF1, 0x82,  // Y: $20, C+ Z+ V- N-
-        0xF1, 0x82,  // Y: $21, C+ Z+ V- N-
-        0xF1, 0x82,  // Y: $22, C+ Z- V- N-
-        0xF1, 0x82,  // Y: $22, C- Z- V- N+
-        0xF1, 0x82,  // Y: $22, C+ Z- V+ N-
-        0xF1, 0x82,  // Y: $22, C+ Z+ V- N-
-        0xF1, 0x82,  // Y: $21, C- Z- V- N+
+        0xF1, 0x82,  // +1 Y: $80, C+ Z- V- N-
+        0xF1, 0x82,  // +1 Y: $80, C- Z- V- N+
+        0xF1, 0x82,  // +1 Y: $80, C+ Z- V+ N-
+        0xF1, 0x82,  // +1 Y: $80, C+ Z+ V- N-
+        0xF1, 0x82,  // +1 Y: $81, C+ Z+ V- N-
+        0xF1, 0x82,  // +1 Y: $82, C+ Z- V- N-
+        0xF1, 0x82,  // +1 Y: $82, C- Z- V- N+
+        0xF1, 0x82,  // +1 Y: $82, C+ Z- V+ N-
+        0xF1, 0x82,  // +1 Y: $82, C+ Z+ V- N-
+        0xF1, 0x82,  // +1 Y: $81, C- Z- V- N+
     });
 
     LoadData(0x80, {
@@ -6187,5 +6187,644 @@ TEST("SBC (imm8), Y-BCD", "SBC-(imm8),Y-BCD") {  // 0xF1
     CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_OVERFLOW_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+//
+// CMP
+//
+TEST("CMP imm8", "CMP-imm8") {  // 0xC9
+    constexpr int expectedCycles = 2;
+
+    LoadData(0x200, {
+        0xC9, 0b00010000,  // C+ Z- N-
+        0xC9, 0b00100000,  // C+ Z+ N-
+        0xC9, 0b01000000,  // C- Z- N+
+    });
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CMP zp", "CMP-zp") {  // 0xC5
+    constexpr int expectedCycles = 3;
+
+    LoadData(0x200, {
+        0xC5, 0x80,  // C+ Z- N-
+        0xC5, 0x81,  // C+ Z+ N-
+        0xC5, 0x82,  // C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CMP zp, X", "CMP-zp,X") {  // 0xD5
+    constexpr int expectedCycles = 4;
+
+    LoadData(0x200, {
+        0xD5, 0x80,  // X: $00, C+ Z- N-
+        0xD5, 0x80,  // X: $01, C+ Z+ N-
+        0xD5, 0x80,  // X: $02, C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x01);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CMP abs16", "CMP-abs16") {  // 0xCD
+    constexpr int expectedCycles = 4;
+
+    LoadData(0x200, {
+        0xCD, 0x34, 0x12,  // C+ Z- N-
+        0xCD, 0x35, 0x12,  // C+ Z+ N-
+        0xCD, 0x36, 0x12,  // C- Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CMP abs16, X", "CMP-abs16,X") {  // 0xDD
+    constexpr int expectedCycles = 4;
+
+    LoadData(0x200, {
+        0xDD, 0x34, 0x12,  // X: $00, C+ Z- N-
+        0xDD, 0x34, 0x12,  // X: $01, C+ Z+ N-
+        0xDD, 0x34, 0x12,  // X: $02, C- Z- N+
+
+        0xDD, 0xF0, 0x20,  // +1 X: $30, C+ Z- N-
+        0xDD, 0xF0, 0x20,  // +1 X: $31, C+ Z+ N-
+        0xDD, 0xF0, 0x20,  // +1 X: $32, C- Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    LoadData(0x2120, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x01);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterX(0x30);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x31);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x32);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CMP abs16, Y", "CMP-abs16,Y") {  // 0xD9
+    constexpr int expectedCycles = 4;
+
+    LoadData(0x200, {
+        0xD9, 0x34, 0x12,  // Y: $00, C+ Z- N-
+        0xD9, 0x34, 0x12,  // Y: $01, C+ Z+ N-
+        0xD9, 0x34, 0x12,  // Y: $02, C- Z- N+
+
+        0xD9, 0xF0, 0x20,  // +1 Y: $30, C+ Z- N-
+        0xD9, 0xF0, 0x20,  // +1 Y: $31, C+ Z+ N-
+        0xD9, 0xF0, 0x20,  // +1 Y: $32, C- Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    LoadData(0x2120, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x01);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterY(0x30);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x31);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x32);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CMP (imm8, X)", "CMP-(imm8,X)") {  // 0xC1
+    constexpr int expectedCycles = 6;
+
+    LoadData(0x200, {
+        0xC1, 0x80,  // X: $00, C+ Z- N-
+        0xC1, 0x80,  // X: $02, C+ Z+ N-
+        0xC1, 0x80,  // X: $04, C- Z- N+
+
+        0xC1, 0xF0,  // X: $20, C+ Z- N-
+        0xC1, 0xF0,  // X: $22, C+ Z+ N-
+        0xC1, 0xF0,  // X: $24, C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0x34, 0x12,
+        0x35, 0x12,
+        0x36, 0x12,
+    });
+
+    LoadData(0x10, {
+        0x34, 0x12,
+        0x35, 0x12,
+        0x36, 0x12,
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x04);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterX(0x20);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x22);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x24);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CMP (imm8), Y", "CMP-(imm8),Y") {  // 0xD1
+    constexpr int expectedCycles = 5;
+
+    LoadData(0x200, {
+        0xD1, 0x80,  // Y: $00, C+ Z- N-
+        0xD1, 0x80,  // Y: $01, C+ Z+ N-
+        0xD1, 0x80,  // Y: $02, C- Z- N+
+
+        0xD1, 0x82,  // +1 Y: $80, C+ Z- N-
+        0xD1, 0x82,  // +1 Y: $81, C+ Z+ N-
+        0xD1, 0x82,  // +1 Y: $82, C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0x40, 0x12,
+        0xC0, 0x11,
+    });
+
+    LoadData(0x1240, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x01);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterY(0x80);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x81);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x82);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles + 1);
+    CHECK_A(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+//
+// CPX
+//
+TEST("CPX imm8", "CPX-imm8") {  // 0xE0
+    constexpr int expectedCycles = 2;
+
+    LoadData(0x200, {
+        0xE0, 0b00010000,  // C+ Z- N-
+        0xE0, 0b00100000,  // C+ Z+ N-
+        0xE0, 0b01000000,  // C- Z- N+
+    });
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CPX zp", "CPX-zp") {  // 0xE4
+    constexpr int expectedCycles = 3;
+
+    LoadData(0x200, {
+        0xE4, 0x80,  // C+ Z- N-
+        0xE4, 0x81,  // C+ Z+ N-
+        0xE4, 0x82,  // C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CPX abs16", "CPX-abs16") {  // 0xEC
+    constexpr int expectedCycles = 4;
+
+    LoadData(0x200, {
+        0xEC, 0x34, 0x12,  // C+ Z- N-
+        0xEC, 0x35, 0x12,  // C+ Z+ N-
+        0xEC, 0x36, 0x12,  // C- Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+//
+// CPY
+//
+TEST("CPY imm8", "CPY-imm8") {  // 0xC0
+    constexpr int expectedCycles = 2;
+
+    LoadData(0x200, {
+        0xC0, 0b00010000,  // C+ Z- N-
+        0xC0, 0b00100000,  // C+ Z+ N-
+        0xC0, 0b01000000,  // C- Z- N+
+    });
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CPY zp", "CPY-zp") {  // 0xC4
+    constexpr int expectedCycles = 3;
+
+    LoadData(0x200, {
+        0xC4, 0x80,  // C+ Z- N-
+        0xC4, 0x81,  // C+ Z+ N-
+        0xC4, 0x82,  // C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("CPY abs16", "CPY-abs16") {  // 0xCC
+    constexpr int expectedCycles = 4;
+
+    LoadData(0x200, {
+        0xCC, 0x34, 0x12,  // C+ Z- N-
+        0xCC, 0x35, 0x12,  // C+ Z+ N-
+        0xCC, 0x36, 0x12,  // C- Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100000, 0b01000000,
+    });
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b00100000);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 }

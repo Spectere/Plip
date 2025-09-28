@@ -23,7 +23,7 @@ static uint8_t op;
     ++cycleCount; \
 }
 
-#define ADDR_MODE(opcode) (opcode & 0b00011100)
+#define ADDR_MODE(opcode) ((opcode) & 0b00011100)
 
 #define CHECK_ADD_CARRY(left, right) { \
     if(((uint16_t)(left)) + ((uint16_t)(right)) + ((uint16_t)(m_registers.GetCarryFlag() ? 1 : 0)) > 0xFF) m_registers.SetCarryFlag(); \
@@ -345,6 +345,64 @@ long Mos6502::DecodeAndExecute() {
                 value ^= 0xFF;
                 m_registers.A = AddBinary(value);
             }
+            break;
+        }
+
+        case 0xC9: case 0xC5: case 0xD5: case 0xCD: case 0xDD: case 0xD9: case 0xC1: case 0xD1: {
+            // CMP
+            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
+            const uint8_t result = m_registers.A - value;
+
+            if(m_registers.A >= value) {
+                m_registers.SetCarryFlag();
+            } else {
+                m_registers.ClearCarryFlag();
+            }
+            
+            CHECK_NEGATIVE(result);
+            CHECK_ZERO(result);
+            break;
+        }
+
+        case 0xE0: case 0xE4: case 0xEC: {
+            // CPX
+            uint8_t value;
+            if(op == 0xE0) {  // CPX/CPY uses 0b000 as the immediate addressing mode
+                FETCH_PC(value);
+            } else {
+                value = FetchFromMemory(ADDR_MODE(op));
+            }
+            const uint8_t result = m_registers.X - value;
+
+            if(m_registers.X >= value) {
+                m_registers.SetCarryFlag();
+            } else {
+                m_registers.ClearCarryFlag();
+            }
+            
+            CHECK_NEGATIVE(result);
+            CHECK_ZERO(result);
+            break;
+        }
+
+        case 0xC0: case 0xC4: case 0xCC: {
+            // CPY
+            uint8_t value;
+            if(op == 0xC0) {  // CPX/CPY uses 0b000 as the immediate addressing mode
+                FETCH_PC(value);
+            } else {
+                value = FetchFromMemory(ADDR_MODE(op));
+            }
+            const uint8_t result = m_registers.Y - value;
+
+            if(m_registers.Y >= value) {
+                m_registers.SetCarryFlag();
+            } else {
+                m_registers.ClearCarryFlag();
+            }
+            
+            CHECK_NEGATIVE(result);
+            CHECK_ZERO(result);            
             break;
         }
 
