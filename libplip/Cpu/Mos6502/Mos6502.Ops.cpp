@@ -785,126 +785,132 @@ long Mos6502::DecodeAndExecute() {
 
         default: {
             if(m_version == Mos6502Version::Wdc65C02) {
-                // TODO: The 65C02 has additional instructions that we don't currently handle.
-                throw PlipInvalidOpcodeException(op);
-            }
-
-            //
-            // Unofficial Opcodes
-            //
-            // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
-            switch(op) { // NOLINT(*-multiway-paths-covered)
-                case 0x1A: case 0x3A: case 0x5A: case 0x7A: case 0xDA: case 0xFA: {
-                    // NOP (1 byte, 2 cycles)
-                    ++cycleCount;
-                    break;
-                }
-
-                case 0x80: case 0x82: case 0x89: case 0xC2: case 0xE2: {
-                    // SKB (2 bytes, 2 cycles)
-                    // Effectively 'NOP imm8'
-                    ++m_registers.PC;
-                    ++cycleCount;
-                    break;
-                }
-
-                case 0x0C:                                                         /* IGN abs16    */
-                case 0x1C: case 0x3C: case 0x5C: case 0x7C: case 0xDC: case 0xFC:  /* IGN abs16, X */
-                case 0x04: case 0x44: case 0x64:                                   /* IGN zp       */
-                case 0x14: case 0x34: case 0x54: case 0x74: case 0xD4: case 0xF4:  /* IGN zp, X    */ {
-                    // IGN (2-3 bytes, 3-5 cycles)
-                    // Effectively NOPs with a variety of addressing modes.
-                    FetchFromMemory(ADDR_MODE(op));  // This should take care of the cycle count.
-                    break;
-                }
-
-                case 0xEB: {
-                    // SBC imm8 (alternate opcode)
-                    uint8_t value = FetchFromMemory(ADDR_MODE(op));
-                    if(AluIsInDecimalMode()) {
-                        m_registers.A = SubDecimal(value);
-                    } else {
-                        value ^= 0xFF;
-                        m_registers.A = AddBinary(value);
-                    }
-                    break;
-                }
-
-                case 0x4B: {
-                    // ALR/ASR imm8 (2 cycles)
-                    // Equivalent to "AND imm8; LSR A"
-                    uint8_t value;
-                    FETCH_PC(value);
-                    m_registers.A &= value;
-                    m_registers.A = OpLogicalShiftRight(m_registers.A);
-                    break;
-                }
-
-                case 0x0B: case 0x2B: {
-                    // ANC imm8 (2 cycles)
-                    // "AND imm8", then copies N to C.
-                    uint8_t value;
-                    FETCH_PC(value);
-                    m_registers.A &= value;
-                    CHECK_ZERO(m_registers.A);
-                    CHECK_NEGATIVE(m_registers.A);
-                    m_registers.GetNegativeFlag() ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-                    break;
-                }
-
-                case 0x6B: {
-                    // ARR imm8 (2 cycles)
-                    // Similar to "AND imm8; ROR A", with different flag setting logic.
-                    // N and Z are set normally.
-                    // C is bit 6
-                    // V is bit 6 xor bit 5.
-                    uint8_t value;
-                    FETCH_PC(value);
-                    m_registers.A &= value;
-                    m_registers.A >>= 1;
-                    m_registers.A |= (m_registers.GetCarryFlag() ? 0x80 : 0);
-                    CHECK_ZERO(m_registers.A);
-                    CHECK_NEGATIVE(m_registers.A);
-                    (m_registers.A & 0b01000000) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-                    (((m_registers.A & 0b01000000) >> 1) ^ (m_registers.A & 0b00100000)) ? m_registers.SetOverflowFlag() : m_registers.ClearOverflowFlag();
-                    break;
-                }
-
-                case 0xCB: {
-                    // AXS imm8 (2 cycles)
-                    // Sets X to "(A && X) - imm8" and updates NZC.
-                    uint8_t value;
-                    FETCH_PC(value);
-                    const uint8_t andResult = m_registers.A & m_registers.X;
-                    int subResult = andResult - value;
-                    (subResult < 0) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-                    CHECK_ZERO(subResult);
-                    CHECK_NEGATIVE(subResult);
-                    m_registers.X = subResult & 0xFF;
-                    break;
-                }
-
-                case 0xA3: case 0xA7: case 0xAF: case 0xB3: case 0xB7: case 0xBF: {
-                    // LAX
-                    // "LDA imm8; TAX"
-                    uint8_t value = FetchFromMemory(ADDR_MODE(op), true);
-                    m_registers.X = m_registers.A = value;
-                    CHECK_ZERO(value);
-                    CHECK_NEGATIVE(value);
-                    break;
-                }
-
-                case 0x83: case 0x87: case 0x8F: case 0x97: {
-                    // SAX
-                    // M = A & X, no flags are affected
-                    StoreToMemory(ADDR_MODE(op), m_registers.A & m_registers.X, true);
-                    break;
-                }
+                DecodeAndExecuteWdc65C02Extended();
+            } else {
+                DecodeAndExecuteNmosUnofficial();
             }
         }
     }
 
     return cycleCount;
+}
+
+void Mos6502::DecodeAndExecuteNmosUnofficial() {
+    // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+    switch(op) { // NOLINT(*-multiway-paths-covered)
+        case 0x1A: case 0x3A: case 0x5A: case 0x7A: case 0xDA: case 0xFA: {
+            // NOP (1 byte, 2 cycles)
+            ++cycleCount;
+            break;
+        }
+
+        case 0x80: case 0x82: case 0x89: case 0xC2: case 0xE2: {
+            // SKB (2 bytes, 2 cycles)
+            // Effectively 'NOP imm8'
+            ++m_registers.PC;
+            ++cycleCount;
+            break;
+        }
+
+        case 0x0C:                                                         /* IGN abs16    */
+        case 0x1C: case 0x3C: case 0x5C: case 0x7C: case 0xDC: case 0xFC:  /* IGN abs16, X */
+        case 0x04: case 0x44: case 0x64:                                   /* IGN zp       */
+        case 0x14: case 0x34: case 0x54: case 0x74: case 0xD4: case 0xF4:  /* IGN zp, X    */ {
+            // IGN (2-3 bytes, 3-5 cycles)
+            // Effectively NOPs with a variety of addressing modes.
+            FetchFromMemory(ADDR_MODE(op));  // This should take care of the cycle count.
+            break;
+        }
+
+        case 0xEB: {
+            // SBC imm8 (alternate opcode)
+            uint8_t value = FetchFromMemory(ADDR_MODE(op));
+            if(AluIsInDecimalMode()) {
+                m_registers.A = SubDecimal(value);
+            } else {
+                value ^= 0xFF;
+                m_registers.A = AddBinary(value);
+            }
+            break;
+        }
+
+        case 0x4B: {
+            // ALR/ASR imm8 (2 cycles)
+            // Equivalent to "AND imm8; LSR A"
+            uint8_t value;
+            FETCH_PC(value);
+            m_registers.A &= value;
+            m_registers.A = OpLogicalShiftRight(m_registers.A);
+            break;
+        }
+
+        case 0x0B: case 0x2B: {
+            // ANC imm8 (2 cycles)
+            // "AND imm8", then copies N to C.
+            uint8_t value;
+            FETCH_PC(value);
+            m_registers.A &= value;
+            CHECK_ZERO(m_registers.A);
+            CHECK_NEGATIVE(m_registers.A);
+            m_registers.GetNegativeFlag() ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+            break;
+        }
+
+        case 0x6B: {
+            // ARR imm8 (2 cycles)
+            // Similar to "AND imm8; ROR A", with different flag setting logic.
+            // N and Z are set normally.
+            // C is bit 6
+            // V is bit 6 xor bit 5.
+            uint8_t value;
+            FETCH_PC(value);
+            m_registers.A &= value;
+            m_registers.A >>= 1;
+            m_registers.A |= (m_registers.GetCarryFlag() ? 0x80 : 0);
+            CHECK_ZERO(m_registers.A);
+            CHECK_NEGATIVE(m_registers.A);
+            (m_registers.A & 0b01000000) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+            (((m_registers.A & 0b01000000) >> 1) ^ (m_registers.A & 0b00100000)) ? m_registers.SetOverflowFlag() : m_registers.ClearOverflowFlag();
+            break;
+        }
+
+        case 0xCB: {
+            // AXS imm8 (2 cycles)
+            // Sets X to "(A && X) - imm8" and updates NZC.
+            uint8_t value;
+            FETCH_PC(value);
+            const uint8_t andResult = m_registers.A & m_registers.X;
+            int subResult = andResult - value;
+            (subResult < 0) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+            CHECK_ZERO(subResult);
+            CHECK_NEGATIVE(subResult);
+            m_registers.X = subResult & 0xFF;
+            break;
+        }
+
+        case 0xA3: case 0xA7: case 0xAF: case 0xB3: case 0xB7: case 0xBF: {
+            // LAX
+            // "LDA imm8; TAX"
+            uint8_t value = FetchFromMemory(ADDR_MODE(op), true);
+            m_registers.X = m_registers.A = value;
+            CHECK_ZERO(value);
+            CHECK_NEGATIVE(value);
+            break;
+        }
+
+        case 0x83: case 0x87: case 0x8F: case 0x97: {
+            // SAX
+            // M = A & X, no flags are affected
+            StoreToMemory(ADDR_MODE(op), m_registers.A & m_registers.X, true);
+            break;
+        }
+    }
+}
+
+// ReSharper disable once CppMemberFunctionMayBeStatic
+void Mos6502::DecodeAndExecuteWdc65C02Extended() { // NOLINT(*-convert-member-functions-to-static)
+    // TODO: The 65C02 has additional instructions that we don't currently handle.
+    throw PlipInvalidOpcodeException(op);
 }
 
 uint16_t Mos6502::FetchAddress(const int addressingMode) {

@@ -65,6 +65,8 @@ namespace Plip::Cpu {
         void CallAbsolute(uint16_t addr);
         void CallReturn();
         long DecodeAndExecute();
+        void DecodeAndExecuteNmosUnofficial();
+        void DecodeAndExecuteWdc65C02Extended();
         [[nodiscard]] uint16_t FetchAddress(int addressingMode);
         uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false);
         void JumpRelative(int8_t rel);
