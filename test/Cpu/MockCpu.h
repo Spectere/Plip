@@ -35,6 +35,10 @@ public:
         }
     }
 
+    void LoadData(int offset, const uint8_t byte) const {
+        memory->SetByte(offset, byte);
+    }
+
     CpuType* cpu;
     Plip::PlipMemoryMap* memory;
 

@@ -25,9 +25,9 @@ TEST("INC zp", "INC-zp") {  // 0xE6
         0x20, 0x11,
     });
 
-    memory->SetByte(0x1100, 0x10);
-    memory->SetByte(0x1110, 0xFF);
-    memory->SetByte(0x1120, 0x7F);
+    LoadData(0x1100, 0x10);
+    LoadData(0x1110, 0xFF);
+    LoadData(0x1120, 0x7F);
 
     EXECUTE(expectedCycles);
     CHECK_RAM(0x1100, 0x11);

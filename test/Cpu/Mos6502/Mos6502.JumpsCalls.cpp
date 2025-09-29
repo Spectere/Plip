@@ -59,9 +59,7 @@ TEST("JSR", "JSR") {  // 0x20
 TEST("RTS", "RTS") {  // 0x60
     constexpr int expectedCycles = 6;
 
-    LoadData(0x200, {
-        0x60,
-    });
+    LoadData(0x200, 0x60);
 
     cpu->SetRegisterS(0xFD);
     LoadData(0x1FE, {

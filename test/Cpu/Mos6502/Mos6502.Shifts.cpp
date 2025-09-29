@@ -66,10 +66,10 @@ TEST("ASL zp", "ASL-zp") {  // 0x06
         0x30, 0x12,
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
 
     EXECUTE(expectedCycles);
     CHECK_RAM(0x1200, 0b01000000);
@@ -113,10 +113,10 @@ TEST("ASL zp, X", "ASL-zp,X") {  // 0x16
         0x30, 0x12,
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
 
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
@@ -157,10 +157,10 @@ TEST("ASL abs16", "ASL-abs16") {  // 0x0E
         0x0E, 0x30, 0x12,  // C- Z- N+
     });
     
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
 
     EXECUTE(expectedCycles);
     CHECK_RAM(0x1200, 0b01000000);
@@ -197,10 +197,10 @@ TEST("ASL abs16, X", "ASL-abs16,X") {  // 0x1E
         0x1E, 0x00, 0x12,  // X: $30, C- Z- N+
     });
     
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
 
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
@@ -280,9 +280,9 @@ TEST("LSR zp", "LSR-zp") {  // 0x46
         0x20, 0x12,
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
 
     EXECUTE(expectedCycles);
     CHECK_RAM(0x1200, 0b00010000);
@@ -318,9 +318,9 @@ TEST("LSR zp, X", "LSR-zp,X") {  // 0x56
         0x20, 0x12,
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
 
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
@@ -353,10 +353,10 @@ TEST("LSR abs16", "LSR-abs16") {  // 0x4E
         0x4E, 0x20, 0x12,  // C- Z+ N-
     });
     
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
 
     EXECUTE(expectedCycles);
     CHECK_RAM(0x1200, 0b00010000);
@@ -386,10 +386,10 @@ TEST("LSR abs16, X", "LSR-abs16,X") {  // 0x5E
         0x5E, 0x00, 0x12,  // X: $20, C- Z+ N-
     });
     
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
 
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
@@ -487,11 +487,11 @@ TEST("ROL zp", "ROL-zp") {  // 0x26
         0x40, 0x12,
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
-    memory->SetByte(0x1240, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
+    LoadData(0x1240, 0b00000000);
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
@@ -548,11 +548,11 @@ TEST("ROL zp, X", "ROL-zp,X") {  // 0x36
         0x40, 0x12,
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
-    memory->SetByte(0x1240, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
+    LoadData(0x1240, 0b00000000);
 
     cpu->ClearCarryFlag();
     cpu->SetRegisterX(0x00);
@@ -606,11 +606,11 @@ TEST("ROL abs16", "ROL-abs16") {  // 0x2E
         0x2E, 0x40, 0x12,  // C- Z- N-
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
-    memory->SetByte(0x1240, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
+    LoadData(0x1240, 0b00000000);
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
@@ -659,11 +659,11 @@ TEST("ROL abs16, X", "ROL-abs16,X") {  // 0x3E
         0x3E, 0x00, 0x12,  // X: $40, C- Z- N-
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b01000000);
-    memory->SetByte(0x1240, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b01000000);
+    LoadData(0x1240, 0b00000000);
 
     cpu->ClearCarryFlag();
     cpu->SetRegisterX(0x00);
@@ -770,10 +770,10 @@ TEST("ROR zp", "ROR-zp") {  // 0x66
         0x40, 0x12,
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b00000000);
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
@@ -822,10 +822,10 @@ TEST("ROR zp, X", "ROR-zp,X") {  // 0x76
         0x40, 0x12,
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b00000000);
 
     cpu->ClearCarryFlag();
     cpu->SetRegisterX(0x00);
@@ -870,10 +870,10 @@ TEST("ROR abs16", "ROR-abs16") {  // 0x6E
         0x6E, 0x30, 0x12,  // C- Z- N+
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b00000000);
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
@@ -914,10 +914,10 @@ TEST("ROR abs16, X", "ROR-abs16,X") {  // 0x7E
         0x7E, 0x00, 0x12,  // X: $30, C- Z- N+
     });
 
-    memory->SetByte(0x1200, 0b00100000);
-    memory->SetByte(0x1210, 0b10000001);
-    memory->SetByte(0x1220, 0b00000000);
-    memory->SetByte(0x1230, 0b00000000);
+    LoadData(0x1200, 0b00100000);
+    LoadData(0x1210, 0b10000001);
+    LoadData(0x1220, 0b00000000);
+    LoadData(0x1230, 0b00000000);
 
     cpu->ClearCarryFlag();
     cpu->SetRegisterX(0x00);

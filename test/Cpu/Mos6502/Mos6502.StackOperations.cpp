@@ -72,9 +72,7 @@ TEST("TXS", "TXS") {  // 0x9A
 }
 
 TEST("PHA", "PHA") {  // 0x48
-    LoadData(0x200, {
-        0x48,
-    });
+    LoadData(0x200, 0x48);
 
     cpu->SetRegisterA(0x12);
     CHECK_S(0xFF);
@@ -198,7 +196,7 @@ TEST("PLP-Zero", "PLP-Zero") {  // 0x28
         0x08,  // PHP
     });
 
-    LoadData(0x1FF, { 0x00 });
+    LoadData(0x1FF, 0x00);
 
     cpu->SetRegisterS(0xFE);
 
