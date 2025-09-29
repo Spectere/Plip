@@ -762,6 +762,34 @@ long Mos6502::DecodeAndExecute() {
             break;
         }
 
+        //
+        // System Instructions
+        //
+        case 0x00: {
+            // BRK
+            const uint16_t addr = (m_memory->GetByte(0xFFFF) << 8) | m_memory->GetByte(0xFFFE);
+            ++m_registers.PC;
+            CallAbsolute(addr);
+            STACK_PUSH(m_registers.F);
+            m_registers.SetBreakCommand();
+            cycleCount += 6;
+            break;
+        }
+
+        case 0xEA: {
+            // NOP
+            ++cycleCount;
+            break;
+        }
+
+        case 0x40: {
+            // RTI
+            m_registers.F = STACK_POP() | 0b00100000;
+            CallReturn();
+            cycleCount += 5;
+            break;
+        }
+
         default: {
             throw PlipInvalidOpcodeException(op);
         }

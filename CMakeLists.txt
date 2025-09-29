@@ -251,6 +251,7 @@ add_executable(${test_name}
     test/Cpu/Mos6502/Mos6502.RegisterTransfers.cpp
     test/Cpu/Mos6502/Mos6502.Shifts.cpp
     test/Cpu/Mos6502/Mos6502.StackOperations.cpp
+    test/Cpu/Mos6502/Mos6502.System.cpp
 
     # Sharp LR35902
     test/Cpu/SharpLr35902/SharpLr35902Common.h

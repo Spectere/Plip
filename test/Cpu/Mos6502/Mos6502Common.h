@@ -17,6 +17,7 @@ using namespace Plip;
 #define TEST(name, op) TEST_CASE_METHOD(MockCpu<MockMos6502>, TEST_NAME(name), OP(op))
 
 #define CHECK_A(val) CHECK(cpu->GetRegisterA() == val);
+#define CHECK_F(val) CHECK(cpu->GetRegisterF() == val);
 #define CHECK_X(val) CHECK(cpu->GetRegisterX() == val);
 #define CHECK_Y(val) CHECK(cpu->GetRegisterY() == val);
 #define CHECK_S(val) CHECK(cpu->GetRegisterS() == val);
@@ -55,6 +56,8 @@ public:
 
     [[nodiscard]] uint8_t GetRegisterA() const { return m_registers.A; }
     void SetRegisterA(const uint8_t value) { m_registers.A = value; }
+
+    [[nodiscard]] uint8_t GetRegisterF() const { return m_registers.F; }
 
     [[nodiscard]] uint8_t GetRegisterX() const { return m_registers.X; }
     void SetRegisterX(const uint8_t value) { m_registers.X = value; }
