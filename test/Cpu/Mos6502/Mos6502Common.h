@@ -28,11 +28,11 @@ using namespace Plip;
 #define CHECK_CARRY_CLEAR CHECK(cpu->GetCarryFlag() == false);
 #define CHECK_CARRY_SET CHECK(cpu->GetCarryFlag() == true);
 
-#define CHECK_DECIMAL_MODE_DISABLED CHECK(cpu->GetDecimalMode() == false);
-#define CHECK_DECIMAL_MODE_ENABLED CHECK(cpu->GetDecimalMode() == true);
+#define CHECK_DECIMAL_MODE_CLEAR CHECK(cpu->GetDecimalMode() == false);
+#define CHECK_DECIMAL_MODE_SET CHECK(cpu->GetDecimalMode() == true);
 
-#define CHECK_INTERRUPT_DISABLED CHECK(cpu->GetInterruptDisable() == false);
-#define CHECK_INTERRUPT_ENABLED CHECK(cpu->GetInterruptDisable() == true);
+#define CHECK_INTERRUPT_DISABLE_CLEAR CHECK(cpu->GetInterruptDisable() == false);
+#define CHECK_INTERRUPT_DISABLE_SET CHECK(cpu->GetInterruptDisable() == true);
 
 #define CHECK_NEGATIVE_CLEAR CHECK(cpu->GetNegativeFlag() == false);
 #define CHECK_NEGATIVE_SET CHECK(cpu->GetNegativeFlag() == true);

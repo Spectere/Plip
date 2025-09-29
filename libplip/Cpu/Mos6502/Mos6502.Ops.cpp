@@ -710,6 +710,58 @@ long Mos6502::DecodeAndExecute() {
             break;
         }
 
+        //
+        // Status Flag
+        //
+        case 0x18: {
+            // CLC
+            m_registers.ClearCarryFlag();
+            ++cycleCount;
+            break;
+        }
+
+        case 0xD8: {
+            // CLD
+            m_registers.ClearDecimalMode();
+            ++cycleCount;
+            break;
+        }
+
+        case 0x58: {
+            // CLI
+            m_registers.ClearInterruptDisable();
+            ++cycleCount;
+            break;
+        }
+
+        case 0xB8: {
+            // CLV
+            m_registers.ClearOverflowFlag();
+            ++cycleCount;
+            break;
+        }
+
+        case 0x38: {
+            // SEC
+            m_registers.SetCarryFlag();
+            ++cycleCount;
+            break;
+        }
+
+        case 0xF8: {
+            // SED
+            m_registers.SetDecimalMode();
+            ++cycleCount;
+            break;
+        }
+
+        case 0x78: {
+            // SEI
+            m_registers.SetInterruptDisable();
+            ++cycleCount;
+            break;
+        }
+
         default: {
             throw PlipInvalidOpcodeException(op);
         }

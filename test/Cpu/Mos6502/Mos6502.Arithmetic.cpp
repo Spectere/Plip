@@ -1194,7 +1194,7 @@ TEST("ADC imm8-BCD-2A03", "ADC-imm-BCD-2A03") {  // 0x69, with no BCD support
 
     cpu->SetDecimalMode();
 
-    CHECK_DECIMAL_MODE_ENABLED;  // The Ricoh 2A03 still has the BCD flag, but it's unused.
+    CHECK_DECIMAL_MODE_SET;  // The Ricoh 2A03 still has the BCD flag, but it's unused.
     
     cpu->ClearCarryFlag();
     cpu->SetRegisterA(0b00000001);

@@ -243,6 +243,7 @@ add_executable(${test_name}
     test/Cpu/Mos6502/Mos6502Common.h
     test/Cpu/Mos6502/Mos6502.Arithmetic.cpp
     test/Cpu/Mos6502/Mos6502.Branches.cpp
+    test/Cpu/Mos6502/Mos6502.Flags.cpp
     test/Cpu/Mos6502/Mos6502.IncrementDecrement.cpp
     test/Cpu/Mos6502/Mos6502.JumpsCalls.cpp
     test/Cpu/Mos6502/Mos6502.LoadStore.cpp
