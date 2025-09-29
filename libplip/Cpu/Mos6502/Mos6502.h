@@ -66,8 +66,9 @@ namespace Plip::Cpu {
         void CallReturn();
         long DecodeAndExecute();
         [[nodiscard]] uint16_t FetchAddress(int addressingMode);
-        [[nodiscard]] uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false);
+        uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false);
         void JumpRelative(int8_t rel);
+        [[nodiscard]] uint8_t OpLogicalShiftRight(uint8_t value);
         void StoreToMemory(int addressingMode, uint8_t value, bool swapXY = false);
     };
 }
