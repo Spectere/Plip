@@ -18,6 +18,11 @@ static uint8_t op;
     ++cycleCount; \
 }
 
+#define FETCH_PC_SIGNED(var) { \
+    var = static_cast<int8_t>(m_memory->GetByte(m_registers.PC++)); \
+    ++cycleCount; \
+}
+
 #define FETCH_ADDR(var, addr) { \
     var = m_memory->GetByte(addr); \
     ++cycleCount; \
@@ -43,6 +48,15 @@ static uint8_t op;
 #define STACK_POP() (m_memory->GetByte(StackLocation | ++m_registers.S))
 
 #define STACK_PUSH(val) { m_memory->SetByte(StackLocation | m_registers.S--, (val)); }
+
+#define BRANCH(cond) { \
+    int8_t rel; \
+    FETCH_PC_SIGNED(rel); \
+    if(cond) { \
+        ++cycleCount; \
+        JumpRelative(rel); \
+    } \
+}
 
 uint8_t Mos6502::AddBinary(const uint8_t value) {
     const uint8_t result = (m_registers.A + value + (m_registers.GetCarryFlag() ? 1 : 0)) & 0xFF;
@@ -90,6 +104,31 @@ uint8_t Mos6502::AddDecimal(const uint8_t value) {
 
     return result & 0xFF;
 }
+
+void Mos6502::CallAbsolute(const uint16_t addr) {
+    // Save address to stack and jump.
+    const uint16_t pc = m_registers.PC - 1;
+    STACK_PUSH(pc >> 8);
+    STACK_PUSH(pc & 0xFF);
+    m_registers.PC = addr;
+}
+
+void Mos6502::CallReturn() {
+    // Pops address from stack and jumps.
+    const uint8_t low = STACK_POP();
+    const uint8_t high = STACK_POP();
+    m_registers.PC = (high << 8) | low;
+}
+
+void Mos6502::JumpRelative(const int8_t rel) {
+    // Jumps to a relative address. Add a cycle if we cross into a new page.
+    const uint16_t newPc = m_registers.PC + rel;
+    if((m_registers.PC ^ newPc) & 0xFF00) {
+        ++cycleCount;
+    }
+    m_registers.PC = newPc;
+}
+
 
 uint8_t Mos6502::SubDecimal(const uint8_t value) {
     const int carry = m_registers.GetCarryFlag() ? 0 : 1;
@@ -609,19 +648,65 @@ long Mos6502::DecodeAndExecute() {
             uint8_t low, high;
             FETCH_PC(low);
             FETCH_PC(high);
-            const uint16_t pc = m_registers.PC - 1;
-            STACK_PUSH(pc >> 8);
-            STACK_PUSH(pc & 0xFF);
-            m_registers.PC = (high << 8) | low;
+            CallAbsolute((high << 8) | low);
             break;
         }
 
         case 0x60: {
             // RTS
-            const uint8_t low = STACK_POP();
-            const uint8_t high = STACK_POP();
-            m_registers.PC = (high << 8) | low;
+            CallReturn();
             cycleCount += 5;
+            break;
+        }
+
+        //
+        // Branches
+        //
+        case 0x90: {
+            // BCC
+            BRANCH(!m_registers.GetCarryFlag());
+            break;
+        }
+
+        case 0xB0: {
+            // BCS
+            BRANCH(m_registers.GetCarryFlag());
+            break;
+        }
+
+        case 0xF0: {
+            // BEQ
+            BRANCH(m_registers.GetZeroFlag());
+            break;
+        }
+
+        case 0x30: {
+            // BMI
+            BRANCH(m_registers.GetNegativeFlag());
+            break;
+        }
+
+        case 0xD0: {
+            // BNE
+            BRANCH(!m_registers.GetZeroFlag());
+            break;
+        }
+
+        case 0x10: {
+            // BPL
+            BRANCH(!m_registers.GetNegativeFlag());
+            break;
+        }
+
+        case 0x50: {
+            // BVC
+            BRANCH(!m_registers.GetOverflowFlag());
+            break;
+        }
+
+        case 0x70: {
+            // BVS
+            BRANCH(m_registers.GetOverflowFlag());
             break;
         }
 
@@ -633,7 +718,7 @@ long Mos6502::DecodeAndExecute() {
     return cycleCount;
 }
 
-uint16_t Mos6502::FetchAddress(int addressingMode) {
+uint16_t Mos6502::FetchAddress(const int addressingMode) {
     switch(addressingMode) {
         case ModeZeroPage: {
             uint8_t offset, low, high;

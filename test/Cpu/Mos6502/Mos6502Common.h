@@ -65,6 +65,8 @@ public:
     [[nodiscard]] uint8_t GetRegisterS() const { return m_registers.S; }
     void SetRegisterS(const uint8_t value) { m_registers.S = value; }
 
+    void SetPc(const uint16_t addr) { m_registers.PC = addr; }
+
     void ClearBreakCommand() { m_registers.ClearBreakCommand(); }
     [[nodiscard]] bool GetBreakCommand() const { return m_registers.GetBreakCommand(); }
     void SetBreakCommand() { m_registers.SetBreakCommand(); }
