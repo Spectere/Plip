@@ -54,43 +54,38 @@ TEST("ASL zp", "ASL-zp") {  // 0x06
 
     LoadData(0x200, {
         0x06, 0x80,  // C- Z- N-
-        0x06, 0x82,  // C+ Z- N-
-        0x06, 0x84,  // C- Z+ N-
-        0x06, 0x86,  // C- Z- N+
+        0x06, 0x81,  // C+ Z- N-
+        0x06, 0x82,  // C- Z+ N-
+        0x06, 0x83,  // C- Z- N+
     });
 
     LoadData(0x80, {
-        0x00, 0x12,
-        0x10, 0x12,
-        0x20, 0x12,
-        0x30, 0x12,
+        0b00100000,
+        0b10000001,
+        0b00000000,
+        0b01000000,
     });
 
-    LoadData(0x1200, 0b00100000);
-    LoadData(0x1210, 0b10000001);
-    LoadData(0x1220, 0b00000000);
-    LoadData(0x1230, 0b01000000);
-
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1200, 0b01000000);
+    CHECK_RAM(0x80, 0b01000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1210, 0b00000010);
+    CHECK_RAM(0x81, 0b00000010);
     CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1220, 0b00000000);
+    CHECK_RAM(0x82, 0b00000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1230, 0b10000000);
+    CHECK_RAM(0x83, 0b10000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
@@ -101,47 +96,42 @@ TEST("ASL zp, X", "ASL-zp,X") {  // 0x16
 
     LoadData(0x200, {
         0x16, 0x80,  // X: $00, C- Z- N-
-        0x16, 0x80,  // X: $02, C+ Z- N-
-        0x16, 0x80,  // X: $04, C- Z+ N-
-        0x16, 0x80,  // X: $06, C- Z- N+
+        0x16, 0x80,  // X: $01, C+ Z- N-
+        0x16, 0x80,  // X: $02, C- Z+ N-
+        0x16, 0x80,  // X: $03, C- Z- N+
     });
 
     LoadData(0x80, {
-        0x00, 0x12,
-        0x10, 0x12,
-        0x20, 0x12,
-        0x30, 0x12,
+        0b00100000,
+        0b10000001,
+        0b00000000,
+        0b01000000,
     });
-
-    LoadData(0x1200, 0b00100000);
-    LoadData(0x1210, 0b10000001);
-    LoadData(0x1220, 0b00000000);
-    LoadData(0x1230, 0b01000000);
 
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1200, 0b01000000);
+    CHECK_RAM(0x80, 0b01000000);
     CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x01);
+    EXECUTE(expectedCycles);
+    CHECK_RAM(0x81, 0b00000010);
+    CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->SetRegisterX(0x02);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1210, 0b00000010);
-    CHECK_CARRY_SET;
-    CHECK_ZERO_CLEAR;
-    CHECK_NEGATIVE_CLEAR;
-
-    cpu->SetRegisterX(0x04);
-    EXECUTE(expectedCycles);
-    CHECK_RAM(0x1220, 0b00000000);
+    CHECK_RAM(0x82, 0b00000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
-    cpu->SetRegisterX(0x06);
+    cpu->SetRegisterX(0x03);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1230, 0b10000000);
+    CHECK_RAM(0x83, 0b10000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
@@ -270,34 +260,30 @@ TEST("LSR zp", "LSR-zp") {  // 0x46
 
     LoadData(0x200, {
         0x46, 0x80,  // C- Z- N-
-        0x46, 0x82,  // C+ Z- N-
-        0x46, 0x84,  // C- Z+ N-
+        0x46, 0x81,  // C+ Z- N-
+        0x46, 0x82,  // C- Z+ N-
     });
 
     LoadData(0x80, {
-        0x00, 0x12,
-        0x10, 0x12,
-        0x20, 0x12,
+        0b00100000,
+        0b10000001,
+        0b00000000,
     });
 
-    LoadData(0x1200, 0b00100000);
-    LoadData(0x1210, 0b10000001);
-    LoadData(0x1220, 0b00000000);
-
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1200, 0b00010000);
+    CHECK_RAM(0x80, 0b00010000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1210, 0b01000000);
+    CHECK_RAM(0x81, 0b01000000);
     CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1220, 0b00000000);
+    CHECK_RAM(0x82, 0b00000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
@@ -308,37 +294,33 @@ TEST("LSR zp, X", "LSR-zp,X") {  // 0x56
 
     LoadData(0x200, {
         0x56, 0x80,  // X: $00, C- Z- N-
-        0x56, 0x80,  // X: $02, C+ Z- N-
-        0x56, 0x80,  // X: $04, C- Z+ N-
+        0x56, 0x80,  // X: $01, C+ Z- N-
+        0x56, 0x80,  // X: $02, C- Z+ N-
     });
 
     LoadData(0x80, {
-        0x00, 0x12,
-        0x10, 0x12,
-        0x20, 0x12,
+        0b00100000,
+        0b10000001,
+        0b00000000,
     });
-
-    LoadData(0x1200, 0b00100000);
-    LoadData(0x1210, 0b10000001);
-    LoadData(0x1220, 0b00000000);
 
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1200, 0b00010000);
+    CHECK_RAM(0x80, 0b00010000);
     CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x01);
+    EXECUTE(expectedCycles);
+    CHECK_RAM(0x81, 0b01000000);
+    CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->SetRegisterX(0x02);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1210, 0b01000000);
-    CHECK_CARRY_SET;
-    CHECK_ZERO_CLEAR;
-    CHECK_NEGATIVE_CLEAR;
-
-    cpu->SetRegisterX(0x04);
-    EXECUTE(expectedCycles);
-    CHECK_RAM(0x1220, 0b00000000);
+    CHECK_RAM(0x82, 0b00000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
@@ -473,57 +455,51 @@ TEST("ROL zp", "ROL-zp") {  // 0x26
 
     LoadData(0x200, {
         0x26, 0x80,  // C- Z- N-
-        0x26, 0x82,  // C+ Z- N-
-        0x26, 0x84,  // C- Z+ N-
-        0x26, 0x86,  // C- Z- N-
-        0x26, 0x88,  // C- Z- N-
+        0x26, 0x81,  // C+ Z- N-
+        0x26, 0x82,  // C- Z+ N-
+        0x26, 0x83,  // C- Z- N-
+        0x26, 0x84,  // C- Z- N-
     });
 
     LoadData(0x80, {
-        0x00, 0x12,
-        0x10, 0x12,
-        0x20, 0x12,
-        0x30, 0x12,
-        0x40, 0x12,
+        0b00100000,
+        0b10000001,
+        0b00000000,
+        0b01000000,
+        0b00000000,
     });
-
-    LoadData(0x1200, 0b00100000);
-    LoadData(0x1210, 0b10000001);
-    LoadData(0x1220, 0b00000000);
-    LoadData(0x1230, 0b01000000);
-    LoadData(0x1240, 0b00000000);
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1200, 0b01000000);
+    CHECK_RAM(0x80, 0b01000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1210, 0b00000010);
+    CHECK_RAM(0x81, 0b00000010);
     CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1220, 0b00000000);
+    CHECK_RAM(0x82, 0b00000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1230, 0b10000000);
+    CHECK_RAM(0x83, 0b10000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 
     cpu->SetCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1240, 0b00000001);
+    CHECK_RAM(0x84, 0b00000001);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
@@ -534,62 +510,56 @@ TEST("ROL zp, X", "ROL-zp,X") {  // 0x36
 
     LoadData(0x200, {
         0x36, 0x80,  // X: $00, C- Z- N-
-        0x36, 0x80,  // X: $02, C+ Z- N-
-        0x36, 0x80,  // X: $04, C- Z+ N-
-        0x36, 0x80,  // X: $06, C- Z- N-
-        0x36, 0x80,  // X: $08, C- Z- N-
+        0x36, 0x80,  // X: $01, C+ Z- N-
+        0x36, 0x80,  // X: $02, C- Z+ N-
+        0x36, 0x80,  // X: $03, C- Z- N-
+        0x36, 0x80,  // X: $04, C- Z- N-
     });
 
     LoadData(0x80, {
-        0x00, 0x12,
-        0x10, 0x12,
-        0x20, 0x12,
-        0x30, 0x12,
-        0x40, 0x12,
+        0b00100000,
+        0b10000001,
+        0b00000000,
+        0b01000000,
+        0b00000000,
     });
-
-    LoadData(0x1200, 0b00100000);
-    LoadData(0x1210, 0b10000001);
-    LoadData(0x1220, 0b00000000);
-    LoadData(0x1230, 0b01000000);
-    LoadData(0x1240, 0b00000000);
 
     cpu->ClearCarryFlag();
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1200, 0b01000000);
+    CHECK_RAM(0x80, 0b01000000);
     CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->ClearCarryFlag();
+    cpu->SetRegisterX(0x01);
+    EXECUTE(expectedCycles);
+    CHECK_RAM(0x81, 0b00000010);
+    CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->ClearCarryFlag();
     cpu->SetRegisterX(0x02);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1210, 0b00000010);
-    CHECK_CARRY_SET;
-    CHECK_ZERO_CLEAR;
-    CHECK_NEGATIVE_CLEAR;
-
-    cpu->ClearCarryFlag();
-    cpu->SetRegisterX(0x04);
-    EXECUTE(expectedCycles);
-    CHECK_RAM(0x1220, 0b00000000);
+    CHECK_RAM(0x82, 0b00000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->ClearCarryFlag();
-    cpu->SetRegisterX(0x06);
+    cpu->SetRegisterX(0x03);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1230, 0b10000000);
+    CHECK_RAM(0x83, 0b10000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 
     cpu->SetCarryFlag();
-    cpu->SetRegisterX(0x08);
+    cpu->SetRegisterX(0x04);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1240, 0b00000001);
+    CHECK_RAM(0x84, 0b00000001);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
@@ -757,17 +727,16 @@ TEST("ROR zp", "ROR-zp") {  // 0x66
 
     LoadData(0x200, {
         0x66, 0x80,  // C- Z- N-
-        0x66, 0x82,  // C+ Z- N-
-        0x66, 0x84,  // C- Z+ N-
-        0x66, 0x86,  // C- Z- N+
+        0x66, 0x81,  // C+ Z- N-
+        0x66, 0x82,  // C- Z+ N-
+        0x66, 0x83,  // C- Z- N+
     });
 
     LoadData(0x80, {
-        0x00, 0x12,
-        0x10, 0x12,
-        0x20, 0x12,
-        0x30, 0x12,
-        0x40, 0x12,
+        0b00100000,
+        0b10000001,
+        0b00000000,
+        0b00000000,
     });
 
     LoadData(0x1200, 0b00100000);
@@ -777,28 +746,28 @@ TEST("ROR zp", "ROR-zp") {  // 0x66
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1200, 0b00010000);
+    CHECK_RAM(0x80, 0b00010000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1210, 0b01000000);
+    CHECK_RAM(0x81, 0b01000000);
     CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->ClearCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1220, 0b00000000);
+    CHECK_RAM(0x82, 0b00000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->SetCarryFlag();
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1230, 0b10000000);
+    CHECK_RAM(0x83, 0b10000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
@@ -809,17 +778,16 @@ TEST("ROR zp, X", "ROR-zp,X") {  // 0x76
 
     LoadData(0x200, {
         0x76, 0x80,  // X: $00, C- Z- N-
-        0x76, 0x80,  // X: $02, C+ Z- N-
-        0x76, 0x80,  // X: $04, C- Z+ N-
-        0x76, 0x80,  // X: $06, C- Z- N+
+        0x76, 0x80,  // X: $01, C+ Z- N-
+        0x76, 0x80,  // X: $02, C- Z+ N-
+        0x76, 0x80,  // X: $03, C- Z- N+
     });
 
     LoadData(0x80, {
-        0x00, 0x12,
-        0x10, 0x12,
-        0x20, 0x12,
-        0x30, 0x12,
-        0x40, 0x12,
+        0b00100000,
+        0b10000001,
+        0b00000000,
+        0b00000000,
     });
 
     LoadData(0x1200, 0b00100000);
@@ -830,31 +798,31 @@ TEST("ROR zp, X", "ROR-zp,X") {  // 0x76
     cpu->ClearCarryFlag();
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1200, 0b00010000);
+    CHECK_RAM(0x80, 0b00010000);
     CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->ClearCarryFlag();
+    cpu->SetRegisterX(0x01);
+    EXECUTE(expectedCycles);
+    CHECK_RAM(0x81, 0b01000000);
+    CHECK_CARRY_SET;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->ClearCarryFlag();
     cpu->SetRegisterX(0x02);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1210, 0b01000000);
-    CHECK_CARRY_SET;
-    CHECK_ZERO_CLEAR;
-    CHECK_NEGATIVE_CLEAR;
-
-    cpu->ClearCarryFlag();
-    cpu->SetRegisterX(0x04);
-    EXECUTE(expectedCycles);
-    CHECK_RAM(0x1220, 0b00000000);
+    CHECK_RAM(0x82, 0b00000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->SetCarryFlag();
-    cpu->SetRegisterX(0x06);
+    cpu->SetRegisterX(0x03);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1230, 0b10000000);
+    CHECK_RAM(0x83, 0b10000000);
     CHECK_CARRY_CLEAR;
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;

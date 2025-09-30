@@ -15,32 +15,28 @@ TEST("INC zp", "INC-zp") {  // 0xE6
 
     LoadData(0x200, {
         0xE6, 0x80,  // Z- N-
-        0xE6, 0x82,  // Z+ N-
-        0xE6, 0x84,  // Z- N+
+        0xE6, 0x81,  // Z+ N-
+        0xE6, 0x82,  // Z- N+
     });
 
     LoadData(0x80, {
-        0x00, 0x11,
-        0x10, 0x11,
-        0x20, 0x11,
+        0x10,
+        0xFF,
+        0x7F,
     });
 
-    LoadData(0x1100, 0x10);
-    LoadData(0x1110, 0xFF);
-    LoadData(0x1120, 0x7F);
-
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1100, 0x11);
+    CHECK_RAM(0x80, 0x11);
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1110, 0x00);
+    CHECK_RAM(0x81, 0x00);
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1120, 0x80);
+    CHECK_RAM(0x82, 0x80);
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 }
@@ -50,35 +46,31 @@ TEST("INC zp, X", "INC-zp,X") {  // 0xF6
 
     LoadData(0x200, {
         0xF6, 0x80,  // X: $00, Z- N-
-        0xF6, 0x80,  // X: $02, Z+ N-
-        0xF6, 0x80,  // X: $04, Z- N+
+        0xF6, 0x80,  // X: $01, Z+ N-
+        0xF6, 0x80,  // X: $02, Z- N+
     });
 
     LoadData(0x80, {
-        0x00, 0x11,
-        0x10, 0x11,
-        0x20, 0x11,
+        0x10,
+        0xFF,
+        0x7F,
     });
-
-    memory->SetByte(0x1100, 0x10);
-    memory->SetByte(0x1110, 0xFF);
-    memory->SetByte(0x1120, 0x7F);
 
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1100, 0x11);
+    CHECK_RAM(0x80, 0x11);
     CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x01);
+    EXECUTE(expectedCycles);
+    CHECK_RAM(0x81, 0x00);
+    CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->SetRegisterX(0x02);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1110, 0x00);
-    CHECK_ZERO_SET;
-    CHECK_NEGATIVE_CLEAR;
-
-    cpu->SetRegisterX(0x04);
-    EXECUTE(expectedCycles);
-    CHECK_RAM(0x1120, 0x80);
+    CHECK_RAM(0x82, 0x80);
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 }
@@ -214,32 +206,28 @@ TEST("DEC zp", "DEC-zp") {  // 0xC6
 
     LoadData(0x200, {
         0xC6, 0x80,  // Z- N-
-        0xC6, 0x82,  // Z+ N-
-        0xC6, 0x84,  // Z- N+
+        0xC6, 0x81,  // Z+ N-
+        0xC6, 0x82,  // Z- N+
     });
 
     LoadData(0x80, {
-        0x00, 0x11,
-        0x10, 0x11,
-        0x20, 0x11,
+        0x10,
+        0x01,
+        0x00,
     });
 
-    memory->SetByte(0x1100, 0x10);
-    memory->SetByte(0x1110, 0x01);
-    memory->SetByte(0x1120, 0x00);
-
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1100, 0x0F);
+    CHECK_RAM(0x80, 0x0F);
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1110, 0x00);
+    CHECK_RAM(0x81, 0x00);
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1120, 0xFF);
+    CHECK_RAM(0x82, 0xFF);
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 }
@@ -249,35 +237,31 @@ TEST("DEC zp, X", "DEC-zp,X") {  // 0xD6
 
     LoadData(0x200, {
         0xD6, 0x80,  // X: $00, Z- N-
-        0xD6, 0x80,  // X: $02, Z+ N-
-        0xD6, 0x80,  // X: $04, Z- N+
+        0xD6, 0x80,  // X: $01, Z+ N-
+        0xD6, 0x80,  // X: $02, Z- N+
     });
 
     LoadData(0x80, {
-        0x00, 0x11,
-        0x10, 0x11,
-        0x20, 0x11,
+        0x10,
+        0x01,
+        0x00,
     });
-
-    memory->SetByte(0x1100, 0x10);
-    memory->SetByte(0x1110, 0x01);
-    memory->SetByte(0x1120, 0x00);
 
     cpu->SetRegisterX(0x00);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1100, 0x0F);
+    CHECK_RAM(0x80, 0x0F);
     CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x01);
+    EXECUTE(expectedCycles);
+    CHECK_RAM(0x81, 0x00);
+    CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 
     cpu->SetRegisterX(0x02);
     EXECUTE(expectedCycles);
-    CHECK_RAM(0x1110, 0x00);
-    CHECK_ZERO_SET;
-    CHECK_NEGATIVE_CLEAR;
-
-    cpu->SetRegisterX(0x04);
-    EXECUTE(expectedCycles);
-    CHECK_RAM(0x1120, 0xFF);
+    CHECK_RAM(0x82, 0xFF);
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 }

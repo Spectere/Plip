@@ -450,13 +450,14 @@ long Mos6502::DecodeAndExecute() {
         //
         case 0xE6: case 0xF6: case 0xEE: case 0xFE: {
             // INC
-            const uint16_t addr = FetchAddress(ADDR_MODE(op));
+            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
             uint8_t value;
             FETCH_ADDR(value, addr);
             ++value;
             CHECK_ZERO(value);
             CHECK_NEGATIVE(value);
             m_memory->SetByte(addr, value);
+            ++cycleCount;
             break;
         }
 
@@ -480,13 +481,14 @@ long Mos6502::DecodeAndExecute() {
 
         case 0xC6: case 0xD6: case 0xCE: case 0xDE: {
             // DEC
-            const uint16_t addr = FetchAddress(ADDR_MODE(op));
+            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
             uint8_t value;
             FETCH_ADDR(value, addr);
             --value;
             CHECK_ZERO(value);
             CHECK_NEGATIVE(value);
             m_memory->SetByte(addr, value);
+            ++cycleCount;
             break;
         }
 
@@ -518,7 +520,7 @@ long Mos6502::DecodeAndExecute() {
             if(op == 0x0A) {
                 value = m_registers.A;
             } else {
-                addr = FetchAddress(ADDR_MODE(op));
+                addr = FetchAddress(ADDR_MODE(op), false, true);
                 FETCH_ADDR(value, addr);
             }
 
@@ -529,10 +531,10 @@ long Mos6502::DecodeAndExecute() {
 
             if(op == 0x0A) {
                 m_registers.A = value;
-                ++cycleCount;
             } else {
                 m_memory->SetByte(addr, value);
             }
+            ++cycleCount;
             break;
         }
 
@@ -543,7 +545,7 @@ long Mos6502::DecodeAndExecute() {
             if(op == 0x4A) {
                 value = m_registers.A;
             } else {
-                addr = FetchAddress(ADDR_MODE(op));
+                addr = FetchAddress(ADDR_MODE(op), false, true);
                 FETCH_ADDR(value, addr);
             }
 
@@ -551,10 +553,10 @@ long Mos6502::DecodeAndExecute() {
 
             if(op == 0x4A) {
                 m_registers.A = value;
-                ++cycleCount;
             } else {
                 m_memory->SetByte(addr, value);
             }
+            ++cycleCount;
             break;
         }
 
@@ -565,7 +567,7 @@ long Mos6502::DecodeAndExecute() {
             if(op == 0x2A) {
                 value = m_registers.A;
             } else {
-                addr = FetchAddress(ADDR_MODE(op));
+                addr = FetchAddress(ADDR_MODE(op), false, true);
                 FETCH_ADDR(value, addr);
             }
 
@@ -578,10 +580,10 @@ long Mos6502::DecodeAndExecute() {
 
             if(op == 0x2A) {
                 m_registers.A = value;
-                ++cycleCount;
             } else {
                 m_memory->SetByte(addr, value);
             }
+            ++cycleCount;
             break;
         }
 
@@ -592,7 +594,7 @@ long Mos6502::DecodeAndExecute() {
             if(op == 0x6A) {
                 value = m_registers.A;
             } else {
-                addr = FetchAddress(ADDR_MODE(op));
+                addr = FetchAddress(ADDR_MODE(op), false, true);
                 FETCH_ADDR(value, addr);
             }
 
@@ -605,10 +607,10 @@ long Mos6502::DecodeAndExecute() {
 
             if(op == 0x6A) {
                 m_registers.A = value;
-                ++cycleCount;
             } else {
                 m_memory->SetByte(addr, value);
             }
+            ++cycleCount;
             break;
         }
 
@@ -956,11 +958,14 @@ uint16_t Mos6502::FetchAddress(const int addressingMode) {
     }
 }
 
-uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, const bool useAccumulator) {
-    if(alwaysUseY && (addressingMode == ModeAbsoluteX)) {
-        addressingMode = ModeAbsoluteY;
-    }
+// ReSharper disable once CppMemberFunctionMayBeStatic
+// ReSharper disable once CppMemberFunctionMayBeConst
+void Mos6502::DecodeAndExecuteWdc65C02Extended() { // NOLINT(*-convert-member-functions-to-static)
+    // TODO: The 65C02 has additional instructions that we don't currently handle.
+    throw PlipInvalidOpcodeException(op);
+}
 
+uint16_t Mos6502::FetchAddress(const int addressingMode, const bool alwaysUseY, const bool forcePenalty) {
     switch(addressingMode) {
         case ModeIndexedIndirect: {
             uint8_t index, low, high;
@@ -968,16 +973,72 @@ uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, cons
             index += m_registers.X;
             FETCH_ADDR(low, index);
             FETCH_ADDR(high, ++index);  // Abuse integer overflows to simulate zero page wraparound.
-            const uint16_t addr = (high << 8) | low;
             cycleCount += 2;
-            return m_memory->GetByte(addr);
+            return (high << 8) | low;
         }
+            
         case ModeZeroPage: {
             uint8_t offset;
             FETCH_PC(offset);
             ++cycleCount;
-            return m_memory->GetByte(offset);
+            return offset;
         }
+            
+        case ModeAbsolute: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            ++cycleCount;
+            return (high << 8) | low;
+        }
+            
+        case ModeIndirectIndexed: {
+            uint8_t index, low, high;
+            FETCH_PC(index);
+            FETCH_ADDR(low, index);
+            FETCH_ADDR(high, ++index);  // Abuse integer overflows to simulate zero page wraparound.
+            const uint16_t addr = ((high << 8) | low) + m_registers.Y;
+            cycleCount += (forcePenalty || ((addr >> 8) != high)) ? 2 : 1;
+            return addr;
+        }
+            
+        case ModeZeroPageReg: {
+            uint8_t offset;
+            FETCH_PC(offset);
+            offset += alwaysUseY ? m_registers.Y : m_registers.X;
+            cycleCount += 2;
+            return offset;
+        }
+            
+        case ModeAbsoluteY: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = ((high << 8) | low) + m_registers.Y;
+            cycleCount += (forcePenalty || ((addr >> 8) != high)) ? 2 : 1;
+            return addr;
+        }
+            
+        case ModeAbsoluteX: {
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = ((high << 8) | low) + m_registers.X;
+            cycleCount += (forcePenalty || ((addr >> 8) != high)) ? 2 : 1;
+            return addr;
+        }
+        
+        default:
+            throw PlipEmulationException("6502: Invalid addressing mode in this context");
+    }
+}
+
+uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, const bool useAccumulator, const bool forcePenalty) {
+    if(alwaysUseY && (addressingMode == ModeAbsoluteX)) {
+        addressingMode = ModeAbsoluteY;
+    }
+
+    switch(addressingMode) {
         case ModeImmediate: {
             if(useAccumulator) {
                 return m_registers.A;
@@ -987,48 +1048,10 @@ uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, cons
             FETCH_PC(value);
             return value;
         }
-        case ModeAbsolute: {
-            uint8_t low, high;
-            FETCH_PC(low);
-            FETCH_PC(high);
-            const uint16_t addr = (high << 8) | low;
-            ++cycleCount;
-            return m_memory->GetByte(addr);
+        
+        default: {
+            return m_memory->GetByte(FetchAddress(addressingMode, alwaysUseY, forcePenalty));
         }
-        case ModeIndirectIndexed: {
-            uint8_t index, low, high;
-            FETCH_PC(index);
-            FETCH_ADDR(low, index);
-            FETCH_ADDR(high, ++index);  // Abuse integer overflows to simulate zero page wraparound.
-            const uint16_t addr = ((high << 8) | low) + m_registers.Y;
-            cycleCount += ((addr >> 8) != high) ? 2 : 1;
-            return m_memory->GetByte(addr);
-        }
-        case ModeZeroPageReg: {
-            uint8_t offset;
-            FETCH_PC(offset);
-            offset += alwaysUseY ? m_registers.Y : m_registers.X;
-            cycleCount += 2;
-            return m_memory->GetByte(offset);
-        }
-        case ModeAbsoluteY: {
-            uint8_t low, high;
-            FETCH_PC(low);
-            FETCH_PC(high);
-            const uint16_t addr = ((high << 8) | low) + m_registers.Y;
-            cycleCount += ((addr >> 8) != high) ? 2 : 1;
-            return m_memory->GetByte(addr);
-        }
-        case ModeAbsoluteX: {
-            uint8_t low, high;
-            FETCH_PC(low);
-            FETCH_PC(high);
-            const uint16_t addr = ((high << 8) | low) + m_registers.X;
-            cycleCount += ((addr >> 8) != high) ? 2 : 1;
-            return m_memory->GetByte(addr);
-        }
-        default:
-            throw PlipEmulationException("6502: Unknown addressing mode");
     }
 }
 
