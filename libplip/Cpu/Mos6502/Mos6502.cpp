@@ -46,5 +46,6 @@ void Mos6502::Reset([[maybe_unused]] const uint32_t pc) {
 }
 
 long Mos6502::Step() {
+    if(OpKillExecuted) return __LONG_MAX__;
     return DecodeAndExecute();
 }

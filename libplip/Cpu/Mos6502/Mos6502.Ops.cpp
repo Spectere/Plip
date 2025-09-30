@@ -129,7 +129,6 @@ void Mos6502::JumpRelative(const int8_t rel) {
     m_registers.PC = newPc;
 }
 
-
 uint8_t Mos6502::SubDecimal(const uint8_t value) {
     const int carry = m_registers.GetCarryFlag() ? 0 : 1;
     const int result = m_registers.A - value - carry;
@@ -171,11 +170,70 @@ uint8_t Mos6502::SubDecimal(const uint8_t value) {
     return final;
 }
 
+void Mos6502::OpCompare(const uint8_t value) {
+    const uint8_t result = m_registers.A - value;
+
+    (m_registers.A >= value) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+            
+    CHECK_NEGATIVE(result);
+    CHECK_ZERO(result);
+}
+
+uint8_t Mos6502::OpDecrement(const uint16_t addr) {
+    uint8_t value;
+    FETCH_ADDR(value, addr);
+    --value;
+    CHECK_ZERO(value);
+    CHECK_NEGATIVE(value);
+    m_memory->SetByte(addr, value);
+    ++cycleCount;
+    return value;
+}
+
+uint8_t Mos6502::OpIncrement(const uint16_t addr) {
+    uint8_t value;
+    FETCH_ADDR(value, addr);
+    ++value;
+    CHECK_ZERO(value);
+    CHECK_NEGATIVE(value);
+    m_memory->SetByte(addr, value);
+    ++cycleCount;
+    return value;
+}
+
+uint8_t Mos6502::OpLogicalShiftLeft(uint8_t value) {
+    (value & 0x80) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+    value <<= 1;
+    CHECK_ZERO(value);
+    CHECK_NEGATIVE(value);
+    return value;
+}
+
 uint8_t Mos6502::OpLogicalShiftRight(uint8_t value) {
     if(value & 0x01) m_registers.SetCarryFlag(); else m_registers.ClearCarryFlag();
     value >>= 1;
     CHECK_ZERO(value);
     CHECK_NEGATIVE(value);  // Should never be set.
+    return value;
+}
+
+uint8_t Mos6502::OpRotateLeft(uint8_t value) {
+    const uint8_t carry = m_registers.GetCarryFlag() ? 0x01 : 0x00;
+    (value & 0x80) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+    value <<= 1;
+    value |= carry;
+    CHECK_ZERO(value);
+    CHECK_NEGATIVE(value);
+    return value;
+}
+
+uint8_t Mos6502::OpRotateRight(uint8_t value) {
+    const uint8_t carry = m_registers.GetCarryFlag() ? 0x80 : 0x00;
+    (value & 0x01) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
+    value >>= 1;
+    value |= carry;
+    CHECK_ZERO(value);
+    CHECK_NEGATIVE(value);
     return value;
 }
 
@@ -401,13 +459,7 @@ long Mos6502::DecodeAndExecute() {
 
         case 0xC9: case 0xC5: case 0xD5: case 0xCD: case 0xDD: case 0xD9: case 0xC1: case 0xD1: {
             // CMP
-            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
-            const uint8_t result = m_registers.A - value;
-
-            (m_registers.A >= value) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-            
-            CHECK_NEGATIVE(result);
-            CHECK_ZERO(result);
+            OpCompare(FetchFromMemory(ADDR_MODE(op)));
             break;
         }
 
@@ -450,14 +502,7 @@ long Mos6502::DecodeAndExecute() {
         //
         case 0xE6: case 0xF6: case 0xEE: case 0xFE: {
             // INC
-            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
-            uint8_t value;
-            FETCH_ADDR(value, addr);
-            ++value;
-            CHECK_ZERO(value);
-            CHECK_NEGATIVE(value);
-            m_memory->SetByte(addr, value);
-            ++cycleCount;
+            OpIncrement(FetchAddress(ADDR_MODE(op), false, true));
             break;
         }
 
@@ -481,14 +526,7 @@ long Mos6502::DecodeAndExecute() {
 
         case 0xC6: case 0xD6: case 0xCE: case 0xDE: {
             // DEC
-            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
-            uint8_t value;
-            FETCH_ADDR(value, addr);
-            --value;
-            CHECK_ZERO(value);
-            CHECK_NEGATIVE(value);
-            m_memory->SetByte(addr, value);
-            ++cycleCount;
+            OpDecrement(FetchAddress(ADDR_MODE(op), false, true));
             break;
         }
 
@@ -524,11 +562,8 @@ long Mos6502::DecodeAndExecute() {
                 FETCH_ADDR(value, addr);
             }
 
-            (value & 0x80) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-            value <<= 1;
-            CHECK_ZERO(value);
-            CHECK_NEGATIVE(value);
-
+            value = OpLogicalShiftLeft(value);
+            
             if(op == 0x0A) {
                 m_registers.A = value;
             } else {
@@ -571,12 +606,7 @@ long Mos6502::DecodeAndExecute() {
                 FETCH_ADDR(value, addr);
             }
 
-            const uint8_t carry = m_registers.GetCarryFlag() ? 0x01 : 0x00;
-            (value & 0x80) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-            value <<= 1;
-            value |= carry;
-            CHECK_ZERO(value);
-            CHECK_NEGATIVE(value);
+            value = OpRotateLeft(value);
 
             if(op == 0x2A) {
                 m_registers.A = value;
@@ -598,12 +628,7 @@ long Mos6502::DecodeAndExecute() {
                 FETCH_ADDR(value, addr);
             }
 
-            const uint8_t carry = m_registers.GetCarryFlag() ? 0x80 : 0x00;
-            (value & 0x01) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-            value >>= 1;
-            value |= carry;
-            CHECK_ZERO(value);
-            CHECK_NEGATIVE(value);
+            value = OpRotateRight(value);
 
             if(op == 0x6A) {
                 m_registers.A = value;
@@ -800,6 +825,13 @@ long Mos6502::DecodeAndExecute() {
 void Mos6502::DecodeAndExecuteNmosUnofficial() {
     // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
     switch(op) { // NOLINT(*-multiway-paths-covered)
+        case 0x02: case 0x12: case 0x22: case 0x32: case 0x42: case 0x52: case 0x62: case 0x72: case 0x92: case 0xB2: case 0xD2: case 0xF2: {
+            // KIL
+            // Crashes the CPU.
+            OpKillExecuted = true;
+            break;
+        }
+        
         case 0x1A: case 0x3A: case 0x5A: case 0x7A: case 0xDA: case 0xFA: {
             // NOP (1 byte, 2 cycles)
             ++cycleCount;
@@ -906,55 +938,45 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
             StoreToMemory(ADDR_MODE(op), m_registers.A & m_registers.X, true);
             break;
         }
-    }
-}
 
-// ReSharper disable once CppMemberFunctionMayBeStatic
-void Mos6502::DecodeAndExecuteWdc65C02Extended() { // NOLINT(*-convert-member-functions-to-static)
-    // TODO: The 65C02 has additional instructions that we don't currently handle.
-    throw PlipInvalidOpcodeException(op);
-}
-
-uint16_t Mos6502::FetchAddress(const int addressingMode) {
-    switch(addressingMode) {
-        case ModeZeroPage: {
-            uint8_t offset, low, high;
-            FETCH_PC(offset);
-            FETCH_ADDR(low, offset);
-            FETCH_ADDR(high, ++offset);  // Abuse integer overflows to simulate zero page wraparound.
-            return (high << 8) | low;
+        case 0xC3: case 0xC7: case 0xCF: case 0xD3: case 0xD7: case 0xDB: case 0xDF: {
+            // DCP
+            // DEC value; CMP value
+            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
+            const uint8_t value = OpDecrement(addr);
+            OpCompare(value);
+            break;
         }
 
-        case ModeZeroPageReg: {
-            uint8_t offset, low, high;
-            FETCH_PC(offset);
-            offset += m_registers.X;
-            FETCH_ADDR(low, offset);
-            FETCH_ADDR(high, ++offset);  // Abuse integer overflows to simulate zero page wraparound.
-            ++cycleCount;
-            return (high << 8) | low;
+        case 0xE3: case 0xE7: case 0xEF: case 0xF3: case 0xF7: case 0xFB: case 0xFF: {
+            // ISC
+            // INC value; SBC value
+            break;
         }
 
-        case ModeAbsolute: {
-            uint16_t low, high;
-            FETCH_PC(low);
-            FETCH_PC(high);
-            cycleCount += 2;
-            return (high << 8) | low;
+        case 0x23: case 0x27: case 0x2F: case 0x33: case 0x37: case 0x3B: case 0x3F: {
+            // RLA
+            // ROL value; AND value
+            break;
         }
 
-        case ModeAbsoluteX: {
-            uint16_t low, high;
-            FETCH_PC(low);
-            FETCH_PC(high);
-            uint16_t addr = (high << 8) | low;
-            addr += m_registers.X;
-            cycleCount += 3;
-            return addr;
+        case 0x63: case 0x67: case 0x6F: case 0x73: case 0x77: case 0x7B: case 0x7F: {
+            // RRA
+            // ROR value; ADC value
+            break;
         }
-        
-        default:
-            throw PlipEmulationException("6502: Invalid addressing mode in this context");
+
+        case 0x03: case 0x07: case 0x0F: case 0x13: case 0x17: case 0x1B: case 0x1F: {
+            // SLO
+            // ASL value; ORA value
+            break;
+        }
+
+        case 0x43: case 0x47: case 0x4F: case 0x53: case 0x57: case 0x5B: case 0x5F: {
+            // SRE
+            // LSR value; EOR value
+            break;
+        }
     }
 }
 

@@ -32,6 +32,8 @@ namespace Plip::Cpu {
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
 
+        bool CpuHasCrashed() const { return OpKillExecuted; }
+
     protected:
         static constexpr uint16_t StackLocation = 0x0100;
         static constexpr uint16_t NmiVectorHigh = 0xFFFB;
@@ -58,6 +60,8 @@ namespace Plip::Cpu {
         static constexpr auto ModeAbsoluteY = 0b110 << 2;
         static constexpr auto ModeAbsoluteX = 0b111 << 2;
 
+        bool OpKillExecuted {};
+
         uint8_t AddBinary(uint8_t value);
         uint8_t AddDecimal(uint8_t value);
         uint8_t SubDecimal(uint8_t value);
@@ -67,10 +71,16 @@ namespace Plip::Cpu {
         long DecodeAndExecute();
         void DecodeAndExecuteNmosUnofficial();
         void DecodeAndExecuteWdc65C02Extended();
-        [[nodiscard]] uint16_t FetchAddress(int addressingMode);
-        uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false);
+        [[nodiscard]] uint16_t FetchAddress(int addressingMode, const bool alwaysUseY = false, const bool forcePenalty = false);
+        uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false, const bool forcePenalty = false);
         void JumpRelative(int8_t rel);
+        void OpCompare(uint8_t value);
+        uint8_t OpDecrement(const uint16_t addr);
+        uint8_t OpIncrement(const uint16_t addr);
+        [[nodiscard]] uint8_t OpLogicalShiftLeft(uint8_t value);
         [[nodiscard]] uint8_t OpLogicalShiftRight(uint8_t value);
+        uint8_t OpRotateLeft(uint8_t value);
+        uint8_t OpRotateRight(uint8_t value);
         void StoreToMemory(int addressingMode, uint8_t value, bool swapXY = false);
     };
 }

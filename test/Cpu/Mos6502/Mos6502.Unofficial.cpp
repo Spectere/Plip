@@ -39,6 +39,105 @@ TEST("Unofficial-WDC65C02", "Unofficial-WDC65C02") {
 }
 
 //
+// KIL
+//
+TEST("Unofficial-KIL $02", "Unofficial-KIL-02") {  // 0x02
+    LoadData(0x200, { 0x02, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $12", "Unofficial-KIL-12") {  // 0x12
+    LoadData(0x200, { 0x12, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $22", "Unofficial-KIL-22") {  // 0x22
+    LoadData(0x200, { 0x22, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $32", "Unofficial-KIL-32") {  // 0x32
+    LoadData(0x200, { 0x32, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $42", "Unofficial-KIL-42") {  // 0x42
+    LoadData(0x200, { 0x42, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $52", "Unofficial-KIL-52") {  // 0x52
+    LoadData(0x200, { 0x52, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $62", "Unofficial-KIL-62") {  // 0x62
+    LoadData(0x200, { 0x62, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $72", "Unofficial-KIL-72") {  // 0x72
+    LoadData(0x200, { 0x72, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $92", "Unofficial-KIL-92") {  // 0x92
+    LoadData(0x200, { 0x92, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $B2", "Unofficial-KIL-B2") {  // 0xB2
+    LoadData(0x200, { 0xB2, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $D2", "Unofficial-KIL-D2") {  // 0xD2
+    LoadData(0x200, { 0xD2, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+TEST("Unofficial-KIL $F2", "Unofficial-KIL-F2") {  // 0xF2
+    LoadData(0x200, { 0xF2, 0xEA });
+    CHECK_FALSE(cpu->CpuHasCrashed());
+    cpu->Step();
+    CHECK(cpu->CpuHasCrashed());
+    EXECUTE(__LONG_MAX__);
+}
+
+//
 // Unofficial NOPs
 //
 
@@ -1032,4 +1131,439 @@ TEST("Unofficial-SAX (imm8, X)", "Unofficial-SAX-(imm8,X)") {  // 0x83
     cpu->SetRegisterX(0b00000010);
     EXECUTE(expectedCycles);
     CHECK_RAM(0x1234, 0b00000010);
+}
+
+//
+// DCP
+//
+TEST("Unofficial-DCP zp", "Unofficial-DCP-zp") {  // 0xC7
+    constexpr int expectedCycles = 5;
+
+    LoadData(0x200, {
+        0xC7, 0x80,  // C+ Z- N-
+        0xC7, 0x81,  // C+ Z+ N+
+        0xC7, 0x82,  // C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x80, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x81, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x82, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-DCP zp, X", "Unofficial-DCP-zp,X") {  // 0xD7
+    constexpr int expectedCycles = 6;
+
+    LoadData(0x200, {
+        0xD7, 0x80,  // X: $00, C+ Z- N-
+        0xD7, 0x80,  // X: $01, C+ Z+ N+
+        0xD7, 0x80,  // X: $02, C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x80, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x01);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x81, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x82, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-DCP abs16", "Unofficial-DCP-abs16") {  // 0xCF
+    constexpr int expectedCycles = 6;
+
+    LoadData(0x200, {
+        0xCF, 0x34, 0x12,  // C+ Z- N-
+        0xCF, 0x35, 0x12,  // C+ Z+ N+
+        0xCF, 0x36, 0x12,  // C- Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1234, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1235, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1236, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-DCP abs16, X", "Unofficial-DCP-abs16, X") {  // 0xDF
+    constexpr int expectedCycles = 7;
+
+    LoadData(0x200, {
+        0xDF, 0x34, 0x12,  // X: $00, C+ Z- N-
+        0xDF, 0x34, 0x12,  // X: $01, C+ Z+ N+
+        0xDF, 0x34, 0x12,  // X: $02, C- Z- N+
+
+        0xDF, 0xF0, 0x20,  // X: $30, C+ Z- N-
+        0xDF, 0xF0, 0x20,  // X: $31, C+ Z+ N+
+        0xDF, 0xF0, 0x20,  // X: $32, C- Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    LoadData(0x2120, {
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1234, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x01);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1235, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1236, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterX(0x30);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x2120, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x31);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x2121, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x32);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x2122, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-DCP abs16, Y", "Unofficial-DCP-abs16, Y") {  // 0xDB
+    constexpr int expectedCycles = 7;
+
+    LoadData(0x200, {
+        0xDB, 0x34, 0x12,  // Y: $00, C+ Z- N-
+        0xDB, 0x34, 0x12,  // Y: $01, C+ Z+ N+
+        0xDB, 0x34, 0x12,  // Y: $02, C- Z- N+
+
+        0xDB, 0xF0, 0x20,  // Y: $30, C+ Z- N-
+        0xDB, 0xF0, 0x20,  // Y: $31, C+ Z+ N+
+        0xDB, 0xF0, 0x20,  // Y: $32, C- Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    LoadData(0x2120, {
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1234, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x01);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1235, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1236, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterY(0x30);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x2120, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x31);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x2121, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x32);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x2122, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-DCP (imm8, X)", "Unofficial-DCP-(imm8,X)") {  // 0xC3
+    constexpr int expectedCycles = 8;
+
+    LoadData(0x200, {
+        0xC3, 0x80,  // X: $00, C+ Z- N-
+        0xC3, 0x80,  // X: $02, C+ Z+ N+
+        0xC3, 0x80,  // X: $04, C- Z- N+
+
+        0xC3, 0xF0,  // X: $20, C+ Z- N-
+        0xC3, 0xF0,  // X: $22, C+ Z+ N+
+        0xC3, 0xF0,  // X: $24, C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0x34, 0x12,
+        0x35, 0x12,
+        0x36, 0x12,
+    });
+
+    LoadData(0x10, {
+        0x37, 0x12,
+        0x38, 0x12,
+        0x39, 0x12,
+    });
+    
+    LoadData(0x1234, {
+        0b00010000, 0b00100001, 0b01000000,
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1234, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1235, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x04);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1236, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterX(0x20);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1237, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x22);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1238, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterX(0x24);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1239, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-DCP (imm8), Y", "Unofficial-DCP-(imm8),Y") {  // 0xD3
+    constexpr int expectedCycles = 8;
+
+    LoadData(0x200, {
+        0xD3, 0x80,  // Y: $00, C+ Z- N-
+        0xD3, 0x80,  // Y: $01, C+ Z+ N+
+        0xD3, 0x80,  // Y: $02, C- Z- N+
+
+        0xD3, 0x82,  // Y: $80, C+ Z- N-
+        0xD3, 0x82,  // Y: $81, C+ Z+ N+
+        0xD3, 0x82,  // Y: $82, C- Z- N+
+    });
+
+    LoadData(0x80, {
+        0x40, 0x12,
+        0xC3, 0x11,
+    });
+    
+    LoadData(0x1240, {
+        0b00010000, 0b00100001, 0b01000000,
+        0b00010000, 0b00100001, 0b01000000,
+    });
+
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1240, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x01);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1241, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1242, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterY(0x80);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1243, 0b00001111);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x81);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1244, 0b00100000);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x82);
+    cpu->SetRegisterA(0b00100000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00100000);
+    CHECK_RAM(0x1245, 0b00111111);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
 }
