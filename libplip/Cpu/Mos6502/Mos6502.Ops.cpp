@@ -1092,6 +1092,18 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
             cycleCount += 2;
             break;
         }
+
+        case 0xAB: {
+            // ANX imm8
+            // X = A &= imm8
+            // Set N and Z based on A
+            uint8_t imm;
+            FETCH_PC(imm);
+            m_registers.X = m_registers.A &= imm;
+            CHECK_ZERO(m_registers.A);
+            CHECK_NEGATIVE(m_registers.A);
+            break;
+        }
     }
 }
 

@@ -4779,3 +4779,37 @@ TEST("Unofficial-AHX abs16, Y", "Unofficial-AHX-abs16,Y") {  // 0x9F
     CHECK_X(0b00110011);
     CHECK_RAM(0x1244, 0b00010001);
 }
+
+//
+// ANX
+//
+TEST("Unofficial-ANX imm8", "Unofficial-ANX-imm8") {  // 0xAB
+    constexpr int expectedCycles = 2;
+
+    LoadData(0x200, {
+        0xAB, 0b01010101,  // Z- N-
+        0xAB, 0b00000000,  // Z+ N-
+        0xAB, 0b10101010,  // Z- N+
+    });
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b01010000);
+    CHECK_X(0b01010000);
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00000000);
+    CHECK_X(0b00000000);
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b10100000);
+    CHECK_X(0b10100000);
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
