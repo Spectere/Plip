@@ -178,6 +178,24 @@ void Mos6502::OpAddWithCarry(const uint8_t value) {
     }
 }
 
+void Mos6502::OpBitwiseAnd(const uint8_t value) {
+    m_registers.A &= value;
+    CHECK_NEGATIVE(m_registers.A);
+    CHECK_ZERO(m_registers.A);
+}
+
+void Mos6502::OpBitwiseOr(const uint8_t value) {
+    m_registers.A |= value;
+    CHECK_NEGATIVE(m_registers.A);
+    CHECK_ZERO(m_registers.A);
+}
+
+void Mos6502::OpBitwiseXor(const uint8_t value) {
+    m_registers.A ^= value;
+    CHECK_NEGATIVE(m_registers.A);
+    CHECK_ZERO(m_registers.A);
+}
+
 void Mos6502::OpCompare(const uint8_t value) {
     const uint8_t result = m_registers.A - value;
 
@@ -214,6 +232,7 @@ uint8_t Mos6502::OpLogicalShiftLeft(uint8_t value) {
     value <<= 1;
     CHECK_ZERO(value);
     CHECK_NEGATIVE(value);
+    ++cycleCount;
     return value;
 }
 
@@ -222,6 +241,7 @@ uint8_t Mos6502::OpLogicalShiftRight(uint8_t value) {
     value >>= 1;
     CHECK_ZERO(value);
     CHECK_NEGATIVE(value);  // Should never be set.
+    ++cycleCount;
     return value;
 }
 
@@ -232,6 +252,7 @@ uint8_t Mos6502::OpRotateLeft(uint8_t value) {
     value |= carry;
     CHECK_ZERO(value);
     CHECK_NEGATIVE(value);
+    ++cycleCount;
     return value;
 }
 
@@ -242,6 +263,7 @@ uint8_t Mos6502::OpRotateRight(uint8_t value) {
     value |= carry;
     CHECK_ZERO(value);
     CHECK_NEGATIVE(value);
+    ++cycleCount;
     return value;
 }
 
@@ -408,28 +430,19 @@ long Mos6502::DecodeAndExecute() {
         //
         case 0x29: case 0x25: case 0x35: case 0x2D: case 0x3D: case 0x39: case 0x21: case 0x31: {
             // AND
-            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
-            m_registers.A &= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
+            OpBitwiseAnd(FetchFromMemory(ADDR_MODE(op)));
             break;
         }
 
         case 0x49: case 0x45: case 0x55: case 0x4D: case 0x5D: case 0x59: case 0x41: case 0x51: {
             // EOR
-            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
-            m_registers.A ^= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
+            OpBitwiseXor(FetchFromMemory(ADDR_MODE(op)));
             break;
         }
 
         case 0x09: case 0x05: case 0x15: case 0x0D: case 0x1D: case 0x19: case 0x01: case 0x11: {
             // ORA
-            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
-            m_registers.A |= value;
-            CHECK_NEGATIVE(m_registers.A);
-            CHECK_ZERO(m_registers.A);
+            OpBitwiseOr(FetchFromMemory(ADDR_MODE(op)));
             break;
         }
 
@@ -574,7 +587,6 @@ long Mos6502::DecodeAndExecute() {
             } else {
                 m_memory->SetByte(addr, value);
             }
-            ++cycleCount;
             break;
         }
 
@@ -596,7 +608,6 @@ long Mos6502::DecodeAndExecute() {
             } else {
                 m_memory->SetByte(addr, value);
             }
-            ++cycleCount;
             break;
         }
 
@@ -618,7 +629,6 @@ long Mos6502::DecodeAndExecute() {
             } else {
                 m_memory->SetByte(addr, value);
             }
-            ++cycleCount;
             break;
         }
 
@@ -640,7 +650,6 @@ long Mos6502::DecodeAndExecute() {
             } else {
                 m_memory->SetByte(addr, value);
             }
-            ++cycleCount;
             break;
         }
 
@@ -874,6 +883,7 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
             FETCH_PC(value);
             m_registers.A &= value;
             m_registers.A = OpLogicalShiftRight(m_registers.A);
+            --cycleCount;
             break;
         }
 
@@ -959,24 +969,52 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
         case 0x23: case 0x27: case 0x2F: case 0x33: case 0x37: case 0x3B: case 0x3F: {
             // RLA
             // ROL value; AND value
+            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
+            uint8_t value;
+            FETCH_ADDR(value, addr);
+            value = OpRotateLeft(value);
+            m_memory->SetByte(addr, value);
+
+            OpBitwiseAnd(value);
             break;
         }
 
         case 0x63: case 0x67: case 0x6F: case 0x73: case 0x77: case 0x7B: case 0x7F: {
             // RRA
             // ROR value; ADC value
+            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
+            uint8_t value;
+            FETCH_ADDR(value, addr);
+            value = OpRotateRight(value);
+            m_memory->SetByte(addr, value);
+
+            OpAddWithCarry(value);
             break;
         }
 
         case 0x03: case 0x07: case 0x0F: case 0x13: case 0x17: case 0x1B: case 0x1F: {
             // SLO
             // ASL value; ORA value
+            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
+            uint8_t value;
+            FETCH_ADDR(value, addr);
+            value = OpLogicalShiftLeft(value);
+            m_memory->SetByte(addr, value);
+
+            OpBitwiseOr(value);
             break;
         }
 
         case 0x43: case 0x47: case 0x4F: case 0x53: case 0x57: case 0x5B: case 0x5F: {
             // SRE
             // LSR value; EOR value
+            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
+            uint8_t value;
+            FETCH_ADDR(value, addr);
+            value = OpLogicalShiftRight(value);
+            m_memory->SetByte(addr, value);
+
+            OpBitwiseXor(value);
             break;
         }
     }

@@ -75,6 +75,9 @@ namespace Plip::Cpu {
         uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false, const bool forcePenalty = false);
         void JumpRelative(int8_t rel);
         void OpAddWithCarry(uint8_t value);
+        void OpBitwiseAnd(uint8_t value);
+        void OpBitwiseOr(uint8_t value);
+        void OpBitwiseXor(uint8_t value);
         void OpCompare(uint8_t value);
         uint8_t OpDecrement(uint16_t addr);
         uint8_t OpIncrement(uint16_t addr);
