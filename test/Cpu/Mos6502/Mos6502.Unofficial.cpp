@@ -1567,3 +1567,692 @@ TEST("Unofficial-DCP (imm8), Y", "Unofficial-DCP-(imm8),Y") {  // 0xD3
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 }
+
+//
+// ISC
+//
+TEST("Unofficial-ISC zp", "Unofficial-ISC-zp") {  // 0xE7
+    constexpr int expectedCycles = 5;
+
+    LoadData(0x200, {
+        0xE7, 0x80,  // C+ Z- N-
+        0xE7, 0x81,  // C+ Z- N-
+        0xE7, 0x82,  // C- Z- N-
+        0xE7, 0x83,  // C- Z- N+
+        0xE7, 0x84,  // C- Z+ N-
+        0xE7, 0x85,  // C+ Z- N+
+    });
+
+    LoadData(0x80, {
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+    });
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x80, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x81, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x82, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x83, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x84, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x85, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-ISC zp, X", "Unofficial-ISC-zp,X") {  // 0xF7
+    constexpr int expectedCycles = 6;
+
+    LoadData(0x200, {
+        0xF7, 0x80,  // X: $00, C+ Z- N-
+        0xF7, 0x80,  // X: $01, C+ Z- N-
+        0xF7, 0x80,  // X: $02, C- Z- N-
+        0xF7, 0x80,  // X: $03, C- Z- N+
+        0xF7, 0x80,  // X: $04, C- Z+ N-
+        0xF7, 0x80,  // X: $05, C+ Z- N+
+    });
+
+    LoadData(0x80, {
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+    });
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x80, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x01);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x81, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x82, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x03);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x83, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x04);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x84, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x05);
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x85, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-ISC abs16", "Unofficial-ISC-abs16") {  // 0xEF
+    constexpr int expectedCycles = 6;
+
+    LoadData(0x200, {
+        0xEF, 0x34, 0x12,  // C+ Z- N-
+        0xEF, 0x35, 0x12,  // C+ Z- N-
+        0xEF, 0x36, 0x12,  // C- Z- N-
+        0xEF, 0x37, 0x12,  // C- Z- N+
+        0xEF, 0x38, 0x12,  // C- Z+ N-
+        0xEF, 0x39, 0x12,  // C+ Z- N+
+    });
+
+    LoadData(0x1234, {
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+    });
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x1234, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x1235, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x1236, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x1237, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x1238, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x1239, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-ISC abs16, X", "Unofficial-ISC-abs16,X") {  // 0xFF
+    constexpr int expectedCycles = 7;
+
+    LoadData(0x200, {
+        0xFF, 0x34, 0x12,  // X: $00, C+ Z- N-
+        0xFF, 0x34, 0x12,  // X: $01, C+ Z- N-
+        0xFF, 0x34, 0x12,  // X: $02, C- Z- N-
+        0xFF, 0x34, 0x12,  // X: $03, C- Z- N+
+        0xFF, 0x34, 0x12,  // X: $04, C- Z+ N-
+        0xFF, 0x34, 0x12,  // X: $05, C+ Z- N+
+    });
+
+    LoadData(0x1234, {
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+    });
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x1234, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x01);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x1235, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x1236, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x03);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x1237, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x04);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x1238, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x05);
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x1239, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-ISC abs16, Y", "Unofficial-ISC-abs16,Y") {  // 0xFB
+    constexpr int expectedCycles = 7;
+
+    LoadData(0x200, {
+        0xFB, 0x34, 0x12,  // Y: $00, C+ Z- N-
+        0xFB, 0x34, 0x12,  // Y: $01, C+ Z- N-
+        0xFB, 0x34, 0x12,  // Y: $02, C- Z- N-
+        0xFB, 0x34, 0x12,  // Y: $03, C- Z- N+
+        0xFB, 0x34, 0x12,  // Y: $04, C- Z+ N-
+        0xFB, 0x34, 0x12,  // Y: $05, C+ Z- N+
+    });
+
+    LoadData(0x1234, {
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+    });
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x1234, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x01);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x1235, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x1236, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x03);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x1237, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x04);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x1238, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x05);
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x1239, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-ISC (zp, X)", "Unofficial-ISC-(zp,X)") {  // 0xE3
+    constexpr int expectedCycles = 8;
+
+    LoadData(0x200, {
+        0xE3, 0x80,  // X: $00, C+ Z- N-
+        0xE3, 0x80,  // X: $02, C+ Z- N-
+        0xE3, 0x80,  // X: $04, C- Z- N-
+        0xE3, 0x80,  // X: $06, C- Z- N+
+        0xE3, 0x80,  // X: $08, C- Z+ N-
+        0xE3, 0x80,  // X: $0A, C+ Z- N+
+
+        0xE3, 0xF0,  // X: $20, C+ Z- N-
+        0xE3, 0xF0,  // X: $22, C+ Z- N-
+        0xE3, 0xF0,  // X: $24, C- Z- N-
+        0xE3, 0xF0,  // X: $26, C- Z- N+
+        0xE3, 0xF0,  // X: $28, C- Z+ N-
+        0xE3, 0xF0,  // X: $2A, C+ Z- N+
+    });
+
+    LoadData(0x80, {
+        0x34, 0x12,
+        0x35, 0x12,
+        0x36, 0x12,
+        0x37, 0x12,
+        0x38, 0x12,
+        0x39, 0x12,
+    });
+
+    LoadData(0x10, {
+        0x3A, 0x12,
+        0x3B, 0x12,
+        0x3C, 0x12,
+        0x3D, 0x12,
+        0x3E, 0x12,
+        0x3F, 0x12,
+    });
+
+    LoadData(0x1234, {
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+    });
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x00);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x1234, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x02);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x1235, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x04);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x1236, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x06);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x1237, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x08);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x1238, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x0A);
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x1239, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x20);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x123A, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x22);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x123B, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x24);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x123C, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x26);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x123D, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x28);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x123E, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterX(0x2A);
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x123F, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}
+
+TEST("Unofficial-ISC (zp), Y", "Unofficial-ISC-(zp),Y") {  // 0xF3
+    constexpr int expectedCycles = 8;
+
+    LoadData(0x200, {
+        0xF3, 0x80,  // Y: $00, C+ Z- N-
+        0xF3, 0x80,  // Y: $01, C+ Z- N-
+        0xF3, 0x80,  // Y: $02, C- Z- N-
+        0xF3, 0x80,  // Y: $03, C- Z- N+
+        0xF3, 0x80,  // Y: $04, C- Z+ N-
+        0xF3, 0x80,  // Y: $05, C+ Z- N+
+
+        0xF3, 0x82,  // Y: $80, C+ Z- N-
+        0xF3, 0x82,  // Y: $81, C+ Z- N-
+        0xF3, 0x82,  // Y: $82, C- Z- N-
+        0xF3, 0x82,  // Y: $83, C- Z- N+
+        0xF3, 0x82,  // Y: $84, C- Z+ N-
+        0xF3, 0x82,  // Y: $85, C+ Z- N+
+    });
+
+    LoadData(0x80, {
+        0x40, 0x12,
+        0xC6, 0x11,
+    });
+
+    LoadData(0x1240, {
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+        0x0F, 0xFF, 0xFE, 0x3F, 0x27, 0x00,
+    });
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x1240, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x01);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x1241, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x1242, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x03);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x1243, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x04);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x1244, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x05);
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x1245, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x80);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x18);
+    CHECK_RAM(0x1246, 0x10);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x81);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x28);
+    CHECK_RAM(0x1247, 0x00);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x82);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x29);
+    CHECK_RAM(0x1248, 0xFF);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x83);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xE8);
+    CHECK_RAM(0x1249, 0x40);
+    CHECK_CARRY_CLEAR;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x84);
+    cpu->SetRegisterA(0x28);
+    EXECUTE(expectedCycles);
+    CHECK_A(0x00);
+    CHECK_RAM(0x124A, 0x28);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetCarryFlag();
+    cpu->SetRegisterY(0x85);
+    cpu->SetRegisterA(0xFF);
+    EXECUTE(expectedCycles);
+    CHECK_A(0xFE);
+    CHECK_RAM(0x124B, 0x01);
+    CHECK_CARRY_SET;
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}

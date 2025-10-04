@@ -74,13 +74,15 @@ namespace Plip::Cpu {
         [[nodiscard]] uint16_t FetchAddress(int addressingMode, const bool alwaysUseY = false, const bool forcePenalty = false);
         uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false, const bool forcePenalty = false);
         void JumpRelative(int8_t rel);
+        void OpAddWithCarry(uint8_t value);
         void OpCompare(uint8_t value);
-        uint8_t OpDecrement(const uint16_t addr);
-        uint8_t OpIncrement(const uint16_t addr);
+        uint8_t OpDecrement(uint16_t addr);
+        uint8_t OpIncrement(uint16_t addr);
         [[nodiscard]] uint8_t OpLogicalShiftLeft(uint8_t value);
         [[nodiscard]] uint8_t OpLogicalShiftRight(uint8_t value);
         uint8_t OpRotateLeft(uint8_t value);
         uint8_t OpRotateRight(uint8_t value);
+        void OpSubtractWithBorrow(uint8_t value);
         void StoreToMemory(int addressingMode, uint8_t value, bool swapXY = false);
     };
 }

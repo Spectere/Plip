@@ -170,6 +170,14 @@ uint8_t Mos6502::SubDecimal(const uint8_t value) {
     return final;
 }
 
+void Mos6502::OpAddWithCarry(const uint8_t value) {
+    if(AluIsInDecimalMode()) {
+        m_registers.A = AddDecimal(value);
+    } else {
+        m_registers.A = AddBinary(value);
+    }
+}
+
 void Mos6502::OpCompare(const uint8_t value) {
     const uint8_t result = m_registers.A - value;
 
@@ -235,6 +243,14 @@ uint8_t Mos6502::OpRotateRight(uint8_t value) {
     CHECK_ZERO(value);
     CHECK_NEGATIVE(value);
     return value;
+}
+
+void Mos6502::OpSubtractWithBorrow(uint8_t value) {
+    if(AluIsInDecimalMode()) {
+        m_registers.A = SubDecimal(value);
+    } else {
+        m_registers.A = AddBinary(value ^ 0xFF);
+    }
 }
 
 long Mos6502::DecodeAndExecute() {
@@ -436,24 +452,13 @@ long Mos6502::DecodeAndExecute() {
         //
         case 0x69: case 0x65: case 0x75: case 0x6D: case 0x7D: case 0x79: case 0x61: case 0x71: {
             // ADC
-            const uint8_t value = FetchFromMemory(ADDR_MODE(op));
-            if(AluIsInDecimalMode()) {
-                m_registers.A = AddDecimal(value);
-            } else {
-                m_registers.A = AddBinary(value);
-            }
+            OpAddWithCarry(FetchFromMemory(ADDR_MODE(op)));
             break;
         }
 
         case 0xE9: case 0xE5: case 0xF5: case 0xED: case 0xFD: case 0xF9: case 0xE1: case 0xF1: {
             // SBC
-            uint8_t value = FetchFromMemory(ADDR_MODE(op));
-            if(AluIsInDecimalMode()) {
-                m_registers.A = SubDecimal(value);
-            } else {
-                value ^= 0xFF;
-                m_registers.A = AddBinary(value);
-            }
+            OpSubtractWithBorrow(FetchFromMemory(ADDR_MODE(op)));
             break;
         }
 
@@ -858,13 +863,7 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
 
         case 0xEB: {
             // SBC imm8 (alternate opcode)
-            uint8_t value = FetchFromMemory(ADDR_MODE(op));
-            if(AluIsInDecimalMode()) {
-                m_registers.A = SubDecimal(value);
-            } else {
-                value ^= 0xFF;
-                m_registers.A = AddBinary(value);
-            }
+            OpSubtractWithBorrow(FetchFromMemory(ADDR_MODE(op)));
             break;
         }
 
@@ -951,6 +950,9 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
         case 0xE3: case 0xE7: case 0xEF: case 0xF3: case 0xF7: case 0xFB: case 0xFF: {
             // ISC
             // INC value; SBC value
+            const uint16_t addr = FetchAddress(ADDR_MODE(op), false, true);
+            const uint8_t value = OpIncrement(addr);
+            OpSubtractWithBorrow(value);
             break;
         }
 
