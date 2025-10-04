@@ -1044,7 +1044,7 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
         }
 
         case 0x9C: {
-            // SHY
+            // SHY abs16, Y
             // (*mem + X) = Y & ((addr >> 8) + 1)
             uint8_t low, high;
             FETCH_PC(low);
@@ -1056,13 +1056,39 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
         }
 
         case 0x9E: {
-            // SHX
+            // SHX abs16, Y
             // (*mem + Y) = X & ((addr >> 8) + 1)
             uint8_t low, high;
             FETCH_PC(low);
             FETCH_PC(high);
             const uint16_t addr = (high << 8) | low;
             m_memory->SetByte(addr + m_registers.Y, m_registers.X & ((addr >> 8) + 1));
+            cycleCount += 2;
+            break;
+        }
+
+        case 0x93: {
+            // AHX (zp), Y
+            // *addr = zp; (addr + Y) = A & X & (&addr) 
+            uint8_t zp, low, high;
+            FETCH_PC(zp);
+            FETCH_ADDR(low, zp)
+            FETCH_ADDR(high, (zp + 1) & 0xFF);
+            const uint16_t addr = (high << 8) | low;
+            const uint8_t value = m_memory->GetByte(addr);
+            m_memory->SetByte(addr + m_registers.Y, m_registers.A & m_registers.X & value);
+            cycleCount += 2;
+            break;
+        }
+
+        case 0x9F: {
+            // AHX abs16, Y
+            // (*mem + Y) = A & X & ((addr >> 8) + 1
+            uint8_t low, high;
+            FETCH_PC(low);
+            FETCH_PC(high);
+            const uint16_t addr = (high << 8) | low;
+            m_memory->SetByte(addr + m_registers.Y, m_registers.A & m_registers.X & ((addr >> 8) + 1));
             cycleCount += 2;
             break;
         }

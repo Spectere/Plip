@@ -4728,3 +4728,54 @@ TEST("Unofficial-SHX abs16, Y", "Unofficial-SHX-abs16,Y") {  // 0x9E
     CHECK_X(0b10100001);
     CHECK_RAM(0x2120, 0b00100001);
 }
+
+//
+// AHX
+//
+TEST("Unofficial-AHX (zp), Y", "Unofficial-AHX-(zp),Y") {  // 0x93
+    constexpr int expectedCycles = 6;
+
+    LoadData(0x200, {
+        0x93, 0x80,
+        0x93, 0xFF,
+    });
+
+    LoadData(0x80, { 0x34, 0x12 });
+    LoadData(0xFF, 0x34); LoadData(0x00, 0x12);
+
+    LoadData(0x1234, 0b00111100);
+
+    cpu->SetRegisterA(0b00001111);
+    cpu->SetRegisterX(0b10101010);
+    cpu->SetRegisterY(0x01);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00001111);
+    CHECK_X(0b10101010);
+    CHECK_RAM(0x1234, 0b00111100);
+    CHECK_RAM(0x1235, 0b00001000);
+
+    cpu->SetRegisterA(0b00001111);
+    cpu->SetRegisterX(0b10101010);
+    cpu->SetRegisterY(0x02);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00001111);
+    CHECK_X(0b10101010);
+    CHECK_RAM(0x1234, 0b00111100);
+    CHECK_RAM(0x1236, 0b00001000);
+}
+
+TEST("Unofficial-AHX abs16, Y", "Unofficial-AHX-abs16,Y") {  // 0x9F
+    constexpr int expectedCycles = 5;
+
+    LoadData(0x200, {
+        0x9F, 0x34, 0x12,
+    });
+
+    cpu->SetRegisterA(0b01010101);
+    cpu->SetRegisterX(0b00110011);
+    cpu->SetRegisterY(0x10);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b01010101);
+    CHECK_X(0b00110011);
+    CHECK_RAM(0x1244, 0b00010001);
+}
