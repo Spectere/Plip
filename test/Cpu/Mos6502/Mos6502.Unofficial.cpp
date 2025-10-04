@@ -4813,3 +4813,40 @@ TEST("Unofficial-ANX imm8", "Unofficial-ANX-imm8") {  // 0xAB
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 }
+
+//
+// XAA (expected magic to be 0xFF, with no attempt to emulate its behavior on real hardware)
+//
+TEST("Unofficial-XAA imm8", "Unofficial-XAA-imm8") {  // 0x8B
+    constexpr int expectedCycles = 2;
+
+    LoadData(0x200, {
+        0x8B, 0b00111100,  // Z- N-
+        0x8B, 0b00001111,  // Z+ N-
+        0x8B, 0b11000011,  // Z- N+
+    });
+
+    cpu->SetRegisterA(0b01010101);
+    cpu->SetRegisterX(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00110000);
+    CHECK_X(0b11110000);
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b01010101);
+    cpu->SetRegisterX(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00000000);
+    CHECK_X(0b11110000);
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterA(0b10101010);
+    cpu->SetRegisterX(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b11000000);
+    CHECK_X(0b11110000);
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}

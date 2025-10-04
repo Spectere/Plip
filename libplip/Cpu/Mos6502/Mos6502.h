@@ -60,6 +60,8 @@ namespace Plip::Cpu {
         static constexpr auto ModeAbsoluteY = 0b110 << 2;
         static constexpr auto ModeAbsoluteX = 0b111 << 2;
 
+        static constexpr uint8_t XaaMagic = 0xFF;
+
         bool OpKillExecuted {};
 
         uint8_t AddBinary(uint8_t value);

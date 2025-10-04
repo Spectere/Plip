@@ -1104,6 +1104,20 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
             CHECK_NEGATIVE(m_registers.A);
             break;
         }
+
+        case 0x8B: {
+            // XAA imm8
+            // E = (A & X & imm8)
+            // A = (A | magic) X & imm8
+            // Set N and Z based on E. E is discarded. Results are unstable on real hardware.
+            uint8_t imm;
+            FETCH_PC(imm);
+            const uint8_t result = m_registers.A & m_registers.X & imm;
+            CHECK_ZERO(result);
+            CHECK_NEGATIVE(result);
+            m_registers.A = (m_registers.A | XaaMagic) & m_registers.X & imm;
+            break;
+        }
     }
 }
 
