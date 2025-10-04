@@ -4571,3 +4571,82 @@ TEST("Unofficial-SRE (zp), Y", "Unofficial-SRE-(zp),Y") {  // 0x53
     CHECK_ZERO_SET;
     CHECK_NEGATIVE_CLEAR;
 }
+
+//
+// LAS
+//
+TEST("Unofficial-LAS abs16, Y", "Unofficial-LAS-abs16,Y") {  // 0xBB
+    constexpr int expectedCycles = 4;
+
+    LoadData(0x200, {
+        0xBB, 0x34, 0x12,  // Y: $00, Z- N-
+        0xBB, 0x34, 0x12,  // Y: $01, Z+ N-
+        0xBB, 0x34, 0x12,  // Y: $02, Z- N+
+
+        0xBB, 0xF0, 0x20,  // Y: $30, Z- N-
+        0xBB, 0xF0, 0x20,  // Y: $31, Z+ N-
+        0xBB, 0xF0, 0x20,  // Y: $32, Z- N+
+    });
+
+    LoadData(0x1234, {
+        0b01010101, 0b00000000, 0b10101010,
+    });
+
+    LoadData(0x2120, {
+        0b01010101, 0b00000000, 0b10101010,
+    });
+
+    cpu->SetRegisterY(0x00);
+    cpu->SetRegisterS(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b01010000);
+    CHECK_S(0b01010000);
+    CHECK_X(0b01010000);
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x01);
+    cpu->SetRegisterS(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00000000);
+    CHECK_S(0b00000000);
+    CHECK_X(0b00000000);
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterS(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b10100000);
+    CHECK_S(0b10100000);
+    CHECK_X(0b10100000);
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+
+    cpu->SetRegisterY(0x30);
+    cpu->SetRegisterS(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b01010000);
+    CHECK_S(0b01010000);
+    CHECK_X(0b01010000);
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x31);
+    cpu->SetRegisterS(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b00000000);
+    CHECK_S(0b00000000);
+    CHECK_X(0b00000000);
+    CHECK_ZERO_SET;
+    CHECK_NEGATIVE_CLEAR;
+
+    cpu->SetRegisterY(0x32);
+    cpu->SetRegisterS(0b11110000);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b10100000);
+    CHECK_S(0b10100000);
+    CHECK_X(0b10100000);
+    CHECK_ZERO_CLEAR;
+    CHECK_NEGATIVE_SET;
+}

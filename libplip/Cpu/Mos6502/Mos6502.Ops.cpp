@@ -1017,6 +1017,18 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
             OpBitwiseXor(value);
             break;
         }
+
+        case 0xBB: {
+            // LAS abs16, Y
+            // S &= mem; A = X = S
+            // No page boundary penalty; fixed 4 cycle instruction.
+            const uint8_t value = FetchFromMemory(ADDR_MODE(op), false, false, true);
+            --cycleCount;  // Force penalty, then adjust cycle count.
+            m_registers.A = m_registers.X = m_registers.S &= value;
+            CHECK_NEGATIVE(m_registers.A);
+            CHECK_ZERO(m_registers.A);
+            break;
+        }
     }
 }
 
@@ -1100,21 +1112,17 @@ uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, cons
         addressingMode = ModeAbsoluteY;
     }
 
-    switch(addressingMode) {
-        case ModeImmediate: {
-            if(useAccumulator) {
-                return m_registers.A;
-            }
+    if(addressingMode == ModeImmediate) {
+        if(useAccumulator) {
+            return m_registers.A;
+        }
 
-            uint8_t value;
-            FETCH_PC(value);
-            return value;
-        }
-        
-        default: {
-            return m_memory->GetByte(FetchAddress(addressingMode, alwaysUseY, forcePenalty));
-        }
+        uint8_t value;
+        FETCH_PC(value);
+        return value;
     }
+    
+    return m_memory->GetByte(FetchAddress(addressingMode, alwaysUseY, forcePenalty));
 }
 
 void Mos6502::StoreToMemory(const int addressingMode, const uint8_t value, const bool swapXY) {
