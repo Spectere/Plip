@@ -4650,3 +4650,81 @@ TEST("Unofficial-LAS abs16, Y", "Unofficial-LAS-abs16,Y") {  // 0xBB
     CHECK_ZERO_CLEAR;
     CHECK_NEGATIVE_SET;
 }
+
+//
+// TAS
+//
+TEST("Unofficial-TAS abs16, Y", "Unofficial-TAS-abs16,Y") {  // 0x9B
+    constexpr int expectedCycles = 5;
+
+    LoadData(0x200, {
+        0x9B, 0x34, 0x12,  // Y: $00 - destination: 0x1234
+        0x9B, 0xF0, 0x20,  // Y: $30 - destination: 0x2120
+    });
+
+    cpu->SetRegisterA(0b01010101);
+    cpu->SetRegisterX(0b11110001);
+    cpu->SetRegisterY(0x00);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b01010101);
+    CHECK_X(0b11110001);
+    CHECK_S(0b01010001);
+    CHECK_RAM(0x1234, 0b00010001);
+
+    cpu->SetRegisterA(0b10101011);
+    cpu->SetRegisterX(0b11110001);
+    cpu->SetRegisterY(0x30);
+    EXECUTE(expectedCycles);
+    CHECK_A(0b10101011);
+    CHECK_X(0b11110001);
+    CHECK_S(0b10100001);
+    CHECK_RAM(0x2120, 0b00100001);
+}
+
+//
+// SHY
+//
+TEST("Unofficial-SHY abs16, X", "Unofficial-SHY-abs16,X") {  // 0x9C
+    constexpr int expectedCycles = 5;
+
+    LoadData(0x200, {
+        0x9C, 0x34, 0x12,  // X: $00 - destination: 0x1234
+        0x9C, 0xF0, 0x20,  // X: $30 - destination: 0x2120
+    });
+
+    cpu->SetRegisterY(0b01010001);
+    cpu->SetRegisterX(0x00);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b01010001);
+    CHECK_RAM(0x1234, 0b00010001);
+
+    cpu->SetRegisterY(0b10100001);
+    cpu->SetRegisterX(0x30);
+    EXECUTE(expectedCycles);
+    CHECK_Y(0b10100001);
+    CHECK_RAM(0x2120, 0b00100001);
+}
+
+//
+// SHX
+//
+TEST("Unofficial-SHX abs16, Y", "Unofficial-SHX-abs16,Y") {  // 0x9E
+    constexpr int expectedCycles = 5;
+
+    LoadData(0x200, {
+        0x9E, 0x34, 0x12,  // Y: $00 - destination: 0x1234
+        0x9E, 0xF0, 0x20,  // Y: $30 - destination: 0x2120
+    });
+
+    cpu->SetRegisterX(0b01010001);
+    cpu->SetRegisterY(0x00);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b01010001);
+    CHECK_RAM(0x1234, 0b00010001);
+
+    cpu->SetRegisterX(0b10100001);
+    cpu->SetRegisterY(0x30);
+    EXECUTE(expectedCycles);
+    CHECK_X(0b10100001);
+    CHECK_RAM(0x2120, 0b00100001);
+}
