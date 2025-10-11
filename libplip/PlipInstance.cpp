@@ -8,6 +8,7 @@
 
 #include "Core/Chip8/Chip8Instance.h"
 #include "Core/GameBoy/GameBoyInstance.h"
+#include "Core/Nes/NesInstance.h"
 
 using Plip::PlipInstance;
 
@@ -55,6 +56,9 @@ Plip::PlipError PlipInstance::Load(const PlipValidCore core, const std::string &
             break;
         case PlipValidCore::GameBoy:
             m_core = new Core::GameBoy::GameBoyInstance(m_audio, m_input, m_video, config);
+            break;
+        case PlipValidCore::Nes:
+            m_core = new Core::Nes::NesInstance(m_audio, m_input, m_video, config);
             break;
         default:
             return PlipError::InvalidCore;

@@ -9,6 +9,8 @@ namespace Plip {
     enum class PlipError {
         Success,
         InvalidCore,
-        FileNotFound
+        FileNotFound,
+        RomFileTruncated,
+        UnrecognizedMedia,
     };
 }

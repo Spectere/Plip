@@ -168,6 +168,15 @@ add_library(${lib_name}
                                                     libplip/Core/GameBoy/MBC_Type.h
                                                     libplip/Core/GameBoy/PPU_Mode.h
                                                     libplip/Core/GameBoy/PPU_OutputStage.h
+    
+    # NES
+    libplip/Core/Nes/NesApuRegisters.cpp            libplip/Core/Nes/NesApuRegisters.h
+    libplip/Core/Nes/NesInstance.cpp                libplip/Core/Nes/NesInstance.h
+    libplip/Core/Nes/NesMapper.cpp                  libplip/Core/Nes/NesMapper.h
+    libplip/Core/Nes/NesMemory.cpp                  libplip/Core/Nes/NesMemory.h
+    libplip/Core/Nes/NesPpuRegisters.cpp            libplip/Core/Nes/NesPpuRegisters.h
+                                                    libplip/Core/Nes/NesTiming.h
+    libplip/Core/Nes/Mapper/M001_NROM.cpp           libplip/Core/Nes/Mapper/M001_NROM.h
 )
 
 if(BIG_ENDIAN)
