@@ -27,12 +27,16 @@ namespace Plip::Cpu {
         Mos6502(long hz, PlipMemoryMap* memoryMap, Mos6502Version version);
         virtual ~Mos6502() = default;
 
+        void Cycle() override;
         [[nodiscard]] unsigned long GetPc() const override;
         long Step() override;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
 
+        void ClearNmi() { m_nmiFlag = false; }
         bool CpuHasCrashed() const { return OpKillExecuted; }
+        void FlagNmi() { m_nmiFlag = true; }
+        void RaiseInterrupt();
 
     protected:
         static constexpr uint16_t StackLocation = 0x0100;
@@ -60,6 +64,8 @@ namespace Plip::Cpu {
         static constexpr auto ModeAbsoluteY = 0b110 << 2;
         static constexpr auto ModeAbsoluteX = 0b111 << 2;
 
+        static constexpr long InterruptCycles = 7;
+
         static constexpr uint8_t XaaMagic = 0xFF;
 
         bool OpKillExecuted {};
@@ -73,8 +79,8 @@ namespace Plip::Cpu {
         long DecodeAndExecute();
         void DecodeAndExecuteNmosUnofficial();
         void DecodeAndExecuteWdc65C02Extended();
-        [[nodiscard]] uint16_t FetchAddress(int addressingMode, const bool alwaysUseY = false, const bool forcePenalty = false);
-        uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false, const bool forcePenalty = false);
+        [[nodiscard]] uint16_t FetchAddress(int addressingMode, bool alwaysUseY = false, bool forcePenalty = false);
+        uint8_t FetchFromMemory(int addressingMode, bool alwaysUseY = false, bool useAccumulator = false, bool forcePenalty = false);
         void JumpRelative(int8_t rel);
         void OpAddWithCarry(uint8_t value);
         void OpBitwiseAnd(uint8_t value);
@@ -88,6 +94,12 @@ namespace Plip::Cpu {
         uint8_t OpRotateLeft(uint8_t value);
         uint8_t OpRotateRight(uint8_t value);
         void OpSubtractWithBorrow(uint8_t value);
+        long ServiceInterrupt(uint16_t vector);
         void StoreToMemory(int addressingMode, uint8_t value, bool swapXY = false);
+
+        bool m_irqPending {};
+        bool m_nmiFlag {};
+        bool m_nmiLast {};
+        bool m_nmiPending {};
     };
 }

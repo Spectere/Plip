@@ -19,6 +19,16 @@ Mos6502::Mos6502(const long hz, PlipMemoryMap* memoryMap, const Mos6502Version v
     Mos6502::Reset(0);
 }
 
+void Mos6502::Cycle() {
+    PlipCpu::Cycle();
+
+    // Perform edge detection to see if we should service an NMI during the next fetch.
+    if(m_nmiFlag && !m_nmiLast) {
+        m_nmiPending = true;
+    }
+    m_nmiLast = m_nmiFlag;
+}
+
 unsigned long Mos6502::GetPc() const {
     return m_registers.PC;
 }
@@ -37,7 +47,18 @@ std::map<std::string, Plip::DebugValue> Mos6502::GetRegisters() const {
         { "F(B)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::BreakCommandBit))) },
         { "F(O)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::OverflowFlagBit))) },
         { "F(N)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::NegativeFlagBit))) },
+        { "NMI Vec", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(GetNmiVector())) },
+        { "RST Vec", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(GetResetVector())) },
+        { "INT Vec", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(GetInterruptVector())) },
     };
+}
+
+void Mos6502::RaiseInterrupt() {
+    if(m_registers.GetInterruptDisable()) {
+        return;
+    }
+    
+    m_irqPending = true;
 }
 
 void Mos6502::Reset([[maybe_unused]] const uint32_t pc) {
@@ -57,5 +78,15 @@ void Mos6502::Reset([[maybe_unused]] const uint32_t pc) {
 
 long Mos6502::Step() {
     if(OpKillExecuted) return __LONG_MAX__;
+
+    if(m_nmiPending) {
+        m_nmiPending = false;
+        return ServiceInterrupt(GetNmiVector());
+    }
+    
+    if(m_irqPending && !m_registers.GetInterruptDisable()) {
+        return ServiceInterrupt(GetInterruptVector());
+    }
+    
     return DecodeAndExecute();
 }
