@@ -27,6 +27,15 @@ NesInstance::~NesInstance() {
 }
 
 void NesInstance::Delta(long ns) {
+    const auto cycleTime = m_cpu->GetCycleTime();
+    auto timeRemaining = ns;
+
+    do {
+        // Run CPU for one cycle.
+        m_cpu->Cycle();
+
+        timeRemaining -= cycleTime;
+    } while(cycleTime < timeRemaining);
 }
 
 std::map<std::string, std::map<std::string, Plip::DebugValue>> NesInstance::GetDebugInfo() const {
@@ -45,20 +54,57 @@ Plip::PlipError NesInstance::Load(const std::string& path) {
         return PlipError::FileNotFound;
     }
 
-    // Read the ROM header.
     const auto romSize = PlipIo::GetSize(m_cartPath);
+    auto romFile = PlipIo::LoadFile(m_cartPath);
+
+    // Read the ROM header.
     if(romSize < 16) {
         return PlipError::RomFileTruncated;
     }
-    if(const auto romHeader = PlipIo::ReadFile(m_cartPath, 16); !ReadRomHeader(romHeader)) {
+    
+    if(const auto romHeader = PlipIo::ReadFile(romFile, 16); !ReadRomHeader(romHeader)) {
         return PlipError::UnrecognizedMedia;
     }
 
     // Make sure the ROM file is actually large enough, then update the titlebar.
-    if(romSize < (m_cartPrgRomSize + m_cartChrRomSize + 16)) {
+    const auto trainerSize = m_cartHasTrainer ? m_trainerSize : 0;
+    if(romSize < (m_cartPrgRomSize + m_cartChrRomSize + 16 + trainerSize)) {
         return PlipError::RomFileTruncated;
     }
     m_video->SetTitle("NES: " + PlipIo::GetFilename(m_cartPath));
+
+    // Load the ROMs.
+    // Trainer > PRG ROM > CHR ROM
+    if(m_cartHasTrainer) {
+        const auto trainerRom = PlipIo::ReadSequential(romFile, m_trainerSize);
+        m_trainerRom = new PlipMemoryRom(trainerRom.data(), m_trainerSize, 0xFF);
+    }
+
+    const auto prgRom = PlipIo::ReadSequential(romFile, m_cartPrgRomSize);
+    const auto chrRom = PlipIo::ReadSequential(romFile, m_cartChrRomSize);
+    PlipIo::CloseFile(romFile);
+
+    m_prgRom = new PlipMemoryRom(prgRom.data(), m_cartPrgRomSize, 0xFF);
+    m_chrRom = new PlipMemoryRom(chrRom.data(), m_cartChrRomSize, 0xFF);
+
+    // Initialize the system and PPU memory.
+    m_workRam = new PlipMemoryRam(m_workRamAmount);
+    m_ppuRam = new PlipMemoryRam(m_ppuRamAmount);
+    m_ppuRegisters = new NesPpuRegisters();
+    m_apuRegisters = new NesApuRegisters();
+
+    // Set up the memory map.
+    m_mapper = NesMapper::CreateMapper(
+        m_cartUsesINesHeader,
+        m_cartMapper, m_cartSubmapper,
+        m_prgRom, m_chrRom, m_trainerRom,
+        m_cartPrgRamSize, m_cartChrRamSize,
+        m_cartPrgNvramSize, m_cartChrNvramSize
+    );
+
+    m_nesMemory = new NesMemory(m_workRam, m_ppuRegisters, m_apuRegisters, m_mapper, m_ppuRam);
+    delete m_memory;
+    m_memory = m_nesMemory;
 
     // Initialize the CPU.
     int cpuClock;

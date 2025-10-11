@@ -7,7 +7,7 @@
 
 using Plip::Core::Nes::NesPpuRegisters;
 
-uint8_t NesPpuRegisters::GetByte(PpuRegister ppuRegister, bool privileged) const {
+uint8_t NesPpuRegisters::GetByte(const PpuRegister ppuRegister, [[maybe_unused]] bool privileged) const {
     constexpr uint8_t openBus = 0xFF;  // TODO: I don't think this is accurate on the NES. Correct this later.
     
     switch(ppuRegister) {
@@ -19,7 +19,8 @@ uint8_t NesPpuRegisters::GetByte(PpuRegister ppuRegister, bool privileged) const
         case PpuRegister::PpuMask:
         case PpuRegister::OamAddress:
         case PpuRegister::PpuScroll:
-        case PpuRegister::PpuAddress: {
+        case PpuRegister::PpuAddress:
+        default: {
             return openBus;
         }
     }
@@ -29,7 +30,7 @@ uint32_t NesPpuRegisters::GetLength() {
     return 0x08;
 }
 
-void NesPpuRegisters::SetByte(PpuRegister ppuRegister, uint8_t value, bool privileged) {
+void NesPpuRegisters::SetByte(const PpuRegister ppuRegister, const uint8_t value, [[maybe_unused]] bool privileged) {
     switch(ppuRegister) {
         case PpuRegister::PpuControl: {
             m_ppuControl = value;

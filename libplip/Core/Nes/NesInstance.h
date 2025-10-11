@@ -10,8 +10,10 @@
 
 #include "NesMemory.h"
 #include "NesTiming.h"
-#include "../../Cpu/Mos6502/Mos6502.h"
 #include "../PlipCore.h"
+#include "../../Cpu/Mos6502/Mos6502.h"
+#include "../../Memory/PlipMemoryRam.h"
+#include "../../Memory/PlipMemoryRom.h"
 
 namespace Plip::Core::Nes {
     class NesInstance final : public PlipCore {
@@ -101,7 +103,22 @@ namespace Plip::Core::Nes {
         static constexpr auto InputP2_Left   = 14;
         static constexpr auto InputP2_Right  = 15;
 
-        // System memory map
+        // System memory
+        static constexpr int m_trainerSize = 512;
+        static constexpr int m_workRamAmount = 2 * 1024;  // 2KiB each
+        static constexpr int m_ppuRamAmount  = 2 * 1024;
+        
         NesMemory* m_nesMemory {};
+        
+        NesApuRegisters* m_apuRegisters {};
+        NesPpuRegisters* m_ppuRegisters {};
+
+        PlipMemoryRam* m_workRam {};
+        PlipMemoryRam* m_ppuRam {};
+        PlipMemoryRom* m_prgRom {};
+        PlipMemoryRom* m_chrRom {};
+        PlipMemoryRom* m_trainerRom {};
+
+        NesMapper* m_mapper {};
     };
 }
