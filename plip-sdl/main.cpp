@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     if(opts["list-cores"].count()) {
         std::cout << "Supported cores:\n\n";
         std::cout << "    Name    |    Description\n";
-        std::cout << "--------------------------------\n";
+        std::cout << "------------+-------------------\n";
 
         for(auto core : coreList) {
             std::string name = core.name;
@@ -186,6 +186,10 @@ int main(int argc, char **argv) {
     auto videoScale = config->GetValue<int>("video", "scale", 1);
     auto integerScaling = config->GetValue<bool>("video", "integer-scaling", false);
     auto targetFps = config->GetValue<int>("video", "target-fps", 60);
+    auto forceWidth = config->GetValue<int>("video", "force-width", -1);
+    auto forceHeight = config->GetValue<int>("video", "force-height", -1);
+    auto lockScaleConfig = config->GetValue<bool>("video", "lock-scale", false);
+    auto showGuiAtStartup = config->GetValue<bool>("video", "show-gui-at-startup", false);
 
     if(opts["integer-scaling"].count() > 0) {
         integerScaling = true;
@@ -195,19 +199,23 @@ int main(int argc, char **argv) {
         targetFps = opts["fps"].as<int>();
     }
 
-    int lockScale = -1;
+    auto lockScale = -1;
     if(opts["lock-scale"].count() > 0) {
+        lockScale = videoScale;
+    } else if(lockScaleConfig) {
         lockScale = videoScale;
     }
 
-    auto forceWidth = -1;
     if(opts["force-width"].count() > 0) {
         forceWidth = opts["force-width"].as<int>();
     }
-
-    auto forceHeight = -1;
+    
     if(opts["force-height"].count() > 0) {
         forceHeight = opts["force-height"].as<int>();
+    }
+
+    if(opts["gui"].as<bool>()) {
+        showGuiAtStartup = true;
     }
 
     auto window = new PlipSdl::SdlWindow(version, integerScaling, lockScale, forceWidth, forceHeight);
@@ -232,7 +240,7 @@ int main(int argc, char **argv) {
     const auto gui = new PlipSdl::Gui(window);
     auto event = new PlipSdl::SdlEvent(input, gui);
 
-    gui->SetEnabled(opts["gui"].as<bool>());
+    gui->SetEnabled(showGuiAtStartup);
     gui->State.PauseCore = opts["pause"].count() > 0;
 
     // Load inputs for Plip.
