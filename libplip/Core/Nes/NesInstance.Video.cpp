@@ -37,7 +37,6 @@ void NesInstance::PPU_Cycle() {
 void NesInstance::PPU_Cycle_FetchAndRender() {
     const auto thisCycle = m_ppuScanlineCycle;
     const auto thisPixelX = thisCycle - 1;
-    m_ppuNametablePointer = ((m_ppuScanlineY / 8) * 32) + (thisPixelX / 8) + 2;
     
     if(m_ppuScanlineY == -1 && thisCycle <= 320) {
         // Unset VBlank.
@@ -56,6 +55,7 @@ void NesInstance::PPU_Cycle_FetchAndRender() {
         // Idle
     } else if(thisCycle <= 256) {
         // Fetching upcoming background tiles and drawing.
+        m_ppuNametablePointer = ((m_ppuScanlineY / 8) * 32) + (thisPixelX / 8) + 2;
 
         if(thisPixelX < (256 - 16) && thisCycle % 2 == 0) {
             // Fetch data every other cycle.
@@ -76,8 +76,10 @@ void NesInstance::PPU_Cycle_FetchAndRender() {
         // Fetching sprites for the next scanline.
     } else if(thisCycle <= 336 && m_ppuScanlineY != 239) {
         // Fetching the next two tiles for the next scanline.
-        m_ppuNametablePointer += 32;
+        m_ppuNametablePointer = (((m_ppuScanlineY + 1) / 8) * 32) + ((thisCycle - 321) / 8);
         if(thisCycle % 2) { PPU_ReadMemory(false); }
+    } else if(thisCycle <= 336 && m_ppuScanlineY == 239) {
+        // Just wait a sec.
     } else if(thisCycle <= 340) {
         // Fetching two unused nametable bytes.
         if(thisCycle % 2) { PPU_ReadMemory(false, true); }
@@ -145,6 +147,7 @@ void NesInstance::PPU_ReadMemory(const bool spriteQueue, const bool holdStage) {
     const auto nametableBase = m_ppuRegisters->GetBaseNamespaceAddress();
     const auto bgPatternBase = m_ppuRegisters->GetBackgroundPatternAddress();
 
+    // Correct the Y offset for reads that occur on the previous scanline.
     const auto offset = (m_ppuScanlineY % 8) + (m_ppuScanlineCycle > 256 ? 1 : 0);
 
     uint8_t pushValue = 0;
