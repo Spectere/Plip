@@ -6,6 +6,7 @@
 #pragma once
 
 #include <filesystem>
+#include <queue>
 #include <vector>
 
 #include "NesMemory.h"
@@ -32,6 +33,16 @@ namespace Plip::Core::Nes {
         void ReadRomHeaderINes(const std::vector<char>& headerData);
         void ReadRomHeaderNes2(const std::vector<char>& headerData);
         void RegisterInput() const;
+
+        void ReadControllers();
+
+        void PPU_CheckForNextScanline();
+        void PPU_Cycle();
+        void PPU_Cycle_FetchAndRender();
+        void PPU_Cycle_VBlank();
+        void PPU_Draw_Background(int pixelX);
+        [[nodiscard]] std::map<std::string, DebugValue> PPU_GetDebugInfo() const;
+        void PPU_ReadMemory(bool spriteQueue, bool holdStage = false);
         
         //
         // Fields
@@ -51,11 +62,11 @@ namespace Plip::Core::Nes {
         static constexpr uint32_t CpuClockDendy = MasterClockRateDendy / ClockDivisorDendy;
 
         static constexpr uint32_t ScreenWidth = 256;
-        static constexpr uint32_t ScreenHeight = 242;
+        static constexpr uint32_t ScreenHeight = 240;
 
-        Cpu::Mos6502 *m_cpu {};
+        Cpu::Mos6502* m_cpu {};
         PlipVideoFormatInfo m_videoFormat {};
-        uint8_t *m_videoBuffer;
+        uint8_t* m_videoBuffer;
         size_t m_videoBufferSize;
 
         // Cartridge
@@ -120,5 +131,25 @@ namespace Plip::Core::Nes {
         PlipMemoryRom* m_trainerRom {};
 
         NesMapper* m_mapper {};
+
+        // Input
+        uint8_t m_input1 = 0;
+        uint8_t m_input2 = 0;
+
+        // Video/PPU
+        uint8_t m_ppuCurrentAttribute = 0;
+        uint8_t m_ppuCurrentTileHigh = 0;
+        uint8_t m_ppuCurrentTileLow = 0;
+        int m_ppuScanlineCycle {};
+        int m_ppuScanlineEnd = 340;
+        int m_ppuScanlineY = -1;
+        int m_ppuRegScrollPosition {};  // v
+        int m_ppuRegScrollXCoarse {};   // t
+        int m_ppuRegScrollXFine {};     // x
+        std::queue<uint8_t> m_ppuSpriteQueue {};
+        std::queue<uint8_t> m_ppuTileQueue {};
+        int m_ppuReadStage = 0;
+        int m_ppuNametablePointer = 0;
+        int m_ppuLastPatternIndex = 0;
     };
 }

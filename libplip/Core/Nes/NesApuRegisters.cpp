@@ -7,7 +7,7 @@
 
 using Plip::Core::Nes::NesApuRegisters;
 
-uint8_t NesApuRegisters::GetByte(ApuRegister apuRegister, bool privileged) const {
+uint8_t NesApuRegisters::GetByte(const ApuRegister apuRegister, [[maybe_unused]] bool privileged) {
     constexpr uint8_t openBus = 0xFF;  // TODO: I don't think this is accurate on the NES. Correct this later.
     
     switch(apuRegister) {
@@ -36,8 +36,16 @@ uint8_t NesApuRegisters::GetByte(ApuRegister apuRegister, bool privileged) const
             return openBus;
         }
         case ApuRegister::SoundChannelsEnable: { return m_soundChannelsEnable; }
-        case ApuRegister::Joy1: { return 0xFF; }  // TODO: Return gamepad 1 data.
-        case ApuRegister::Joy2: { return 0xFF; }  // TODO: Return gamepad 2 data.
+        case ApuRegister::Joy1: {
+            const uint8_t value = m_joy1 & 1;
+            m_joy1 >>= 1;
+            return value;
+        }
+        case ApuRegister::Joy2: {
+            const uint8_t value = m_joy2 & 1;
+            m_joy2 >>= 1;
+            return value;
+        }
     }
 }
 
@@ -45,7 +53,7 @@ uint32_t NesApuRegisters::GetLength() {
     return 0x20;
 }
 
-void NesApuRegisters::SetByte(ApuRegister apuRegister, uint8_t value, bool privileged) {
+void NesApuRegisters::SetByte(const ApuRegister apuRegister, const uint8_t value, [[maybe_unused]] bool privileged) {
     switch(apuRegister) {
         case ApuRegister::Pulse1DutyCycleVolume: {
             m_pulse1DutyCycleVolume = value;
@@ -128,7 +136,7 @@ void NesApuRegisters::SetByte(ApuRegister apuRegister, uint8_t value, bool privi
             break;
         }
         case ApuRegister::Joy1: {
-            m_joy1 = value;
+            m_controllerStrobe = value & 1;
             break;
         }
         case ApuRegister::Joy2: {

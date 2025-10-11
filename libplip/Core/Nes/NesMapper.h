@@ -13,11 +13,11 @@ namespace Plip::Core::Nes {
         static NesMapper* CreateMapper(bool legacyINes, int mapperId, int submapperId, PlipMemory* prgRom, PlipMemory* chrRom,
             PlipMemory* trainer, int prgRamSize, int chrRamSize, int prgNvramSize, int chrNvramSize);
         
-        [[nodiscard]] virtual uint8_t GetByteChr(uint32_t address, bool privileged) const = 0;
-        virtual void SetByteChr(uint32_t address, uint8_t value, bool privileged) = 0;
+        [[nodiscard]] virtual uint8_t GetByteChr(uint32_t address, bool privileged = false) const = 0;
+        virtual void SetByteChr(uint32_t address, uint8_t value, bool privileged = false) = 0;
 
-        [[nodiscard]] virtual uint8_t GetByteSys(uint32_t address, bool privileged) const = 0;
-        virtual void SetByteSys(uint32_t address, uint8_t value, bool privileged) = 0;
+        [[nodiscard]] virtual uint8_t GetByteSys(uint32_t address, bool privileged = false) const = 0;
+        virtual void SetByteSys(uint32_t address, uint8_t value, bool privileged = false) = 0;
 
     protected:
         NesMapper(int mapperId, int submapperId, PlipMemory* prgRom, PlipMemory* chrRom, PlipMemory* trainer);

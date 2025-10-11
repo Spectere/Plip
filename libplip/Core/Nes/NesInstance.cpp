@@ -9,6 +9,16 @@
 
 using Plip::Core::Nes::NesInstance;
 
+#define READ_INPUT1(idx) { \
+    if(m_input->GetInput(idx).digital) \
+    m_input1 |= 1 << idx; \
+}
+
+#define READ_INPUT2(idx) { \
+    if(m_input->GetInput(idx - 8).digital) \
+    m_input2 |= 1 << (idx - 8); \
+}
+
 NesInstance::NesInstance(PlipAudio* audio, PlipInput* input, PlipVideo* video, const PlipKeyValuePairCollection& config)
 : PlipCore(audio, input, video, config) {
     // Initialize framebuffer and video subsystem.
@@ -26,13 +36,23 @@ NesInstance::~NesInstance() {
     delete m_videoBuffer;
 }
 
-void NesInstance::Delta(long ns) {
+void NesInstance::Delta(const long ns) {
     const auto cycleTime = m_cpu->GetCycleTime();
     auto timeRemaining = ns;
 
     do {
         // Run CPU for one cycle.
         m_cpu->Cycle();
+
+        // Input
+        ReadControllers();
+
+        // PPU
+        // Ticks thrice for every CPU cycle on NTSC (master clock divided by 4) and Dendy.
+        // TODO: Emulate PAL behavior (master clock divided by 5; 3.2 PPU ticks per CPU cycle).
+        for(auto i = 0; i < 3; ++i) {
+            PPU_Cycle();
+        }
 
         timeRemaining -= cycleTime;
     } while(cycleTime < timeRemaining);
@@ -41,6 +61,8 @@ void NesInstance::Delta(long ns) {
 std::map<std::string, std::map<std::string, Plip::DebugValue>> NesInstance::GetDebugInfo() const {
     return {
         { "CPU Registers", m_cpu->GetRegisters() },
+        { "PPU", PPU_GetDebugInfo() },
+        { "PPU Registers", m_ppuRegisters->GetDebugInfo() },
     };
 }
 
@@ -90,7 +112,7 @@ Plip::PlipError NesInstance::Load(const std::string& path) {
     // Initialize the system and PPU memory.
     m_workRam = new PlipMemoryRam(m_workRamAmount);
     m_ppuRam = new PlipMemoryRam(m_ppuRamAmount);
-    m_ppuRegisters = new NesPpuRegisters();
+    m_ppuRegisters = new NesPpuRegisters(m_ppuRam);
     m_apuRegisters = new NesApuRegisters();
 
     // Set up the memory map.
@@ -122,8 +144,37 @@ Plip::PlipError NesInstance::Load(const std::string& path) {
             break;
     }
     m_cpu = new Cpu::Mos6502(cpuClock, m_memory, Cpu::Mos6502Version::Ricoh2A03);
+
+    // Pass the CPU to the PPU registers object to allow it to raise NMIs.
+    m_ppuRegisters->SetCpu(m_cpu);
     
     return PlipError::Success;
+}
+
+void NesInstance::ReadControllers() {
+    if(!m_apuRegisters->GetControllerStrobe()) return;
+    
+    m_input1 = m_input2 = 0;
+
+    READ_INPUT1(InputP1_A);
+    READ_INPUT1(InputP1_B);
+    READ_INPUT1(InputP1_Select);
+    READ_INPUT1(InputP1_Start);
+    READ_INPUT1(InputP1_Up);
+    READ_INPUT1(InputP1_Down);
+    READ_INPUT1(InputP1_Left);
+    READ_INPUT1(InputP1_Right);
+    m_apuRegisters->SetControllerPort1(m_input1);
+
+    READ_INPUT2(InputP2_A);
+    READ_INPUT2(InputP2_B);
+    READ_INPUT2(InputP2_Select);
+    READ_INPUT2(InputP2_Start);
+    READ_INPUT2(InputP2_Up);
+    READ_INPUT2(InputP2_Down);
+    READ_INPUT2(InputP2_Left);
+    READ_INPUT2(InputP2_Right);
+    m_apuRegisters->SetControllerPort2(m_input2);
 }
 
 bool NesInstance::ReadRomHeader(const std::vector<char>& headerData) {
@@ -229,4 +280,5 @@ void NesInstance::RegisterInput() const {
 }
 
 void NesInstance::Reset() {
+    m_ppuRegisters->Reset();
 }

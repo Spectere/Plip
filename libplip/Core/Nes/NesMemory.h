@@ -21,9 +21,9 @@ namespace Plip::Core::Nes {
 
         NesMemory(PlipMemory* workRam, NesPpuRegisters* ppuRegisters, NesApuRegisters* apuRegisters, NesMapper* mapper, PlipMemory* ppuRam);
 
-        [[nodiscard]] uint8_t GetByte(uint32_t address, bool privileged) const override;
+        [[nodiscard]] uint8_t GetByte(uint32_t address, bool privileged = false) const override;
         uint32_t GetLength() override { return 1 << 16; }
-        void SetByte(uint32_t address, uint8_t value, bool privileged) override;
+        void SetByte(uint32_t address, uint8_t value, bool privileged = false) override;
 
     private:
         PlipMemory* m_workRam;

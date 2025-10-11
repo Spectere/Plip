@@ -45,10 +45,14 @@ namespace Plip::Core::Nes {
             SetByte(static_cast<ApuRegister>(address), value, privileged);
         }
 
-        [[nodiscard]] uint8_t GetByte(ApuRegister apuRegister, bool privileged) const;
+        [[nodiscard]] uint8_t GetByte(ApuRegister apuRegister, bool privileged);
         [[nodiscard]] uint32_t GetLength() override;
         void SetByte(ApuRegister apuRegister, uint8_t value, bool privileged);
 
+        [[nodiscard]] bool GetControllerStrobe() const { return m_controllerStrobe; }
+        void SetControllerPort1(const uint8_t value) { m_joy1 = value; }
+        void SetControllerPort2(const uint8_t value) { m_joy2 = value; }
+        
     private:
         uint8_t m_pulse1DutyCycleVolume {};
         uint8_t m_pulse1SweepControl {};
@@ -72,5 +76,7 @@ namespace Plip::Core::Nes {
         uint8_t m_soundChannelsEnable {};
         uint8_t m_joy1 {};
         uint8_t m_joy2 {};
+
+        bool m_controllerStrobe {};
     }; 
 }

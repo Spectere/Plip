@@ -172,6 +172,7 @@ add_library(${lib_name}
     # NES
     libplip/Core/Nes/NesApuRegisters.cpp            libplip/Core/Nes/NesApuRegisters.h
     libplip/Core/Nes/NesInstance.cpp                libplip/Core/Nes/NesInstance.h
+    libplip/Core/Nes/NesInstance.Video.cpp
     libplip/Core/Nes/NesMapper.cpp                  libplip/Core/Nes/NesMapper.h
     libplip/Core/Nes/NesMemory.cpp                  libplip/Core/Nes/NesMemory.h
     libplip/Core/Nes/NesPpuRegisters.cpp            libplip/Core/Nes/NesPpuRegisters.h

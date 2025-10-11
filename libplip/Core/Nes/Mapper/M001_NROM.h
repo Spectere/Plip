@@ -15,11 +15,11 @@ namespace Plip::Core::Nes::Mapper {
             PlipMemory* prgRom, PlipMemory* chrRom, PlipMemory* trainer,
             int prgRamSize, int chrRamSize, int prgNvramSize, int chrNvramSize);
         
-        [[nodiscard]] uint8_t GetByteChr(uint32_t address, bool privileged) const override;
-        void SetByteChr(uint32_t address, uint8_t value, bool privileged) override;
+        [[nodiscard]] uint8_t GetByteChr(uint32_t address, bool privileged = false) const override;
+        void SetByteChr(uint32_t address, uint8_t value, bool privileged = false) override;
 
-        [[nodiscard]] uint8_t GetByteSys(uint32_t address, bool privileged) const override;
-        void SetByteSys(uint32_t address, uint8_t value, bool privileged) override;
+        [[nodiscard]] uint8_t GetByteSys(uint32_t address, bool privileged = false) const override;
+        void SetByteSys(uint32_t address, uint8_t value, bool privileged = false) override;
 
     private:
         int m_prgRamSize {};

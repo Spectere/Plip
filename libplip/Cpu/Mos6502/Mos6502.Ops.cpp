@@ -109,7 +109,7 @@ uint8_t Mos6502::AddDecimal(const uint8_t value) {
 
 void Mos6502::CallAbsolute(const uint16_t addr) {
     // Save address to stack and jump.
-    const uint16_t pc = m_registers.PC - 1;
+    const uint16_t pc = m_registers.PC;
     STACK_PUSH_16(pc);
     cycleCount += 3;
     m_registers.PC = addr;
@@ -804,7 +804,6 @@ long Mos6502::DecodeAndExecute() {
         case 0x00: {
             // BRK
             const uint16_t addr = (m_memory->GetByte(0xFFFF) << 8) | m_memory->GetByte(0xFFFE);
-            ++m_registers.PC;
             CallAbsolute(addr);
             STACK_PUSH(m_registers.F);
             m_registers.SetBreakCommand();
@@ -1216,7 +1215,7 @@ uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, cons
     return m_memory->GetByte(FetchAddress(addressingMode, alwaysUseY, forcePenalty));
 }
 
-long Mos6502::ServiceInterrupt(uint16_t vector) {
+long Mos6502::ServiceInterrupt(const uint16_t vector) {
     STACK_PUSH_16(m_registers.PC);
     STACK_PUSH(m_registers.F);
     m_registers.PC = vector;

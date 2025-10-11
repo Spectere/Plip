@@ -40,7 +40,7 @@ TEST("JMP (ind16)", "JMP-(ind16)") {  // 0x6C
 // JSR
 //
 TEST("JSR", "JSR") {  // 0x20
-    constexpr int expectedCycles = 3;
+    constexpr int expectedCycles = 6;
 
     LoadData(0x200, {
         0x20, 0x34, 0x12,
