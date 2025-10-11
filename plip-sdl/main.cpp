@@ -232,6 +232,12 @@ int main(int argc, char **argv) {
         case Plip::PlipError::InvalidCore:
             std::cout << "BUG: Core implemented improperly!\n" << std::endl;
             return 1;
+        case Plip::PlipError::RomFileTruncated:
+            std::cout << "Load failed. ROM appears to be truncated.\n" << std::endl;
+            return 1;
+        case Plip::PlipError::UnrecognizedMedia:
+            std::cout << "Unrecognized media. ROM appears to be in an invalid format.\n" << std::endl;
+            return 1;
         default:
             break;
     }
