@@ -64,7 +64,7 @@ void NesInstance::PPU_Cycle_FetchAndRender() {
 
         // Pop a tile from the queue every 8 cycles.
         if(thisPixelX % 8 == 0) {
-            m_ppuTileQueue.pop();  // Nametable byte. Unused in this context.
+            m_ppuNametablePointerPlotting = m_ppuTileQueue.front(); m_ppuTileQueue.pop();
             m_ppuCurrentAttribute = m_ppuTileQueue.front(); m_ppuTileQueue.pop();
             m_ppuCurrentTileLow = m_ppuTileQueue.front(); m_ppuTileQueue.pop();
             m_ppuCurrentTileHigh = m_ppuTileQueue.front(); m_ppuTileQueue.pop();
@@ -111,42 +111,27 @@ void NesInstance::PPU_Draw_Background(const int pixelX) {
     const auto actualPixel = pixelX + (ScreenWidth * m_ppuScanlineY);
     m_ppuCurrentTileHigh <<= 1;
     m_ppuCurrentTileLow <<= 1;
+    
+    const auto quad = (m_ppuNametablePointerPlotting & 0b1000000) >> 5 | ((m_ppuNametablePointerPlotting & 0b10) >> 2);
+    const auto paletteOffset = ((m_ppuCurrentAttribute >> (quad * 2)) & 0b11) * 4;
+    
+    const auto color = currentColor == 0
+        ? PPU_GetColorPtr(m_ppuRegisters->GetBytePalette(0))  // backdrop
+        : PPU_GetColorPtr(m_ppuRegisters->GetBytePalette(paletteOffset + currentColor));
 
-    switch(currentColor) {
-        case 0b00:
-            m_videoFormat.plot(m_videoBuffer, actualPixel, 255, 255, 255);
-            break;
-
-        case 0b01:
-            m_videoFormat.plot(m_videoBuffer, actualPixel, 172, 172, 172);
-            break;
-
-        case 0b10:
-            m_videoFormat.plot(m_videoBuffer, actualPixel, 86, 86, 86);
-            break;
-
-        case 0b11:
-            m_videoFormat.plot(m_videoBuffer, actualPixel, 0, 0, 0);
-            break;
-
-        default:  // wtf? Red, I guess?
-            m_videoFormat.plot(m_videoBuffer, actualPixel, 255, 0, 0);
-            break;
-    }
+    m_videoFormat.plot(m_videoBuffer, actualPixel, *color, *(color + 1), *(color + 2));
 }
 
-std::map<std::string, Plip::DebugValue> NesInstance::PPU_GetDebugInfo() const {
-    return {
-        { "Scanline", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_ppuScanlineY)) },
-        { "Scanline Cycle", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_ppuScanlineCycle)) },
-    };
+uint8_t* NesInstance::PPU_GetColorPtr(int index) {
+    index = (index % 0x40) * 3;
+    return &m_nesPalette[index];
 }
 
 void NesInstance::PPU_ReadMemory(const bool spriteQueue, const bool holdStage) {
     auto& queue = spriteQueue ? m_ppuSpriteQueue : m_ppuTileQueue;
     const auto nametableBase = m_ppuRegisters->GetBaseNamespaceAddress();
     const auto bgPatternBase = m_ppuRegisters->GetBackgroundPatternAddress();
-
+    
     // Correct the Y offset for reads that occur on the previous scanline.
     const auto offset = (m_ppuScanlineY % 8) + (m_ppuScanlineCycle > 256 ? 1 : 0);
 
@@ -154,9 +139,9 @@ void NesInstance::PPU_ReadMemory(const bool spriteQueue, const bool holdStage) {
     
     switch(m_ppuReadStage) {
         case 0: {
-            // Nametable byte.
+            // Nametable byte. We're going to push the current pointer instead, though.
             m_ppuLastPatternIndex = m_ppuRam->GetByte(nametableBase + m_ppuNametablePointer); 
-            pushValue = m_ppuLastPatternIndex;
+            pushValue = m_ppuNametablePointer;
             break;
         }
 
@@ -194,4 +179,11 @@ void NesInstance::PPU_ReadMemory(const bool spriteQueue, const bool holdStage) {
             m_ppuReadStage = 0;
         }
     }
+}
+
+std::map<std::string, Plip::DebugValue> NesInstance::PPU_GetDebugInfo() const {
+    return {
+            { "Scanline", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_ppuScanlineY)) },
+            { "Scanline Cycle", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_ppuScanlineCycle)) },
+        };
 }

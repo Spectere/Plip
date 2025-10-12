@@ -45,6 +45,8 @@ namespace Plip::Core::Nes {
         [[nodiscard]] uint8_t GetByteOam(uint8_t address) const;
         void SetByteOam(uint8_t address, uint8_t value);
 
+        [[nodiscard]] uint8_t GetBytePalette(const uint8_t address) const { return m_palette[address % 0x20]; }
+
         [[nodiscard]] uint16_t GetBaseNamespaceAddress() const { return 0x2000 + (m_ppuCtrlBaseNamespaceAddress * 0x400); }
         [[nodiscard]] uint16_t GetBackgroundPatternAddress() const { return m_ppuCtrlBackgroundAddressHigh ? 0x1000 : 0; }
         [[nodiscard]] std::map<std::string, DebugValue> GetDebugInfo() const;
@@ -65,6 +67,9 @@ namespace Plip::Core::Nes {
         //
         static constexpr int m_oamSize = 256;
         std::array<uint8_t, m_oamSize> m_oam {};
+
+        static constexpr int m_paletteSize = 0x20;
+        std::array<uint8_t, m_paletteSize> m_palette {};
 
         Cpu::Mos6502* m_cpu {};
         PlipMemory* m_ppuRam;

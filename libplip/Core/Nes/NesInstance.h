@@ -41,6 +41,7 @@ namespace Plip::Core::Nes {
         void PPU_Cycle_FetchAndRender();
         void PPU_Cycle_VBlank();
         void PPU_Draw_Background(int pixelX);
+        [[nodiscard]] uint8_t* PPU_GetColorPtr(int index);
         [[nodiscard]] std::map<std::string, DebugValue> PPU_GetDebugInfo() const;
         void PPU_ReadMemory(bool spriteQueue, bool holdStage = false);
         
@@ -146,10 +147,79 @@ namespace Plip::Core::Nes {
         int m_ppuRegScrollPosition {};  // v
         int m_ppuRegScrollXCoarse {};   // t
         int m_ppuRegScrollXFine {};     // x
-        std::queue<uint8_t> m_ppuSpriteQueue {};
-        std::queue<uint8_t> m_ppuTileQueue {};
+        std::queue<int> m_ppuSpriteQueue {};
+        std::queue<int> m_ppuTileQueue {};
         int m_ppuReadStage = 0;
         int m_ppuNametablePointer = 0;
+        int m_ppuNametablePointerPlotting = 0;
         int m_ppuLastPatternIndex = 0;
+
+        std::array<uint8_t, 0x40 * 3> m_nesPalette = {
+            117, 117, 117,  // $00
+             36,  24, 142,  // $01
+              0,   0, 170,  // $02
+             69,   0, 158,  // $03
+            142,   0, 117,  // $04
+            170,   0,  16,  // $05
+            166,   0,   0,  // $06
+            125,   8,   0,  // $07
+             65,  44,   0,  // $08
+              0,  69,   0,  // $09
+              0,  81,   0,  // $0A
+              0,  60,  20,  // $0B
+             24,  60,  93,  // $0C
+              0,   0,   0,  // $0D
+              0,   0,   0,  // $0E
+              0,   0,   0,  // $0F
+            190, 190, 190,  // $10
+              0, 113, 239,  // $11
+             32,  56, 239,  // $12
+            130,   0, 243,  // $13
+            190,   0, 190,  // $14
+            231,   0,  89,  // $15
+            219,  40,   0,  // $16
+            203,  77,  12,  // $17
+            138, 113,   0,  // $18
+              0, 150,   0,  // $19
+              0, 170,   0,  // $1A
+              0, 146,  56,  // $1B
+              0, 130, 138,  // $1C
+              0,   0,   0,  // $1D
+              0,   0,   0,  // $1E
+              0,   0,   0,  // $1F
+            255, 255, 255,  // $20
+             60, 190, 255,  // $21
+             93, 150, 255,  // $22
+            207, 138, 255,  // $23
+            247, 121, 255,  // $24
+            255, 117, 182,  // $25
+            255, 117,  97,  // $26
+            255, 154,  56,  // $27
+            243, 190,  60,  // $28
+            130, 211,  16,  // $29
+             77, 223,  73,  // $2A
+             89, 251, 154,  // $2B
+              0, 235, 219,  // $2C
+            121, 121, 121,  // $2D
+              0,   0,   0,  // $2E
+              0,   0,   0,  // $2F
+            255, 255, 255,  // $30
+            170, 231, 255,  // $31
+            199, 215, 255,  // $32
+            215, 203, 255,  // $33
+            255, 199, 255,  // $34
+            255, 199, 219,  // $35
+            255, 190, 178,  // $36
+            255, 219, 170,  // $37
+            255, 231, 162,  // $38
+            227, 255, 162,  // $39
+            170, 243, 190,  // $3A
+            178, 255, 207,  // $3B
+            158, 255, 243,  // $3C
+            199, 199, 199,  // $3D
+              0,   0,   0,  // $3E
+              0,   0,   0,  // $3F
+
+        };
     };
 }
