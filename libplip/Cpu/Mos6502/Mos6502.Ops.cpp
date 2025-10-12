@@ -49,6 +49,8 @@ static uint8_t op;
 
 #define STACK_PUSH(val) { m_memory->SetByte(StackLocation | m_registers.S--, (val)); }
 
+#define STACK_PUSH_FLAGS() { STACK_PUSH(m_registers.F | (1 << m_registers.BreakCommandBit)); }
+
 #define STACK_PUSH_16(val) { STACK_PUSH(val >> 8); STACK_PUSH(val & 0xFF); }
 
 #define BRANCH(cond) { \
@@ -406,7 +408,7 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x08: {
             // PHP
-            STACK_PUSH(m_registers.F);
+            STACK_PUSH_FLAGS();
             cycleCount += 2;
             break;
         }
@@ -805,7 +807,7 @@ long Mos6502::DecodeAndExecute() {
             // BRK
             const uint16_t addr = (m_memory->GetByte(0xFFFF) << 8) | m_memory->GetByte(0xFFFE);
             CallAbsolute(addr);
-            STACK_PUSH(m_registers.F);
+            STACK_PUSH_FLAGS();
             m_registers.SetBreakCommand();
             cycleCount += 3;
             break;
@@ -1217,7 +1219,7 @@ uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, cons
 
 long Mos6502::ServiceInterrupt(const uint16_t vector) {
     STACK_PUSH_16(m_registers.PC);
-    STACK_PUSH(m_registers.F);
+    STACK_PUSH_FLAGS();
     m_registers.PC = vector;
     m_registers.ClearBreakCommand();
     m_registers.SetInterruptDisable();
