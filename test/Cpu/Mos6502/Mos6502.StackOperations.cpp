@@ -102,7 +102,7 @@ TEST("PHP", "PHP") {  // 0x08
     cpu->ClearZeroFlag();
     EXECUTE(3);
     CHECK_S(0xFD);
-    CHECK_RAM(0x01FE, 0b00100000);
+    CHECK_RAM(0x01FE, 0b00110000);
 
     cpu->SetBreakCommand();
     cpu->SetCarryFlag();
@@ -202,5 +202,5 @@ TEST("PLP-Zero", "PLP-Zero") {  // 0x28
 
     cpu->Step();
     cpu->Step();
-    CHECK_RAM(0x01FF, 0b00100000);
+    CHECK_RAM(0x01FF, 0b00110000);
 }
