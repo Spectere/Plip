@@ -671,13 +671,15 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x6C: {
             // JMP (indirect)
-            uint8_t low, high;
-            FETCH_PC(low);
-            FETCH_PC(high);
-            const uint16_t addr = (high << 8) | low;
-            FETCH_ADDR(low, addr);
-            FETCH_ADDR(high, addr + 1);
-            m_registers.PC = (high << 8) | low;
+            uint8_t lowDest, highDest, lowSrc, highSrc;
+            FETCH_PC(lowSrc);
+            FETCH_PC(highSrc);
+            uint16_t addr = (highSrc << 8) | lowSrc;
+            
+            FETCH_ADDR(lowDest, addr);
+            addr = (addr & 0xFF00) | static_cast<uint8_t>(lowSrc + 1);  // Emulate page wraparound.
+            FETCH_ADDR(highDest, addr);
+            m_registers.PC = (highDest << 8) | lowDest;
             break;
         }
 

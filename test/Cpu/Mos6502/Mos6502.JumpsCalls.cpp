@@ -36,6 +36,20 @@ TEST("JMP (ind16)", "JMP-(ind16)") {  // 0x6C
     CHECK_PC(0x2468);
 }
 
+TEST("JMP (ind16) (with Wraparound)", "JMP-(ind16)-Wraparound") {  // 0x6C
+    constexpr int expectedCycles = 5;
+
+    LoadData(0x200, {
+        0x6C, 0xFF, 0x12,
+    });
+
+    LoadData(0x12FF, 0x68);
+    LoadData(0x1200, 0x24);
+
+    EXECUTE(expectedCycles);
+    CHECK_PC(0x2468);
+}
+
 //
 // JSR
 //
