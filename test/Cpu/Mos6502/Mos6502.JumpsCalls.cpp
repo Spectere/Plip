@@ -50,7 +50,7 @@ TEST("JSR", "JSR") {  // 0x20
     CHECK_PC(0x1234);
     CHECK_S(0xFD);
     CHECK_RAM(0x01FF, 0x02);
-    CHECK_RAM(0x01FE, 0x02);
+    CHECK_RAM(0x01FE, 0x03);
 }
 
 //
