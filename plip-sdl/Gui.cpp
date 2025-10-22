@@ -221,7 +221,6 @@ void Gui::DrawMemoryTools() {
     }
 }
 
-
 bool Gui::GetEnabled() const {
     return State.GuiShown;
 }

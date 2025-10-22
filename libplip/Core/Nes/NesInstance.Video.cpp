@@ -5,6 +5,7 @@
 
 #include "NesInstance.h"
 #include "../../PlipEmulationException.h"
+#include "../../PlipIo.h"
 
 using Plip::Core::Nes::NesInstance;
 
@@ -125,6 +126,23 @@ void NesInstance::PPU_Draw_Background(const int pixelX) {
 uint8_t* NesInstance::PPU_GetColorPtr(int index) {
     index = (index % 0x40) * 3;
     return &m_nesPalette[index];
+}
+
+Plip::PlipError NesInstance::PPU_LoadPalette(const std::string &path) {
+    if(!PlipIo::FileExists(path)) {
+        return PlipError::FileNotFound;
+    }
+
+    if(PlipIo::GetSize(path) < m_nesPaletteSize) {
+        return PlipError::AssetFileTruncated;
+    }
+
+    const auto paletteData = PlipIo::ReadFile(path, m_nesPaletteSize);
+    for(auto i = 0; i < m_nesPaletteSize; ++i) {
+        m_nesPalette[i] = static_cast<uint8_t>(paletteData[i]);
+    }
+
+    return PlipError::Success;
 }
 
 void NesInstance::PPU_ReadMemory(const bool spriteQueue, const bool holdStage) {

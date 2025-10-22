@@ -76,9 +76,14 @@ Plip::PlipError NesInstance::Load(const std::string& path) {
         return PlipError::FileNotFound;
     }
 
+    // Read the PPU palette.
+    const std::string palettePath = m_config.GetValue("Palette");
+    PPU_LoadPalette(palettePath);
+
+    // Read the ROM
     const auto romSize = PlipIo::GetSize(m_cartPath);
     auto romFile = PlipIo::LoadFile(m_cartPath);
-
+    
     // Read the ROM header.
     if(romSize < 16) {
         return PlipError::RomFileTruncated;

@@ -94,7 +94,6 @@ cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
     }
 }
 
-extern "C"
 int main(int argc, char **argv) {
     auto opts = ParseCmdLine(argc, argv);
     auto version = Plip::PlipInstance::GetVersion();

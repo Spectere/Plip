@@ -12,5 +12,6 @@ namespace Plip {
         FileNotFound,
         RomFileTruncated,
         UnrecognizedMedia,
+        AssetFileTruncated,
     };
 }
