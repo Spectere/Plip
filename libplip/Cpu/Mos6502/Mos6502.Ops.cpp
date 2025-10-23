@@ -1080,7 +1080,7 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
             FETCH_ADDR(low, zp)
             FETCH_ADDR(high, (zp + 1) & 0xFF);
             const uint16_t addr = (high << 8) | low;
-            const uint8_t value = m_memory->GetByte(addr);
+            const uint8_t value = m_memory->GetByte(addr + 1);
             m_memory->SetByte(addr + m_registers.Y, m_registers.A & m_registers.X & value);
             cycleCount += 2;
             break;
