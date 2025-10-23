@@ -117,18 +117,19 @@ Plip::PlipError NesInstance::Load(const std::string& path) {
     // Initialize the system and PPU memory.
     m_workRam = new PlipMemoryRam(m_workRamAmount);
     m_ppuRam = new PlipMemoryRam(m_ppuRamAmount);
-    m_ppuRegisters = new NesPpuRegisters(m_ppuRam);
     m_apuRegisters = new NesApuRegisters();
 
     // Set up the memory map.
     m_mapper = NesMapper::CreateMapper(
         m_cartUsesINesHeader,
         m_cartMapper, m_cartSubmapper,
-        m_prgRom, m_chrRom, m_trainerRom,
+        m_ppuRam, m_prgRom, m_chrRom, m_trainerRom,
         m_cartPrgRamSize, m_cartChrRamSize,
         m_cartPrgNvramSize, m_cartChrNvramSize
     );
 
+    m_ppuRegisters = new NesPpuRegisters(m_mapper);
+    
     m_nesMemory = new NesMemory(m_workRam, m_ppuRegisters, m_apuRegisters, m_mapper, m_ppuRam);
     delete m_memory;
     m_memory = m_nesMemory;

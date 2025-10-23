@@ -158,7 +158,7 @@ void NesInstance::PPU_ReadMemory(const bool spriteQueue, const bool holdStage) {
     switch(m_ppuReadStage) {
         case 0: {
             // Nametable byte. We're going to push the current pointer instead, though.
-            m_ppuLastPatternIndex = m_ppuRam->GetByte(nametableBase + m_ppuNametablePointer); 
+            m_ppuLastPatternIndex = m_mapper->GetBytePpu(nametableBase + m_ppuNametablePointer); 
             pushValue = m_ppuNametablePointer;
             break;
         }
@@ -170,19 +170,19 @@ void NesInstance::PPU_ReadMemory(const bool spriteQueue, const bool holdStage) {
             // Final result -> 0b00yyyxxx
             auto attributeOffset = (m_ppuNametablePointer >> 2) & 0b111;
             attributeOffset |= (m_ppuNametablePointer >> 4) & 0b111000;
-            pushValue = m_ppuRam->GetByte(nametableBase + 0x3C0 + attributeOffset);
+            pushValue = m_mapper->GetBytePpu(nametableBase + 0x3C0 + attributeOffset);
             break;
         }
 
         case 2: {
             // Pattern table tile low.
-            pushValue = m_mapper->GetByteChr(bgPatternBase + (16 * m_ppuLastPatternIndex) + offset);
+            pushValue = m_mapper->GetBytePpu(bgPatternBase + (16 * m_ppuLastPatternIndex) + offset);
             break;
         }
 
         case 3: {
             // Pattern table tile high.
-            pushValue = m_mapper->GetByteChr(bgPatternBase + (16 * m_ppuLastPatternIndex) + offset + 8);
+            pushValue = m_mapper->GetBytePpu(bgPatternBase + (16 * m_ppuLastPatternIndex) + offset + 8);
             break;
         }
 

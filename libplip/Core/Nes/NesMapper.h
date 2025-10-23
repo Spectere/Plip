@@ -10,17 +10,18 @@
 namespace Plip::Core::Nes {
     class NesMapper {
     public:
-        static NesMapper* CreateMapper(bool legacyINes, int mapperId, int submapperId, PlipMemory* prgRom, PlipMemory* chrRom,
-            PlipMemory* trainer, int prgRamSize, int chrRamSize, int prgNvramSize, int chrNvramSize);
+        static NesMapper* CreateMapper(bool legacyINes, int mapperId, int submapperId, PlipMemory* ppuRam,
+            PlipMemory* prgRom, PlipMemory* chrRom, PlipMemory* trainer, int prgRamSize, int chrRamSize,
+            int prgNvramSize, int chrNvramSize);
         
-        [[nodiscard]] virtual uint8_t GetByteChr(uint32_t address, bool privileged = false) const = 0;
-        virtual void SetByteChr(uint32_t address, uint8_t value, bool privileged = false) = 0;
+        [[nodiscard]] virtual uint8_t GetBytePpu(uint32_t address, bool privileged = false) const = 0;
+        virtual void SetBytePpu(uint32_t address, uint8_t value, bool privileged = false) = 0;
 
         [[nodiscard]] virtual uint8_t GetByteSys(uint32_t address, bool privileged = false) const = 0;
         virtual void SetByteSys(uint32_t address, uint8_t value, bool privileged = false) = 0;
-
+    
     protected:
-        NesMapper(int mapperId, int submapperId, PlipMemory* prgRom, PlipMemory* chrRom, PlipMemory* trainer);
+        NesMapper(int mapperId, int submapperId, PlipMemory* ppuRam, PlipMemory* prgRom, PlipMemory* chrRom, PlipMemory* trainer);
         ~NesMapper() = default;
 
         int m_mapperId {};
@@ -28,5 +29,6 @@ namespace Plip::Core::Nes {
         PlipMemory* m_prgRom {};
         PlipMemory* m_chrRom {};
         PlipMemory* m_trainer {};
+        PlipMemory* m_ppuRam;
     };
 }

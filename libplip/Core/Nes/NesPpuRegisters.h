@@ -9,7 +9,7 @@
 #include <map>
 #include <string>
 
-#include "../PlipCore.h"
+#include "NesMapper.h"
 #include "../../Cpu/Mos6502/Mos6502.h"
 #include "../../Memory/PlipMemory.h"
 
@@ -27,7 +27,7 @@ namespace Plip::Core::Nes {
 
     class NesPpuRegisters final : public PlipMemory {
     public:
-        explicit NesPpuRegisters(PlipMemory* ppuRam) : m_ppuRam(ppuRam) {}
+        explicit NesPpuRegisters(NesMapper* mapper) : m_mapper(mapper) {}
         
         [[nodiscard]] uint8_t GetByte(const uint32_t address, const bool privileged = false) override {
             return GetByte(static_cast<PpuRegister>(address), privileged);
@@ -72,7 +72,7 @@ namespace Plip::Core::Nes {
         std::array<uint8_t, m_paletteSize> m_palette {};
 
         Cpu::Mos6502* m_cpu {};
-        PlipMemory* m_ppuRam;
+        NesMapper* m_mapper;
         
         // PPUCTRL
         uint8_t m_ppuDebugCtrl {};

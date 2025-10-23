@@ -34,7 +34,7 @@ uint8_t NesPpuRegisters::GetByte(const PpuRegister ppuRegister, [[maybe_unused]]
             }
 
             const uint8_t returnValue = m_ppuDataBuffer;
-            m_ppuDataBuffer = m_ppuRam->GetByte(m_ppuAddress);
+            m_ppuDataBuffer = m_mapper->GetBytePpu(m_ppuAddress);
             IncrementPpuAddress();
             return returnValue;
         }
@@ -172,7 +172,7 @@ void NesPpuRegisters::SetByte(const PpuRegister ppuRegister, const uint8_t value
             if(m_ppuAddress >= 0x3F00 && m_ppuAddress < 0x4000) {
                 m_palette[(m_ppuAddress - 0x3F00) % 0x20] = value;
             } else {
-                m_ppuRam->SetByte(m_ppuAddress, value);
+                m_mapper->SetBytePpu(m_ppuAddress, value);
             }
             IncrementPpuAddress();
             break;
