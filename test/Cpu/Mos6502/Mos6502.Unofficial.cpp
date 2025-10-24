@@ -4740,14 +4740,14 @@ TEST("Unofficial-AHX (zp), Y", "Unofficial-AHX-(zp),Y") {  // 0x93
         0x93, 0xFF,
     });
 
-    LoadData(0x80, { 0x34, 0x12 });
-    LoadData(0xFF, 0x34); LoadData(0x00, 0x12);
+    LoadData(0x80, { 0x33, 0x12 });
+    LoadData(0xFF, 0x33); LoadData(0x00, 0x12);
 
     LoadData(0x1234, 0b00111100);
 
     cpu->SetRegisterA(0b00001111);
     cpu->SetRegisterX(0b10101010);
-    cpu->SetRegisterY(0x01);
+    cpu->SetRegisterY(0x02);
     EXECUTE(expectedCycles);
     CHECK_A(0b00001111);
     CHECK_X(0b10101010);
@@ -4756,7 +4756,7 @@ TEST("Unofficial-AHX (zp), Y", "Unofficial-AHX-(zp),Y") {  // 0x93
 
     cpu->SetRegisterA(0b00001111);
     cpu->SetRegisterX(0b10101010);
-    cpu->SetRegisterY(0x02);
+    cpu->SetRegisterY(0x03);
     EXECUTE(expectedCycles);
     CHECK_A(0b00001111);
     CHECK_X(0b10101010);

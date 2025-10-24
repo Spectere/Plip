@@ -1,4 +1,4 @@
-/* SharpLr35902.Ops.cpp
+/* Mos6502.Ops.cpp
  *
  * An implementation of a MOS 6502 CPU.
  * This file implements the decode and execution steps.
