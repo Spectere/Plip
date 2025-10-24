@@ -23,6 +23,8 @@ void NesInstance::PPU_CheckForNextScanline() {
 }
 
 void NesInstance::PPU_Cycle() {
+    m_ppuRegisters->SetCycle(m_ppuScanlineCycle);
+    
     if(m_ppuScanlineY < 240) {
         // Fetching/rendering
         PPU_Cycle_FetchAndRender();
@@ -73,8 +75,13 @@ void NesInstance::PPU_Cycle_FetchAndRender() {
 
         // Draw!
         PPU_Draw_Background(thisPixelX);
+        PPU_Draw_Sprite(thisPixelX);
     } else if(thisCycle <= 320) {
         // Fetching sprites for the next scanline.
+        if(thisPixelX % 2) {
+            // Fetch a byte of sprite data from OAM every other cycle.
+            PPU_ReadMemory(true);
+        }
     } else if(thisCycle <= 336 && m_ppuScanlineY != 239) {
         // Fetching the next two tiles for the next scanline.
         m_ppuNametablePointer = (((m_ppuScanlineY + 1) / 8) * 32) + ((thisCycle - 321) / 8);
@@ -121,6 +128,10 @@ void NesInstance::PPU_Draw_Background(const int pixelX) {
         : PPU_GetColorPtr(m_ppuRegisters->GetBytePalette(paletteOffset + currentColor));
 
     m_videoFormat.plot(m_videoBuffer, actualPixel, *color, *(color + 1), *(color + 2));
+}
+
+void NesInstance::PPU_Draw_Sprite(const int pixelX) {
+    const auto currentColor = ((m_ppuCurrentTileHigh & 0x80) >> 6) | (m_ppuCurrentTileLow >> 7);
 }
 
 uint8_t* NesInstance::PPU_GetColorPtr(int index) {

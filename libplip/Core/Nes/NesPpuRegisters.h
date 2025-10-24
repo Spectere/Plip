@@ -42,7 +42,8 @@ namespace Plip::Core::Nes {
         void Reset();
         void SetByte(PpuRegister ppuRegister, uint8_t value, bool privileged);
 
-        [[nodiscard]] uint8_t GetByteOam(uint8_t address) const;
+        void CopyPrimaryOamToSecondary(uint8_t address);
+        [[nodiscard]] uint8_t GetByteOam(uint8_t address, bool secondary) const;
         void SetByteOam(uint8_t address, uint8_t value);
 
         [[nodiscard]] uint8_t GetBytePalette(const uint8_t address) const { return m_palette[address % 0x20]; }
@@ -54,7 +55,7 @@ namespace Plip::Core::Nes {
         [[nodiscard]] bool GetVBlankNmi() const { return m_ppuCtrlNmiEnabled; }
 
         void SetCpu(Cpu::Mos6502* cpu) { m_cpu = cpu; }
-        
+        void SetCycle(const int cycle) { m_cycle = cycle; }
         void SetStatusSpriteOverflow(const bool value) { m_ppuStatusSpriteOverflow = value; } 
         void SetStatusSprite0Hit(const bool value) { m_ppuStatusSprite0Hit = value; }
         void SetStatusVBlank(const bool value) { m_ppuStatusVBlank = value; }
@@ -66,13 +67,16 @@ namespace Plip::Core::Nes {
         // Fields
         //
         static constexpr int m_oamSize = 256;
-        std::array<uint8_t, m_oamSize> m_oam {};
+        std::array<uint8_t, m_oamSize> m_primaryOam {};
+        std::array<uint8_t, m_oamSize> m_secondaryOam {};
 
         static constexpr int m_paletteSize = 0x20;
         std::array<uint8_t, m_paletteSize> m_palette {};
 
         Cpu::Mos6502* m_cpu {};
         NesMapper* m_mapper;
+
+        int m_cycle {};
         
         // PPUCTRL
         uint8_t m_ppuDebugCtrl {};

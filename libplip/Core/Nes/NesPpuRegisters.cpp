@@ -7,6 +7,10 @@
 
 using Plip::Core::Nes::NesPpuRegisters;
 
+void NesPpuRegisters::CopyPrimaryOamToSecondary(const uint8_t address) {
+    m_secondaryOam[address] = m_primaryOam[address];
+}
+
 uint8_t NesPpuRegisters::GetByte(const PpuRegister ppuRegister, [[maybe_unused]] bool privileged) {
     constexpr uint8_t openBus = 0xFF;  // TODO: I don't think this is accurate on the NES. Correct this later.
     
@@ -50,8 +54,8 @@ uint8_t NesPpuRegisters::GetByte(const PpuRegister ppuRegister, [[maybe_unused]]
     }
 }
 
-uint8_t NesPpuRegisters::GetByteOam(const uint8_t address) const {
-    return m_oam[address];
+uint8_t NesPpuRegisters::GetByteOam(const uint8_t address, const bool secondary) const {
+    return secondary ? m_secondaryOam[address] : m_primaryOam[address];
 }
 
 uint32_t NesPpuRegisters::GetLength() {
@@ -181,7 +185,7 @@ void NesPpuRegisters::SetByte(const PpuRegister ppuRegister, const uint8_t value
 }
 
 void NesPpuRegisters::SetByteOam(const uint8_t address, const uint8_t value) {
-    m_oam[address] = value;
+    m_primaryOam[address] = value;
 }
 
 std::map<std::string, Plip::DebugValue> NesPpuRegisters::GetDebugInfo() const {

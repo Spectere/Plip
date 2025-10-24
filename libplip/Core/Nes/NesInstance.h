@@ -41,6 +41,7 @@ namespace Plip::Core::Nes {
         void PPU_Cycle_FetchAndRender();
         void PPU_Cycle_VBlank();
         void PPU_Draw_Background(int pixelX);
+        void PPU_Draw_Sprite(int pixelX);
         [[nodiscard]] uint8_t* PPU_GetColorPtr(int index);
         [[nodiscard]] std::map<std::string, DebugValue> PPU_GetDebugInfo() const;
         PlipError PPU_LoadPalette(const std::string& path);
