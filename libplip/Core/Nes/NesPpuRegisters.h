@@ -43,7 +43,7 @@ namespace Plip::Core::Nes {
         void SetByte(PpuRegister ppuRegister, uint8_t value, bool privileged);
 
         void CopyPrimaryOamToSecondary(uint8_t address);
-        [[nodiscard]] uint8_t GetByteOam(uint8_t address, bool secondary) const;
+        [[nodiscard]] uint8_t GetByteOam(uint8_t address, bool secondary = false) const;
         void SetByteOam(uint8_t address, uint8_t value);
 
         [[nodiscard]] uint8_t GetBytePalette(const uint8_t address) const { return m_palette[address % 0x20]; }
