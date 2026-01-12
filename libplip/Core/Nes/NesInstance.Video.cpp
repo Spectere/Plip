@@ -3,9 +3,12 @@
  * Handles emulating the PPU.
  */
 
+#include <cassert>
+
 #include "NesInstance.h"
 #include "../../PlipEmulationException.h"
 #include "../../PlipIo.h"
+#include "../../PlipUtility.h"
 
 using Plip::Core::Nes::NesInstance;
 
@@ -73,15 +76,24 @@ void NesInstance::PPU_Cycle_FetchAndRender() {
             m_ppuCurrentTileHigh = m_ppuTileQueue.front(); m_ppuTileQueue.pop();
         }
 
+        // Sprite handling.
+        if(thisCycle <= 64 && (thisCycle % 2) == 0) {
+            // Initialize secondary OAM.
+            m_ppuRegisters->SetByteOam((thisCycle - 2) / 2, 0xFF);
+        } else if(thisCycle <= 256) {
+            // Sprite evaluation.
+            if((thisCycle % 2) == 1) {
+                // Odd cycles--read data from primary OAM.
+            }
+        } else if(thisCycle <= 320) {
+            // Sprite fetches.
+        }
+
         // Draw!
         PPU_Draw_Background(thisPixelX);
         PPU_Draw_Sprite(thisPixelX);
     } else if(thisCycle <= 320) {
         // Fetching sprites for the next scanline.
-        if(thisPixelX % 2) {
-            // Fetch a byte of sprite data from OAM every other cycle.
-            PPU_ReadMemory(true);
-        }
     } else if(thisCycle <= 336 && m_ppuScanlineY != 239) {
         // Fetching the next two tiles for the next scanline.
         m_ppuNametablePointer = (((m_ppuScanlineY + 1) / 8) * 32) + ((thisCycle - 321) / 8);
@@ -92,6 +104,9 @@ void NesInstance::PPU_Cycle_FetchAndRender() {
         // Fetching two unused nametable bytes.
         if(thisCycle % 2) { PPU_ReadMemory(false, true); }
     }
+
+    assert(m_ppuTileQueue.size() <= 2 * 4);
+    //assert(m_ppuSpriteQueue.size() <= 64 * 4);
 
     PPU_CheckForNextScanline();
 }

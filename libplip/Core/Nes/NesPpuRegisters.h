@@ -66,9 +66,10 @@ namespace Plip::Core::Nes {
         //
         // Fields
         //
-        static constexpr int m_oamSize = 256;
-        std::array<uint8_t, m_oamSize> m_primaryOam {};
-        std::array<uint8_t, m_oamSize> m_secondaryOam {};
+        static constexpr int m_primaryOamSize = 256;
+        static constexpr int m_secondaryOamSize = 32;
+        std::array<uint8_t, m_primaryOamSize> m_primaryOam {};
+        std::array<uint8_t, m_secondaryOamSize> m_secondaryOam {};
 
         static constexpr int m_paletteSize = 0x20;
         std::array<uint8_t, m_paletteSize> m_palette {};
