@@ -40,6 +40,7 @@ void GameBoyInstance::PPU_Cycle() {
         const auto dotClocks = m_doubleSpeed ? PPU_DotsPerCycleHighSpeed : PPU_DotsPerCycleLowSpeed; 
         for(auto dotCycle = 0; dotCycle < dotClocks; dotCycle++) {
             PPU_DotClock(currentLcdControl, currentLcdStatus);
+            ++m_ppuDotClock;
         }
     }
 
@@ -74,9 +75,13 @@ void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdSt
             break;
     }
 
-    if(!performModeTransition) {
-        ++m_ppuDotClock;
-    } else {
+    m_ppuLyc = m_ppuLcdYCoordinate == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
+    if(BIT_TEST(lcdStatus, 6) && m_ppuLyc) {
+        // LYC == LY interrupt.
+        m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+    }
+
+    if(performModeTransition) {
         // Transition to the next video mode.
         PPU_VideoModeTransition();
         PPU_FinishTransition(lcdStatus);
@@ -130,8 +135,8 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
         // Done!
         m_ppuOamScanComplete = true;
     }
-    
-    return m_ppuDotClock < PPU_OamScanTime;
+
+    return m_ppuDotClock < PPU_OamScanTime - 1;
 }
 
 bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
@@ -153,17 +158,32 @@ bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
     }
     
     switch(m_ppuOutputStage) {
-        case PPU_OutputStage::BackgroundScrolling: {
-            // Background scrolling causes a delay of (SCX % 8) dot clocks.
-            if(++m_ppuOutputClock > (m_ppuScrollX & 0b111)) {
-                m_ppuOutputClock = 0;
-                m_ppuOutputStage = PPU_OutputStage::Drawing;
+        case PPU_OutputStage::WindowPreparation: {
+            if(--m_ppuOutputClock == 0) {
+                if((m_ppuScrollX & 0b111) > 0) {
+                    // Background scroll penalty comes next.
+                    m_ppuOutputStage = PPU_OutputStage::BackgroundScrolling;
+                } else {
+                    // Simulate tile fetch penalty.
+                    m_ppuOutputClock = 12;
+                    m_ppuOutputStage = PPU_OutputStage::TileFetchPenalty;
+                }
             }
             break;
         }
 
-        case PPU_OutputStage::WindowPreparation:
+        case PPU_OutputStage::BackgroundScrolling: {
+            // Background scrolling causes a delay of (SCX % 8) dot clocks.
+            if(++m_ppuOutputClock > (m_ppuScrollX & 0b111)) {
+                m_ppuOutputClock = 12;
+                m_ppuOutputStage = PPU_OutputStage::TileFetchPenalty;
+            }
+            break;
+        }
+
+        case PPU_OutputStage::TileFetchPenalty:
         case PPU_OutputStage::ObjectPenalty: {
+            // TODO: Implement OBJ drawing penalties.
             if(--m_ppuOutputClock == 0) {
                 m_ppuOutputStage = PPU_OutputStage::Drawing;
             }
@@ -369,7 +389,15 @@ void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
             break;
 
         case PPU_Mode::Output:
-            m_ppuOutputStage = PPU_OutputStage::BackgroundScrolling;
+            if((m_ppuScrollX & 0b111) > 0) {
+                // Apply background scrolling penalty.
+                m_ppuOutputStage = PPU_OutputStage::BackgroundScrolling;
+                m_ppuOutputClock = 0;
+            } else {
+                // Go directly to the tile fetch penalty.
+                m_ppuOutputStage = PPU_OutputStage::TileFetchPenalty;
+                m_ppuOutputClock = 12;
+            }
             m_ppuScrollX = m_ioRegisters->GetByte(IoRegister::ScrollX);
             m_ppuWindowSetUp = false;
             break;
@@ -377,16 +405,10 @@ void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
 }
 
 void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) {
-    m_ppuLyc = m_ppuLcdYCoordinate == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
     m_ppuOamScanComplete = false;
 
     if(BIT_TEST(lcdStatus, 5)) {
         // OAM interrupt.
-        m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
-    }
-
-    if(BIT_TEST(lcdStatus, 6) && m_ppuLyc) {
-        // LYC == LY interrupt.
         m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
     }
 }
@@ -473,7 +495,7 @@ void GameBoyInstance::PPU_Reset() {
     m_ppuLastLcdControl = 0;
     m_ppuLcdOff = false;
     m_ppuLyc = false;
-    m_ppuMode = PPU_Mode::OamScan;
+    m_ppuMode = PPU_Mode::HBlank;
     m_ppuLcdXCoordinate = 0;
     m_ppuLcdYCoordinate = 0;
 }

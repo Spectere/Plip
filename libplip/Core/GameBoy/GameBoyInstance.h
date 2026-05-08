@@ -189,7 +189,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_ppuLastLcdControl {};
         bool m_ppuLcdOff = false;
         bool m_ppuLyc {};
-        PPU_Mode m_ppuMode {};
+        PPU_Mode m_ppuMode = PPU_Mode::HBlank;
         bool m_ppuOamScanComplete = false;
         std::vector<PPU_Object> m_ppuObjectDrawList {};
         int m_ppuOutputClock {};

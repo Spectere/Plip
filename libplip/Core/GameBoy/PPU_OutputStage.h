@@ -10,6 +10,7 @@ namespace Plip::Core::GameBoy {
         BackgroundScrolling,
         Drawing,
         WindowPreparation,
+        TileFetchPenalty,
         ObjectPenalty,
     };
 }
