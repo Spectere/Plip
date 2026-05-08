@@ -35,16 +35,30 @@ void GameBoyInstance::PPU_Cycle() {
         m_ppuLcdOff = true;
     }
 
+    uint8_t regLy = 0;
+
     if(BIT_TEST(currentLcdControl, 7)) {
         // Run 2/4 dot clock cycles per CPU cycle.
         const auto dotClocks = m_doubleSpeed ? PPU_DotsPerCycleHighSpeed : PPU_DotsPerCycleLowSpeed; 
         for(auto dotCycle = 0; dotCycle < dotClocks; dotCycle++) {
             PPU_DotClock(currentLcdControl, currentLcdStatus);
+
+            // There's a fun little quirk where LY will only equal 153 for 4 dot clocks before rolling over to 0.
+            regLy = (m_ppuLcdYCoordinate == 153 && m_ppuDotClock >= PPU_LyRolloverClock)
+                ? static_cast<uint8_t>(0)
+                : m_ppuLcdYCoordinate;
+
+            m_ppuLyc = regLy == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
+            if(BIT_TEST(currentLcdStatus, 6) && m_ppuLyc) {
+                // LYC == LY interrupt
+                m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+            }
+
             ++m_ppuDotClock;
         }
     }
 
-    m_ioRegisters->Video_SetYCoordinate(m_ppuLcdYCoordinate);
+    m_ioRegisters->Video_SetYCoordinate(regLy);
     m_ppuLastLcdControl = currentLcdControl;
 
     // Update the LCD STAT register.
@@ -58,27 +72,22 @@ void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdSt
         case PPU_Mode::HBlank:
             performModeTransition = m_ppuDotClock >= PPU_ScanlineTime;
             break;
-        case PPU_Mode::VBlank:
+        case PPU_Mode::VBlank: {
             if(m_ppuDotClock > 0) {
-                if(m_ppuDotClock % (PPU_OamScanTime + PPU_ScanlineTime) == 0) {
+                if(m_ppuDotClock % PPU_ScanlineTime == 0) {
                     ++m_ppuLcdYCoordinate;
                 }
             }
 
-            performModeTransition = m_ppuDotClock >= PPU_FrameTime;
+            performModeTransition = m_ppuDotClock >= PPU_VBlankTime;
             break;
+        }
         case PPU_Mode::OamScan:
             performModeTransition = !PPU_DotClock_OamScan();
             break;
         case PPU_Mode::Output:
             performModeTransition = !PPU_DotClock_Output(lcdControl);
             break;
-    }
-
-    m_ppuLyc = m_ppuLcdYCoordinate == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
-    if(BIT_TEST(lcdStatus, 6) && m_ppuLyc) {
-        // LYC == LY interrupt.
-        m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
     }
 
     if(performModeTransition) {
