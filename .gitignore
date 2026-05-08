@@ -20,16 +20,15 @@
 .idea/**/gradle.xml
 .idea/**/libraries
 
+# More JetBrains (technically not part of their recommended set, but it ALWAYS MODIFIES THESE ARGH)
+.idea/**/vcs.xml
+
 # CMake
 build*/
 cmake-build-*/
 
 # macOS
 .DS_Store
-
-# Git
-.worktrees/
-worktrees/
 
 
 #
