@@ -33,7 +33,7 @@ TEST("IRQ (Interrupts Disabled)", "IRQ-IntDisabled") {
     cpu->SetInterruptDisable();
     cpu->RaiseInterrupt();
 
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     CHECK_PC(0x0201);
 }
@@ -50,8 +50,8 @@ TEST("NMI (Interrupts Enabled)", "NMI-IntEnabled") {
     cpu->ClearInterruptDisable();
     cpu->SetBreakCommand();
     cpu->FlagNmi();
-    cpu->Cycle();  // NOP (2 cycles)
-    cpu->Cycle();  // The end of this cycle should signal for the CPU to jump to the NMI vector.
+    cpu->Step();  // NOP (2 cycles)
+    cpu->Step();  // The end of this cycle should signal for the CPU to jump to the NMI vector.
 
     EXECUTE(expectedCycles);
     CHECK_FALSE(cpu->CpuHasCrashed());
@@ -68,8 +68,8 @@ TEST("NMI (Interrupts Disabled)", "NMI-IntDisabled") {
     cpu->SetInterruptDisable();
     cpu->SetBreakCommand();
     cpu->FlagNmi();
-    cpu->Cycle();  // NOP (2 cycles)
-    cpu->Cycle();  // The end of this cycle should signal for the CPU to jump to the NMI vector.
+    cpu->Step();  // NOP (2 cycles)
+    cpu->Step();  // The end of this cycle should signal for the CPU to jump to the NMI vector.
 
     EXECUTE(expectedCycles);
     CHECK_FALSE(cpu->CpuHasCrashed());

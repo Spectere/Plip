@@ -66,11 +66,11 @@ void DoLoadAllRegisters(const MockCpu<Cpu::Chip8>* fixture) {
     CreateLoadRegistersRoutine(fixture);
     fixture->LoadData(InitialPc, { 0x2F, 00 });
 
-    fixture->cpu->Step();  // Jump into subroutine.
+    fixture->cpu->Cycle();  // Jump into subroutine.
     CHECK(fixture->cpu->GetPc() == LoadRegistersSubroutineAddress);
 
     while(fixture->REG("SP") == 1) {
-        fixture->cpu->Step();
+        fixture->cpu->Cycle();
     }
     CHECK(fixture->cpu->GetPc() == InitialPc + 2);
 }
@@ -82,7 +82,7 @@ void Execute(const MockCpu<Cpu::Chip8>* fixture, const std::vector<uint8_t> &dat
     fixture->cpu->Reset(InitialPc);
     int cycles = 0;
     while(fixture->cpu->GetPc() != InitialPc + data.size()) {
-        fixture->cpu->Step();
+        fixture->cpu->Cycle();
         if(++cycles >= cycleLimit) {
             throw std::runtime_error("Infinite loop detected.");
         }
@@ -92,17 +92,17 @@ void Execute(const MockCpu<Cpu::Chip8>* fixture, const std::vector<uint8_t> &dat
 TEST("Stack underflow", "RET-underflow") {  // 00EE
     LoadData(InitialPc, { 0x00, 0xEE });
     cpu->Reset(InitialPc);
-    REQUIRE_THROWS(cpu->Step());  // Stack underflow.
+    REQUIRE_THROWS(cpu->Cycle());  // Stack underflow.
 }
 
 TEST("Call and return from subroutine", "CALL/RET") {  // 0x2nnn, 0x00EE
     LoadData(InitialPc, { 0x23, 0x00 });  // Jump to 0x300
     LoadData(0x300, { 0x00, 0xEE });            // Return from subroutine
     cpu->Reset(InitialPc);
-    cpu->Step();
+    cpu->Cycle();
     REQUIRE(cpu->GetPc() == 0x300);  // Jump successful
     REQUIRE(REG("SP") == 1);  // Stack pointer incremented.
-    cpu->Step();
+    cpu->Cycle();
     REQUIRE(cpu->GetPc() == InitialPc + 2);  // Return successful
     REQUIRE(REG("SP") == 0);  // Stack pointer decremented.
 }
@@ -129,16 +129,16 @@ TEST("Stack overflow", "CALL-overflow") {  // 0x2nnn
     cpu->Reset(InitialPc);
 
     for(auto i = 0; i < 16; i++) { // Fill up the stack...
-        cpu->Step();
+        cpu->Cycle();
     }
-    REQUIRE_THROWS(cpu->Step());  // Boom!
+    REQUIRE_THROWS(cpu->Cycle());  // Boom!
 }
 
 TEST("Unconditional jump", "JP") {  // 1nnn
     LoadData(InitialPc, { 0x1F, 0xFF });
     cpu->Reset(InitialPc);
 
-    cpu->Step();
+    cpu->Cycle();
     REQUIRE(cpu->GetPc() == 0xFFF);
 }
 
@@ -397,8 +397,8 @@ TEST("Jump to V0 + value", "JPV0,a") {  // Bnnn
     });
     cpu->Reset(InitialPc);
 
-    cpu->Step();
-    cpu->Step();
+    cpu->Cycle();
+    cpu->Cycle();
     REQUIRE(cpu->GetPc() == 0x224);
 }
 
@@ -410,22 +410,22 @@ TEST("Delay timer", "LDr,n") {  // Fx07/Fx15
     });
     cpu->Reset(InitialPc);
 
-    cpu->Step();
-    cpu->Step();
+    cpu->Cycle();
+    cpu->Cycle();
     REQUIRE(REG("Delay") == 0x02);
 
     cpu->DelayTimer();
-    cpu->Step();
+    cpu->Cycle();
     REQUIRE(REG("Delay") == 0x01);
     REQUIRE(REG("V1") == 0x01);
 
     cpu->DelayTimer();
-    cpu->Step();
+    cpu->Cycle();
     REQUIRE(REG("Delay") == 0x00);
     REQUIRE(REG("V1") == 0x01);
 
     cpu->DelayTimer();
-    cpu->Step();
+    cpu->Cycle();
     REQUIRE(REG("Delay") == 0x00);
     REQUIRE(REG("V1") == 0x01);
 }
@@ -437,8 +437,8 @@ TEST("Sound timer", "LDST,r") {  // Fx18
     });
     cpu->Reset(InitialPc);
 
-    cpu->Step();
-    cpu->Step();
+    cpu->Cycle();
+    cpu->Cycle();
     REQUIRE(REG("Audio") == 0x02);
 
     cpu->DelayTimer();

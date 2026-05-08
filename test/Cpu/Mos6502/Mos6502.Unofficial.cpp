@@ -34,7 +34,7 @@ TEST("Unofficial-WDC65C02", "Unofficial-WDC65C02") {
     cpu->SetVersion(Cpu::Mos6502Version::Wdc65C02);
 
     for(auto i = 0; i < opCount; i++) {
-        CHECK_THROWS(cpu->Step());
+        CHECK_THROWS(cpu->Cycle());
     }
 }
 
@@ -44,7 +44,7 @@ TEST("Unofficial-WDC65C02", "Unofficial-WDC65C02") {
 TEST("Unofficial-KIL $02", "Unofficial-KIL-02") {  // 0x02
     LoadData(0x200, { 0x02, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -52,7 +52,7 @@ TEST("Unofficial-KIL $02", "Unofficial-KIL-02") {  // 0x02
 TEST("Unofficial-KIL $12", "Unofficial-KIL-12") {  // 0x12
     LoadData(0x200, { 0x12, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -60,7 +60,7 @@ TEST("Unofficial-KIL $12", "Unofficial-KIL-12") {  // 0x12
 TEST("Unofficial-KIL $22", "Unofficial-KIL-22") {  // 0x22
     LoadData(0x200, { 0x22, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -68,7 +68,7 @@ TEST("Unofficial-KIL $22", "Unofficial-KIL-22") {  // 0x22
 TEST("Unofficial-KIL $32", "Unofficial-KIL-32") {  // 0x32
     LoadData(0x200, { 0x32, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -76,7 +76,7 @@ TEST("Unofficial-KIL $32", "Unofficial-KIL-32") {  // 0x32
 TEST("Unofficial-KIL $42", "Unofficial-KIL-42") {  // 0x42
     LoadData(0x200, { 0x42, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -84,7 +84,7 @@ TEST("Unofficial-KIL $42", "Unofficial-KIL-42") {  // 0x42
 TEST("Unofficial-KIL $52", "Unofficial-KIL-52") {  // 0x52
     LoadData(0x200, { 0x52, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -92,7 +92,7 @@ TEST("Unofficial-KIL $52", "Unofficial-KIL-52") {  // 0x52
 TEST("Unofficial-KIL $62", "Unofficial-KIL-62") {  // 0x62
     LoadData(0x200, { 0x62, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -100,7 +100,7 @@ TEST("Unofficial-KIL $62", "Unofficial-KIL-62") {  // 0x62
 TEST("Unofficial-KIL $72", "Unofficial-KIL-72") {  // 0x72
     LoadData(0x200, { 0x72, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -108,7 +108,7 @@ TEST("Unofficial-KIL $72", "Unofficial-KIL-72") {  // 0x72
 TEST("Unofficial-KIL $92", "Unofficial-KIL-92") {  // 0x92
     LoadData(0x200, { 0x92, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -116,7 +116,7 @@ TEST("Unofficial-KIL $92", "Unofficial-KIL-92") {  // 0x92
 TEST("Unofficial-KIL $B2", "Unofficial-KIL-B2") {  // 0xB2
     LoadData(0x200, { 0xB2, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -124,7 +124,7 @@ TEST("Unofficial-KIL $B2", "Unofficial-KIL-B2") {  // 0xB2
 TEST("Unofficial-KIL $D2", "Unofficial-KIL-D2") {  // 0xD2
     LoadData(0x200, { 0xD2, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }
@@ -132,7 +132,7 @@ TEST("Unofficial-KIL $D2", "Unofficial-KIL-D2") {  // 0xD2
 TEST("Unofficial-KIL $F2", "Unofficial-KIL-F2") {  // 0xF2
     LoadData(0x200, { 0xF2, 0xEA });
     CHECK_FALSE(cpu->CpuHasCrashed());
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->CpuHasCrashed());
     EXECUTE(__LONG_MAX__);
 }

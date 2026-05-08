@@ -18,11 +18,11 @@ namespace Plip::Cpu {
         [[nodiscard]] long GetHz() const;
         void SetHz(long hz);
 
-        virtual void Cycle();
+        virtual long Cycle() = 0;
         [[nodiscard]] virtual unsigned long GetPc() const = 0;
         [[nodiscard]] virtual std::map<std::string, DebugValue> GetRegisters() const = 0;
         virtual void Reset(uint32_t pc) = 0;
-        virtual long Step() = 0;
+        virtual void Step();
 
     protected:
         PlipCpu(long hz, PlipMemoryMap* memoryMap);

@@ -200,7 +200,7 @@ TEST("PLP-Zero", "PLP-Zero") {  // 0x28
 
     cpu->SetRegisterS(0xFE);
 
-    cpu->Step();
-    cpu->Step();
+    cpu->Cycle();
+    cpu->Cycle();
     CHECK_RAM(0x01FF, 0b00110000);
 }

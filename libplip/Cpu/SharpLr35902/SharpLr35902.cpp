@@ -57,7 +57,7 @@ std::map<std::string, Plip::DebugValue> SharpLr35902::GetRegisters() const {
     };
 }
 
-long SharpLr35902::Step() {
+long SharpLr35902::Cycle() {
     if(m_changingSpeed) {
         if(--m_speedChangeTimer == 0) {
             m_changingSpeed = false;

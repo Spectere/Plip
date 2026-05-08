@@ -12,13 +12,13 @@ PlipCpu::PlipCpu(const long hz, PlipMemoryMap* memoryMap) {
     m_memory = memoryMap;
 }
 
-void PlipCpu::Cycle() {
+void PlipCpu::Step() {
     if(m_remainingCycles > 0) {
         m_remainingCycles--;
     }
 
     if(m_remainingCycles == 0) {
-        m_remainingCycles = Step();
+        m_remainingCycles = Cycle();
     }
 }
 

@@ -86,7 +86,7 @@ void GameBoyInstance::Delta(const long ns) {
     do {
         // Run CPU for one cycle.
         if(!m_dmaBlockCpu)
-            m_cpu->Cycle();
+            m_cpu->Step();
 
         if(const auto cpuDoubleSpeed = m_cpu->IsDoubleSpeed(); m_doubleSpeed != cpuDoubleSpeed) {
             m_doubleSpeed = cpuDoubleSpeed;

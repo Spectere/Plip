@@ -19,10 +19,10 @@ TEST("HALT (IME+)", "HALT-IME-E") {
     CHECK(cpu->GetHalt() == true);
 
     // If we run additional cycles, the PC should remain at 0x01.
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetHalt() == true);
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetHalt() == true);
 }
@@ -35,10 +35,10 @@ TEST("HALT (IME~)", "HALT-IME-P") {
     CHECK(cpu->GetHalt() == true);
 
     // If we run additional cycles, the PC should remain at 0x01.
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetHalt() == true);
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetHalt() == true);
 }
@@ -51,10 +51,10 @@ TEST("HALT (IME-)", "HALT-IME-D") {
     CHECK(cpu->GetHalt() == true);
 
     // If we run additional cycles, the PC should remain at 0x01.
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetHalt() == true);
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetHalt() == true);
 }
@@ -71,10 +71,10 @@ TEST("HALT Bug (IME-)", "HALT-Bug-IME-D") {
     // 0x02 after an additional cycle.
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetHalt() == false);
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetPc() == 0x01);
     CHECK(cpu->GetHalt() == false);
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetPc() == 0x02);
     CHECK(cpu->GetHalt() == false);
 }
@@ -102,7 +102,7 @@ TEST("HALT Bug (RST)", "HALT-Bug-RST") {
 
     EXECUTE(1);
     CHECK(cpu->GetPc() == 0x01);   // PC is on RST $10
-    cpu->Step();                  // This should execute RST $10.
+    cpu->Cycle();                  // This should execute RST $10.
 
     // The address of RST $10 should be on the stack, and PC should be 0x10.
     CHECK(memory->GetByte(0x1FF) == 0x00);
@@ -125,7 +125,7 @@ TEST("EI", "EI") {
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::PendingEnable);
 
     // Interrupts should be fully enabled after a NOP.
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
 }
 
@@ -137,9 +137,9 @@ TEST("EI (Multiple)", "EI-multiple") {
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::PendingEnable);
 
     // Repeatedly check for enabled.
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
-    cpu->Step();
+    cpu->Cycle();
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
 }
 

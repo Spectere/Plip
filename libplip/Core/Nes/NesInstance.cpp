@@ -42,7 +42,7 @@ void NesInstance::Delta(const long ns) {
 
     do {
         // Run CPU for one cycle.
-        m_cpu->Cycle();
+        m_cpu->Step();
 
         // Input
         ReadControllers();

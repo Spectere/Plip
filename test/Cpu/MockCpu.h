@@ -13,7 +13,7 @@
 
 #define CHECK_RAM(addr, val) CHECK(memory->GetByte(addr) == val);
 
-#define EXECUTE(expectedCycles) CHECK(cpu->Step() == expectedCycles);
+#define EXECUTE(expectedCycles) CHECK(cpu->Cycle() == expectedCycles);
 
 template<class CpuType>
 class MockCpu {

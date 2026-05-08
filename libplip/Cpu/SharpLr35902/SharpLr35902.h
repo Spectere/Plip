@@ -31,7 +31,7 @@ namespace Plip::Cpu {
         bool IsChangingSpeed() const { return m_changingSpeed; }
         bool IsDoubleSpeed() const { return m_doubleSpeed; }
         bool IsHalted() const { return m_halt; }
-        long Step() override;
+        long Cycle() override;
         [[nodiscard]] unsigned long GetPc() const override;
         [[nodiscard]] std::map<std::string, DebugValue> GetDebugInfo() const;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;

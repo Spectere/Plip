@@ -27,9 +27,9 @@ namespace Plip::Cpu {
         Mos6502(long hz, PlipMemoryMap* memoryMap, Mos6502Version version);
         virtual ~Mos6502() = default;
 
-        void Cycle() override;
+        void Step() override;
         [[nodiscard]] unsigned long GetPc() const override;
-        long Step() override;
+        long Cycle() override;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
 

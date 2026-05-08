@@ -19,8 +19,8 @@ Mos6502::Mos6502(const long hz, PlipMemoryMap* memoryMap, const Mos6502Version v
     Mos6502::Reset(0);
 }
 
-void Mos6502::Cycle() {
-    PlipCpu::Cycle();
+void Mos6502::Step() {
+    PlipCpu::Step();
 
     // Perform edge detection to see if we should service an NMI during the next fetch.
     if(m_nmiFlag && !m_nmiLast) {
@@ -76,7 +76,7 @@ void Mos6502::Reset([[maybe_unused]] const uint32_t pc) {
     m_registers.PC = GetResetVector();
 }
 
-long Mos6502::Step() {
+long Mos6502::Cycle() {
     if(OpKillExecuted) return __LONG_MAX__;
 
     if(m_nmiPending) {
