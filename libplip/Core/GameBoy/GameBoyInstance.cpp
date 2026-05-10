@@ -77,8 +77,7 @@ void GameBoyInstance::BootRomFlagHandler() {
 }
 
 void GameBoyInstance::Delta(const double ns) {
-    auto timeRemaining = ns;
-    auto cycleTime = m_cpu->GetCycleTime();
+    m_deltaTimeRemaining += ns;
 
     ReadJoypad();
     ClearActiveBreakpoint();
@@ -91,7 +90,7 @@ void GameBoyInstance::Delta(const double ns) {
         if(const auto cpuDoubleSpeed = m_cpu->IsDoubleSpeed(); m_doubleSpeed != cpuDoubleSpeed) {
             m_doubleSpeed = cpuDoubleSpeed;
             m_ioRegisters->SetDoubleSpeed(m_doubleSpeed);
-            cycleTime = m_cpu->GetCycleTime();
+            m_cycleTime = m_cpu->GetCycleTime();
             m_ioRegisters->Timer_Reset();
         }
 
@@ -149,8 +148,8 @@ void GameBoyInstance::Delta(const double ns) {
         }
 
         ++m_totalCpuCycles;
-        timeRemaining -= cycleTime;
-    } while(cycleTime < timeRemaining);
+        m_deltaTimeRemaining -= m_cycleTime;
+    } while(m_cycleTime < m_deltaTimeRemaining);
 }
 
 void GameBoyInstance::DmaCheck() {
@@ -397,6 +396,7 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
 
     // Create CPU.
     m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory, m_model == GameBoyModel::CGB);
+    m_cycleTime = m_cpu->GetCycleTime();
 
     // Reset system.
     Reset();

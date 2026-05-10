@@ -89,6 +89,8 @@ namespace Plip::Core::GameBoy {
 
         bool m_cgbMode {};
         Cpu::SharpLr35902 *m_cpu;
+        double m_cycleTime {};
+        double m_deltaTimeRemaining {};
         bool m_doubleSpeed {};
         GameBoyModel m_model;
         uint64_t m_totalCpuCycles {};
