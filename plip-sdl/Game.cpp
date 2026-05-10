@@ -32,6 +32,10 @@ void Game::Run() const {
     auto lastFrameTime = steady_clock::now();
     auto nextFrameTarget = steady_clock::now() + frameDuration;
 
+    // Emulator core profiling.
+    uint64_t cpuCyclesLast {};
+    uint64_t vblankCountLast {};
+
     double sleepLatencySec = 0;
     auto sleepLatency = duration_cast<steady_clock::duration>(duration<double>(0.0));
 
@@ -154,6 +158,9 @@ void Game::Run() const {
                 // Pause, or long stall. Reset the frame target.
                 nextFrameTarget = steady_clock::now() + frameDuration - sleepLatency;
             }
+        } else {
+            // Turbo throws off the sleep latency timer. Ensure that it's reset.
+            sleepLatencySec = 0.0;
         }
 
         const auto currentFrameTime = steady_clock::now();
@@ -174,6 +181,14 @@ void Game::Run() const {
             }
 
             sleepLatency = duration_cast<nanoseconds>(duration<double>(sleepLatencySec));
+
+            // Emulator profiling.
+            const auto cpuCyclesNow = m_plip->GetCore()->GetTotalCpuCycles();
+            const auto vblankCountNow = m_plip->GetCore()->GetTotalVBlankCount();
+            m_gui->State.EmulatedCpuHz = static_cast<double>(cpuCyclesNow - cpuCyclesLast) / averageFrameTime;
+            m_gui->State.EmulatedRefreshRate = static_cast<double>(vblankCountNow - vblankCountLast) / averageFrameTime;
+            cpuCyclesLast = cpuCyclesNow;
+            vblankCountLast = vblankCountNow;
 
             // Update GUI and reset work values.
             m_gui->State.AverageFrameTime = averageFrameTimeSec * 1000;

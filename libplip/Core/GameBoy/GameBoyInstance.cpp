@@ -67,7 +67,7 @@ GameBoyInstance::~GameBoyInstance() {
 
 void GameBoyInstance::BootRomFlagHandler() {
     if(!m_ioRegisters->GetBootRomDisabled()) return;
-    
+
     // Swap the boot ROM out for the cartridge ROM.
     m_bootRomDisableFlag = true;
     m_gbMemory->DisableBootRom();
@@ -94,7 +94,7 @@ void GameBoyInstance::Delta(const double ns) {
             cycleTime = m_cpu->GetCycleTime();
             m_ioRegisters->Timer_Reset();
         }
-        
+
         // Timer
         if(!m_dmaBlockCpu && !m_cpu->IsChangingSpeed())
             m_ioRegisters->Timer_Cycle();
@@ -148,6 +148,7 @@ void GameBoyInstance::Delta(const double ns) {
             }
         }
 
+        ++m_totalCpuCycles;
         timeRemaining -= cycleTime;
     } while(cycleTime < timeRemaining);
 }
@@ -173,7 +174,7 @@ void GameBoyInstance::DmaComplete() const {
             DmaCompleteOam();
             break;
         }
-        
+
         default: break;
     }
 }
@@ -210,14 +211,14 @@ void GameBoyInstance::DmaCycle() {
                 m_batchLastPpuMode = m_ppuMode;
                 break;
             }
-            
+
             m_batchLastPpuMode = m_ppuMode;
             m_dmaState = DmaState::Preparing;
             m_dmaBatchLength = HBlankDmaBatchLength;
             m_dmaBlockCpu = m_dmaCgb;
             break;
         }
-        
+
         case DmaState::Transferring: {
             if(m_dmaTransferMode != DmaTransferMode::Oam && m_ioRegisters->Video_GetHdmaTransferCancelled()) {
                 m_ioRegisters->Video_AcknowledgeHdmaCancellation();
@@ -228,7 +229,7 @@ void GameBoyInstance::DmaCycle() {
             const auto thisByte = m_dmaCopyInvalidBytes
                 ? 0xFF
                 : m_memory->GetByte(m_dmaSourceAddress + m_dmaCurrentOffset, true);
-            
+
             m_memory->SetByte(m_dmaDestinationAddress + m_dmaCurrentOffset, thisByte, true);
 
             if(m_dmaCgb) {
@@ -248,7 +249,7 @@ void GameBoyInstance::DmaCycle() {
             if(m_dmaBatched && --m_dmaBatchLength == 0) {
                 m_dmaState = DmaState::WaitingForHBlank;
             }
-            
+
             break;
         }
 
@@ -259,7 +260,7 @@ void GameBoyInstance::DmaCycle() {
             }
             break;
         }
-        
+
         case DmaState::Inactive:
         default:
             break;
@@ -315,14 +316,14 @@ void GameBoyInstance::DmaInitCgb(const DmaTransferMode transferMode) {
         case DmaTransferMode::GeneralPurpose: {
             break;
         }
-        
+
         case DmaTransferMode::HBlank: {
             m_dmaBatched = true;
             m_dmaBatchLength = HBlankDmaBatchLength;
             m_dmaState = DmaState::WaitingForHBlank;
             break;
         }
-        
+
         case DmaTransferMode::Inactive:
         default:
             break;
@@ -396,7 +397,7 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
 
     // Create CPU.
     m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory, m_model == GameBoyModel::CGB);
-    
+
     // Reset system.
     Reset();
 

@@ -29,6 +29,8 @@ namespace Plip::Core::GameBoy {
         void Delta(double ns) override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         std::vector<uint64_t> GetPcs() const override;
+        uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
+        uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
         PlipError Load(const std::string &path) override;
         void Reset() override;
         void Shutdown() override;
@@ -89,6 +91,8 @@ namespace Plip::Core::GameBoy {
         Cpu::SharpLr35902 *m_cpu;
         bool m_doubleSpeed {};
         GameBoyModel m_model;
+        uint64_t m_totalCpuCycles {};
+        uint64_t m_totalVBlankCount {};
         PlipVideoFormatInfo m_videoFormat {};
         uint8_t *m_videoBuffer;
         size_t m_videoBufferSize;
@@ -167,7 +171,7 @@ namespace Plip::Core::GameBoy {
         static constexpr auto PPU_OamScanTime = 80;
         static constexpr auto PPU_ScanlineTime = 456;
         static constexpr auto PPU_LyRolloverClock = PPU_ScanlineTime * 9 + 4;
-        static constexpr auto PPU_VBlankTime = 4560;
+        static constexpr auto PPU_Scanlines = 154;
 
         static constexpr auto PPU_TileBase = 0x0000;
         static constexpr auto PPU_TileBaseBlock2 = 0x1000;
@@ -190,7 +194,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_ppuLastLcdControl {};
         bool m_ppuLcdOff = false;
         bool m_ppuLyc {};
-        PPU_Mode m_ppuMode = PPU_Mode::HBlank;
+        PPU_Mode m_ppuMode = PPU_Mode::OamScan;
         bool m_ppuOamScanComplete = false;
         std::vector<PPU_Object> m_ppuObjectDrawList {};
         int m_ppuOutputClock {};
@@ -202,6 +206,11 @@ namespace Plip::Core::GameBoy {
         bool m_ppuWindowSetUp {};
         int m_ppuWindowX {};
         int m_ppuWindowY {};
+
+#ifndef NDEBUG
+        static constexpr auto PPU_DBG_TotalDotClocksPerFrame = 70224;
+        int m_DBG_ppuFrameDotClocks {};
+#endif // !NDEBUG
 
         // Timer
         uint16_t m_timerSystem {};

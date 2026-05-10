@@ -44,6 +44,8 @@ namespace Plip {
         virtual std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const = 0;
         [[nodiscard]] PlipMemoryMap* GetMemoryMap() const { return m_memory; }
         virtual std::vector<uint64_t> GetPcs() const = 0;
+        virtual uint64_t GetTotalCpuCycles() const { return 0; }
+        virtual uint64_t GetTotalVBlankCount() const { return 0; }
         virtual PlipError Load(const std::string &path) = 0;
         virtual void Reset() = 0;
         void SetBreakpoints(const std::set<uint64_t> &breakpoints) { m_breakpoints = breakpoints; }

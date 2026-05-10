@@ -67,7 +67,7 @@ Plip::PlipError PlipInstance::Load(const PlipValidCore core, const std::string &
     return m_core->Load(path);
 }
 
-void PlipInstance::Run(const long ns) const {
+void PlipInstance::Run(const double ns) const {
     m_core->Delta(ns);
 }
 

@@ -4,6 +4,7 @@
  */
 
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 
 #include "GameBoyInstance.h"
@@ -27,7 +28,10 @@ void GameBoyInstance::PPU_Cycle() {
         m_video->Draw(m_videoBuffer);
         m_video->EndDraw();
 
-        m_ppuMode = PPU_Mode::HBlank;
+        m_ppuMode = PPU_Mode::OamScan;
+        m_ppuDotClock = 0;
+        m_ppuLcdXCoordinate = 0;
+        m_ppuLcdYCoordinate = 0;
     } else if(!BIT_TEST(m_ppuLastLcdControl, 7) && BIT_TEST(currentLcdControl, 7)) {
         // LCD was enabled during this cycle. Reset VRAM permissions and signal for the
         // screen to be drawn during the next frame.
@@ -39,8 +43,8 @@ void GameBoyInstance::PPU_Cycle() {
 
     if(BIT_TEST(currentLcdControl, 7)) {
         // Run 2/4 dot clock cycles per CPU cycle.
-        const auto dotClocks = m_doubleSpeed ? PPU_DotsPerCycleHighSpeed : PPU_DotsPerCycleLowSpeed; 
-        for(auto dotCycle = 0; dotCycle < dotClocks; dotCycle++) {
+        const auto dotClocks = m_doubleSpeed ? PPU_DotsPerCycleHighSpeed : PPU_DotsPerCycleLowSpeed;
+        for(auto dotCycle = 0; dotCycle < dotClocks; ++dotCycle) {
             PPU_DotClock(currentLcdControl, currentLcdStatus);
 
             // There's a fun little quirk where LY will only equal 153 for 4 dot clocks before rolling over to 0.
@@ -55,6 +59,12 @@ void GameBoyInstance::PPU_Cycle() {
             }
 
             ++m_ppuDotClock;
+
+            assert(m_ppuDotClock < PPU_ScanlineTime);
+            assert(m_ppuLcdYCoordinate < PPU_Scanlines);
+#ifndef NDEBUG
+            assert(m_DBG_ppuFrameDotClocks < PPU_DBG_TotalDotClocksPerFrame);
+#endif // !NDEBUG
         }
     }
 
@@ -70,16 +80,15 @@ void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdSt
 
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
-            performModeTransition = m_ppuDotClock >= PPU_ScanlineTime;
+            performModeTransition = m_ppuDotClock >= PPU_ScanlineTime - 1;
             break;
         case PPU_Mode::VBlank: {
-            if(m_ppuDotClock > 0) {
-                if(m_ppuDotClock % PPU_ScanlineTime == 0) {
-                    ++m_ppuLcdYCoordinate;
-                }
+            if(m_ppuDotClock >= PPU_ScanlineTime - 1) {
+                ++m_ppuLcdYCoordinate;
+                m_ppuDotClock = 0;
             }
 
-            performModeTransition = m_ppuDotClock >= PPU_VBlankTime;
+            performModeTransition = m_ppuLcdYCoordinate >= PPU_Scanlines - 1;
             break;
         }
         case PPU_Mode::OamScan:
@@ -95,6 +104,10 @@ void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdSt
         PPU_VideoModeTransition();
         PPU_FinishTransition(lcdStatus);
     }
+
+#ifndef NDEBUG
+    ++m_DBG_ppuFrameDotClocks;
+#endif // !NDEBUG
 }
 
 bool GameBoyInstance::PPU_DotClock_OamScan() {
@@ -103,7 +116,7 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
 
         const auto lcdControl = m_ioRegisters->GetByte(IoRegister::LcdControl);
         const bool tallSprites = BIT_TEST(lcdControl, 2);
-    
+
         // Clear draw list array.
         m_ppuObjectDrawList.clear();
 
@@ -165,7 +178,7 @@ bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
             m_ppuOutputStage = PPU_OutputStage::WindowPreparation;
         }
     }
-    
+
     switch(m_ppuOutputStage) {
         case PPU_OutputStage::WindowPreparation: {
             if(--m_ppuOutputClock == 0) {
@@ -206,11 +219,14 @@ bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
         }
     }
 
-    return m_ppuLcdXCoordinate < ScreenWidth;
+    return m_ppuLcdXCoordinate < ScreenWidth - 1;
 }
 
 void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
     const uint32_t pixelOffset = (m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate;
+
+    assert(m_ppuLcdXCoordinate < ScreenWidth);
+    assert(m_ppuLcdYCoordinate < ScreenHeight);
 
     if(!BIT_TEST(lcdControl, 7)) {
         // The LCD should not be disabled here. Plot an error pixel.
@@ -223,7 +239,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
         // Background/Window drawing is enabled (or we're in CGB mode).
         const auto backgroundPalette = m_ioRegisters->GetByte(IoRegister::BgPalette);
         const auto scrollY = m_ioRegisters->GetByte(IoRegister::ScrollY);
-        
+
         const auto backgroundTileMapAddress = PPU_TileMapBase + (BIT_TEST(lcdControl, 3) ? PPU_TileMapBlockOffset : 0);
 
         const auto tilesUseBlock2 = (BIT_TEST(lcdControl, 4)) == 0;
@@ -257,7 +273,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
 int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const int offsetX, const int offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1, const bool lcdcPriority) const {
     uint8_t surfacePixelX {};
     uint8_t surfacePixelY {};
-    
+
     if(isWindow) {
         if(offsetX > 166 || offsetY > 143) { return -1; }  // Window is off-screen.
         if(m_ppuLcdXCoordinate < offsetX || m_ppuLcdYCoordinate < offsetY) { return -1; }  // Current pixel is up/left of window.
@@ -268,7 +284,7 @@ int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, cons
         surfacePixelX = m_ppuLcdXCoordinate + offsetX;
         surfacePixelY = m_ppuLcdYCoordinate + offsetY;
     }
-    
+
     const auto tileX = (surfacePixelX / PPU_TileSizeX) % PPU_MapTileCountX;
     const auto tileY = (surfacePixelY / PPU_TileSizeY) % PPU_MapTileCountY;
     const auto mapIndex = (tileY * PPU_MapTileCountX) + tileX;
@@ -299,22 +315,22 @@ int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, cons
     }
 
     const auto tileIndex = m_videoRam->GetByte(tileMapAddress + mapIndex, true);
-    
+
     const auto lineOffset = tilePixelY * 2;
 
-    const auto tileDataAddress = (tileIndex < 128) ? tileDataAddress0 : tileDataAddress1 + (bank1 ? GameBoyMapper::VideoRamLength : 0); 
+    const auto tileDataAddress = (tileIndex < 128) ? tileDataAddress0 : tileDataAddress1 + (bank1 ? GameBoyMapper::VideoRamLength : 0);
     const auto pixelDataLow = m_videoRam->GetByte(tileDataAddress + (tileIndex % 128 * 16) + lineOffset, true);
     const auto pixelDataHigh = m_videoRam->GetByte(tileDataAddress + (tileIndex % 128 * 16) + lineOffset + 1, true);
     const auto tileShift = 7 - tilePixelX;
     const auto pixelData = (((pixelDataHigh >> tileShift) & 0b1) << 1)
                          | ((pixelDataLow >> tileShift) & 0b1);
     const auto pixelColor = (palette >> (pixelData * 2)) & 0b11;
-    
+
     if(m_model == GameBoyModel::DMG) {
         PPU_Plot_DMG(pixelColor, pixelOffset);
         return pixelColor;
     }
-    
+
     PPU_Plot_CGB(false, cgbPalette, m_cgbMode ? pixelData : pixelColor, pixelOffset);
     return pixelData | (priority ? (1 << 7) : 0);
 }
@@ -323,7 +339,7 @@ bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Objec
     // TODO: Emulate object dot clock penalties. :(
     const auto objX = object.X - 8;
     const auto objY = object.Y - 16;
-    
+
     if((m_ppuLcdXCoordinate < objX) || (m_ppuLcdXCoordinate >= objX + 8)) {
         // Sprite does not exist on the current X coordinate.
         return false;
@@ -357,7 +373,7 @@ bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Objec
         // Flip vertically.
         objPixelY = (tallSprites ? 15 : 7) - objPixelY;
     }
-    
+
     const auto lineOffset = objPixelY * 2;
     const auto pixelDataLow = m_videoRam->GetByte(PPU_TileBase + (tileIndex * 16) + lineOffset, true);
     const auto pixelDataHigh = m_videoRam->GetByte(PPU_TileBase + (tileIndex * 16) + lineOffset + 1, true);
@@ -365,7 +381,7 @@ bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Objec
     const auto pixelData = (((pixelDataHigh >> objShift) & 0b1) << 1)
                          | ((pixelDataLow >> objShift) & 0b1);
     if(pixelData == 0) return false;  // Color 0b00 is always transparent.
-    
+
     const auto objPalette = m_ioRegisters->GetByte(BIT_TEST(object.Flags, 4) ? IoRegister::Obj1Palette : IoRegister::Obj0Palette);
     const auto pixelColor = (objPalette >> (pixelData * 2)) & 0b11;
 
@@ -380,7 +396,6 @@ bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Objec
 
 void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
     PPU_SetMemoryPermissions();
-    m_ppuDotClock = 0;
 
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
@@ -434,6 +449,12 @@ void GameBoyInstance::PPU_FinishTransition_VBlank(const uint8_t lcdStatus) {
     if(BIT_TEST(lcdStatus, 4)) {
         m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
     }
+
+    ++m_totalVBlankCount;
+
+#ifndef NDEBUG
+    m_DBG_ppuFrameDotClocks = 0;
+#endif // !NDEBUG
 }
 
 std::map<std::string, Plip::DebugValue> GameBoyInstance::PPU_GetDebugInfo() const {
@@ -504,7 +525,7 @@ void GameBoyInstance::PPU_Reset() {
     m_ppuLastLcdControl = 0;
     m_ppuLcdOff = false;
     m_ppuLyc = false;
-    m_ppuMode = PPU_Mode::HBlank;
+    m_ppuMode = PPU_Mode::OamScan;
     m_ppuLcdXCoordinate = 0;
     m_ppuLcdYCoordinate = 0;
 }
@@ -551,10 +572,12 @@ void GameBoyInstance::PPU_SetMemoryPermissions() const {
 void GameBoyInstance::PPU_VideoModeTransition() {
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
+            m_ppuDotClock = 0;
+
             m_ppuLcdXCoordinate = 0;
             ++m_ppuLcdYCoordinate;
 
-            m_ppuMode = m_ppuLcdYCoordinate < ScreenHeight
+            m_ppuMode = m_ppuLcdYCoordinate <= ScreenHeight - 1
                 ? PPU_Mode::OamScan
                 : PPU_Mode::VBlank;
             break;

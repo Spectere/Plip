@@ -18,6 +18,8 @@ namespace PlipSdl {
         bool TurboEnabled = false;
         double AverageFrameTime = 0;
         double AverageWorkTime = 0;
+        double EmulatedCpuHz = 0;
+        double EmulatedRefreshRate = 0;
 
         // Memory display.
         bool PerformRead = false;
