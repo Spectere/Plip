@@ -18,14 +18,23 @@ bool Game::GetPaused() const {
 }
 
 void Game::Run() const {
+    using std::chrono::duration;
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    using std::chrono::steady_clock;
+
     const auto frameTimeNs = m_frameTime * 1000000000;
+    const auto frameDuration = duration_cast<steady_clock::duration>(duration<double>(m_frameTime));
     const auto audio = m_plip->GetAudio();
-    auto averageFrameTimeCount = 0;
+    auto averageTimeCount = 0;
     double averageFrameTime = 0;
+    double averageWorkTime = 0;
+    auto lastFrameTime = steady_clock::now();
+    auto nextFrameTarget = steady_clock::now() + frameDuration;
 
     auto running = true;
     while(running) {
-        const auto frameStartTime = std::chrono::steady_clock::now();
+        const auto frameStartTime = steady_clock::now();
 
         auto uiEvents = m_event->ProcessEvents();
         for(const auto &event : uiEvents) {
@@ -130,23 +139,36 @@ void Game::Run() const {
         m_gui->Render();
         m_window->Present();
 
-        const auto elapsedTime = std::chrono::duration<double>(
-            std::chrono::steady_clock::now() - frameStartTime
+        const auto elapsedTime = duration<double>(
+            steady_clock::now() - frameStartTime
         ).count();
 
-        if(elapsedTime < m_frameTime && !m_gui->State.TurboEnabled) {
-            const auto sleepTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                std::chrono::duration<double>(m_frameTime - elapsedTime)
-            );
-            std::this_thread::sleep_for(sleepTime);
+        if(!m_gui->State.TurboEnabled) {
+            std::this_thread::sleep_until(nextFrameTarget);
+            nextFrameTarget += frameDuration;
+
+            if(nextFrameTarget < steady_clock::now() - frameDuration) {
+                // Pause, or long stall. Reset the frame target.
+                nextFrameTarget = steady_clock::now() + frameDuration;
+            }
         }
 
-        averageFrameTime += elapsedTime;
-        if(++averageFrameTimeCount > AverageFrameTimeSampleSize) {
-            m_gui->State.AverageFrameTime = averageFrameTime / AverageFrameTimeSampleSize * 1000;
-            averageFrameTimeCount = 0;
+        const auto currentFrameTime = steady_clock::now();
+        const auto currentFrameDuration = duration<double>(
+            currentFrameTime - lastFrameTime
+        ).count();
+
+        averageWorkTime += elapsedTime;
+        averageFrameTime += currentFrameDuration;
+        if(++averageTimeCount > AverageTimeSampleSize) {
+            m_gui->State.AverageFrameTime = averageFrameTime / AverageTimeSampleSize * 1000;
+            m_gui->State.AverageWorkTime = averageWorkTime / AverageTimeSampleSize * 1000;
+            averageTimeCount = 0;
             averageFrameTime = 0;
+            averageWorkTime = 0;
         }
+
+        lastFrameTime = currentFrameTime;
     }
 
     m_plip->GetCore()->Shutdown();

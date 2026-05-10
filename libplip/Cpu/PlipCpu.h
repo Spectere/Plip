@@ -14,7 +14,7 @@
 namespace Plip::Cpu {
     class PlipCpu {
     public:
-        [[nodiscard]] long GetCycleTime() const;
+        [[nodiscard]] double GetCycleTime() const;
         [[nodiscard]] long GetHz() const;
         void SetHz(long hz);
 
@@ -29,7 +29,7 @@ namespace Plip::Cpu {
         ~PlipCpu() = default;
 
         long m_hz {};
-        long m_cycle {};
+        double m_cycle {};
         PlipMemoryMap *m_memory;
 
     private:

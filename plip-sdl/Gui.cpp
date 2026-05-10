@@ -138,6 +138,7 @@ void Gui::DrawCoreDebugInfo() {
 }
 
 void Gui::DrawEmulatorControls() {
+    ImGui::Text("Work Time: %f ms", State.AverageWorkTime);
     ImGui::Text("Frame Time: %f ms", State.AverageFrameTime);
     ImGui::Checkbox("Pause", &State.PauseCore);
 
