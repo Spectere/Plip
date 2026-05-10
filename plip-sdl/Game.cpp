@@ -36,9 +36,6 @@ void Game::Run() const {
     uint64_t cpuCyclesLast {};
     uint64_t vblankCountLast {};
 
-    double sleepLatencySec = 0;
-    auto sleepLatency = duration_cast<steady_clock::duration>(duration<double>(0.0));
-
     auto running = true;
     while(running) {
         const auto frameStartTime = steady_clock::now();
@@ -152,15 +149,12 @@ void Game::Run() const {
 
         if(!m_gui->State.TurboEnabled) {
             std::this_thread::sleep_until(nextFrameTarget);
-            nextFrameTarget += frameDuration - sleepLatency;
+            nextFrameTarget += frameDuration;
 
             if(nextFrameTarget < steady_clock::now() - frameDuration) {
                 // Pause, or long stall. Reset the frame target.
-                nextFrameTarget = steady_clock::now() + frameDuration - sleepLatency;
+                nextFrameTarget = steady_clock::now() + frameDuration;
             }
-        } else {
-            // Turbo throws off the sleep latency timer. Ensure that it's reset.
-            sleepLatencySec = 0.0;
         }
 
         const auto currentFrameTime = steady_clock::now();
@@ -172,15 +166,6 @@ void Game::Run() const {
         averageFrameTime += currentFrameDuration;
         if(++averageTimeCount > AverageTimeSampleSize) {
             const auto averageFrameTimeSec = averageFrameTime / AverageTimeSampleSize;
-
-            // Use the average frame time to calculate the approximate sleep latency for this system.
-            sleepLatencySec = averageFrameTimeSec - m_frameTime + sleepLatencySec;
-            if(sleepLatencySec < -SleepLatencyErrorMargin || sleepLatencySec > SleepLatencyErrorMargin) {
-                // The time is way off. Reset.
-                sleepLatencySec = 0.0;
-            }
-
-            sleepLatency = duration_cast<nanoseconds>(duration<double>(sleepLatencySec));
 
             // Emulator profiling.
             const auto cpuCyclesNow = m_plip->GetCore()->GetTotalCpuCycles();
