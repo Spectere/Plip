@@ -22,7 +22,7 @@ namespace Plip::Core::Nes {
         NesInstance(PlipAudio* audio, PlipInput* input, PlipVideo* video, const PlipKeyValuePairCollection &config);
         ~NesInstance() override;
         
-        void Delta(long ns) override;
+        void Delta(double ns) override;
         std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         std::vector<uint64_t> GetPcs() const override;
         PlipError Load(const std::string& path) override;

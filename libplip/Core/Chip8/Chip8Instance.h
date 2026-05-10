@@ -23,7 +23,7 @@ namespace Plip::Core::Chip8 {
         Chip8Instance(PlipAudio *audio, PlipInput *input, PlipVideo *video, const PlipKeyValuePairCollection &config);
         ~Chip8Instance() override;
 
-        void Delta(long ns) override;
+        void Delta(double ns) override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         std::vector<uint64_t> GetPcs() const override;
         PlipError Load(const std::string &path) override;

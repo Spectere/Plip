@@ -76,7 +76,7 @@ void GameBoyInstance::BootRomFlagHandler() {
     m_cgbMode = m_model == GameBoyModel::CGB && !BIT_TEST(m_ioRegisters->GetByte(IoRegister::CpuModeSelect), 2);
 }
 
-void GameBoyInstance::Delta(const long ns) {
+void GameBoyInstance::Delta(const double ns) {
     auto timeRemaining = ns;
     auto cycleTime = m_cpu->GetCycleTime();
 

@@ -66,7 +66,7 @@ Chip8Instance::~Chip8Instance() {
     free(m_videoOutput);
 }
 
-void Chip8Instance::Delta(const long ns) {
+void Chip8Instance::Delta(const double ns) {
     m_cycleRemaining += ns;
 
     ClearActiveBreakpoint();

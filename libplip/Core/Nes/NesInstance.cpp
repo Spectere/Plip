@@ -36,7 +36,7 @@ NesInstance::~NesInstance() {
     delete m_videoBuffer;
 }
 
-void NesInstance::Delta(const long ns) {
+void NesInstance::Delta(const double ns) {
     const auto cycleTime = m_cpu->GetCycleTime();
     auto timeRemaining = ns;
 

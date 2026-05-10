@@ -32,6 +32,9 @@ void Game::Run() const {
     auto lastFrameTime = steady_clock::now();
     auto nextFrameTarget = steady_clock::now() + frameDuration;
 
+    double sleepLatencySec = 0;
+    auto sleepLatency = duration_cast<steady_clock::duration>(duration<double>(0.0));
+
     auto running = true;
     while(running) {
         const auto frameStartTime = steady_clock::now();
@@ -145,11 +148,11 @@ void Game::Run() const {
 
         if(!m_gui->State.TurboEnabled) {
             std::this_thread::sleep_until(nextFrameTarget);
-            nextFrameTarget += frameDuration;
+            nextFrameTarget += frameDuration - sleepLatency;
 
             if(nextFrameTarget < steady_clock::now() - frameDuration) {
                 // Pause, or long stall. Reset the frame target.
-                nextFrameTarget = steady_clock::now() + frameDuration;
+                nextFrameTarget = steady_clock::now() + frameDuration - sleepLatency;
             }
         }
 
@@ -161,7 +164,19 @@ void Game::Run() const {
         averageWorkTime += elapsedTime;
         averageFrameTime += currentFrameDuration;
         if(++averageTimeCount > AverageTimeSampleSize) {
-            m_gui->State.AverageFrameTime = averageFrameTime / AverageTimeSampleSize * 1000;
+            const auto averageFrameTimeSec = averageFrameTime / AverageTimeSampleSize;
+
+            // Use the average frame time to calculate the approximate sleep latency for this system.
+            sleepLatencySec = averageFrameTimeSec - m_frameTime + sleepLatencySec;
+            if(sleepLatencySec < -SleepLatencyErrorMargin || sleepLatencySec > SleepLatencyErrorMargin) {
+                // The time is way off. Reset.
+                sleepLatencySec = 0.0;
+            }
+
+            sleepLatency = duration_cast<nanoseconds>(duration<double>(sleepLatencySec));
+
+            // Update GUI and reset work values.
+            m_gui->State.AverageFrameTime = averageFrameTimeSec * 1000;
             m_gui->State.AverageWorkTime = averageWorkTime / AverageTimeSampleSize * 1000;
             averageTimeCount = 0;
             averageFrameTime = 0;

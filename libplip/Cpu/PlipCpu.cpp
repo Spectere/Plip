@@ -32,5 +32,5 @@ long PlipCpu::GetHz() const {
 
 void PlipCpu::SetHz(const long hz) {
     m_hz = hz;
-    m_cycle = 1000000000.0 / hz;
+    m_cycle = 1000000000.0 / static_cast<double>(hz);
 }

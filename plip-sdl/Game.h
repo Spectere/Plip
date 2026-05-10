@@ -20,6 +20,7 @@ namespace PlipSdl {
 
     private:
         static constexpr auto AverageTimeSampleSize = 60;
+        static constexpr auto SleepLatencyErrorMargin = 0.1;
 
         Plip::PlipInstance* m_plip;
         Gui* m_gui;
