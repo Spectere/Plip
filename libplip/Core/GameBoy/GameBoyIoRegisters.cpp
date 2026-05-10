@@ -83,7 +83,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
             /* $FF6B */ case IoRegister::ObjectPaletteData: { return m_videoCgbObjPaletteRam->GetByte(m_videoObjPaletteIndex); }
             /* $FF6C */ case IoRegister::ObjectPriorityMode: { return 0xFF ^ (m_videoCgbObjectPriority ? 1 : 0); }
             /* $FF70 */ case IoRegister::WramBank: { return m_regWramBank; }
-            
+
             default: break;
         }
     }
@@ -124,7 +124,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         m_audioWaveRam[static_cast<int>(ioRegister) - static_cast<int>(IoRegister::WaveRam0)] = value;
         return;
     }
-    
+
     switch(ioRegister) {
         // $FF00
         case IoRegister::JoypadInput: {
@@ -171,6 +171,10 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF07
         case IoRegister::TimerControl: {
             m_regTimerControl = PadValue(value, 3);
+
+            const auto thisBitResult = m_timerLastBitResult && m_regTimerControl & 0b100;
+            Timer_FallingEdgeDetection(thisBitResult);
+
             break;
         }
 
@@ -377,7 +381,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             m_regWindowX = value;
             break;
         }
-        
+
         // $FF50
         case IoRegister::BootRomDisable: {
             if(!m_bootRomDisabled) {
@@ -485,7 +489,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
                 m_videoCgbObjectPriority = !BIT_TEST(value, 0);
                 break;
             }
-        
+
             // $FF70
             case IoRegister::WramBank: {
                 m_performWorkRamBankSwitch = m_regWramBank = value & 0b111;
@@ -514,7 +518,7 @@ void GameBoyIoRegisters::Timer_Cycle() {
     const auto timerControl = m_regTimerControl;
     const auto timaEnabled = timerControl & 0b100;
     const auto timaClock = timerControl & 0b11;
-    
+
     const auto frequencyBit = Timer_GetFrequencyBit(timaClock);
     const bool thisBitResult = ((m_timerInternal >> frequencyBit) & 0b1) && timaEnabled;
 

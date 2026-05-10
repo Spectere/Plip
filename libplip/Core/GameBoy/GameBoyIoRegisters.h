@@ -16,7 +16,7 @@ namespace Plip::Core::GameBoy {
         GeneralPurpose,
         HBlank,
     };
-    
+
     enum class IoRegister {
         JoypadInput = 0x00,
         SerialData = 0x01,
@@ -94,7 +94,7 @@ namespace Plip::Core::GameBoy {
         AudioDigitalOutput12 = 0x76,    // CGB
         AudioDigitalOutput34 = 0x77,    // CGB
     };
-    
+
     class GameBoyIoRegisters final : public PlipMemory {
     public:
         GameBoyIoRegisters(GameBoyModel gbModel, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam);
@@ -188,7 +188,7 @@ namespace Plip::Core::GameBoy {
             ReloadScheduled,
             ReloadJustOccurred,
         };
-        
+
         bool m_timerLastBitResult {};
         TimaReloadStatus m_timerTimaReloadStatus {};
         uint16_t m_timerInternal {};
@@ -229,7 +229,7 @@ namespace Plip::Core::GameBoy {
         uint16_t m_videoHdmaSourceAddress {};           // CGB
         bool m_videoHdmaTransferCancelled {};           // CGB
         int m_videoHdmaTransferLength {};               // CGB
-        DmaTransferMode m_videoHdmaTransferMode {};    // CGB
+        DmaTransferMode m_videoHdmaTransferMode {};     // CGB
         int m_videoHdmaTransferRemaining {};            // CGB
         bool m_videoCgbObjectPriority {};               // CGB
         bool m_videoBgPaletteAutoIncrement {};          // CGB

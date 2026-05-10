@@ -32,6 +32,10 @@ void GameBoyInstance::PPU_Cycle() {
         m_ppuDotClock = 0;
         m_ppuLcdXCoordinate = 0;
         m_ppuLcdYCoordinate = 0;
+
+#ifndef NDEBUG
+        m_DBG_ppuFrameDotClocks = 0;
+#endif // !NDEBUG
     } else if(!BIT_TEST(m_ppuLastLcdControl, 7) && BIT_TEST(currentLcdControl, 7)) {
         // LCD was enabled during this cycle. Reset VRAM permissions and signal for the
         // screen to be drawn during the next frame.
@@ -58,13 +62,13 @@ void GameBoyInstance::PPU_Cycle() {
                 m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
             }
 
-            ++m_ppuDotClock;
-
             assert(m_ppuDotClock < PPU_ScanlineTime);
             assert(m_ppuLcdYCoordinate < PPU_Scanlines);
 #ifndef NDEBUG
-            assert(m_DBG_ppuFrameDotClocks < PPU_DBG_TotalDotClocksPerFrame);
+            assert(m_DBG_ppuFrameDotClocks <= PPU_DBG_TotalDotClocksPerFrame);
 #endif // !NDEBUG
+
+            ++m_ppuDotClock;
         }
     }
 
@@ -80,10 +84,10 @@ void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdSt
 
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
-            performModeTransition = m_ppuDotClock >= PPU_ScanlineTime - 1;
+            performModeTransition = m_ppuDotClock >= PPU_ScanlineTime;
             break;
         case PPU_Mode::VBlank: {
-            if(m_ppuDotClock >= PPU_ScanlineTime - 1) {
+            if(m_ppuDotClock >= PPU_ScanlineTime) {
                 ++m_ppuLcdYCoordinate;
                 m_ppuDotClock = 0;
             }
@@ -451,10 +455,6 @@ void GameBoyInstance::PPU_FinishTransition_VBlank(const uint8_t lcdStatus) {
     }
 
     ++m_totalVBlankCount;
-
-#ifndef NDEBUG
-    m_DBG_ppuFrameDotClocks = 0;
-#endif // !NDEBUG
 }
 
 std::map<std::string, Plip::DebugValue> GameBoyInstance::PPU_GetDebugInfo() const {
@@ -583,6 +583,10 @@ void GameBoyInstance::PPU_VideoModeTransition() {
             break;
 
         case PPU_Mode::VBlank:
+#ifndef NDEBUG
+            assert(m_DBG_ppuFrameDotClocks == PPU_DBG_TotalDotClocksPerFrame);
+            m_DBG_ppuFrameDotClocks = 0;
+#endif // !NDEBUG
             m_ppuLcdYCoordinate = 0;
             m_ppuMode = PPU_Mode::OamScan;
             break;
