@@ -88,7 +88,7 @@ void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdSt
                 m_ppuDotClock = 0;
             }
 
-            performModeTransition = m_ppuLcdYCoordinate >= PPU_Scanlines - 1;
+            performModeTransition = m_ppuLcdYCoordinate >= PPU_Scanlines;
             break;
         }
         case PPU_Mode::OamScan:

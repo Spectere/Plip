@@ -172,7 +172,7 @@ namespace Plip::Core::GameBoy {
 
         static constexpr auto PPU_OamScanTime = 80;
         static constexpr auto PPU_ScanlineTime = 456;
-        static constexpr auto PPU_LyRolloverClock = PPU_ScanlineTime * 9 + 4;
+        static constexpr auto PPU_LyRolloverClock = 4;
         static constexpr auto PPU_Scanlines = 154;
 
         static constexpr auto PPU_TileBase = 0x0000;
