@@ -152,7 +152,6 @@ namespace Plip::Core::GameBoy {
         int m_dmaCopyLength {};
         int m_dmaCurrentOffset {};
         int m_dmaDestinationAddress {};
-        int m_dmaPreparationCycles {};
         int m_dmaSourceAddress {};
         DmaState m_dmaState {};
         DmaTransferMode m_dmaTransferMode {};

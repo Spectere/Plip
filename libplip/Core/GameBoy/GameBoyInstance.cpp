@@ -198,10 +198,8 @@ void GameBoyInstance::DmaCycle() {
 
     switch(m_dmaState) {
         case DmaState::Preparing: {
-            if(--m_dmaPreparationCycles == 0) {
-                m_dmaState = DmaState::Transferring;
-                DmaFinishPreparations();
-            }
+            m_dmaState = DmaState::Transferring;
+            DmaFinishPreparations();
             break;
         }
 
@@ -237,7 +235,6 @@ void GameBoyInstance::DmaCycle() {
 
             if(++m_dmaCurrentOffset >= m_dmaCopyLength) {
                 m_dmaState = DmaState::Finalize;
-                m_dmaPreparationCycles = 1;
                 m_dmaBlockCpu = false;
 
                 if(m_dmaCgb) {
@@ -253,10 +250,8 @@ void GameBoyInstance::DmaCycle() {
         }
 
         case DmaState::Finalize: {
-            if(--m_dmaPreparationCycles == 0) {
-                m_dmaState = DmaState::Inactive;
-                DmaComplete();
-            }
+            m_dmaState = DmaState::Inactive;
+            DmaComplete();
             break;
         }
 
@@ -300,7 +295,6 @@ void GameBoyInstance::DmaFinishPreparations() const {
 void GameBoyInstance::DmaInitCgb(const DmaTransferMode transferMode) {
     // Common initialization.
     m_dmaState = DmaState::Preparing;
-    m_dmaPreparationCycles = 1;
     m_dmaBlockCpu = m_dmaCgb = true;
     m_dmaSourceAddress = m_ioRegisters->Video_GetHdmaSourceAddress();
     m_dmaDestinationAddress = m_gbMemory->VideoRamAddress | m_ioRegisters->Video_GetHdmaDestinationAddress();
@@ -331,7 +325,6 @@ void GameBoyInstance::DmaInitCgb(const DmaTransferMode transferMode) {
 
 void GameBoyInstance::DmaInitOam(const int sourceAddress) {
     m_dmaState = DmaState::Preparing;
-    m_dmaPreparationCycles = 1;
     m_dmaBlockCpu = m_dmaCgb = false;
     m_dmaSourceAddress = sourceAddress << 8;
     m_dmaDestinationAddress = GameBoyMapper::OamAddress;
