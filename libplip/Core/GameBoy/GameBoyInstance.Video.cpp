@@ -574,6 +574,8 @@ void GameBoyInstance::PPU_SetMemoryPermissions() const {
 void GameBoyInstance::PPU_VideoModeTransition() {
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
+            assert(m_ppuDotClock == PPU_ScanlineTime);
+
             m_ppuDotClock = 0;
 
             m_ppuLcdXCoordinate = 0;
