@@ -477,7 +477,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
             // $FF6B
             case IoRegister::ObjectPaletteData: {
-                m_videoCgbObjPaletteRam->SetByte(m_videoObjPaletteIndex, value | 0b1);
+                m_videoCgbObjPaletteRam->SetByte(m_videoObjPaletteIndex, value);
                 if(m_videoObjPaletteAutoIncrement) {
                     m_videoObjPaletteIndex = (m_videoObjPaletteIndex + 1) & 0b111111;
                 }
