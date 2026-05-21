@@ -15,6 +15,8 @@ void GameBoyInstance::PPU_Cycle() {
     const auto currentLcdControl = m_ioRegisters->GetByte(IoRegister::LcdControl);
     const auto currentLcdStatus = m_ioRegisters->GetByte(IoRegister::LcdStatus);
 
+    uint8_t regLy = 0;
+
     if(BIT_TEST(m_ppuLastLcdControl, 7) && !BIT_TEST(currentLcdControl, 7)) {
         // LCD was disabled during this cycle. Flag all memory as writable, blank the screen, and reset the PPU mode
         // to 0 (HBlank).
@@ -41,11 +43,7 @@ void GameBoyInstance::PPU_Cycle() {
         // screen to be drawn during the next frame.
         PPU_SetMemoryPermissions();
         m_ppuLcdOff = true;
-    }
-
-    uint8_t regLy = 0;
-
-    if(BIT_TEST(currentLcdControl, 7)) {
+    } else if(BIT_TEST(currentLcdControl, 7)) {
         // Run 2/4 dot clock cycles per CPU cycle.
         const auto dotClocks = m_doubleSpeed ? PPU_DotsPerCycleHighSpeed : PPU_DotsPerCycleLowSpeed;
         for(auto dotCycle = 0; dotCycle < dotClocks; ++dotCycle) {
@@ -67,8 +65,6 @@ void GameBoyInstance::PPU_Cycle() {
 #ifndef NDEBUG
             assert(m_DBG_ppuFrameDotClocks <= PPU_DBG_TotalDotClocksPerFrame);
 #endif // !NDEBUG
-
-            ++m_ppuDotClock;
         }
     }
 
@@ -81,6 +77,8 @@ void GameBoyInstance::PPU_Cycle() {
 
 void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdStatus) {
     bool performModeTransition = false;
+
+    ++m_ppuDotClock;
 
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
@@ -103,15 +101,15 @@ void GameBoyInstance::PPU_DotClock(const uint8_t lcdControl, const uint8_t lcdSt
             break;
     }
 
+#ifndef NDEBUG
+    ++m_DBG_ppuFrameDotClocks;
+#endif // !NDEBUG
+
     if(performModeTransition) {
         // Transition to the next video mode.
         PPU_VideoModeTransition();
         PPU_FinishTransition(lcdStatus);
     }
-
-#ifndef NDEBUG
-    ++m_DBG_ppuFrameDotClocks;
-#endif // !NDEBUG
 }
 
 bool GameBoyInstance::PPU_DotClock_OamScan() {
@@ -162,7 +160,7 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
         m_ppuOamScanComplete = true;
     }
 
-    return m_ppuDotClock < PPU_OamScanTime - 1;
+    return m_ppuDotClock <= PPU_OamScanTime - 1;
 }
 
 bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
