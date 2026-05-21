@@ -30,15 +30,15 @@ namespace Plip::Core::GameBoy {
         static constexpr auto UnusableAddress = 0xFEA0;
         static constexpr auto IoRegistersAddress = 0xFF00;
         static constexpr auto HighRamAddress = 0xFF80;
-        
+
         GameBoyMapper(PlipMemory* bootRom, PlipMemory* cartRom, PlipMemory* videoRam, PlipMemory* workRam, PlipMemory* oam, PlipMemory* ioRegisters, PlipMemory* highRam);
         PlipMemory* ConfigureMapper(MBC_Type mbcType, bool hasRtc, int cartRamBanks);
         void DisableBootRom();
         void EnableCartridgeRam(bool enable);
-        uint8_t GetByte(uint32_t address, bool privileged) const override;
-        uint8_t GetByte_HuC1(uint32_t address, bool privileged) const;
-        uint8_t GetByte_Mbc3(uint32_t address, bool privileged) const;
-        std::map<std::string, DebugValue> GetMbcDebugInfo() const;
+        [[nodiscard]] uint8_t GetByte(uint32_t address, bool privileged) const override;
+        [[nodiscard]] uint8_t GetByte_HuC1(uint32_t address, bool privileged) const;
+        [[nodiscard]] uint8_t GetByte_Mbc3(uint32_t address, bool privileged) const;
+        [[nodiscard]] std::map<std::string, DebugValue> GetMbcDebugInfo() const;
         void RemapMemory(bool remapRom, bool remapRam);
         void Reset();
         void RestoreCartridgeMemoryAccessibility() const;
@@ -56,7 +56,7 @@ namespace Plip::Core::GameBoy {
         void RTC_Increment();
         void RTC_LatchRegisters();
         void RTC_Load(std::fstream& file);
-        uint8_t RTC_RegisterGet(int index) const;
+        [[nodiscard]] uint8_t RTC_RegisterGet(int index) const;
         void RTC_RegisterSet(int index, uint8_t value);
         void RTC_ResetSubSecondClock();
         void RTC_SetCpuClockRate(int clockRate);
@@ -71,7 +71,7 @@ namespace Plip::Core::GameBoy {
         };
 
         bool m_largeBootRom {};
-        
+
         static constexpr uint8_t UnusableContents[0x60] {};
         PlipMemory* m_bootRom = nullptr;
         PlipMemory* m_cartRom = nullptr;

@@ -37,6 +37,7 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
     switch(m_mbcType) {
         case MBC_Type::None: m_mbcName = "ROM ONLY"; break;
         case MBC_Type::Mbc1: m_mbcName = "MBC1"; break;
+        case MBC_Type::Mbc1M: m_mbcName = "MBC1M"; break;
         case MBC_Type::Mbc2: m_mbcName = "MBC2"; break;
         case MBC_Type::Mbc3: m_mbcName = "MBC3"; break;
         case MBC_Type::Mbc5: m_mbcName = "MBC5"; break;
@@ -51,8 +52,8 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
     }
     if(m_cartRom->GetLength() > 16 * 1024) m_rom1Bank = 1;
 
-    // MBC1 allows the second register to act as high bits for the ROM bank selection.
-    if(m_mbcType == MBC_Type::Mbc1) {
+    // MBC1(M) allows the second register to act as high bits for the ROM bank selection.
+    if(m_mbcType == MBC_Type::Mbc1 || m_mbcType == MBC_Type::Mbc1M) {
         m_register1SelectsRomBank = m_cartRom->GetLength() > 512 * 1024;
     }
 
@@ -96,6 +97,7 @@ uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) co
             return GetByte_HuC1(address, privileged);
         case MBC_Type::None:
         case MBC_Type::Mbc1:
+        case MBC_Type::Mbc1M:
         case MBC_Type::Mbc2:
         case MBC_Type::Mbc5:
         case MBC_Type::Mbc6:
@@ -249,13 +251,13 @@ void GameBoyMapper::RTC_Dump(std::fstream &file) const {
 void GameBoyMapper::RTC_Increment() {
     if(++m_rtcRegisters.Seconds == 60) {
         m_rtcRegisters.Seconds = 0;
-        
+
         if(++m_rtcRegisters.Minutes == 60) {
             m_rtcRegisters.Minutes = 0;
-            
+
             if(++m_rtcRegisters.Hours == 24) {
                 m_rtcRegisters.Hours = 0;
-                
+
                 if(++m_rtcRegisters.Days == 0) {
                     // The low days counter wrapped around.
                     m_rtcRegisters.Flags ^= 0b1;
@@ -365,7 +367,7 @@ void GameBoyMapper::RTC_RegisterSet(const int index, const uint8_t value) {
         case 0x0C:
             m_rtcLatchedRegisters.Flags = m_rtcRegisters.Flags = value & 0b11000001;
             break;
-        
+
         default: break;
     }
 }
@@ -383,6 +385,7 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
 
     switch(m_mbcType) {
         case MBC_Type::Mbc1:
+        case MBC_Type::Mbc1M:
             mbcHandledWrite = SetByte_Mbc1(address, value);
             break;
         case MBC_Type::Mbc2:
@@ -442,7 +445,7 @@ bool GameBoyMapper::SetByte_HuC1(const uint32_t address, const uint8_t value) {
     if(bankSwitchRom || bankSwitchRam) {
         RemapMemory(bankSwitchRom, bankSwitchRam);
     }
-    
+
     return true;
 }
 
@@ -476,9 +479,15 @@ bool GameBoyMapper::SetByte_Mbc1(const uint32_t address, const uint8_t value) {
             m_rom1Bank = 1;
         }
 
+        if(m_mbcType == MBC_Type::Mbc1M) {
+            // On MBC1M, the bit 4 can be used to get around the 0/1 rule above, but addresses
+            // are only 4-bits wide. Adjust here.
+            m_rom1Bank &= 0b1111;
+        }
+
         if(m_register1SelectsRomBank) {
             // ROM is greater than 512 megabits. Register 1 selects higher ROM banks.
-            m_rom1Bank |= m_bankRegister1 << 5;
+            m_rom1Bank |= m_bankRegister1 << (m_mbcType == MBC_Type::Mbc1M ? 4 : 5);
         }
 
         if(m_bankingMode == 0) {
@@ -488,7 +497,7 @@ bool GameBoyMapper::SetByte_Mbc1(const uint32_t address, const uint8_t value) {
         } else {
             // Advanced banking mode--bank switch $0000-$3FFF (or RAM on $A000-BFFF) using register 1.
             if(m_register1SelectsRomBank) {
-                m_rom0Bank = m_bankRegister1 << 5;
+                m_rom0Bank = m_bankRegister1 << (m_mbcType == MBC_Type::Mbc1M ? 4 : 5);
             } else {
                 m_ramBank = m_bankRegister1;
             }
@@ -561,7 +570,7 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
                 m_rom1Bank = 1;
             }
         }
-        
+
         // Remap memory.
         RemapMemory(bankSwitchRom, bankSwitchRam);
     }
@@ -597,7 +606,7 @@ bool GameBoyMapper::SetByte_Mbc5(const uint32_t address, const uint8_t value) {
         if(bankSwitchRom) {
             m_rom1Bank = (m_bankRegister1 << 8) | m_bankRegister0;
         }
-        
+
         // Remap memory.
         RemapMemory(bankSwitchRom, bankSwitchRam);
     }
@@ -614,7 +623,7 @@ void GameBoyMapper::SetVideoRamBank(const int bank) {
 
 void GameBoyMapper::SetWorkRamBank(const int bank) {
     m_wramBank = bank;
-    
+
     UnassignBlock(WorkRamAddress, WorkRamLength);
     AssignBlock(m_workRam, WorkRamAddress, WorkRamLength * m_wramBank, WorkRamLength);
 }

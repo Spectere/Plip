@@ -9,6 +9,7 @@ namespace Plip::Core::GameBoy {
     enum class MBC_Type {
         None,
         Mbc1,
+        Mbc1M,
         Mbc2,
         Mbc3,
         Mbc5,
