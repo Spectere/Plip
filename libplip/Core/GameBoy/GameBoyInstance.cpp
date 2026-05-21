@@ -97,7 +97,7 @@ void GameBoyInstance::Delta(const double ns) {
 
         // Timer
         if(!m_cpu->IsChangingSpeed()) {
-            m_ioRegisters->Timer_Cycle();
+            m_ioRegisters->Timer_Cycle(m_totalCpuCycles / 4);
         }
 
         // DMA

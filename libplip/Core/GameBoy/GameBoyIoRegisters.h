@@ -129,7 +129,7 @@ namespace Plip::Core::GameBoy {
         void Joypad_SetMatrix(const uint8_t inputsPressed) { m_inputsPressed = inputsPressed; }
 
         // Timer
-        void Timer_Cycle();
+        void Timer_Cycle(uint64_t mCycle);
         void Timer_FallingEdgeDetection(bool thisBit);
         static int Timer_GetFrequencyBit(int clockSelect);
         void Timer_Reset() { m_timerInternal = 0; }
@@ -192,6 +192,7 @@ namespace Plip::Core::GameBoy {
         bool m_timerLastBitResult {};
         TimaReloadStatus m_timerTimaReloadStatus {};
         uint16_t m_timerInternal {};
+        uint64_t m_timerThisMCycle {};
 
         // Audio
         bool m_audioEnabled {};

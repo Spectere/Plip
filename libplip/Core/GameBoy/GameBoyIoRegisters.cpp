@@ -501,15 +501,19 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
     }
 }
 
-void GameBoyIoRegisters::Timer_Cycle() {
+void GameBoyIoRegisters::Timer_Cycle(const uint64_t mCycle) {
     // Perform TIMA reload if necessary.
     if(m_timerTimaReloadStatus == ReloadScheduled) {
         RaiseInterrupt(Cpu::SharpLr35902Interrupt::Timer);
         m_regTimerCounter = m_regTimerModulo;
         m_timerTimaReloadStatus = ReloadJustOccurred;
     } else if(m_timerTimaReloadStatus == ReloadJustOccurred) {
-        m_timerTimaReloadStatus = NoReload;
+        if(mCycle != m_timerThisMCycle) {
+            m_timerTimaReloadStatus = NoReload;
+        }
     }
+
+    m_timerThisMCycle = mCycle;
 
     // Either reset or increment the timer.
     m_timerInternal += 1;
