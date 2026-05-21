@@ -36,7 +36,7 @@ void GameBoyInstance::PPU_Cycle() {
         m_ppuLcdYCoordinate = 0;
 
 #ifndef NDEBUG
-        m_DBG_ppuFrameDotClocks = 0;
+        m_DBG_ppuFrameDotClocks = m_ppuDotClock;
 #endif // !NDEBUG
     } else if(!BIT_TEST(m_ppuLastLcdControl, 7) && BIT_TEST(currentLcdControl, 7)) {
         // LCD was enabled during this cycle. Reset VRAM permissions and signal for the
@@ -221,7 +221,7 @@ bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
         }
     }
 
-    return m_ppuLcdXCoordinate < ScreenWidth - 1;
+    return m_ppuLcdXCoordinate <= ScreenWidth - 1;
 }
 
 void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
@@ -526,6 +526,10 @@ void GameBoyInstance::PPU_Reset() {
     m_ppuMode = PPU_Mode::OamScan;
     m_ppuLcdXCoordinate = 0;
     m_ppuLcdYCoordinate = 0;
+
+#ifndef NDEBUG
+    m_DBG_ppuFrameDotClocks = m_ppuDotClock;
+#endif // NDEBUG
 }
 
 void GameBoyInstance::PPU_SetMemoryPermissions() const {
