@@ -67,11 +67,11 @@ Chip8Instance::~Chip8Instance() {
 }
 
 void Chip8Instance::Delta(const double ns) {
-    m_cycleRemaining += ns;
+    m_deltaTimeRemaining += ns;
 
     ClearActiveBreakpoint();
     do {
-        m_cycleRemaining -= m_cpu->Cycle();
+        m_deltaTimeRemaining -= static_cast<double>(m_cpu->Cycle());
 
         if(m_audio->IsActive()) {
             if(const auto audioQueueFilled = m_audio->GetQueueSize(); audioQueueFilled < m_audioBufferFillThreshold) {
@@ -98,7 +98,7 @@ void Chip8Instance::Delta(const double ns) {
         }
 
         ++m_totalCpuCycles;
-    } while(m_cycleTime < m_cycleRemaining);
+    } while(m_cycleTime < m_deltaTimeRemaining);
 
     Draw();
     ++m_totalVBlankCount;

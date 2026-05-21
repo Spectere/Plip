@@ -56,9 +56,9 @@ namespace Plip::Core::Chip8 {
         int m_phaseAdjustment;
 
         Cpu::Chip8 *m_cpu;
-        long m_cycleRemaining = 0;
-        long m_delayRemaining = DelayTimerTick;
-        long m_cycleTime = 0;
+        double m_deltaTimeRemaining = 0;
+        double m_delayRemaining = DelayTimerTick;
+        double m_cycleTime = 0;
         PlipMemoryRam *m_ram;
         std::unordered_map<int, PlipInputDefinition> m_inputList;
         PlipVideoFormatInfo m_videoFormat {};
