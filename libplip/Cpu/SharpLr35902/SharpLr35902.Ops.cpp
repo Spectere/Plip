@@ -14,6 +14,8 @@ using Plip::Cpu::SharpLr35902;
 static int cycleCount = 0;
 static uint8_t op;
 
+#define ADVANCE_M_CYCLE() { cycleCount += MCycleLength; }
+
 #define CHECK_ADD_CARRY(left, right) { \
     if(((uint16_t)(left)) + ((uint16_t)(right)) > 0xFF) m_registers.SetCarryFlag(); \
     else m_registers.ClearCarryFlag(); \
@@ -57,7 +59,7 @@ static uint8_t op;
 #define FETCH_PC(var) { \
     var = m_memory->GetByte(m_registers.PC); \
     if(!m_holdPc) ++m_registers.PC; else m_holdPc = false; \
-    ++cycleCount; \
+    ADVANCE_M_CYCLE(); \
 }
 
 #define FETCH_PC16(var) { \
@@ -68,17 +70,17 @@ static uint8_t op;
 
 #define FETCH_ADDR(var, addr) { \
     var = m_memory->GetByte(addr); \
-    ++cycleCount; \
+    ADVANCE_M_CYCLE(); \
 }
 
 #define STORE_ADDR(addr, val) { \
     m_memory->SetByte(addr, val); \
-    ++cycleCount; \
+    ADVANCE_M_CYCLE(); \
 }
 
 #define JUMP_ABSOLUTE(addr) { \
     m_registers.PC = addr; \
-    ++cycleCount; \
+    ADVANCE_M_CYCLE(); \
 }
 
 #define REG_IE (m_memory->GetByte(0xFFFF))
@@ -191,7 +193,7 @@ void SharpLr35902::OpBitwiseXorRegisterA(const uint8_t value) {
 
 void SharpLr35902::OpJumpRelative(const int8_t offset) {
     m_registers.PC += offset;
-    ++cycleCount;
+    ADVANCE_M_CYCLE();
 }
 
 bool SharpLr35902::TestConditional(const int conditional) const {
@@ -316,18 +318,18 @@ long SharpLr35902::DecodeAndExecute() {
     if(m_halt) {
         if(activeInterrupts == 0) {
             // No pending interrupts. Do nothing.
-            return 1;
+            return MCycleLength;
         }
 
         m_halt = false;
         if(m_ime != SharpLr35902ImeState::Enabled) {
             // Interrupts are disabled. Wake up, but don't service the interrupt.
-            return 1;
+            return MCycleLength;
         }
     }
 
     if(m_ime == SharpLr35902ImeState::Enabled && activeInterrupts) {
-        cycleCount += 2;
+        ADVANCE_M_CYCLE(); ADVANCE_M_CYCLE();
         ServiceInterrupt(activeInterrupts);
         return cycleCount;
     }
@@ -351,7 +353,7 @@ long SharpLr35902::DecodeAndExecute() {
 
             // In CGB mode, STOP is used to put the CPU into double speed mode.
             if(!BIT_TEST(m_memory->GetByte(0xFF4D), 0)) {
-                ++cycleCount;
+                ADVANCE_M_CYCLE();
                 break;
             }
 
@@ -376,7 +378,7 @@ long SharpLr35902::DecodeAndExecute() {
                 // to the intricacies of the silicon, but we'll just simulate it by decrementing
                 // PC and calling the interrupt handler.
                 --m_registers.PC;
-                ++cycleCount;
+                ADVANCE_M_CYCLE();
                 ServiceInterrupt(activeInterrupts);
             } else {
                 m_halt = true;
@@ -447,7 +449,7 @@ long SharpLr35902::DecodeAndExecute() {
             if(TestConditional(OP_COND)) {
                 OpReturn();
             }
-            ++cycleCount;
+            ADVANCE_M_CYCLE();
             break;
         }
 
@@ -697,7 +699,7 @@ long SharpLr35902::DecodeAndExecute() {
                 valHigh = val >> 8;
             }
             Push16ToStack(valHigh, valLow);
-            cycleCount++;
+            ADVANCE_M_CYCLE();
             break;
         }
 
@@ -721,7 +723,7 @@ long SharpLr35902::DecodeAndExecute() {
             } else if(!m_registers.GetCarryFlag() && (val & 0b1000000) != 0) {
                 m_registers.H--;
             }
-            cycleCount++;
+            ADVANCE_M_CYCLE();
             break;
         }
 
@@ -729,7 +731,7 @@ long SharpLr35902::DecodeAndExecute() {
             // LD SP, HL
             // 2 cycles, - - - -
             m_registers.SP = m_registers.GetHl();
-            cycleCount++;
+            ADVANCE_M_CYCLE();
             break;
         }
 
@@ -1045,7 +1047,7 @@ long SharpLr35902::DecodeAndExecute() {
             const auto regValue = m_registers.Get16ByIndex(destRegIdx);
             m_registers.Set16ByIndex(destRegIdx, regValue + 1);
 
-            ++cycleCount;
+            ADVANCE_M_CYCLE();
             break;
         }
 
@@ -1056,7 +1058,7 @@ long SharpLr35902::DecodeAndExecute() {
             const auto regValue = m_registers.Get16ByIndex(destRegIdx);
             m_registers.Set16ByIndex(destRegIdx, regValue - 1);
 
-            ++cycleCount;
+            ADVANCE_M_CYCLE();
             break;
         }
 
@@ -1077,7 +1079,7 @@ long SharpLr35902::DecodeAndExecute() {
             m_registers.H += part + carry;
             m_registers.ClearSubtractFlag();
 
-            ++cycleCount;
+            ADVANCE_M_CYCLE();
             break;
         }
 
@@ -1099,7 +1101,7 @@ long SharpLr35902::DecodeAndExecute() {
                 m_registers.SP += immValue;
             }
 
-            cycleCount += 2;
+            ADVANCE_M_CYCLE(); ADVANCE_M_CYCLE();
             break;
         }
 

@@ -27,6 +27,13 @@ using namespace Plip;
 #define CHECK_ZERO_CLEAR CHECK(cpu->GetZeroFlag() == false)
 #define CHECK_ZERO_SET CHECK(cpu->GetZeroFlag() == true)
 
+#ifdef EXECUTE
+#undef EXECUTE
+#endif // EXECUTE
+
+// Ugly hack that allows us to use M-cycles in this test harness.
+#define EXECUTE(expectedCycles) CHECK(cpu->Cycle() == (expectedCycles * 4));
+
 class MockSharpLr35902 final : public Cpu::SharpLr35902 {
 public:
     static constexpr int RegIndexB  = 0b000;

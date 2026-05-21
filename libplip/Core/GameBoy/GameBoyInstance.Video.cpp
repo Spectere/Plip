@@ -44,28 +44,24 @@ void GameBoyInstance::PPU_Cycle() {
         PPU_SetMemoryPermissions();
         m_ppuLcdOff = true;
     } else if(BIT_TEST(currentLcdControl, 7)) {
-        // Run 2/4 dot clock cycles per CPU cycle.
-        const auto dotClocks = m_doubleSpeed ? PPU_DotsPerCycleHighSpeed : PPU_DotsPerCycleLowSpeed;
-        for(auto dotCycle = 0; dotCycle < dotClocks; ++dotCycle) {
-            PPU_DotClock(currentLcdControl, currentLcdStatus);
+        PPU_DotClock(currentLcdControl, currentLcdStatus);
 
-            // There's a fun little quirk where LY will only equal 153 for 4 dot clocks before rolling over to 0.
-            regLy = (m_ppuLcdYCoordinate == 153 && m_ppuDotClock >= PPU_LyRolloverClock)
-                ? static_cast<uint8_t>(0)
-                : m_ppuLcdYCoordinate;
+        // There's a fun little quirk where LY will only equal 153 for 4 dot clocks before rolling over to 0.
+        regLy = (m_ppuLcdYCoordinate == 153 && m_ppuDotClock >= PPU_LyRolloverClock)
+            ? static_cast<uint8_t>(0)
+            : m_ppuLcdYCoordinate;
 
-            m_ppuLyc = regLy == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
-            if(BIT_TEST(currentLcdStatus, 6) && m_ppuLyc) {
-                // LYC == LY interrupt
-                m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
-            }
-
-            assert(m_ppuDotClock < PPU_ScanlineTime);
-            assert(m_ppuLcdYCoordinate < PPU_Scanlines);
-#ifndef NDEBUG
-            assert(m_DBG_ppuFrameDotClocks <= PPU_DBG_TotalDotClocksPerFrame);
-#endif // !NDEBUG
+        m_ppuLyc = regLy == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
+        if(BIT_TEST(currentLcdStatus, 6) && m_ppuLyc) {
+            // LYC == LY interrupt
+            m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
         }
+
+        assert(m_ppuDotClock < PPU_ScanlineTime);
+        assert(m_ppuLcdYCoordinate < PPU_Scanlines);
+#ifndef NDEBUG
+        assert(m_DBG_ppuFrameDotClocks <= PPU_DBG_TotalDotClocksPerFrame);
+#endif // !NDEBUG
     }
 
     m_ioRegisters->Video_SetYCoordinate(regLy);

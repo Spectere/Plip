@@ -92,11 +92,13 @@ void GameBoyInstance::Delta(const double ns) {
             m_ioRegisters->SetDoubleSpeed(m_doubleSpeed);
             m_cycleTime = m_cpu->GetCycleTime();
             m_ioRegisters->Timer_Reset();
+            m_ppuSkip = false;
         }
 
         // Timer
-        if(!m_cpu->IsChangingSpeed())
+        if(!m_cpu->IsChangingSpeed()) {
             m_ioRegisters->Timer_Cycle();
+        }
 
         // DMA
         if(m_dmaState == DmaState::Inactive) {
@@ -111,7 +113,12 @@ void GameBoyInstance::Delta(const double ns) {
         m_ioRegisters->Joypad_Cycle();
 
         // PPU
-        PPU_Cycle();
+        if(!m_ppuSkip || !m_cpu->IsDoubleSpeed()) {
+            PPU_Cycle();
+            m_ppuSkip = true;
+        } else {
+            m_ppuSkip = false;
+        }
 
         // RTC
         if(m_hasRtc) {
@@ -388,7 +395,7 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
     m_cartRam = m_gbMemory->ConfigureMapper(m_mbc, m_hasRtc, m_cartRamBanks);
 
     // Create CPU.
-    m_cpu = new Cpu::SharpLr35902(BaseClockRate / 4, m_memory, m_model == GameBoyModel::CGB);
+    m_cpu = new Cpu::SharpLr35902(BaseClockRate, m_memory, m_model == GameBoyModel::CGB);
     m_cycleTime = m_cpu->GetCycleTime();
 
     // Reset system.

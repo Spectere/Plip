@@ -167,8 +167,6 @@ namespace Plip::Core::GameBoy {
         static constexpr auto PPU_Block0 = 0x0000;
         static constexpr auto PPU_Block1 = 0x0800;
         static constexpr auto PPU_Block2 = 0x1000;
-        static constexpr auto PPU_DotsPerCycleLowSpeed = 4;
-        static constexpr auto PPU_DotsPerCycleHighSpeed = 2;
 
         static constexpr auto PPU_OamScanTime = 80;
         static constexpr auto PPU_ScanlineTime = 456;
@@ -208,6 +206,7 @@ namespace Plip::Core::GameBoy {
         bool m_ppuWindowSetUp {};
         int m_ppuWindowX {};
         int m_ppuWindowY {};
+        bool m_ppuSkip {};
 
 #ifndef NDEBUG
         static constexpr auto PPU_DBG_TotalDotClocksPerFrame = 70224;

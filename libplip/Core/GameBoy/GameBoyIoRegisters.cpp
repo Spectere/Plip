@@ -512,7 +512,7 @@ void GameBoyIoRegisters::Timer_Cycle() {
     }
 
     // Either reset or increment the timer.
-    m_timerInternal += 4;  // 4 T-cycles per M-cycle
+    m_timerInternal += 1;
 
     // Work out which bit should potentially increment TIMA.
     const auto timerControl = m_regTimerControl;
