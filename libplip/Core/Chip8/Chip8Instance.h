@@ -26,6 +26,8 @@ namespace Plip::Core::Chip8 {
         void Delta(double ns) override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         std::vector<uint64_t> GetPcs() const override;
+        uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
+        uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
         PlipError Load(const std::string &path) override;
         void Reset() override {}
 
@@ -38,6 +40,9 @@ namespace Plip::Core::Chip8 {
         static constexpr float WaveformVolume = 0.25;
 
     private:
+        uint64_t m_totalCpuCycles {};
+        uint64_t m_totalVBlankCount {};
+
         float m_waveformVolume = WaveformVolume;
         double m_phase = 0.0;
         double m_phaseDelta;

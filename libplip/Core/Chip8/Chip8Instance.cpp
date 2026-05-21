@@ -96,9 +96,12 @@ void Chip8Instance::Delta(const double ns) {
                 break;
             }
         }
+
+        ++m_totalCpuCycles;
     } while(m_cycleTime < m_cycleRemaining);
 
     Draw();
+    ++m_totalVBlankCount;
 }
 
 void Chip8Instance::Draw() const {
