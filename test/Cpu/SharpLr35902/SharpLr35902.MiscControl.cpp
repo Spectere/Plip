@@ -5,11 +5,27 @@
 
 #include "catch2/catch_test_macros.hpp"
 
+#include "PlipEmulationException.h"
 #include "SharpLr35902Common.h"
 
 TEST("NOP", "NOP") {
     // Brace yourself...
     EXECUTE(1);
+}
+
+TEST("STOP (CGB)", "STOP-CGB") {
+    // On CGB, STOP is used to change the CPU speed. We can't test the speed change routine here,
+    // but we can ensure that the call does *not* throw.
+    cpu->SetGbcMode(true);
+
+    LoadData(0x00, { 0x10 });
+    REQUIRE_NOTHROW(cpu->Cycle());
+}
+
+TEST("STOP (DMG)", "STOP-DMG") {
+    // On DMG, STOP halts the CPU. The CPU core throws an exception as execution cannot continue.
+    LoadData(0x00, { 0x10 });
+    REQUIRE_THROWS_AS(cpu->Cycle(), PlipEmulationException);
 }
 
 TEST("HALT (IME+)", "HALT-IME-E") {

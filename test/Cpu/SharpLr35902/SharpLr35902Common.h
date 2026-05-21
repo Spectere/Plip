@@ -59,6 +59,9 @@ public:
     [[nodiscard]] Cpu::SharpLr35902ImeState GetImeState() const { return m_ime; }
     void SetImeState(const Cpu::SharpLr35902ImeState newState) { m_ime = newState; }
 
+    bool GetGbcMode() const { return m_gbcMode; }
+    void SetGbcMode(const bool value) { m_gbcMode = value; }
+
     bool GetHalt() const { return m_halt; }
     void SetHalt(const bool value) { m_halt = value; }
 
