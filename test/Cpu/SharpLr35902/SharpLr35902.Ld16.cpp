@@ -62,7 +62,7 @@ TEST("PUSH BC", "PUSH-BC") {  // 0xC5
     cpu->SetSp(0x1000);
     LoadData(0x00, { 0xC5 });
 
-    EXECUTE(3);
+    EXECUTE(4);
     CHECK(memory->GetByte(0x0FFF) == 0x12);
     CHECK(memory->GetByte(0x0FFE) == 0x34);
     CHECK(cpu->GetSp() == 0x0FFE);
@@ -86,7 +86,7 @@ TEST("PUSH DE", "PUSH-DE") {  // 0xD5
     cpu->SetSp(0x1000);
     LoadData(0x00, { 0xD5 });
 
-    EXECUTE(3);
+    EXECUTE(4);
     CHECK(memory->GetByte(0x0FFF) == 0x12);
     CHECK(memory->GetByte(0x0FFE) == 0x34);
     CHECK(cpu->GetSp() == 0x0FFE);
@@ -110,7 +110,7 @@ TEST("PUSH HL", "PUSH-HL") {  // 0xE5
     cpu->SetSp(0x1000);
     LoadData(0x00, { 0xE5 });
 
-    EXECUTE(3);
+    EXECUTE(4);
     CHECK(memory->GetByte(0x0FFF) == 0x12);
     CHECK(memory->GetByte(0x0FFE) == 0x34);
     CHECK(cpu->GetSp() == 0x0FFE);
@@ -140,7 +140,7 @@ TEST("PUSH AF", "PUSH-AF") {  // 0xF5
     cpu->SetSp(0x1000);
     LoadData(0x00, { 0xF5 });
 
-    EXECUTE(3);
+    EXECUTE(4);
     CHECK(memory->GetByte(0x0FFF) == 0x12);
     CHECK(memory->GetByte(0x0FFE) == 0xF0);
     CHECK(cpu->GetSp() == 0x0FFE);

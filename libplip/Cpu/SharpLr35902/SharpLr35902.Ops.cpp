@@ -354,7 +354,7 @@ long SharpLr35902::DecodeAndExecute() {
                 ++cycleCount;
                 break;
             }
-            
+
             // Switch speed.
             m_changingSpeed = true;
             m_speedChangeTimer = SpeedSwitchDelay;
@@ -683,7 +683,7 @@ long SharpLr35902::DecodeAndExecute() {
 
         case 0xC5: case 0xD5: case 0xE5: case 0xF5: {
             // PUSH zz
-            // 3 cycles, - - - -
+            // 4 cycles, - - - -
             const auto srcReg16Idx = OP_REG16;
             uint8_t valLow;
             uint8_t valHigh;
@@ -697,6 +697,7 @@ long SharpLr35902::DecodeAndExecute() {
                 valHigh = val >> 8;
             }
             Push16ToStack(valHigh, valLow);
+            cycleCount++;
             break;
         }
 
