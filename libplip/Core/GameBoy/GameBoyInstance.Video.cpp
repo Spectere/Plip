@@ -471,6 +471,10 @@ std::map<std::string, Plip::DebugValue> GameBoyInstance::PPU_GetDebugInfo() cons
     };
 }
 
+uint8_t GameBoyInstance::PPU_ScaleColorChannel(const uint8_t val) {
+    return val << 3;
+}
+
 void GameBoyInstance::PPU_Plot_CGB(const bool objPalette, const int palette, const int color, const int pos) const {
     if(m_ppuLcdOff) {
         m_videoFormat.plot(m_videoBuffer, pos, 0, 0, 0);
@@ -481,9 +485,9 @@ void GameBoyInstance::PPU_Plot_CGB(const bool objPalette, const int palette, con
     const auto index = (((palette & 0b111) * 4) + (color & 0b11)) * 2;
     const uint16_t colorDefinition = (paletteRam->GetByte(index + 1, true) << 8)
                                    | paletteRam->GetByte(index, true);
-    const uint8_t red = (colorDefinition & 0b11111) * 8;
-    const uint8_t green = ((colorDefinition & 0b11111 << 5) >> 5) * 8;
-    const uint8_t blue = ((colorDefinition & 0b11111 << 10) >> 10) * 8;
+    const uint8_t red = PPU_ScaleColorChannel(colorDefinition & 0b11111);
+    const uint8_t green = PPU_ScaleColorChannel((colorDefinition >> 5) & 0b11111);
+    const uint8_t blue = PPU_ScaleColorChannel((colorDefinition >> 10) & 0b11111);
     m_videoFormat.plot(m_videoBuffer, pos, red, green, blue);
 }
 

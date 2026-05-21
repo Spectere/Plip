@@ -73,6 +73,7 @@ namespace Plip::Core::GameBoy {
         void PPU_Plot_CGB(bool objPalette, int palette, int color, int pos) const;
         void PPU_Plot_DMG(int color, int pos) const;
         void PPU_Reset();
+        static uint8_t PPU_ScaleColorChannel(uint8_t val);
         void PPU_SetMemoryPermissions() const;
         void PPU_VideoModeTransition();
 
