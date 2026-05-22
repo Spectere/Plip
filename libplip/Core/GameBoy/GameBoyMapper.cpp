@@ -348,24 +348,24 @@ uint8_t GameBoyMapper::RTC_RegisterGet(const int index) const {
 void GameBoyMapper::RTC_RegisterSet(const int index, const uint8_t value) {
     switch(index) {
         case 0x08:
-            m_rtcLatchedRegisters.Seconds = m_rtcRegisters.Seconds = value & 0b00111111;
+            m_rtcRegisters.Seconds = value & 0b00111111;
             RTC_ResetSubSecondClock();
             break;
 
         case 0x09:
-            m_rtcLatchedRegisters.Minutes = m_rtcRegisters.Minutes = value & 0b00111111;
+            m_rtcRegisters.Minutes = value & 0b00111111;
             break;
 
         case 0x0A:
-            m_rtcLatchedRegisters.Hours = m_rtcRegisters.Hours = value & 0b00011111;
+            m_rtcRegisters.Hours = value & 0b00011111;
             break;
 
         case 0x0B:
-            m_rtcLatchedRegisters.Days = m_rtcRegisters.Days = value & 0b11111111;
+            m_rtcRegisters.Days = value & 0b11111111;
             break;
 
         case 0x0C:
-            m_rtcLatchedRegisters.Flags = m_rtcRegisters.Flags = value & 0b11000001;
+            m_rtcRegisters.Flags = value & 0b11000001;
             break;
 
         default: break;
@@ -546,9 +546,10 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
         }
     } else if(address < 0x8000) {
         // RTC register latch.
-        if(value == 1 && m_rtcLatchLastValueWritten == 0) {
+        if(BIT_TEST(value, 0) && !BIT_TEST(m_rtcLatchLastValueWritten, 0)) {
             RTC_LatchRegisters();
         }
+        m_rtcLatchLastValueWritten = value;
     } else if(address >= 0xA000 && address < 0xC000) {
         // RTC register 08-0C.
         if(m_ramBank >= 0x08 && m_ramBank <= 0x0C) {
