@@ -20,6 +20,7 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
     m_mbcType = mbcType;
     m_hasRtc = hasRtc;
     m_cartRamBanks = cartRamBanks;
+    m_cartRomBanks = m_cartRom->GetLength() / RomBank0Length;
 
     // Catch unimplemented mappers.
     // ReSharper disable once CppIncompleteSwitchStatement
@@ -139,6 +140,7 @@ std::map<std::string, Plip::DebugValue> GameBoyMapper::GetMbcDebugInfo() const {
         { "RAM Enabled", DebugValue(m_ramEnabled) },
         { "ROM $0000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom0Bank)) },
         { "ROM $4000 Bank", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_rom1Bank)) },
+        { "ROM Bank Count", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_cartRomBanks)) },
         { "VRAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_vramBank) )},
         { "WRAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_wramBank) )},
     };
