@@ -28,6 +28,8 @@ namespace Plip::Core::GameBoy {
 
         void Delta(double ns) override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
+        static std::string GetDmaStateString(DmaState state);
+        static std::string GetDmaTransferModeString(DmaTransferMode mode);
         std::vector<uint64_t> GetPcs() const override;
         uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
         uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
@@ -46,7 +48,7 @@ namespace Plip::Core::GameBoy {
         // GameBoyInstance
         void BootRomFlagHandler();
         void DmaCheck();
-        void DmaComplete() const;
+        void DmaComplete();
         void DmaCompleteOam() const;
         void DmaCycle();
         void DmaFinishPreparations() const;

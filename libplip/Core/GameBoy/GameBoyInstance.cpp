@@ -174,7 +174,7 @@ void GameBoyInstance::DmaCheck() {
     }
 }
 
-void GameBoyInstance::DmaComplete() const {
+void GameBoyInstance::DmaComplete() {
     switch(m_dmaTransferMode) {
         case DmaTransferMode::Oam: {
             DmaCompleteOam();
@@ -183,6 +183,11 @@ void GameBoyInstance::DmaComplete() const {
 
         default: break;
     }
+
+    m_dmaCurrentOffset = 0;
+    m_dmaSourceAddress = 0;
+    m_dmaDestinationAddress = 0;
+    m_dmaTransferMode = DmaTransferMode::Inactive;
 }
 
 void GameBoyInstance::DmaCompleteOam() const {
@@ -304,7 +309,7 @@ void GameBoyInstance::DmaInitCgb(const DmaTransferMode transferMode) {
     m_dmaState = DmaState::Preparing;
     m_dmaBlockCpu = m_dmaCgb = true;
     m_dmaSourceAddress = m_ioRegisters->Video_GetHdmaSourceAddress();
-    m_dmaDestinationAddress = m_gbMemory->VideoRamAddress | m_ioRegisters->Video_GetHdmaDestinationAddress();
+    m_dmaDestinationAddress = GameBoyMapper::VideoRamAddress | m_ioRegisters->Video_GetHdmaDestinationAddress();
     m_dmaCopyLength = m_ioRegisters->Video_GetHdmaTransferLength();
     m_dmaCurrentOffset = 0;
 
@@ -313,10 +318,6 @@ void GameBoyInstance::DmaInitCgb(const DmaTransferMode transferMode) {
 
     m_dmaTransferMode = transferMode;
     switch(m_dmaTransferMode) {
-        case DmaTransferMode::GeneralPurpose: {
-            break;
-        }
-
         case DmaTransferMode::HBlank: {
             m_dmaBatched = true;
             m_dmaBatchLength = HBlankDmaBatchLength;
@@ -342,11 +343,40 @@ void GameBoyInstance::DmaInitOam(const int sourceAddress) {
     m_dmaCopyInvalidBytes = false;
 }
 
+std::string GameBoyInstance::GetDmaStateString(const DmaState state) {
+    switch(state) {
+        case DmaState::Inactive:         return "Inactive";
+        case DmaState::Preparing:        return "Preparing";
+        case DmaState::Transferring:     return "Transferring";
+        case DmaState::WaitingForHBlank: return "Waiting (HBlank)";
+        case DmaState::Finalize:         return "Finalize";
+        default:                         return "UNKNOWN";
+    }
+}
+
+std::string GameBoyInstance::GetDmaTransferModeString(const DmaTransferMode mode) {
+    switch(mode) {
+        case DmaTransferMode::Inactive:       return "Inactive";
+        case DmaTransferMode::Oam:            return "OAM";
+        case DmaTransferMode::GeneralPurpose: return "General";
+        case DmaTransferMode::HBlank:         return "HBlank";
+        default:                              return "UNKNOWN";
+    }
+}
+
 std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::GetDebugInfo() const {
     return {
         { "CPU Registers", m_cpu->GetRegisters() },
         { "CPU (Other)", m_cpu->GetDebugInfo() },
         { "MBC", m_gbMemory->GetMbcDebugInfo() },
+        { "DMA", {
+            { "CPU Blocked", DebugValue(m_dmaBlockCpu) },
+            { "Current", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaCurrentOffset)) },
+            { "Dest", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaDestinationAddress)) },
+            { "Mode", DebugValue(GetDmaTransferModeString(m_dmaTransferMode)) },
+            { "Source", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaSourceAddress)) },
+            { "State", DebugValue(GetDmaStateString(m_dmaState)) },
+        }},
         { "PPU", PPU_GetDebugInfo() },
         { "Timer", {
             { "DIV", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::Divider))) },

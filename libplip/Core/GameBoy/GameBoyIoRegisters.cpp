@@ -72,7 +72,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
             /* $FF4C */ case IoRegister::CpuModeSelect: { return !m_dmgCompatibility ? 0b11111011 : 0b11111111; }
             /* $FF4D */ case IoRegister::SpeedSwitch: { return 0b01111110 | (m_doubleSpeedActive ? 0b10000000 : 0) | (m_speedSwitchArmed ? 0b1 : 0); }
-            /* $FF4F */ case IoRegister::VramBank: { return m_regVramBank; }
+            /* $FF4F */ case IoRegister::VramBank: { return PadValue(m_regVramBank, 1); }
             /* $FF55 */ case IoRegister::VramDmaLengthModeStart: {
                 return (m_videoHdmaTransferMode != DmaTransferMode::Inactive ? 0b10000000 : 0)
                      | ((m_videoHdmaTransferRemaining >> 4) & 0b01111111);
@@ -82,7 +82,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
             /* $FF6A */ case IoRegister::ObjectPaletteIndex: { return (m_videoObjPaletteAutoIncrement ? 0b10000000 : 0) | 0b01000000 | (m_videoObjPaletteIndex & 0b111111); }
             /* $FF6B */ case IoRegister::ObjectPaletteData: { return m_videoCgbObjPaletteRam->GetByte(m_videoObjPaletteIndex); }
             /* $FF6C */ case IoRegister::ObjectPriorityMode: { return 0xFF ^ (m_videoCgbObjectPriority ? 1 : 0); }
-            /* $FF70 */ case IoRegister::WramBank: { return m_regWramBank; }
+            /* $FF70 */ case IoRegister::WramBank: { return PadValue(m_regWramBank, 3); }
 
             default: break;
         }
@@ -429,7 +429,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
             // $FF53
             case IoRegister::VramDmaDestinationHigh: {
-                m_videoHdmaDestinationAddress = ((value & 0x0F) << 8) | (m_videoHdmaDestinationAddress & 0xFF);
+                m_videoHdmaDestinationAddress = ((value & 0b11111) << 8) | (m_videoHdmaDestinationAddress & 0xFF);
                 break;
             }
 
