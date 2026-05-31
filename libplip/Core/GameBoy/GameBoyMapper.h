@@ -89,6 +89,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_bankRegister2 {};
         bool m_cartHasRam {};
         int m_cartRamBanks {};
+        uint32_t m_cartRomBanks = 0;
         bool m_hasRtc {};
         bool m_hucIrMode {};
         std::string m_mbcName = "UNKNOWN";
@@ -104,11 +105,11 @@ namespace Plip::Core::GameBoy {
         // RTC
         RtcRegisters m_rtcRegisters {};
         RtcRegisters m_rtcLatchedRegisters {
-            .Days = 0xFF,
-            .Flags = 0xFF,
-            .Hours = 0xFF,
-            .Minutes = 0xFF,
-            .Seconds = 0xFF
+            .Days = 0x00,
+            .Flags = 0x00,
+            .Hours = 0x00,
+            .Minutes = 0x00,
+            .Seconds = 0x00
         };
         int m_rtcCpuClockRate {};
         int m_rtcMachineCycles {};
