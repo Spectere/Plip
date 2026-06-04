@@ -61,6 +61,15 @@ namespace Plip::Core::GameBoy {
         void RegisterInput() const;
         void RegisterWriteServiced() const;
 
+        // GameBoyInstance.Audio
+        float APU_Clock_Channel(PulseChannel* channel) const;
+        float APU_Clock_Channel(WaveChannel* channel) const;
+        float APU_Clock_Channel(NoiseChannel* channel) const;
+        void APU_Cycle();
+        void APU_Init();
+        void APU_Reset();
+        void APU_Send();
+
         // GameBoyInstance.Video
         void PPU_Cycle();
         void PPU_DotClock(uint8_t lcdControl, uint8_t lcdStatus);
@@ -83,6 +92,14 @@ namespace Plip::Core::GameBoy {
         //
         // Fields
         //
+
+        // PlipAudio
+        std::vector<float> m_audioBuffer {};
+        int m_audioSampleRate {};
+        float m_audioResamplePos {};
+        float m_audioCyclesPerSample {};
+        float m_audioAccumulator {};
+        int m_apuOutputSendThreshold {};
 
         // Core
         static constexpr uint32_t BaseClockRate = 4194304;
@@ -168,10 +185,21 @@ namespace Plip::Core::GameBoy {
         DmaTransferMode m_dmaTransferMode {};
 
         // APU
-        static constexpr auto APU_CyclesLowSpeed = 4;
-        static constexpr auto APU_CyclesHighSpeed = 2;
+        constexpr static float ApuMixDivisor = 60;  // 15 audible volume levels, 4 channels
+        constexpr static auto ApuClockDivisorNormal = 2;
+        constexpr static auto ApuClockDivisorDouble = 4;
 
-        int m_apuCycles = APU_CyclesLowSpeed;
+        int m_apuClockDivisor = 2;
+
+        PulseChannel* m_channel1;
+        PulseChannel* m_channel2;
+        WaveChannel* m_channel3;
+        NoiseChannel* m_channel4;
+
+        float m_channel1Last {};
+        float m_channel2Last {};
+        float m_channel3Last {};
+        float m_channel4Last {};
 
         // PPU
         static constexpr auto PPU_Block0 = 0x0000;

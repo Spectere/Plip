@@ -43,7 +43,7 @@ void SdlAudio::DequeueAll() {
 
 void SdlAudio::Enqueue(const std::vector<float> buffer) {
     if(!m_active) return;
-    SDL_PutAudioStreamData(m_stream, buffer.data(), static_cast<int>(buffer.size()));
+    SDL_PutAudioStreamData(m_stream, buffer.data(), static_cast<int>(buffer.size() * sizeof(float)));
 }
 
 uintmax_t SdlAudio::GetQueueSize() {

@@ -56,6 +56,9 @@ GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *
     m_videoBufferSize = m_videoFormat.pixelWidth * ScreenWidth * ScreenHeight;
     m_videoBuffer = new uint8_t[m_videoBufferSize];
 
+    // Initialize audio.
+    APU_Init();
+
     // Initialize input.
     RegisterInput();
 }
@@ -93,6 +96,7 @@ void GameBoyInstance::Delta(const double ns) {
             m_cycleTime = m_cpu->GetCycleTime();
             m_ioRegisters->Timer_Reset();
             m_ppuSkip = false;
+            m_apuClockDivisor = m_doubleSpeed ? ApuClockDivisorDouble : ApuClockDivisorNormal;
         }
 
         // Timer
@@ -111,6 +115,15 @@ void GameBoyInstance::Delta(const double ns) {
         // Input
         m_ioRegisters->Joypad_SetMatrix(m_keypad);
         m_ioRegisters->Joypad_Cycle();
+
+        // APU
+        if(m_totalCpuCycles % m_apuClockDivisor == 0) {
+            APU_Cycle();
+
+            if(m_audio->IsActive() && m_audioBuffer.size() >= m_apuOutputSendThreshold) {
+                APU_Send();
+            }
+        }
 
         // PPU
         if(!m_ppuSkip || !m_cpu->IsDoubleSpeed()) {
@@ -368,6 +381,9 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
     return {
         { "CPU Registers", m_cpu->GetRegisters() },
         { "CPU (Other)", m_cpu->GetDebugInfo() },
+        { "APU", {
+            { "DIV-APU", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->Audio_GetDivApuCounter())) },
+        }},
         { "MBC", m_gbMemory->GetMbcDebugInfo() },
         { "DMA", {
             { "CPU Blocked", DebugValue(m_dmaBlockCpu) },
@@ -665,6 +681,9 @@ void GameBoyInstance::Reset() {
 
     // Reset PPU.
     PPU_Reset();
+
+    // Reset APU.
+    APU_Reset();
 
     // Initialize RTC counter (if applicable).
     if(m_hasRtc) {

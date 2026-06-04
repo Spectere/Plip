@@ -30,27 +30,27 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF06 */ case IoRegister::TimerModulo: { return m_regTimerModulo; }
         /* $FF07 */ case IoRegister::TimerControl: { return m_regTimerControl; }
         /* $FF0F */ case IoRegister::InterruptFlag: { return m_interruptFlag; }
-        /* $FF10 */ case IoRegister::SoundCh1Sweep: { return m_audioCh1Sweep; }
-        /* $FF11 */ case IoRegister::SoundCh1LengthDuty: { return m_audioCh1LengthAndDutyCycle; }
-        /* $FF12 */ case IoRegister::SoundCh1VolumeEnvelope: { return m_audioCh1VolumeAndEnvelope | 0b00111111; }
-        /* $FF13 */ case IoRegister::SoundCh1PeriodLow: { return m_audioCh1PeriodLow; }
-        /* $FF14 */ case IoRegister::SoundCh1PeriodHighControl: { return m_audioCh1PeriodHighAndControl; }
-        /* $FF16 */ case IoRegister::SoundCh2LengthDuty: { return m_audioCh2LengthAndDutyCycle; }
-        /* $FF17 */ case IoRegister::SoundCh2VolumeEnvelope: { return m_audioCh2VolumeAndEnvelope | 0b00111111; }
-        /* $FF18 */ case IoRegister::SoundCh2PeriodLow: { return m_audioCh2PeriodLow; }
-        /* $FF19 */ case IoRegister::SoundCh2PeriodHighControl: { return m_audioCh2PeriodHighAndControl; }
-        /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return (m_audioCh3DacEnable ? 0b10000000 : 0) | 0b01111111; }
+        /* $FF10 */ case IoRegister::SoundCh1Sweep: { return (m_audioPulse1.Ch1SweepPace << 4) | (m_audioPulse1.Ch1SweepSubtract ? 0b1000 : 0) | m_audioPulse1.Ch1SweepStep; }
+        /* $FF11 */ case IoRegister::SoundCh1LengthDuty: { return (m_audioPulse1.DutyCycle << 6) | 0b00111111; }
+        /* $FF12 */ case IoRegister::SoundCh1VolumeEnvelope: { return (m_audioPulse1.InitialVolume << 4) | (m_audioPulse1.EnvelopeIncrease ? 0b1000 : 0) | m_audioPulse1.EnvelopeSweepPace; }
+        /* $FF13 */ case IoRegister::SoundCh1PeriodLow: { return 0xFF; }  // write-only
+        /* $FF14 */ case IoRegister::SoundCh1PeriodHighControl: { return (m_audioPulse1.TimerEnabled ? 0b1000000 : 0) | 0b10111111; }
+        /* $FF16 */ case IoRegister::SoundCh2LengthDuty: { return (m_audioPulse2.DutyCycle << 6) | 0b00111111; }
+        /* $FF17 */ case IoRegister::SoundCh2VolumeEnvelope: { return (m_audioPulse2.InitialVolume << 4) | (m_audioPulse2.EnvelopeIncrease ? 0b1000 : 0) | m_audioPulse2.EnvelopeSweepPace; }
+        /* $FF18 */ case IoRegister::SoundCh2PeriodLow: { return 0xFF; }  // write-only
+        /* $FF19 */ case IoRegister::SoundCh2PeriodHighControl: { return (m_audioPulse2.TimerEnabled ? 0b1000000 : 0) | 0b10111111; }
+        /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return (m_audioWave.Enabled ? 0b10000000 : 0) | 0b01111111; }
         /* $FF1B - write-only */
-        /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return (m_audioCh3OutputLevel << 5) | 0b10011111; }
-        /* $FF1D */ case IoRegister::SoundCh3PeriodLow: { return m_audioCh3PeriodLow; }
-        /* $FF1E */ case IoRegister::SoundCh3PeriodHighControl: { return m_audioCh3PeriodHighAndControl; }
+        /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return (m_audioWave.Volume << 5) | 0b10011111; }
+        /* $FF1D */ case IoRegister::SoundCh3PeriodLow: { return 0xFF; }  // write-only
+        /* $FF1E */ case IoRegister::SoundCh3PeriodHighControl: { return (m_audioWave.TimerEnabled ? 0b1000000 : 0) | 0b10111111; }
         /* $FF20 - write-only */
-        /* $FF21 */ case IoRegister::SoundCh4VolumeEnvelope: { return m_audioCh4VolumeAndEnvelope; }
-        /* $FF22 */ case IoRegister::SoundCh4FrequencyRandomness: { return m_audioCh4FrequencyAndRandomness; }
-        /* $FF23 */ case IoRegister::SoundCh4Control: { return m_audioCh4Control; }
+        /* $FF21 */ case IoRegister::SoundCh4VolumeEnvelope: { return (m_audioNoise.InitialVolume << 4) | (m_audioNoise.EnvelopeIncrease ? 0b1000 : 0) | m_audioNoise.EnvelopeSweepPace; }
+        /* $FF22 */ case IoRegister::SoundCh4FrequencyRandomness: { return (m_audioNoise.ClockShift << 4) | (m_audioNoise.LFSRWidth7Bit ? 0b1000 : 0) | m_audioNoise.ClockDivider; }
+        /* $FF23 */ case IoRegister::SoundCh4Control: { return (m_audioNoise.TimerEnabled ? 0b1000000 : 0) | 0b10111111; }
         /* $FF24 */ case IoRegister::SoundVolume: { return m_audioVinPanning | m_audioMasterVolume; }
-        /* $FF25 */ case IoRegister::SoundPanning: { return m_audioChannelPanning; }
-        /* $FF26 */ case IoRegister::SoundEnable: { return (m_audioEnabled ? 0b10000000 : 0) | m_audioChannelState | 0b01110000; }
+        /* $FF25 */ case IoRegister::SoundPanning: { return Audio_GetChannelPanning(); }
+        /* $FF26 */ case IoRegister::SoundEnable: { return (m_audioEnabled ? 0b10000000 : 0) | Audio_GetChannelState() | 0b01110000; }
         /* $FF40 */ case IoRegister::LcdControl: { return m_regLcdControl; }
         /* $FF41 */ case IoRegister::LcdStatus: { return m_regLcdStatus; }
         /* $FF42 */ case IoRegister::ScrollY: { return m_regScrollY; }
@@ -89,6 +89,20 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
     }
 
     return 0xFF;
+}
+
+uint8_t GameBoyIoRegisters::Audio_GetChannelPanning() const {
+    return  m_audioPulse1.GetPanning()
+         | (m_audioPulse2.GetPanning() << 2)
+         | (m_audioWave.GetPanning()   << 4)
+         | (m_audioNoise.GetPanning()  << 6);
+}
+
+uint8_t GameBoyIoRegisters::Audio_GetChannelState() const {
+    return (m_audioPulse1.Enabled ? 0b0001 : 0)
+         | (m_audioPulse2.Enabled ? 0b0010 : 0)
+         | (m_audioWave.Enabled   ? 0b0100 : 0)
+         | (m_audioNoise.Enabled  ? 0b1000 : 0);
 }
 
 void GameBoyIoRegisters::Joypad_Cycle() {
@@ -186,109 +200,220 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF10
         case IoRegister::SoundCh1Sweep: {
-            m_audioCh1Sweep = PadValue(value, 6);
+            if(!m_audioEnabled) break;
+
+            m_audioPulse1.Ch1SweepPace = (value & 0b01110000) >> 4;
+            m_audioPulse1.Ch1SweepSubtract = value & 0b1000;
+            m_audioPulse1.Ch1SweepStep = value & 0b111;
             break;
         }
 
         // $FF11
         case IoRegister::SoundCh1LengthDuty: {
-            m_audioCh1LengthAndDutyCycle = value;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse1.DutyCycle = (value & 0b11000000) >> 6;
+            m_audioPulse1.Length = ~(value & 0b111111) & 0b111111;
             break;
         }
 
         // $FF12
         case IoRegister::SoundCh1VolumeEnvelope: {
-            m_audioCh1VolumeAndEnvelope = value;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse1.InitialVolume = (value & 0b11110000) >> 3;
+            m_audioPulse1.EnvelopeIncrease = value & 0b1000;
+            m_audioPulse1.EnvelopeSweepPace = value & 0b111;
+
+            if((value & 0b11111000) == 0) {
+                // Turn channel off.
+                m_audioPulse1.Enabled = false;
+            }
+
             break;
         }
 
         // $FF13
         case IoRegister::SoundCh1PeriodLow: {
-            m_audioCh1PeriodLow = value;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse1.Period = (m_audioPulse1.Period & 0xFF00) | value;
             break;
         }
 
         // $FF14
         case IoRegister::SoundCh1PeriodHighControl: {
-            m_audioCh1PeriodHighAndControl = value | 0b00111000;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse1.TimerEnabled = value & 0b1000000;
+            m_audioPulse1.Period = ((value & 0b111) << 8) | (m_audioPulse1.Period & 0xFF);
+
+            if(value & 0b10000000) {  // Channel 1 trigger.
+                m_audioPulse1.Enabled = true;
+                if(m_audioPulse1.Length == 0) {
+                    m_audioPulse1.Length = PulseChannel::MaxLength;
+                }
+                m_audioPulse1.Volume = m_audioPulse1.InitialVolume;
+                m_audioPulse1.EnvelopeTimer = 0;
+                m_audioPulse1.Volume = m_audioPulse1.InitialVolume;
+                m_audioPulse1.PeriodDivider = m_audioPulse1.Period;
+
+                // Special channel 1 sweep stuff.
+                m_audioPulse1.Ch1SweepEnabled = m_audioPulse1.Ch1SweepPace || m_audioPulse1.Ch1SweepStep;
+                m_audioPulse1.Ch1SweepTimer = 0;
+                m_audioPulse1.Ch1PeriodShadow = m_audioPulse1.Period;
+                // TODO: Perform frequency calculation and overflow check.
+            }
             break;
         }
 
         // $FF16
         case IoRegister::SoundCh2LengthDuty: {
-            m_audioCh2LengthAndDutyCycle = value;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse2.DutyCycle = (value & 0b11000000) >> 6;
+            m_audioPulse2.Length = ~(value & 0b111111) & 0b111111;
             break;
         }
 
         // $FF17
         case IoRegister::SoundCh2VolumeEnvelope: {
-            m_audioCh2VolumeAndEnvelope = value;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse2.InitialVolume = (value & 0b11110000) >> 3;
+            m_audioPulse2.EnvelopeIncrease = value & 0b1000;
+            m_audioPulse2.EnvelopeSweepPace = value & 0b111;
+            m_audioPulse2.PeriodDivider = m_audioPulse2.Period;
+
+            if((value & 0b11111000) == 0) {
+                // Turn channel off.
+                m_audioPulse2.Enabled = false;
+            }
+
             break;
         }
 
         // $FF18
         case IoRegister::SoundCh2PeriodLow: {
-            m_audioCh2PeriodLow = value;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse2.Period = (m_audioPulse2.Period & 0xFF00) | value;
             break;
         }
 
         // $FF19
         case IoRegister::SoundCh2PeriodHighControl: {
-            m_audioCh2PeriodHighAndControl = value | 0b00111000;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse2.TimerEnabled = value & 0b1000000;
+            m_audioPulse2.Period = ((value & 0b111) << 8) | (m_audioPulse2.Period & 0xFF);
+
+            if(value & 0b10000000) {  // Channel 2 trigger.
+                m_audioPulse2.Enabled = true;
+                if(m_audioPulse2.Length == 0) {
+                    m_audioPulse2.Length = PulseChannel::MaxLength;
+                }
+                m_audioPulse2.Volume = m_audioPulse2.InitialVolume;
+                m_audioPulse2.EnvelopeTimer = 0;
+                m_audioPulse2.Volume = m_audioPulse2.InitialVolume;
+            }
             break;
         }
 
         // $FF1A
         case IoRegister::SoundCh3DacEnable: {
-            m_audioCh3DacEnable = BIT_TEST(value, 7);
+            if(!m_audioEnabled) break;
+
+            m_audioWave.Enabled = true;
             break;
         }
 
         // $FF1B
         case IoRegister::SoundCh3Length: {
-            m_audioCh3LengthTimer = value;
+            if(!m_audioEnabled) break;
+
+            m_audioWave.Length = ~value;
             break;
         }
 
         // $FF1C
         case IoRegister::SoundCh3OutputLevel: {
-            m_audioCh3OutputLevel = (value & 0b01100000) >> 5;
+            if(!m_audioEnabled) break;
+
+            m_audioWave.Volume = (value & 0b01100000) >> 4;
             break;
         }
 
         // $FF1D
         case IoRegister::SoundCh3PeriodLow: {
-            m_audioCh3PeriodLow = value;
+            if(!m_audioEnabled) break;
+
+            m_audioWave.Period = (m_audioWave.Period & 0xFF00) | value;
             break;
         }
 
         // $FF1E
         case IoRegister::SoundCh3PeriodHighControl: {
-            m_audioCh3PeriodHighAndControl = value & 0b11000111;
+            if(!m_audioEnabled) break;
+
+            m_audioWave.TimerEnabled = value & 0b1000000;
+            m_audioWave.Period = ((value & 0b111) << 8) | (m_audioWave.Period & 0xFF);
+
+            if(value & 0b10000000) {  // Channel 3 trigger.
+                m_audioWave.Enabled = true;
+                if(m_audioWave.Length == 0) {
+                    m_audioWave.Length = WaveChannel::MaxLength;
+                }
+                m_audioWave.PeriodDivider = m_audioWave.Period;
+                m_audioWave.Volume = m_audioWave.InitialVolume;
+                m_audioWave.WaveRamIndex = 0;
+            }
             break;
         }
 
         // $FF20
         case IoRegister::SoundCh4Length: {
-            m_audioCh4LengthTimer = value & 0b00111111;
+            if(!m_audioEnabled) break;
+
+            m_audioNoise.Length = ~(value & 0b111111) & 0b111111;
             break;
         }
 
         // $FF21
         case IoRegister::SoundCh4VolumeEnvelope: {
-            m_audioCh4VolumeAndEnvelope = value;
+            if(!m_audioEnabled) break;
+
+            m_audioNoise.InitialVolume = (value & 0b11110000) >> 3;
+            m_audioNoise.EnvelopeIncrease = value & 0b1000;
+            m_audioNoise.EnvelopeSweepPace = value & 0b111;
             break;
         }
 
         // $FF22
         case IoRegister::SoundCh4FrequencyRandomness: {
-            m_audioCh4FrequencyAndRandomness = value;
+            if(!m_audioEnabled) break;
+
+            m_audioNoise.ClockShift = (value & 0b11110000) >> 4;
+            m_audioNoise.LFSRWidth7Bit = value & 0b1000;
+            m_audioNoise.ClockDivider = value & 0b111;
             break;
         }
 
         // $FF23
         case IoRegister::SoundCh4Control: {
-            m_audioCh4Control = (value & 0b11000000) | 0b00111111;
+            if(!m_audioEnabled) break;
+
+            m_audioNoise.TimerEnabled = value & 0b1000000;
+
+            if(value & 0b10000000) {  // Channel 4 trigger.
+                m_audioNoise.Enabled = true;
+                if(m_audioNoise.Length == 0) {
+                    m_audioNoise.Length = NoiseChannel::MaxLength;
+                }
+                m_audioNoise.EnvelopeTimer = 0;
+                m_audioNoise.Volume = m_audioNoise.InitialVolume;
+                m_audioNoise.LFSRBits = 0;
+            }
             break;
         }
 
@@ -303,7 +428,13 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF25
         case IoRegister::SoundPanning: {
-            if(m_audioEnabled) m_audioChannelPanning = value;
+            if(!m_audioEnabled) break;
+
+            m_audioPulse1.SetPanning(value & 0b00000011);
+            m_audioPulse2.SetPanning(value & 0b00001100);
+            m_audioWave  .SetPanning(value & 0b00110000);
+            m_audioNoise .SetPanning(value & 0b11000000);
+
             break;
         }
 
@@ -527,6 +658,23 @@ void GameBoyIoRegisters::Timer_Cycle(const uint64_t mCycle) {
     const bool thisBitResult = ((m_timerInternal >> frequencyBit) & 0b1) && timaEnabled;
 
     Timer_FallingEdgeDetection(thisBitResult);
+    Timer_DivApuCheckIncrement();
+}
+
+void GameBoyIoRegisters::Timer_DivApuCheckIncrement() {
+    // DIV-APU increments when bit 4 (or 5 in double-speed mode) falls (512 hz).
+    const bool thisBit = m_timerInternal & (1 << (m_doubleSpeedActive ? AudioTimerBaseBit + 1 : AudioTimerBaseBit));
+
+    if(!thisBit && m_timerDivApuLastBitResult) {
+        ++m_audioDivApu;
+
+        // Update each channel with the new value.
+        m_audioPulse1.DivApuPulse(m_audioDivApu);
+        m_audioPulse2.DivApuPulse(m_audioDivApu);
+        m_audioWave.DivApuPulse(m_audioDivApu);
+        m_audioNoise.DivApuPulse(m_audioDivApu);
+    }
+    m_timerDivApuLastBitResult = thisBit;
 }
 
 void GameBoyIoRegisters::Timer_FallingEdgeDetection(const bool thisBit) {

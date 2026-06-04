@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "AudioChannel.h"
 #include "GameBoyModel.h"
 #include "../../Cpu/SharpLr35902/SharpLr35902.h"
 #include "../../Memory/PlipMemory.h"
@@ -130,16 +131,22 @@ namespace Plip::Core::GameBoy {
 
         // Timer
         void Timer_Cycle(uint64_t mCycle);
+        void Timer_DivApuCheckIncrement();
         void Timer_FallingEdgeDetection(bool thisBit);
         static int Timer_GetFrequencyBit(int clockSelect);
         void Timer_Reset() { m_timerInternal = 0; }
 
         // Audio
+        [[nodiscard]] PulseChannel* Audio_GetChannelPulse1() { return &m_audioPulse1; }
+        [[nodiscard]] PulseChannel* Audio_GetChannelPulse2() { return &m_audioPulse2; }
+        [[nodiscard]] WaveChannel* Audio_GetChannelWave() { return &m_audioWave; }
+        [[nodiscard]] NoiseChannel* Audio_GetChannelNoise() { return &m_audioNoise; }
+        [[nodiscard]] uint8_t Audio_GetChannelPanning() const;
+        [[nodiscard]] uint8_t Audio_GetChannelState() const;
+        [[nodiscard]] uint8_t Audio_GetDivApuCounter() const { return m_audioDivApu; }
         [[nodiscard]] bool Audio_GetEnabled() const { return m_audioEnabled; }
-        [[nodiscard]] uint8_t Audio_GetChannelPanning() const { return m_audioChannelPanning; }
         [[nodiscard]] uint8_t Audio_GetMasterVolume() const { return m_audioMasterVolume; }
         [[nodiscard]] uint8_t Audio_GetVinPanning() const { return m_audioVinPanning; }
-        void Audio_SetChannelState(const uint8_t state) { m_audioChannelState = state & 0xF; }
 
         // Video
         void Video_AcknowledgeOamDmaCopy() { m_videoPerformOamDmaCopy = false; }
@@ -190,35 +197,24 @@ namespace Plip::Core::GameBoy {
         };
 
         bool m_timerLastBitResult {};
+        bool m_timerDivApuLastBitResult {};
         TimaReloadStatus m_timerTimaReloadStatus {};
         uint16_t m_timerInternal {};
         uint64_t m_timerThisMCycle {};
 
         // Audio
+        static constexpr int AudioTimerBaseBit = 12;
+
         bool m_audioEnabled {};
-        uint8_t m_audioChannelPanning {};
-        uint8_t m_audioChannelState {};
+        uint8_t m_audioDivApu {};
         uint8_t m_audioMasterVolume {};
         uint8_t m_audioVinPanning {};
         uint8_t m_audioWaveRam[16] {};
-        uint8_t m_audioCh1Sweep {};
-        uint8_t m_audioCh1LengthAndDutyCycle {};
-        uint8_t m_audioCh1VolumeAndEnvelope {};
-        uint8_t m_audioCh1PeriodLow {};
-        uint8_t m_audioCh1PeriodHighAndControl {};
-        uint8_t m_audioCh2LengthAndDutyCycle {};
-        uint8_t m_audioCh2VolumeAndEnvelope {};
-        uint8_t m_audioCh2PeriodLow {};
-        uint8_t m_audioCh2PeriodHighAndControl {};
-        bool m_audioCh3DacEnable {};
-        uint8_t m_audioCh3LengthTimer {};
-        uint8_t m_audioCh3OutputLevel {};
-        uint8_t m_audioCh3PeriodLow {};
-        uint8_t m_audioCh3PeriodHighAndControl {};
-        uint8_t m_audioCh4LengthTimer {};
-        uint8_t m_audioCh4VolumeAndEnvelope {};
-        uint8_t m_audioCh4FrequencyAndRandomness {};
-        uint8_t m_audioCh4Control {};
+
+        PulseChannel m_audioPulse1 {};
+        PulseChannel m_audioPulse2 {};
+        WaveChannel m_audioWave {};
+        NoiseChannel m_audioNoise {};
 
         // Video
         bool m_videoPerformOamDmaCopy {};
