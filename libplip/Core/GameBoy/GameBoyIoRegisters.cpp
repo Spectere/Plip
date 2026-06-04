@@ -262,7 +262,11 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
                 m_audioPulse1.Ch1SweepEnabled = m_audioPulse1.Ch1SweepPace || m_audioPulse1.Ch1SweepStep;
                 m_audioPulse1.Ch1SweepTimer = 0;
                 m_audioPulse1.Ch1PeriodShadow = m_audioPulse1.Period;
-                // TODO: Perform frequency calculation and overflow check.
+                m_audioPulse1.Ch1SweepPaceCurrent = m_audioPulse1.Ch1SweepPace;
+                if(m_audioPulse1.Ch1SweepStep) {
+                    // If sweep step is non-zero, force an immediate frequency calculation/overflow check.
+                    m_audioPulse1.ClockSweep(0);
+                }
             }
             break;
         }
@@ -673,6 +677,9 @@ void GameBoyIoRegisters::Timer_DivApuCheckIncrement() {
         m_audioPulse2.DivApuPulse(m_audioDivApu);
         m_audioWave.DivApuPulse(m_audioDivApu);
         m_audioNoise.DivApuPulse(m_audioDivApu);
+
+        // Perform sweep calculations on channel 1.
+        m_audioPulse1.ClockSweep(m_audioDivApu);
     }
     m_timerDivApuLastBitResult = thisBit;
 }

@@ -96,12 +96,36 @@ namespace Plip::Core::GameBoy {
         uint8_t Ch1SweepTimer {};
         uint16_t Ch1PeriodShadow {};
 
+        int Ch1SweepPaceCurrent {};
+
         // Convenience methods.
         void ClockChannel(const uint8_t divApu) override {
             AudioChannel::ClockChannel(divApu);
 
             if(IncrementPeriod()) {
                 DutyPosition = (DutyPosition + 1) % 8;
+            }
+        }
+
+        void ClockSweep(const uint8_t divApu) {
+            if(!Ch1SweepEnabled || Ch1SweepPace == 0 || (divApu % 4) != 0) return;
+            if(--Ch1SweepPaceCurrent) return;
+            Ch1SweepPaceCurrent = Ch1SweepPace;
+
+            auto sweepFrequency = Ch1PeriodShadow >> Ch1SweepStep;
+            if(Ch1SweepSubtract) sweepFrequency = -sweepFrequency;
+
+            if(const auto newPeriod = Ch1PeriodShadow + sweepFrequency; newPeriod > 2047) {
+                // Overflow has occurred. Disable the channel.
+                Enabled = false;
+            } else if(Ch1SweepStep != 0) {
+                // Update the period.
+                Ch1PeriodShadow = Period = newPeriod;
+            }
+
+            // Perform an immediate second overflow check. Don't write the value back this time.
+            if(Ch1PeriodShadow + sweepFrequency > 2047) {
+                Enabled = false;
             }
         }
     };
