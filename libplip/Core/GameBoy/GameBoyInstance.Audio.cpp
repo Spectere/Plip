@@ -58,9 +58,8 @@ void GameBoyInstance::APU_Cycle() {
                             + (m_channel3->PanRight ? m_channel3Last : 0)
                             + (m_channel4->PanRight ? m_channel4Last : 0);
 
-        // We still want to generate audio even if the audio engine is disabled. Just don't push it anywhere.
-        m_audioBuffer.push_back(mixLeft / ApuMixDivisor);
-        m_audioBuffer.push_back(mixRight / ApuMixDivisor);
+        m_audioBuffer.push_back((mixLeft / ApuMixDivisor) * ApuFinalMixMultiplier);
+        m_audioBuffer.push_back((mixRight / ApuMixDivisor) * ApuFinalMixMultiplier);
     }
 }
 
@@ -70,25 +69,28 @@ void GameBoyInstance::APU_Send() {
 }
 
 // Channels 1 and 2
-float GameBoyInstance::APU_Clock_Channel(PulseChannel* channel) const {
-    channel->ClockChannel(m_ioRegisters->Audio_GetDivApuCounter());
+float GameBoyInstance::APU_Clock_Channel(PulseChannel* channel) {
+    channel->ClockChannel();
 
     if(!channel->Enabled) return 0.0f;
 
-    const auto waveform = PulseChannel::Waveforms[channel->DutyCycle];
-    return static_cast<float>(waveform >> (7 - channel->DutyPosition) & 0b1) * static_cast<float>(channel->Volume);
+    const auto waveform = PulseChannel::Waveforms[channel->DutyCycle] >> (7 - channel->DutyPosition) & 0b1;
+    return (waveform ? 1.0f : -1.0f) * static_cast<float>(channel->Volume);
 }
 
 // Channel 3
-float GameBoyInstance::APU_Clock_Channel(WaveChannel* channel) const {
-    channel->ClockChannel(m_ioRegisters->Audio_GetDivApuCounter());
+float GameBoyInstance::APU_Clock_Channel(WaveChannel* channel) {
+    channel->ClockChannel();
 
     return 0.0f;
 }
 
 // Channel 4
-float GameBoyInstance::APU_Clock_Channel(NoiseChannel* channel) const {
-    channel->ClockChannel(m_ioRegisters->Audio_GetDivApuCounter());
+float GameBoyInstance::APU_Clock_Channel(NoiseChannel* channel) {
+    channel->ClockChannel();
 
-    return 0.0f;
+    if(!channel->Enabled) return 0.0f;
+
+    const auto value = channel->LFSRBits & 0b1;
+    return (value ? 1.0f : -1.0f) * static_cast<float>(channel->Volume);
 }

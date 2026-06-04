@@ -62,9 +62,9 @@ namespace Plip::Core::GameBoy {
         void RegisterWriteServiced() const;
 
         // GameBoyInstance.Audio
-        float APU_Clock_Channel(PulseChannel* channel) const;
-        float APU_Clock_Channel(WaveChannel* channel) const;
-        float APU_Clock_Channel(NoiseChannel* channel) const;
+        static float APU_Clock_Channel(PulseChannel* channel);
+        static float APU_Clock_Channel(WaveChannel* channel);
+        static float APU_Clock_Channel(NoiseChannel* channel);
         void APU_Cycle();
         void APU_Init();
         void APU_Reset();
@@ -188,6 +188,7 @@ namespace Plip::Core::GameBoy {
         constexpr static float ApuMixDivisor = 60;  // 15 audible volume levels, 4 channels
         constexpr static auto ApuClockDivisorNormal = 2;
         constexpr static auto ApuClockDivisorDouble = 4;
+        constexpr static auto ApuFinalMixMultiplier = 0.5f;
 
         int m_apuClockDivisor = 2;
 

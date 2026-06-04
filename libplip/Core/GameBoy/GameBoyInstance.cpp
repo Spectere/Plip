@@ -383,6 +383,8 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "CPU (Other)", m_cpu->GetDebugInfo() },
         { "APU", {
             { "DIV-APU", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->Audio_GetDivApuCounter())) },
+            { "LFSR", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_channel4->LFSRBits)) },
+            { "Panning", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->Audio_GetChannelPanning()))},
         }},
         { "MBC", m_gbMemory->GetMbcDebugInfo() },
         { "DMA", {

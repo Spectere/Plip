@@ -36,9 +36,9 @@ namespace Plip::Core::GameBoy {
         int EnvelopeTimer {};               // P1 / P2 / N
 
         // Convenience methods.
-        virtual void ClockChannel(const uint8_t divApu) { }
+        virtual void ClockChannel() { }
 
-        void DivApuPulse(const uint8_t divApu) {
+        virtual void DivApuPulse(const uint8_t divApu) {
             if(TimerEnabled && (divApu % 2 == 0) && Length > 0 && --Length == 0) {
                 Enabled = false;
             }
@@ -99,16 +99,23 @@ namespace Plip::Core::GameBoy {
         int Ch1SweepPaceCurrent {};
 
         // Convenience methods.
-        void ClockChannel(const uint8_t divApu) override {
-            AudioChannel::ClockChannel(divApu);
+        void ClockChannel() override {
+            AudioChannel::ClockChannel();
 
             if(IncrementPeriod()) {
                 DutyPosition = (DutyPosition + 1) % 8;
             }
         }
 
-        void ClockSweep(const uint8_t divApu) {
-            if(!Ch1SweepEnabled || Ch1SweepPace == 0 || (divApu % 4) != 0) return;
+        void DivApuPulse(const uint8_t divApu) override {
+            AudioChannel::DivApuPulse(divApu);
+
+            if(Ch1SweepEnabled && Ch1SweepPace > 0 && (divApu % 4) == 0) {
+                ClockSweep();
+            }
+        }
+
+        void ClockSweep() {
             if(--Ch1SweepPaceCurrent) return;
             Ch1SweepPaceCurrent = Ch1SweepPace;
 
@@ -136,8 +143,8 @@ namespace Plip::Core::GameBoy {
         uint8_t WaveRamIndex {};
 
         // Convenience methods.
-        void ClockChannel(const uint8_t divApu) override {
-            AudioChannel::ClockChannel(divApu);
+        void ClockChannel() override {
+            AudioChannel::ClockChannel();
         }
     };
 
@@ -149,9 +156,18 @@ namespace Plip::Core::GameBoy {
         uint8_t ClockDivider {};
         uint16_t LFSRBits {};
 
+        int NoiseTick {};
+
         // Convenience methods.
-        void ClockChannel(const uint8_t divApu) override {
-            AudioChannel::ClockChannel(divApu);
+        void ClockChannel() override {
+            AudioChannel::ClockChannel();
+
+            if(++NoiseTick >= ClockDivider * 8) {
+                NoiseTick = 0;
+                for(auto i = 0; i < ClockShift; ++i) {
+                    TickLFSR();
+                }
+            }
         }
 
         void TickLFSR() {
