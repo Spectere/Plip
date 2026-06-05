@@ -377,6 +377,15 @@ std::string GameBoyInstance::GetDmaTransferModeString(const DmaTransferMode mode
     }
 }
 
+std::vector<Plip::DebugAudioChannel> GameBoyInstance::GetDebugAudioChannels() {
+    return {
+        DebugAudioChannel("Pulse 1", &m_channelEnable[0]),
+        DebugAudioChannel("Pulse 2", &m_channelEnable[1]),
+        DebugAudioChannel("Wave", &m_channelEnable[2]),
+        DebugAudioChannel("Noise", &m_channelEnable[3]),
+    };
+}
+
 std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::GetDebugInfo() const {
     return {
         { "CPU Registers", m_cpu->GetRegisters() },

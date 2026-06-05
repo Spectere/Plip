@@ -27,6 +27,7 @@ namespace Plip::Core::GameBoy {
         ~GameBoyInstance() override;
 
         void Delta(double ns) override;
+        [[nodiscard]] std::vector<DebugAudioChannel> GetDebugAudioChannels() override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         static std::string GetDmaStateString(DmaState state);
         static std::string GetDmaTransferModeString(DmaTransferMode mode);
@@ -196,6 +197,8 @@ namespace Plip::Core::GameBoy {
         PulseChannel* m_channel2;
         WaveChannel* m_channel3;
         NoiseChannel* m_channel4;
+
+        std::array<bool, 4> m_channelEnable { true, true, true, true };
 
         float m_channel1Last {};
         float m_channel2Last {};

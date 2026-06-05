@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "../DebugAudioChannel.h"
 #include "../DebugValue.h"
 #include "../PlipError.h"
 #include "../PlipKeyValuePairCollection.h"
@@ -41,6 +42,7 @@ namespace Plip {
         void ClearActiveBreakpoint() { m_activeBreakpoint = UINT64_MAX; }
         virtual void Delta(double ns) = 0;
         uint64_t GetActiveBreakpoint() const { return m_activeBreakpoint; }
+        virtual std::vector<DebugAudioChannel> GetDebugAudioChannels() { return {}; }
         virtual std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const = 0;
         [[nodiscard]] PlipMemoryMap* GetMemoryMap() const { return m_memory; }
         virtual std::vector<uint64_t> GetPcs() const = 0;

@@ -36,6 +36,9 @@ void Game::Run() const {
     uint64_t cpuCyclesLast {};
     uint64_t vblankCountLast {};
 
+    // Static debugging elements.
+    m_gui->SetDebugAudioChannels(m_plip->GetCore()->GetDebugAudioChannels());
+
     auto running = true;
     while(running) {
         const auto frameStartTime = steady_clock::now();

@@ -6,6 +6,7 @@
 
 #include <map>
 
+#include "DebugAudioChannel.h"
 #include "DebugValue.h"
 #include "GuiState.h"
 
@@ -18,9 +19,10 @@ namespace PlipSdl {
         ~Gui();
 
         [[nodiscard]] bool GetEnabled() const;
-        void NewFrame() const;
+        static void NewFrame();
         void Render() const;
         void SendEvent(const SDL_Event &event) const;
+        void SetDebugAudioChannels(const std::vector<Plip::DebugAudioChannel>& debugAudioChannels);
         void SetDebugInfo(std::map<std::string, std::map<std::string, Plip::DebugValue>> debugInfo);
         void SetEnabled(bool enable);
         void Update();
@@ -28,6 +30,7 @@ namespace PlipSdl {
         GuiState State = {};
 
     private:
+        void DrawAudioControls();
         void DrawBreakpointControls();
         void DrawCoreDebugInfo();
         void DrawEmulatorControls();
@@ -35,6 +38,7 @@ namespace PlipSdl {
 
         SDL_Renderer* m_renderer;
 
+        std::vector<Plip::DebugAudioChannel> m_debugAudioChannels;
         std::map<std::string, std::map<std::string, Plip::DebugValue>> m_debugInfo;
     };
 }

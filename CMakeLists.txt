@@ -104,6 +104,7 @@ add_custom_target(
 )
 
 add_library(${lib_name}
+                                                    libplip/DebugAudioChannel.h
                                                     libplip/DebugValue.h
                                                     libplip/PlipEmulationException.h
                                                     libplip/PlipError.h

@@ -48,15 +48,15 @@ void GameBoyInstance::APU_Cycle() {
         m_audioAccumulator -= m_audioCyclesPerSample;
 
         // TODO: This is ugly, and probably inefficient. Bitwise math on m_ioRegisters->Audio_GetChannelPanning might be better.
-        const auto mixLeft  = (m_channel1->PanLeft  ? m_channel1Last : 0)
-                            + (m_channel2->PanLeft  ? m_channel2Last : 0)
-                            + (m_channel3->PanLeft  ? m_channel3Last : 0)
-                            + (m_channel4->PanLeft  ? m_channel4Last : 0);
+        const auto mixLeft  = (m_channel1->PanLeft && m_channelEnable[0]  ? m_channel1Last : 0)
+                            + (m_channel2->PanLeft && m_channelEnable[1]  ? m_channel2Last : 0)
+                            + (m_channel3->PanLeft && m_channelEnable[2]  ? m_channel3Last : 0)
+                            + (m_channel4->PanLeft && m_channelEnable[3]  ? m_channel4Last : 0);
 
-        const auto mixRight = (m_channel1->PanRight ? m_channel1Last : 0)
-                            + (m_channel2->PanRight ? m_channel2Last : 0)
-                            + (m_channel3->PanRight ? m_channel3Last : 0)
-                            + (m_channel4->PanRight ? m_channel4Last : 0);
+        const auto mixRight = (m_channel1->PanRight && m_channelEnable[0] ? m_channel1Last : 0)
+                            + (m_channel2->PanRight && m_channelEnable[1] ? m_channel2Last : 0)
+                            + (m_channel3->PanRight && m_channelEnable[2] ? m_channel3Last : 0)
+                            + (m_channel4->PanRight && m_channelEnable[3] ? m_channel4Last : 0);
 
         m_audioBuffer.push_back((mixLeft / ApuMixDivisor) * ApuFinalMixMultiplier);
         m_audioBuffer.push_back((mixRight / ApuMixDivisor) * ApuFinalMixMultiplier);

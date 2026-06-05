@@ -30,6 +30,12 @@ Gui::~Gui() {
     ImGui::DestroyContext();
 }
 
+void Gui::DrawAudioControls() {
+    for(const auto ch : m_debugAudioChannels) {
+        ImGui::Checkbox(ch.Description.c_str(), ch.Value);
+    }
+}
+
 void Gui::DrawBreakpointControls() {
     static auto bpHitHighlight = ImGui::GetColorU32( ImVec4(0.3f, 0.0, 0.0, 1.0f));
 
@@ -230,7 +236,7 @@ bool Gui::GetEnabled() const {
     return State.GuiShown;
 }
 
-void Gui::NewFrame() const {
+void Gui::NewFrame() {
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
@@ -247,6 +253,10 @@ void Gui::SendEvent(const SDL_Event &event) const {
     ImGui_ImplSDL3_ProcessEvent(&event);
 }
 
+void Gui::SetDebugAudioChannels(const std::vector<Plip::DebugAudioChannel>& debugAudioChannels) {
+    m_debugAudioChannels = debugAudioChannels;
+}
+
 void Gui::SetDebugInfo(std::map<std::string, std::map<std::string, Plip::DebugValue>> debugInfo) {
     m_debugInfo = std::move(debugInfo);
 }
@@ -256,6 +266,8 @@ void Gui::SetEnabled(const bool enable) {
 }
 
 void Gui::Update() {
+    // Debug Window
+    // TODO: Refactor this. Gui::Update() should (ideally) be a teeny tiny orchestrator.
     if(!ImGui::Begin("Debug", &State.GuiShown, ImGuiWindowFlags_NoNavInputs)) {
         State.PerformRead = false;
         ImGui::End();
@@ -266,6 +278,18 @@ void Gui::Update() {
     DrawMemoryTools();
     DrawBreakpointControls();
     DrawCoreDebugInfo();
+
+    ImGui::End();
+
+    // Audio Channels
+    if(m_debugAudioChannels.empty()) return;
+
+    if(!ImGui::Begin("Audio Channels", &State.GuiShown, ImGuiWindowFlags_NoNavInputs)) {
+        ImGui::End();
+        return;
+    }
+
+    DrawAudioControls();
 
     ImGui::End();
 }
