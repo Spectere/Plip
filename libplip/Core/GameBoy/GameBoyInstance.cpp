@@ -392,8 +392,16 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "CPU (Other)", m_cpu->GetDebugInfo() },
         { "APU", {
             { "DIV-APU", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->Audio_GetDivApuCounter())) },
-            { "LFSR", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_channel4->LFSRBits)) },
             { "Panning", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->Audio_GetChannelPanning())) },
+            { "Ch1 Enabled", DebugValue(m_channel1->Enabled) },
+            { "Ch2 Enabled", DebugValue(m_channel2->Enabled) },
+            { "Ch3 DAC", DebugValue(m_channel3->DacEnabled) },
+            { "Ch3 Enabled", DebugValue(m_channel3->Enabled) },
+            { "Ch4 7-Bit LFSR", DebugValue(m_channel4->LFSRWidth7Bit) },
+            { "Ch4 Clock Divider", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_channel4->ClockDivider)) },
+            { "Ch4 Clock Shift", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_channel4->ClockShift)) },
+            { "Ch4 Enabled", DebugValue(m_channel4->Enabled) },
+            { "Ch4 LFSR", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_channel4->LFSRBits)) },
         }},
         { "MBC", m_gbMemory->GetMbcDebugInfo() },
         { "DMA", {

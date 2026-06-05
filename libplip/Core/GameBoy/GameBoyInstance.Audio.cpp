@@ -39,10 +39,8 @@ void GameBoyInstance::APU_Cycle() {
     // BaseClock / 2 == Wave
     m_channel3Last = APU_Clock_Channel(m_channel3);
 
-    // BaseClock / 16 == Noise
-    if(m_totalCpuCycles % (m_apuClockDivisor * 8) == 0) {
-        m_channel4Last = APU_Clock_Channel(m_channel4);
-    }
+    // BaseClock / 8 == Noise (smallest divisor is 8 cycles)
+    m_channel4Last = APU_Clock_Channel(m_channel4);
 
     if(m_audio->IsActive() && ++m_audioAccumulator >= m_audioCyclesPerSample) {
         m_audioAccumulator -= m_audioCyclesPerSample;
@@ -80,7 +78,7 @@ float GameBoyInstance::APU_Clock_Channel(PulseChannel* channel) {
 
 // Channel 3
 float GameBoyInstance::APU_Clock_Channel(WaveChannel* channel) {
-    constexpr auto DacAmplify = 3.0f;
+    constexpr auto DacAmplify = 15.0f;
 
     channel->ClockChannel();
 
@@ -96,7 +94,7 @@ float GameBoyInstance::APU_Clock_Channel(WaveChannel* channel) {
     }
 
     // Convert to a float, shift, and amplify.
-    const auto value = (static_cast<float>(sample) / 2.0f) - 1.0f;
+    const auto value = (static_cast<float>(sample) / 15.0f) - 0.5f;
     return value * DacAmplify;
 }
 

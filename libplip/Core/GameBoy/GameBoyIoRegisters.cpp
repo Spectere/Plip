@@ -39,7 +39,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF17 */ case IoRegister::SoundCh2VolumeEnvelope: { return (m_audioPulse2.InitialVolume << 4) | (m_audioPulse2.EnvelopeIncrease ? 0b1000 : 0) | m_audioPulse2.EnvelopeSweepPace; }
         /* $FF18 */ case IoRegister::SoundCh2PeriodLow: { return 0xFF; }  // write-only
         /* $FF19 */ case IoRegister::SoundCh2PeriodHighControl: { return (m_audioPulse2.TimerEnabled ? 0b1000000 : 0) | 0b10111111; }
-        /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return (m_audioWave.Enabled ? 0b10000000 : 0) | 0b01111111; }
+        /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return (m_audioWave.DacEnabled ? 0b10000000 : 0) | 0b01111111; }
         /* $FF1B - write-only */
         /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return (m_audioWave.OutputLevel << 5) | 0b10011111; }
         /* $FF1D */ case IoRegister::SoundCh3PeriodLow: { return 0xFF; }  // write-only
@@ -93,9 +93,9 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
 
 uint8_t GameBoyIoRegisters::Audio_GetChannelPanning() const {
     return  m_audioPulse1.GetPanning()
-         | (m_audioPulse2.GetPanning() << 2)
-         | (m_audioWave.GetPanning()   << 4)
-         | (m_audioNoise.GetPanning()  << 6);
+         | (m_audioPulse2.GetPanning() << 1)
+         | (m_audioWave.GetPanning()   << 2)
+         | (m_audioNoise.GetPanning()  << 3);
 }
 
 uint8_t GameBoyIoRegisters::Audio_GetChannelState() const {
@@ -221,7 +221,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         case IoRegister::SoundCh1VolumeEnvelope: {
             if(!m_audioEnabled) break;
 
-            m_audioPulse1.InitialVolume = (value & 0b11110000) >> 3;
+            m_audioPulse1.InitialVolume = (value & 0b11110000) >> 4;
             m_audioPulse1.EnvelopeIncrease = value & 0b1000;
             m_audioPulse1.EnvelopeSweepPace = value & 0b111;
 
@@ -284,7 +284,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         case IoRegister::SoundCh2VolumeEnvelope: {
             if(!m_audioEnabled) break;
 
-            m_audioPulse2.InitialVolume = (value & 0b11110000) >> 3;
+            m_audioPulse2.InitialVolume = (value & 0b11110000) >> 4;
             m_audioPulse2.EnvelopeIncrease = value & 0b1000;
             m_audioPulse2.EnvelopeSweepPace = value & 0b111;
             m_audioPulse2.PeriodDivider = m_audioPulse2.Period;
@@ -328,7 +328,8 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         case IoRegister::SoundCh3DacEnable: {
             if(!m_audioEnabled) break;
 
-            m_audioWave.Enabled = true;
+            m_audioWave.DacEnabled = value & 0b10000000;
+            if(!m_audioWave.DacEnabled) m_audioWave.Enabled = false;
             break;
         }
 
@@ -364,10 +365,10 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             m_audioWave.Period = ((value & 0b111) << 8) | (m_audioWave.Period & 0xFF);
 
             if(value & 0b10000000) {  // Channel 3 trigger.
-                m_audioWave.Enabled = true;
                 if(m_audioWave.Length == 0) {
                     m_audioWave.Length = WaveChannel::MaxLength;
                 }
+                m_audioWave.Enabled = m_audioWave.DacEnabled;
                 m_audioWave.PeriodDivider = m_audioWave.Period;
                 m_audioWave.Volume = m_audioWave.InitialVolume;
                 m_audioWave.WaveRamIndex = 0;
@@ -390,6 +391,12 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             m_audioNoise.InitialVolume = (value & 0b11110000) >> 3;
             m_audioNoise.EnvelopeIncrease = value & 0b1000;
             m_audioNoise.EnvelopeSweepPace = value & 0b111;
+
+            if((value & 0b11111000) == 0) {
+                // Turn channel off.
+                m_audioNoise.Enabled = false;
+            }
+
             break;
         }
 
@@ -434,10 +441,12 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         case IoRegister::SoundPanning: {
             if(!m_audioEnabled) break;
 
-            m_audioPulse1.SetPanning(value & 0b00000011);
-            m_audioPulse2.SetPanning(value & 0b00001100);
-            m_audioWave  .SetPanning(value & 0b00110000);
-            m_audioNoise .SetPanning(value & 0b11000000);
+            //                        80     40     20     01     08     04     02     01
+            // Panning layout: MSB | Ch4L . Ch3L . Ch2L . Ch1L . Ch4R . Ch3R . Ch2R . Ch1R | LSB
+            m_audioPulse1.SetPanning(value & 0x11);
+            m_audioPulse2.SetPanning(value & 0x22);
+            m_audioWave  .SetPanning(value & 0x44);
+            m_audioNoise .SetPanning(value & 0x88);
 
             break;
         }

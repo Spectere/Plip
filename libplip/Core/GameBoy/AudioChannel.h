@@ -15,7 +15,7 @@ namespace Plip::Core::GameBoy {
         virtual ~AudioChannel() = default;
 
         constexpr static uint16_t MaxPeriod = 2048;
-        constexpr static uint8_t MaxLength = 0;  // override me
+        constexpr static int MaxLength = 0;  // override me
 
         // Common values (settable)
         bool Enabled {};
@@ -26,7 +26,7 @@ namespace Plip::Core::GameBoy {
         uint8_t Volume {};
 
         // Common values (internal)
-        uint8_t Length {};
+        uint16_t Length {};
 
         // Semi-common values :)
         uint16_t Period {};                 // P1 / P2 / W
@@ -58,12 +58,12 @@ namespace Plip::Core::GameBoy {
         }
 
         [[nodiscard]] uint8_t GetPanning() const {
-            return (PanLeft ? 0b10 : 0) | (PanRight ? 0b1 : 0);
+            return (PanLeft ? 0x10 : 0) | (PanRight ? 0x01 : 0);
         }
 
         void SetPanning(const uint8_t value) {
-            PanLeft  = value & 0b10101010;
-            PanRight = value & 0b01010101;
+            PanLeft  = value & 0xF0;
+            PanRight = value & 0x0F;
         }
 
     protected:
@@ -84,7 +84,7 @@ namespace Plip::Core::GameBoy {
             0b10000001,  // 75% duty cycle
         };
 
-        constexpr static uint8_t MaxLength = 63;
+        constexpr static int MaxLength = 63;
 
         uint8_t DutyCycle {};
         uint8_t DutyPosition {};
@@ -139,8 +139,9 @@ namespace Plip::Core::GameBoy {
     };
 
     struct WaveChannel : AudioChannel {
-        constexpr static uint8_t MaxLength = 255;
+        constexpr static int MaxLength = 256;
 
+        bool DacEnabled {};
         uint8_t OutputLevel {};
         std::array<uint8_t, 16> WaveRam {};
         uint8_t WaveRamIndex {};
@@ -157,12 +158,14 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] uint8_t GetCurrentSample() const {
             // Wave RAM consists of 32 4-bit samples, stuffed into 16 bytes.
             // Extract the current sample and return it.
-            return WaveRam[WaveRamIndex / 2] >> ((WaveRamIndex % 2) * 4) & 0b1111;
+            const auto shift = (WaveRamIndex % 2 == 0) ? 4 : 0;
+            return (WaveRam[WaveRamIndex / 2] >> shift) & 0b1111;
         }
     };
 
     struct NoiseChannel : AudioChannel {
-        constexpr static uint8_t MaxLength = 63;
+        constexpr static int MaxLength = 63;
+        constexpr static std::array<int, 8> Divisors = { 8, 16, 32, 48, 64, 80, 96, 112 };
 
         uint8_t ClockShift {};
         bool LFSRWidth7Bit {};  // false = 15-bit, true = 7-bit
@@ -175,11 +178,9 @@ namespace Plip::Core::GameBoy {
         void ClockChannel() override {
             AudioChannel::ClockChannel();
 
-            if(++NoiseTick >= ClockDivider * 8) {
+            if(++NoiseTick >= (Divisors[ClockDivider] << ClockShift) >> 1) {  // APU runs every 2 T-cycles
                 NoiseTick = 0;
-                for(auto i = 0; i < ClockShift; ++i) {
-                    TickLFSR();
-                }
+                TickLFSR();
             }
         }
 
@@ -189,8 +190,8 @@ namespace Plip::Core::GameBoy {
             LFSRBits |= ~(lfsr0 ^ lfsr1) << 15;  // bit 15 should already be clear
             if(LFSRWidth7Bit) {
                 // Copy bit 15 to 7.
-                LFSRBits = (LFSRBits & ~(1 << 7))           // remove bit 7
-                         | (LFSRBits & (~(1 << 15)) >> 8);  // isolate bit 15 and shift it to 7
+                LFSRBits = (LFSRBits & ~(1 << 7))       // remove bit 7
+                         | ((LFSRBits & 0x8000) >> 8);  // isolate bit 15 and shift it to 7
             }
             LFSRBits >>= 1;
         }

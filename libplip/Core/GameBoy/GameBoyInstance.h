@@ -189,7 +189,7 @@ namespace Plip::Core::GameBoy {
         constexpr static float ApuMixDivisor = 60;  // 15 audible volume levels, 4 channels
         constexpr static auto ApuClockDivisorNormal = 2;
         constexpr static auto ApuClockDivisorDouble = 4;
-        constexpr static auto ApuFinalMixMultiplier = 0.5f;
+        constexpr static auto ApuFinalMixMultiplier = 0.60f;
 
         int m_apuClockDivisor = 2;
 
