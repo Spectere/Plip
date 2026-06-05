@@ -209,7 +209,6 @@ namespace Plip::Core::GameBoy {
         uint8_t m_audioDivApu {};
         uint8_t m_audioMasterVolume {};
         uint8_t m_audioVinPanning {};
-        uint8_t m_audioWaveRam[16] {};
 
         PulseChannel m_audioPulse1 {};
         PulseChannel m_audioPulse2 {};

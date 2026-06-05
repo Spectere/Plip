@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 namespace Plip::Core::GameBoy {
@@ -140,11 +141,23 @@ namespace Plip::Core::GameBoy {
     struct WaveChannel : AudioChannel {
         constexpr static uint8_t MaxLength = 255;
 
+        uint8_t OutputLevel {};
+        std::array<uint8_t, 16> WaveRam {};
         uint8_t WaveRamIndex {};
 
         // Convenience methods.
         void ClockChannel() override {
             AudioChannel::ClockChannel();
+
+            if(IncrementPeriod()) {
+                WaveRamIndex = (WaveRamIndex + 1) % 32;
+            }
+        }
+
+        [[nodiscard]] uint8_t GetCurrentSample() const {
+            // Wave RAM consists of 32 4-bit samples, stuffed into 16 bytes.
+            // Extract the current sample and return it.
+            return WaveRam[WaveRamIndex / 2] >> ((WaveRamIndex % 2) * 4) & 0b1111;
         }
     };
 

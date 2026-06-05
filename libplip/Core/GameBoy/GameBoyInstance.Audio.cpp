@@ -80,9 +80,24 @@ float GameBoyInstance::APU_Clock_Channel(PulseChannel* channel) {
 
 // Channel 3
 float GameBoyInstance::APU_Clock_Channel(WaveChannel* channel) {
+    constexpr auto DacAmplify = 3.0f;
+
     channel->ClockChannel();
 
-    return 0.0f;
+    if(!channel->Enabled) return 0.0f;
+
+    auto sample = channel->GetCurrentSample();
+    if(channel->OutputLevel == 0) {
+        // Set to digital zero.
+        sample = 0;
+    } else {
+        // Shift toward digital zero.
+        sample >>= channel->OutputLevel - 1;
+    }
+
+    // Convert to a float, shift, and amplify.
+    const auto value = (static_cast<float>(sample) / 2.0f) - 1.0f;
+    return value * DacAmplify;
 }
 
 // Channel 4

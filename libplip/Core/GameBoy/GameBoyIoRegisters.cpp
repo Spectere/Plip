@@ -20,7 +20,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
     if(ioRegister >= IoRegister::WaveRam0 && ioRegister <= IoRegister::WaveRamF) {
         // Wave RAM is basically an array, so treat it as such.
         // TODO: Implement wave RAM (in)accessibility.
-        return m_audioWaveRam[static_cast<int>(ioRegister) - static_cast<int>(IoRegister::WaveRam0)];
+        return m_audioWave.WaveRam[static_cast<int>(ioRegister) - static_cast<int>(IoRegister::WaveRam0)];
     }
 
     switch(ioRegister) {  // NOLINT(*-multiway-paths-covered)
@@ -41,7 +41,7 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
         /* $FF19 */ case IoRegister::SoundCh2PeriodHighControl: { return (m_audioPulse2.TimerEnabled ? 0b1000000 : 0) | 0b10111111; }
         /* $FF1A */ case IoRegister::SoundCh3DacEnable: { return (m_audioWave.Enabled ? 0b10000000 : 0) | 0b01111111; }
         /* $FF1B - write-only */
-        /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return (m_audioWave.Volume << 5) | 0b10011111; }
+        /* $FF1C */ case IoRegister::SoundCh3OutputLevel: { return (m_audioWave.OutputLevel << 5) | 0b10011111; }
         /* $FF1D */ case IoRegister::SoundCh3PeriodLow: { return 0xFF; }  // write-only
         /* $FF1E */ case IoRegister::SoundCh3PeriodHighControl: { return (m_audioWave.TimerEnabled ? 0b1000000 : 0) | 0b10111111; }
         /* $FF20 - write-only */
@@ -135,7 +135,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
     if(ioRegister >= IoRegister::WaveRam0 && ioRegister <= IoRegister::WaveRamF) {
         // Wave RAM is basically an array, so treat it as such.
         // TODO: Implement wave RAM (in)accessibility.
-        m_audioWaveRam[static_cast<int>(ioRegister) - static_cast<int>(IoRegister::WaveRam0)] = value;
+        m_audioWave.WaveRam[static_cast<int>(ioRegister) - static_cast<int>(IoRegister::WaveRam0)] = value;
         return;
     }
 
@@ -344,7 +344,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         case IoRegister::SoundCh3OutputLevel: {
             if(!m_audioEnabled) break;
 
-            m_audioWave.Volume = (value & 0b01100000) >> 4;
+            m_audioWave.OutputLevel = (value & 0b01100000) >> 5;
             break;
         }
 
