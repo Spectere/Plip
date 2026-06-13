@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.0)
+
 set(product_name "Plip")
 set(gui_name "plip-sdl")
 set(lib_name "plip")
 set(test_name "plip-test")
+set(jsmoo_test_name "plip-test-jsmoo")
 
 project(${gui_name})
 set(CMAKE_CXX_STANDARD 17)
@@ -75,6 +77,15 @@ target_include_directories(imgui PUBLIC
 target_compile_definitions(imgui PUBLIC
     IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 )
+
+# json
+FetchContent_Declare(
+    json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG        55f93686c01528224f448c19128836e7df245f72  # v3.12.0
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(json)
 
 # SDL3
 FetchContent_Declare(
@@ -291,3 +302,8 @@ target_link_libraries(${test_name} PRIVATE
 )
 
 catch_discover_tests(${test_name})
+
+###################
+# plip-test-jsmoo #
+###################
+add_subdirectory(test-jsmoo/src)
