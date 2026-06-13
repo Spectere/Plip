@@ -5,13 +5,15 @@
 
 #pragma once
 
+#include <memory>
+
 #include "PlipMemory.h"
 
 namespace Plip {
     class PlipMemoryRom : public PlipMemory {
     public:
         explicit PlipMemoryRom(const void *data, uint32_t length, uint8_t unprivilegedValue = 0);
-        virtual ~PlipMemoryRom();
+        virtual ~PlipMemoryRom() = default;
 
         uint8_t GetByte(uint32_t address, bool privileged = false) override;
         uint32_t GetLength() override;
@@ -19,6 +21,6 @@ namespace Plip {
 
     protected:
         uint32_t m_length;
-        uint8_t *m_data;
+        std::unique_ptr<uint8_t[]> m_data;
     };
 }

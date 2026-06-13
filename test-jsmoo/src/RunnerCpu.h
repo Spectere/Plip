@@ -13,7 +13,7 @@
 class RunnerCpu {
 public:
     explicit RunnerCpu(const uint32_t memorySize) {
-        memory = CreateMemoryMap(memorySize);
+        CreateMemoryMap(memorySize);
     }
 
     [[nodiscard]] uint8_t ReadMemory(const uint32_t position) const { return memory->GetByte(position); }
@@ -27,13 +27,17 @@ public:
     Plip::PlipMemoryMap* memory;
 
 protected:
-    ~RunnerCpu() { delete memory; }
+    ~RunnerCpu() {
+        delete memory;
+        delete m_ram;
+    }
 
 private:
-    static Plip::PlipMemoryMap* CreateMemoryMap(const uint32_t size) {
-        const auto memoryMap = new Plip::PlipMemoryMap();
-        memoryMap->AddBlock(new Plip::PlipMemoryRam(size), 0);
+    Plip::PlipMemoryRam* m_ram;
 
-        return memoryMap;
+    void CreateMemoryMap(const uint32_t size) {
+        memory = new Plip::PlipMemoryMap();
+        m_ram = new Plip::PlipMemoryRam(size);
+        memory->AddBlock(m_ram, 0);
     }
 };

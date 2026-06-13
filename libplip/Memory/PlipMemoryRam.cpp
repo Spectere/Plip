@@ -8,14 +8,10 @@
 using Plip::PlipMemoryRam;
 
 PlipMemoryRam::PlipMemoryRam(const uint32_t amount, const uint8_t unprivilegedValue) {
-    m_data = new uint8_t[amount] {};
+    m_data = std::make_unique<uint8_t[]>(amount);
     m_length = amount;
 
     m_unprivilegedValue = unprivilegedValue;
-}
-
-PlipMemoryRam::~PlipMemoryRam() {
-    delete m_data;
 }
 
 uint8_t PlipMemoryRam::GetByte(const uint32_t address, const bool privileged) {

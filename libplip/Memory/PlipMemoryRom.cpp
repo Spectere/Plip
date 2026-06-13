@@ -11,15 +11,11 @@ using Plip::PlipMemoryRom;
 
 PlipMemoryRom::PlipMemoryRom(const void *data, const uint32_t length, const uint8_t unprivilegedValue) {
     m_length = length;
-    m_data = new uint8_t[m_length];
+    m_data = std::make_unique<uint8_t[]>(length);
 
-    std::memcpy(m_data, data, m_length);
+    std::memcpy(m_data.get(), data, m_length);
 
     m_unprivilegedValue = unprivilegedValue;
-}
-
-PlipMemoryRom::~PlipMemoryRom() {
-    delete m_data;
 }
 
 uint8_t PlipMemoryRom::GetByte(const uint32_t address, const bool privileged) {
