@@ -706,23 +706,22 @@ long SharpLr35902::DecodeAndExecute() {
         case 0xF8: {
             // LD HL, SP + imm8s
             // 3 cycles, 0 0 H C
-            uint8_t val;
+            int8_t val;
             FETCH_PC(val);
-            m_registers.SetHl(m_registers.SP);
+
+            m_registers.SetHl(m_registers.SP + val);
 
             m_registers.ClearSubtractFlag();
             m_registers.ClearZeroFlag();
-            CHECK_ADD_HALF_CARRY(m_registers.L, val);
-            CHECK_ADD_CARRY(m_registers.L, val);
 
-            m_registers.L += val;
+            ((m_registers.SP & 0xFF) + static_cast<uint8_t>(val) > 0xFF)
+                ? m_registers.SetCarryFlag()
+                : m_registers.ClearCarryFlag();
 
-            // Adjust H if necessary.
-            if(m_registers.GetCarryFlag() && (val & 0b1000000) == 0) {
-                m_registers.H++;
-            } else if(!m_registers.GetCarryFlag() && (val & 0b1000000) != 0) {
-                m_registers.H--;
-            }
+            ((m_registers.SP & 0x0F) + (static_cast<uint8_t>(val) & 0x0F) > 0x0F)
+                ? m_registers.SetHalfCarryFlag()
+                : m_registers.ClearHalfCarryFlag();
+
             ADVANCE_M_CYCLE();
             break;
         }
