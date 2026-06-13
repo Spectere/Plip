@@ -35,7 +35,6 @@ cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
         options.add_options("General")
             ("h,help", "shows this help screen and exits")
             ("r,recursive", "scans directories recursively")
-            ("t,threads", "the number of test threads (default = number of CPU cores)", cxxopts::value<uint>())
         ;
 
         options.parse_positional({ "cpu", "tests" });
@@ -155,11 +154,6 @@ int main(const int argc, char** argv) {
     testPaths = opts["tests"].as<std::vector<std::string>>();
     const auto testRecursive = opts["recursive"].as<bool>();
 
-    auto threads = 0;
-    if(opts.count("threads")) {
-        threads = opts["threads"].as<uint>();
-    }
-
     // Invalid CPU detection.
     if(!supportedCpus.count(testCpu)) {
         std::cerr << "The CPU '" << testCpu << "' is not supported by this utility." << std::endl;
@@ -193,7 +187,7 @@ int main(const int argc, char** argv) {
     std::set<RunnerTestResult> results {};
     if(testCpu == "sm83") {
         Runner<RunnerSharpSm83> runner;
-        results = runner.RunTests(testFiles, threads);
+        results = runner.RunTests(testFiles);
     }
 
     // Report results to user.
