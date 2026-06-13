@@ -1,5 +1,18 @@
 add_executable(${jsmoo_test_name}
     JsmooMain.cpp
+                                        Runner.h
+                                        RunnerCpu.h
+                                        RunnerCpuError.h
+                                        RunnerMemoryError.h
+                                        RunnerTest.h
+                                        RunnerTestCycle.h
+                                        RunnerTestResult.h
+                                        RunnerTestMemory.h
+                                        RunnerTestState.h
+
+                                        Cpu/MockSharpSm83.h
+
+    RunnerSharpSm83.cpp                 RunnerSharpSm83.h
 )
 
 target_include_directories(${jsmoo_test_name}
@@ -10,4 +23,5 @@ target_include_directories(${jsmoo_test_name}
 
 target_link_libraries(${jsmoo_test_name}
     plip
+    nlohmann_json::nlohmann_json
 )

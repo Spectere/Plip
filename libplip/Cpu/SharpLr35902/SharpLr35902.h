@@ -47,6 +47,7 @@ namespace Plip::Cpu {
         bool m_doubleSpeed {};
         bool m_changingSpeed {};
         int m_speedChangeTimer {};
+        bool m_enableInterrupts {};
 
     private:
         static constexpr int SpeedSwitchDelay = 8200;  // In T-cycles
@@ -75,7 +76,5 @@ namespace Plip::Cpu {
         void Push16ToStack(uint8_t high, uint8_t low);
         void ServiceInterrupt(int activeInterrupts);
         [[nodiscard]] bool TestConditional(int conditional) const;
-
-        bool m_enableInterrupts {};
     };
 }
