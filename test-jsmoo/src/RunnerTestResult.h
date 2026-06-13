@@ -15,6 +15,9 @@ struct RunnerTestResult {
     std::vector<RunnerCpuError> RegisterMisses;
     std::vector<RunnerMemoryError> MemoryMisses;
 
+    bool Skipped;
+    std::string SkipReason;
+
     [[nodiscard]] bool Success() const {
         return RegisterMisses.empty() && MemoryMisses.empty();
     }

@@ -4,16 +4,19 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <set>
 #include <thread>
 #include <vector>
 
 #include <nlohmann/json.hpp>
 
+#include "PlipEmulationException.h"
 #include "RunnerCpu.h"
 #include "RunnerTest.h"
 #include "RunnerTestResult.h"
@@ -30,8 +33,12 @@ public:
 
         if(!threads) {
             // Get hardware thread count.
-            // TODO: Multithread this thing.
-            threads = std::thread::hardware_concurrency();
+            if(const auto detectedThreads = std::thread::hardware_concurrency(); detectedThreads > 0) {
+                threads = detectedThreads;
+            } else {
+                // thread::hardware_concurrency() returned 0. Fallback to 4.
+                threads = 4;
+            }
         }
 
         const auto parseStart = steady_clock::now();
@@ -44,12 +51,53 @@ public:
                   << static_cast<float>(duration_cast<milliseconds>(parseTime).count()) / 1000.0f
                   << " seconds." << std::endl;
 
-        std::set<RunnerTestResult> results {};
-        for(const auto &test : m_tests) {
-            results.insert(PerformTest(test));
+        std::cout << "Running tests using " << threads << " threads..." << std::endl;
+
+        const auto testStart = steady_clock::now();
+        std::set<RunnerTestResult> allResults {};
+        std::mutex allResultsMutex;
+        std::atomic<size_t> nextTestIdx { 0 };
+
+        auto worker = [&] {
+            std::vector<RunnerTestResult> workerResults;
+            size_t thisTestIdx;
+
+            while((thisTestIdx = nextTestIdx.fetch_add(1, std::memory_order_relaxed)) < m_tests.size()) {
+                try {
+                    workerResults.push_back(PerformTest(m_tests[thisTestIdx]));
+                } catch(Plip::PlipEmulationException& ex) {
+                    RunnerTestResult result {};
+                    result.Key = FormatKey(m_tests[thisTestIdx]);
+                    result.Skipped = true;
+                    result.SkipReason = "PlipEmulationException: " + std::string(ex.what());
+                    workerResults.push_back(result);
+                }
+            }
+
+            std::lock_guard lock(allResultsMutex);
+            for(auto& r : workerResults) {
+                allResults.insert(std::move(r));
+            }
+        };
+
+        std::vector<std::thread> threadPool;
+        threadPool.reserve(threads);
+
+        for(unsigned t = 0; t < threads; ++t) {
+            threadPool.emplace_back(worker);
         }
 
-        return results;
+        for(auto& thread : threadPool) {
+            thread.join();
+        }
+
+        const auto testEnd = steady_clock::now();
+        const auto testTime = testEnd - testStart;
+        std::cout << "All tests completed in "
+                  << static_cast<float>(duration_cast<milliseconds>(testTime).count()) / 1000.0f
+                  << " seconds." << std::endl;
+
+        return allResults;
     }
 
 private:
@@ -119,6 +167,10 @@ private:
         return test;
     }
 
+    std::string FormatKey(const RunnerTest& test) {
+        return test.Filename + " [" + test.TestName + "]";
+    }
+
     void LoadTestCollection(const std::string& filename) {
         std::ifstream file(filename);
         const auto data = json::parse(file);
@@ -134,7 +186,7 @@ private:
         RunnerTestResult result {};
         const auto cpu = std::make_unique<RunnerCpuType>();
 
-        result.Key = test.Filename + " [" + test.TestName + "]";
+        result.Key = FormatKey(test);
 
         // Set initial memory state.
         for(const auto [ addr, val ] : test.InitialState.Memory) {

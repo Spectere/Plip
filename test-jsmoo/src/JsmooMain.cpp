@@ -35,7 +35,7 @@ cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
         options.add_options("General")
             ("h,help", "shows this help screen and exits")
             ("r,recursive", "scans directories recursively")
-            ("t,threads", "the number of test threads (default = number of CPU cores)", cxxopts::value<int>())
+            ("t,threads", "the number of test threads (default = number of CPU cores)", cxxopts::value<uint>())
         ;
 
         options.parse_positional({ "cpu", "tests" });
@@ -75,6 +75,11 @@ void ShowReport(const std::set<RunnerTestResult>& results) {
         if(!result.Success()) failedTests.insert(result);
     }
 
+    std::set<RunnerTestResult> skippedTests {};
+    for(const auto &result : results) {
+        if(result.Skipped) skippedTests.insert(result);
+    }
+
     if(!failedTests.empty()) {
         for(const auto &result : failedTests) {
             std::cout << result.Key << ": " << std::endl;
@@ -84,16 +89,19 @@ void ShowReport(const std::set<RunnerTestResult>& results) {
             }
 
             for(const auto &mem : result.MemoryMisses) {
-                std::cout << "memory [addr: " << mem.Address << "] (expected: " << mem.Expected << "; actual: " << mem.Actual << ")" << std::endl;
+                std::cout << "memory [addr: " << mem.Address << "] (expected: " << static_cast<uint16_t>(mem.Expected) << "; actual: " << static_cast<uint16_t>(mem.Actual) << ")" << std::endl;
             }
 
             std::cout << std::endl;
         }
     }
 
-    std::cout << "summary: " << totalTests - failedTests.size() << " / " << totalTests << " tests passed" << std::endl;
+    std::cout << "summary: " << totalTests - failedTests.size() - skippedTests.size() << " / " << totalTests << " tests passed" << std::endl;
     if(!failedTests.empty()) {
         std::cout << " FAILED: " << failedTests.size() << " tests" << std::endl;
+    }
+    if(!skippedTests.empty()) {
+        std::cout << "SKIPPED: " << skippedTests.size() << " tests" << std::endl;
     }
 }
 
@@ -149,7 +157,7 @@ int main(const int argc, char** argv) {
 
     auto threads = 0;
     if(opts.count("threads")) {
-        threads = opts["threads"].as<int>();
+        threads = opts["threads"].as<uint>();
     }
 
     // Invalid CPU detection.

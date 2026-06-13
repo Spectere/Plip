@@ -10,7 +10,7 @@
 class RunnerSharpSm83 : public RunnerCpu {
 public:
     RunnerSharpSm83();
-    virtual ~RunnerSharpSm83() = default;
+    virtual ~RunnerSharpSm83() { delete m_cpu; }
 
     std::vector<RunnerCpuError> CompareState(RunnerTestState state) override;
     void SetInitialState(RunnerTestState state) override;

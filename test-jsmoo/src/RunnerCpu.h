@@ -27,7 +27,7 @@ public:
     Plip::PlipMemoryMap* memory;
 
 protected:
-    ~RunnerCpu() = default;
+    ~RunnerCpu() { delete memory; }
 
 private:
     static Plip::PlipMemoryMap* CreateMemoryMap(const uint32_t size) {
