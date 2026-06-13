@@ -31,10 +31,10 @@ std::vector<RunnerCpuError> RunnerSharpSm83::CompareState(RunnerTestState state)
             results.push_back({ "L", expected, reg->L });
         else if(r == "sp" && reg->SP != expected)
             results.push_back({ "SP", expected, reg->SP });
+        else if(const uint64_t ei = m_cpu->GetIme() ? 1 : 0; r == "ei" && ei != expected)
+            results.push_back({ "EI", expected, ei });
         else if(const auto pc = m_cpu->GetPc(); r == "pc" && pc != expected)
             results.push_back({ "PC", expected, pc });
-        else if(const uint64_t ime = m_cpu->GetIme() ? 1 : 0; r == "ime" && ime != expected)
-            results.push_back({ "IME", expected, ime });
     }
 
     return results;
@@ -55,7 +55,6 @@ void RunnerSharpSm83::SetInitialState(const RunnerTestState state) {
         else if(r == "h") reg->H = val;
         else if(r == "l") reg->L = val;
         else if(r == "sp") reg->SP = val;
-        else if(r == "ie") m_cpu->SetInterruptEnabled(val);
         else if(r == "ime") m_cpu->SetIme(val);
     }
 }
