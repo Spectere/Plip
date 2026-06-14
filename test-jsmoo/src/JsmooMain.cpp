@@ -3,8 +3,10 @@
 // Entry point for the JSMoo-based CPU unit tests.
 
 #include <filesystem>
+#include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -12,13 +14,17 @@
 
 #include "Runner.h"
 #include "RunnerSharpSm83.h"
+#include "TestableCpu.h"
 
 namespace fs = std::filesystem;
 
-const std::map<std::string, std::string> supportedCpus {
-    { "6502", "MOS 6502" },
-    { "2a03", "Ricoh 2A03/2A07" },
-    { "sm83", "Sharp SM83" },
+//{ "6502", "MOS 6502" },
+//{ "2a03", "Ricoh 2A03/2A07" },
+const std::map<std::string, TestableCpu> supportedCpus {
+    { "sm83", {
+        "Sharp SM83",
+        []{ return std::make_unique<Runner<RunnerSharpSm83>>(); }
+    }},
 };
 
 cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
@@ -183,14 +189,9 @@ int main(const int argc, char** argv) {
         return 1;
     }
 
-    // TODO: This could get ugly really fast. This is fine for testing, but find a better approach.
-    std::set<RunnerTestResult> results {};
-    if(testCpu == "sm83") {
-        Runner<RunnerSharpSm83> runner;
-        results = runner.RunTests(testFiles);
-    }
-
-    // Report results to user.
+    // Dispatch, gather results, and report them to the user.
+    const auto runner = supportedCpus.at(testCpu).Create();
+    const auto results = runner->RunTests(testFiles);
     ShowReport(results);
 
     return 0;

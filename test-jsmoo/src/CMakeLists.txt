@@ -1,5 +1,6 @@
 add_executable(${jsmoo_test_name}
     JsmooMain.cpp
+                                        IRunner.h
                                         Runner.h
                                         RunnerCpu.h
                                         RunnerCpuError.h
@@ -9,6 +10,7 @@ add_executable(${jsmoo_test_name}
                                         RunnerTestResult.h
                                         RunnerTestMemory.h
                                         RunnerTestState.h
+                                        TestableCpu.h
 
                                         Cpu/MockSharpSm83.h
 

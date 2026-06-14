@@ -14,6 +14,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "IRunner.h"
 #include "PlipEmulationException.h"
 #include "RunnerCpu.h"
 #include "RunnerTest.h"
@@ -22,11 +23,11 @@
 using namespace nlohmann;
 
 template<class RunnerCpuType>
-class Runner {
+class Runner : public IRunner {
     static_assert(std::is_base_of_v<RunnerCpu, RunnerCpuType>, "RunnerCpuType must be a subclass of RunnerCpu");
 
 public:
-    std::set<RunnerTestResult> RunTests(const std::set<std::string>& tests) {
+    std::set<RunnerTestResult> RunTests(const std::set<std::string>& tests) override {
         using namespace std::chrono;
 
         const auto parseStart = steady_clock::now();
