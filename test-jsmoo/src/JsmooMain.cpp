@@ -97,6 +97,10 @@ void ShowReport(const std::set<RunnerTestResult>& results) {
                 std::cout << "memory [addr: " << mem.Address << "] (expected: " << static_cast<uint16_t>(mem.Expected) << "; actual: " << static_cast<uint16_t>(mem.Actual) << ")" << std::endl;
             }
 
+            for(const auto &ex : result.ExceptionsThrown) {
+                std::cout << "exception thrown: " << ex << std::endl;
+            }
+
             std::cout << std::endl;
         }
     }

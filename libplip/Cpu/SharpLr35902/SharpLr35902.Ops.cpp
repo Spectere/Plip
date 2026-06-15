@@ -348,7 +348,7 @@ long SharpLr35902::DecodeAndExecute() {
             if(!m_gbcMode) {
                 // According to PanDocs, no licensed DMG ROM uses STOP, so we're gonna leave
                 // it like this for now. :)
-                throw PlipEmulationException("STOP not yet implemented for the DMG CPU");
+                throw PlipEmulationException("STOP not yet implemented for the DMG CPU", true);
             }
 
             // In CGB mode, STOP is used to put the CPU into double speed mode.

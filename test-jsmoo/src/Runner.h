@@ -48,8 +48,19 @@ public:
             } catch(Plip::PlipEmulationException& ex) {
                 RunnerTestResult result {};
                 result.Key = FormatKey(test);
-                result.Skipped = true;
-                result.SkipReason = "PlipEmulationException: " + std::string(ex.what());
+                result.Skipped = ex.SkipsUnitTest;
+
+                if(result.Skipped)
+                    result.SkipReason = "Skippable Error: " + std::string(ex.what());
+                else
+                    result.ExceptionsThrown.emplace_back("PlipEmulationException: " + std::string(ex.what()));
+
+                allResults.insert(result);
+            } catch(std::exception& ex) {
+                RunnerTestResult result {};
+                result.Key = FormatKey(test);
+                result.ExceptionsThrown.emplace_back(ex.what());
+
                 allResults.insert(result);
             }
         }
