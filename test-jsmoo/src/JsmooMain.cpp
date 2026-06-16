@@ -72,7 +72,7 @@ bool IsTestFile(const fs::directory_entry& entry) {
     return entry.path().has_extension() && entry.path().extension() == ".json";
 }
 
-void ShowReport(const std::set<RunnerTestResult>& results) {
+int ShowReport(const std::set<RunnerTestResult>& results) {
     const auto totalTests = results.size();
 
     std::set<RunnerTestResult> failedTests {};
@@ -87,31 +87,33 @@ void ShowReport(const std::set<RunnerTestResult>& results) {
 
     if(!failedTests.empty()) {
         for(const auto &result : failedTests) {
-            std::cout << result.Key << ": " << std::endl;
+            std::cerr << result.Key << ": " << std::endl;
 
             for(const auto &reg : result.RegisterMisses) {
-                std::cout << "register " << reg.Register << " (expected: " << reg.Expected << "; actual: " << reg.Actual << ")" << std::endl;
+                std::cerr << "register " << reg.Register << " (expected: " << reg.Expected << "; actual: " << reg.Actual << ")" << std::endl;
             }
 
             for(const auto &mem : result.MemoryMisses) {
-                std::cout << "memory [addr: " << mem.Address << "] (expected: " << static_cast<uint16_t>(mem.Expected) << "; actual: " << static_cast<uint16_t>(mem.Actual) << ")" << std::endl;
+                std::cerr << "memory [addr: " << mem.Address << "] (expected: " << static_cast<uint16_t>(mem.Expected) << "; actual: " << static_cast<uint16_t>(mem.Actual) << ")" << std::endl;
             }
 
             for(const auto &ex : result.ExceptionsThrown) {
-                std::cout << "exception thrown: " << ex << std::endl;
+                std::cerr << "exception thrown: " << ex << std::endl;
             }
 
-            std::cout << std::endl;
+            std::cerr << std::endl;
         }
     }
 
     std::cout << "summary: " << totalTests - failedTests.size() - skippedTests.size() << " / " << totalTests << " tests passed" << std::endl;
     if(!failedTests.empty()) {
-        std::cout << " FAILED: " << failedTests.size() << " tests" << std::endl;
+        std::cerr << " FAILED: " << failedTests.size() << " tests" << std::endl;
     }
     if(!skippedTests.empty()) {
         std::cout << "SKIPPED: " << skippedTests.size() << " tests" << std::endl;
     }
+
+    return failedTests.empty() ? 0 : 1;
 }
 
 std::set<std::string> FindTestFiles(const std::vector<std::string>& paths, const bool recursive) {
@@ -196,7 +198,5 @@ int main(const int argc, char** argv) {
     // Dispatch, gather results, and report them to the user.
     const auto runner = supportedCpus.at(testCpu).Create();
     const auto results = runner->RunTests(testFiles);
-    ShowReport(results);
-
-    return 0;
+    return ShowReport(results);
 }
