@@ -20,40 +20,40 @@ namespace Plip::Cpu {
         static constexpr int NegativeFlagBit = 7;
 
         uint8_t A;
-        uint8_t F = 0b00100000;
+        uint8_t P = 0b00100000;
         uint8_t X;
         uint8_t Y;
 
         uint16_t PC;
         uint8_t S;
 
-        void ClearBreakCommand() { F = BIT_CLEAR(F, BreakCommandBit); }
-        [[nodiscard]] bool GetBreakCommand() const { return BIT_TEST(F, BreakCommandBit); }
-        void SetBreakCommand() { F = BIT_SET(F, BreakCommandBit); }
+        void ClearBreakCommand() { P = BIT_CLEAR(P, BreakCommandBit); }
+        [[nodiscard]] bool GetBreakCommand() const { return BIT_TEST(P, BreakCommandBit); }
+        void SetBreakCommand() { P = BIT_SET(P, BreakCommandBit); }
 
-        void ClearCarryFlag() { F = BIT_CLEAR(F, CarryFlagBit); }
-        [[nodiscard]] bool GetCarryFlag() const { return BIT_TEST(F, CarryFlagBit); }
-        void SetCarryFlag() { F = BIT_SET(F, CarryFlagBit); }
-        void FlipCarryFlag() { F = BIT_FLIP(F, CarryFlagBit); }
+        void ClearCarryFlag() { P = BIT_CLEAR(P, CarryFlagBit); }
+        [[nodiscard]] bool GetCarryFlag() const { return BIT_TEST(P, CarryFlagBit); }
+        void SetCarryFlag() { P = BIT_SET(P, CarryFlagBit); }
+        void FlipCarryFlag() { P = BIT_FLIP(P, CarryFlagBit); }
 
-        void ClearDecimalMode() { F = BIT_CLEAR(F, DecimalModeBit); }
-        [[nodiscard]] bool GetDecimalMode() const { return BIT_TEST(F, DecimalModeBit); }
-        void SetDecimalMode() { F = BIT_SET(F, DecimalModeBit); }
+        void ClearDecimalMode() { P = BIT_CLEAR(P, DecimalModeBit); }
+        [[nodiscard]] bool GetDecimalMode() const { return BIT_TEST(P, DecimalModeBit); }
+        void SetDecimalMode() { P = BIT_SET(P, DecimalModeBit); }
 
-        void ClearInterruptDisable() { F = BIT_CLEAR(F, InterruptDisableBit); }
-        [[nodiscard]] bool GetInterruptDisable() const { return BIT_TEST(F, InterruptDisableBit); }
-        void SetInterruptDisable() { F = BIT_SET(F, InterruptDisableBit); }
+        void ClearInterruptDisable() { P = BIT_CLEAR(P, InterruptDisableBit); }
+        [[nodiscard]] bool GetInterruptDisable() const { return BIT_TEST(P, InterruptDisableBit); }
+        void SetInterruptDisable() { P = BIT_SET(P, InterruptDisableBit); }
 
-        void ClearNegativeFlag() { F = BIT_CLEAR(F, NegativeFlagBit); }
-        [[nodiscard]] bool GetNegativeFlag() const { return BIT_TEST(F, NegativeFlagBit); }
-        void SetNegativeFlag() { F = BIT_SET(F, NegativeFlagBit); }
+        void ClearNegativeFlag() { P = BIT_CLEAR(P, NegativeFlagBit); }
+        [[nodiscard]] bool GetNegativeFlag() const { return BIT_TEST(P, NegativeFlagBit); }
+        void SetNegativeFlag() { P = BIT_SET(P, NegativeFlagBit); }
 
-        void ClearOverflowFlag() { F = BIT_CLEAR(F, OverflowFlagBit); }
-        [[nodiscard]] bool GetOverflowFlag() const { return BIT_TEST(F, OverflowFlagBit); }
-        void SetOverflowFlag() { F = BIT_SET(F, OverflowFlagBit); }
+        void ClearOverflowFlag() { P = BIT_CLEAR(P, OverflowFlagBit); }
+        [[nodiscard]] bool GetOverflowFlag() const { return BIT_TEST(P, OverflowFlagBit); }
+        void SetOverflowFlag() { P = BIT_SET(P, OverflowFlagBit); }
 
-        void ClearZeroFlag() { F = BIT_CLEAR(F, ZeroFlagBit); }
-        [[nodiscard]] bool GetZeroFlag() const { return BIT_TEST(F, ZeroFlagBit); }
-        void SetZeroFlag() { F = BIT_SET(F, ZeroFlagBit); }
+        void ClearZeroFlag() { P = BIT_CLEAR(P, ZeroFlagBit); }
+        [[nodiscard]] bool GetZeroFlag() const { return BIT_TEST(P, ZeroFlagBit); }
+        void SetZeroFlag() { P = BIT_SET(P, ZeroFlagBit); }
     };
 }

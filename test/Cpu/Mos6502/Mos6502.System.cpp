@@ -9,11 +9,11 @@
 
 TEST("BRK", "BRK") {  // 0x00
     constexpr int expectedCycles = 7;
-    
+
     LoadData(0xFFFE, { 0x34, 0x12 });
     LoadData(0x200, 0x00);
-    
-    const uint8_t expectedStatus = cpu->GetRegisterF();
+
+    const uint8_t expectedStatus = cpu->GetRegisterP();
 
     EXECUTE(expectedCycles);
     CHECK_PC(0x1234);
@@ -44,6 +44,6 @@ TEST("RTI", "RTI") {  // 0x40
 
     EXECUTE(expectedCycles);
     CHECK_PC(0x4080);
-    CHECK_F(0b00100000);  // Bit 5 should always be set.
+    CHECK_P(0b00100000);  // Bit 5 should always be set.
     CHECK_S(0xFF);
 }

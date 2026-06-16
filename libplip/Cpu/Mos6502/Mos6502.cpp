@@ -13,7 +13,7 @@ Mos6502::Mos6502(const long hz, PlipMemoryMap* memoryMap, const Mos6502Version v
     m_registers.A = 0;
     m_registers.X = 0;
     m_registers.Y = 0;
-    m_registers.F = 0b00110100;
+    m_registers.P = 0b00110100;
 
     // Ensure that the PC is set properly.
     Mos6502::Reset(0);
@@ -40,13 +40,13 @@ std::map<std::string, Plip::DebugValue> Mos6502::GetRegisters() const {
         { "Y", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.Y)) },
         { "S", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.S)) },
         { "PC", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_registers.PC)) },
-        { "F(C)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::CarryFlagBit))) },
-        { "F(Z)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::ZeroFlagBit))) },
-        { "F(I)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::InterruptDisableBit))) },
-        { "F(D)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::DecimalModeBit))) },
-        { "F(B)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::BreakCommandBit))) },
-        { "F(O)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::OverflowFlagBit))) },
-        { "F(N)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.F, Mos6502Registers::NegativeFlagBit))) },
+        { "F(C)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.P, Mos6502Registers::CarryFlagBit))) },
+        { "F(Z)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.P, Mos6502Registers::ZeroFlagBit))) },
+        { "F(I)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.P, Mos6502Registers::InterruptDisableBit))) },
+        { "F(D)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.P, Mos6502Registers::DecimalModeBit))) },
+        { "F(B)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.P, Mos6502Registers::BreakCommandBit))) },
+        { "F(O)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.P, Mos6502Registers::OverflowFlagBit))) },
+        { "F(N)", DebugValue(static_cast<bool>(BIT_TEST(m_registers.P, Mos6502Registers::NegativeFlagBit))) },
         { "NMI Vec", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(GetNmiVector())) },
         { "RST Vec", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(GetResetVector())) },
         { "INT Vec", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(GetInterruptVector())) },
@@ -70,7 +70,7 @@ void Mos6502::Reset([[maybe_unused]] const uint32_t pc) {
     }
 
     // Set interrupt disable.
-    m_registers.F |= 0b00000100;
+    m_registers.P |= 0b00000100;
 
     // The 6502 gets its reset vector from memory. Ignore the function parameter.
     m_registers.PC = GetResetVector();

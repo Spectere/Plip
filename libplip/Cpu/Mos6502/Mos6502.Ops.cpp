@@ -49,7 +49,7 @@ static uint8_t op;
 
 #define STACK_PUSH(val) { m_memory->SetByte(StackLocation | m_registers.S--, (val)); }
 
-#define STACK_PUSH_FLAGS() { STACK_PUSH(m_registers.F | (1 << m_registers.BreakCommandBit)); }
+#define STACK_PUSH_FLAGS() { STACK_PUSH(m_registers.P | (1 << m_registers.BreakCommandBit)); }
 
 #define STACK_PUSH_16(val) { STACK_PUSH(val >> 8); STACK_PUSH(val & 0xFF); }
 
@@ -88,7 +88,7 @@ uint8_t Mos6502::AddDecimal(const uint8_t value) {
     } else {
         m_registers.ClearOverflowFlag();
     }
-        
+
     result += highAdjustment;
 
     // Set carry flag based on the high nibble adjustment.
@@ -136,7 +136,7 @@ void Mos6502::JumpRelative(const int8_t rel) {
 uint8_t Mos6502::SubDecimal(const uint8_t value) {
     const int carry = m_registers.GetCarryFlag() ? 0 : 1;
     const int result = m_registers.A - value - carry;
-    
+
     // Set the carry and overflow flags based on the binary result.
     if(result & 0xFF00) {
         m_registers.ClearCarryFlag();
@@ -149,12 +149,12 @@ uint8_t Mos6502::SubDecimal(const uint8_t value) {
     } else {
         m_registers.ClearOverflowFlag();
     }
-    
+
     // Perform arithmetic on each nibble and perform adjustments as necessary.
     int lowNibble = (m_registers.A & 0x0F) - (value & 0x0F) - carry;
     int highNibble = (m_registers.A & 0xF0) - (value & 0xF0);
 
-    // If we carry into bit 4, adjust the low nibble. Borrow from the high nibble if necessary. 
+    // If we carry into bit 4, adjust the low nibble. Borrow from the high nibble if necessary.
     if(lowNibble & 0xF0) lowNibble -= 0x06;
     if(lowNibble & 0x80) highNibble -= 0x10;
     if(highNibble & 0x0F00) highNibble -= 0x60;
@@ -204,7 +204,7 @@ void Mos6502::OpCompare(const uint8_t value) {
     const uint8_t result = m_registers.A - value;
 
     (m_registers.A >= value) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-            
+
     CHECK_NEGATIVE(result);
     CHECK_ZERO(result);
 }
@@ -424,7 +424,7 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x28: {
             // PLP
-            m_registers.F = STACK_POP() | 0b00100000;
+            m_registers.P = STACK_POP() | 0b00100000;
             cycleCount += 3;
             break;
         }
@@ -460,7 +460,7 @@ long Mos6502::DecodeAndExecute() {
             --cycleCount;
 
             // Copy the high bits into the flag register (N/V).
-            m_registers.F = (m_registers.F & 0b00111111) | (result & 0b11000000);
+            m_registers.P = (m_registers.P & 0b00111111) | (result & 0b11000000);
             break;
         }
 
@@ -496,7 +496,7 @@ long Mos6502::DecodeAndExecute() {
             const uint8_t result = m_registers.X - value;
 
             (m_registers.X >= value) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-            
+
             CHECK_NEGATIVE(result);
             CHECK_ZERO(result);
             break;
@@ -513,9 +513,9 @@ long Mos6502::DecodeAndExecute() {
             const uint8_t result = m_registers.Y - value;
 
             (m_registers.Y >= value) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
-            
+
             CHECK_NEGATIVE(result);
-            CHECK_ZERO(result);            
+            CHECK_ZERO(result);
             break;
         }
 
@@ -585,7 +585,7 @@ long Mos6502::DecodeAndExecute() {
             }
 
             value = OpLogicalShiftLeft(value);
-            
+
             if(op == 0x0A) {
                 m_registers.A = value;
             } else {
@@ -675,7 +675,7 @@ long Mos6502::DecodeAndExecute() {
             FETCH_PC(lowSrc);
             FETCH_PC(highSrc);
             uint16_t addr = (highSrc << 8) | lowSrc;
-            
+
             FETCH_ADDR(lowDest, addr);
             addr = (addr & 0xFF00) | static_cast<uint8_t>(lowSrc + 1);  // Emulate page wraparound.
             FETCH_ADDR(highDest, addr);
@@ -823,7 +823,7 @@ long Mos6502::DecodeAndExecute() {
 
         case 0x40: {
             // RTI
-            m_registers.F = STACK_POP() | 0b00100000;
+            m_registers.P = STACK_POP() | 0b00100000;
             CallReturn();
             cycleCount += 5;
             break;
@@ -850,7 +850,7 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
             OpKillExecuted = true;
             break;
         }
-        
+
         case 0x1A: case 0x3A: case 0x5A: case 0x7A: case 0xDA: case 0xFA: {
             // NOP (1 byte, 2 cycles)
             ++cycleCount;
@@ -1074,7 +1074,7 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
 
         case 0x93: {
             // AHX (zp), Y
-            // *addr = zp; (addr + Y) = A & X & (&addr) 
+            // *addr = zp; (addr + Y) = A & X & (&addr)
             uint8_t zp, low, high;
             FETCH_PC(zp);
             FETCH_ADDR(low, zp)
@@ -1144,14 +1144,14 @@ uint16_t Mos6502::FetchAddress(const int addressingMode, const bool alwaysUseY, 
             cycleCount += 2;
             return (high << 8) | low;
         }
-            
+
         case ModeZeroPage: {
             uint8_t offset;
             FETCH_PC(offset);
             ++cycleCount;
             return offset;
         }
-            
+
         case ModeAbsolute: {
             uint8_t low, high;
             FETCH_PC(low);
@@ -1159,7 +1159,7 @@ uint16_t Mos6502::FetchAddress(const int addressingMode, const bool alwaysUseY, 
             ++cycleCount;
             return (high << 8) | low;
         }
-            
+
         case ModeIndirectIndexed: {
             uint8_t index, low, high;
             FETCH_PC(index);
@@ -1169,7 +1169,7 @@ uint16_t Mos6502::FetchAddress(const int addressingMode, const bool alwaysUseY, 
             cycleCount += (forcePenalty || ((addr >> 8) != high)) ? 2 : 1;
             return addr;
         }
-            
+
         case ModeZeroPageReg: {
             uint8_t offset;
             FETCH_PC(offset);
@@ -1177,7 +1177,7 @@ uint16_t Mos6502::FetchAddress(const int addressingMode, const bool alwaysUseY, 
             cycleCount += 2;
             return offset;
         }
-            
+
         case ModeAbsoluteY: {
             uint8_t low, high;
             FETCH_PC(low);
@@ -1186,7 +1186,7 @@ uint16_t Mos6502::FetchAddress(const int addressingMode, const bool alwaysUseY, 
             cycleCount += (forcePenalty || ((addr >> 8) != high)) ? 2 : 1;
             return addr;
         }
-            
+
         case ModeAbsoluteX: {
             uint8_t low, high;
             FETCH_PC(low);
@@ -1195,7 +1195,7 @@ uint16_t Mos6502::FetchAddress(const int addressingMode, const bool alwaysUseY, 
             cycleCount += (forcePenalty || ((addr >> 8) != high)) ? 2 : 1;
             return addr;
         }
-        
+
         default:
             throw PlipEmulationException("6502: Invalid addressing mode in this context");
     }
@@ -1215,7 +1215,7 @@ uint8_t Mos6502::FetchFromMemory(int addressingMode, const bool alwaysUseY, cons
         FETCH_PC(value);
         return value;
     }
-    
+
     return m_memory->GetByte(FetchAddress(addressingMode, alwaysUseY, forcePenalty));
 }
 
