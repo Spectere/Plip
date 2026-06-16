@@ -127,7 +127,7 @@ namespace Plip::Core::GameBoy {
 
         // Joypad
         void Joypad_Cycle();
-        void Joypad_SetMatrix(const uint8_t inputsPressed) { m_inputsPressed = inputsPressed; }
+        void Joypad_SetMatrix(uint8_t inputsPressed);
 
         // Timer
         void Timer_Cycle(uint64_t mCycle);
@@ -188,6 +188,7 @@ namespace Plip::Core::GameBoy {
         // Joypad
         uint8_t m_inputsPressed {};
         uint8_t m_inputsSelected {};
+        uint8_t m_inputsPressedLast = 0b11111111;
 
         // Timer
         enum TimaReloadStatus {

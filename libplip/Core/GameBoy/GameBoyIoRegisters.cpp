@@ -116,6 +116,17 @@ void GameBoyIoRegisters::Joypad_Cycle() {
     }
 }
 
+void GameBoyIoRegisters::Joypad_SetMatrix(const uint8_t inputsPressed) {
+    m_inputsPressed = inputsPressed;
+
+    // Check for falling edges on the pressed inputs. If there are any, raise an interrupt.
+    if((m_inputsPressedLast & ~m_inputsPressed) & 0xF) {
+        RaiseInterrupt(Cpu::SharpLr35902Interrupt::Joypad);
+    }
+
+    m_inputsPressedLast = m_regJoypad;
+}
+
 void GameBoyIoRegisters::RaiseInterrupt(const Cpu::SharpLr35902Interrupt interrupt) {
     m_interruptFlag = m_interruptFlag | static_cast<int>(interrupt);
 }
@@ -142,7 +153,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
     switch(ioRegister) {
         // $FF00
         case IoRegister::JoypadInput: {
-            m_regJoypad = value;
+            m_regJoypad = (m_regJoypad & 0x0F) | (value & 0x30);
             break;
         }
 
