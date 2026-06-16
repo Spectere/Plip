@@ -20,6 +20,7 @@ public:
     void WriteMemory(const uint32_t position, const uint8_t value) const { memory->SetByte(position, value); }
 
     virtual std::vector<RunnerCpuError> CompareState(RunnerTestState state) = 0;
+    virtual uint32_t GetPc() = 0;
     virtual void SetInitialState(RunnerTestState state) = 0;
 
     virtual void Step() = 0;

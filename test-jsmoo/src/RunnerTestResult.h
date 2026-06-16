@@ -12,6 +12,7 @@
 
 struct RunnerTestResult {
     std::string Key;
+    std::string Filename;
     std::vector<RunnerCpuError> RegisterMisses;
     std::vector<RunnerMemoryError> MemoryMisses;
     std::vector<std::string> ExceptionsThrown;

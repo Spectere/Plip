@@ -1,16 +1,16 @@
-// RunnerSharpSm83.h
+// RunnerMos6502.h
 //
-// A test runner for the Sharp SM83 (LR36902).
+// TODO: Add description here.
 
 #pragma once
 
-#include "../Cpu/MockSharpSm83.h"
+#include "../Cpu/MockMos6502.h"
 #include "../RunnerCpu.h"
 
-class RunnerSharpSm83 : public RunnerCpu {
+class RunnerMos6502 : public RunnerCpu {
 public:
-    RunnerSharpSm83();
-    virtual ~RunnerSharpSm83() { delete m_cpu; }
+    RunnerMos6502();
+    virtual ~RunnerMos6502() { delete m_cpu; }
 
     std::vector<RunnerCpuError> CompareState(RunnerTestState state) override;
     [[nodiscard]] uint32_t GetPc() override { return m_cpu->GetPc(); }
@@ -19,5 +19,5 @@ public:
     void Step() override;
 
 private:
-    MockSharpSm83* m_cpu;
+    MockMos6502* m_cpu;
 };

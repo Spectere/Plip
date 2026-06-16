@@ -3,29 +3,49 @@
 // Entry point for the JSMoo-based CPU unit tests.
 
 #include <filesystem>
+#include <format>
 #include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
 
 #include "cxxopts.hpp"
 
 #include "Runner.h"
+#include "Runner/RunnerMos6502.h"
 #include "Runner/RunnerSharpSm83.h"
 #include "TestableCpu.h"
 
 namespace fs = std::filesystem;
 
-//{ "6502", "MOS 6502" },
 //{ "2a03", "Ricoh 2A03/2A07" },
 const std::map<std::string, TestableCpu> supportedCpus {
+    { "6502", {
+        "MOS 6502 (NMOS)",
+        []{ return std::make_unique<Runner<RunnerMos6502>>(); }
+    }},
     { "sm83", {
         "Sharp SM83",
         []{ return std::make_unique<Runner<RunnerSharpSm83>>(); }
     }},
 };
+
+void ShowSupportedCpus() {
+    std::cout << "Supported CPUs:\n\n";
+
+    std::cout << "     Name     |    Description\n";
+    std::cout << "--------------+--------------------------------\n";
+    for(const auto&[ cpuName, cpu ] : supportedCpus) {
+        std::string code =  cpuName;
+        code.append(12 - code.length(), ' ');  // Pad string.
+        std::cout << " " << code << " | " << cpu.Name << '\n';
+    }
+
+    std::cout << std::endl;
+}
 
 cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
     try {
@@ -40,6 +60,8 @@ cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
 
         options.add_options("General")
             ("h,help", "shows this help screen and exits")
+            ("l,list-cpus", "lists the supported CPUs" )
+            ("c,count", "suppress detailed test results--only show counts")
             ("r,recursive", "scans directories recursively")
         ;
 
@@ -49,6 +71,11 @@ cxxopts::ParseResult ParseCmdLine(const int argc, char **argv) {
 
         if(result.count("help")) {
             std::cout << options.help() << std::endl;
+            exit(0);
+        }
+
+        if(result.count("list-cpus")) {
+            ShowSupportedCpus();
             exit(0);
         }
 
@@ -72,7 +99,79 @@ bool IsTestFile(const fs::directory_entry& entry) {
     return entry.path().has_extension() && entry.path().extension() == ".json";
 }
 
-int ShowReport(const std::set<RunnerTestResult>& results) {
+int FormatReportTotals(const size_t totalTests, const size_t failedTests, const size_t skippedTests) {
+    std::cout << "summary: " << totalTests - failedTests - skippedTests << " / " << totalTests << " tests passed" << std::endl;
+    if(failedTests) {
+        std::cerr << " FAILED: " << failedTests << " tests" << std::endl;
+    }
+    if(skippedTests) {
+        std::cout << "SKIPPED: " << skippedTests << " tests" << std::endl;
+    }
+
+    return failedTests ? 1 : 0;
+}
+
+struct CondensedResult {
+    size_t Fails;
+    size_t Skips;
+    size_t Successes;
+    size_t Total;
+};
+
+std::string FormatFileResult(std::string filename, CondensedResult results) {
+    std::string failString {};
+    if(results.Fails) {
+        failString = std::format(" (FAIL: {})", results.Fails);
+    }
+
+    std::string skipString {};
+    if(results.Skips) {
+        skipString = std::format(" (skipped: {})", results.Skips);
+    }
+
+    return std::format("{} : {}/{}{}{}",
+        filename,
+        results.Successes,
+        results.Total,
+        failString,
+        skipString
+    );
+}
+
+int ShowCondensedReport(const std::set<RunnerTestResult>& results) {
+    const auto totalTests = results.size();
+    size_t totalFailed {};
+    size_t totalSkipped {};
+
+    // Tally up per-file totals.
+    std::map<std::string, CondensedResult> fileResults;
+    for(const auto& result : results) {
+        if(result.Skipped) ++fileResults[result.Filename].Skips;
+        else if(!result.Success()) ++fileResults[result.Filename].Fails;
+        else ++fileResults[result.Filename].Successes;
+
+        ++fileResults[result.Filename].Total;
+    }
+
+    // Tally up totally total totals.
+    for(const auto& result : fileResults | std::views::values) {
+        totalFailed += result.Fails;
+        totalSkipped += result.Skips;
+    }
+
+    // Show the results per-file.
+    for(const auto &[ file, result ] : fileResults) {
+        if(result.Fails) {
+            std::cerr << FormatFileResult(file, result) << std::endl;
+        } else {
+            std::cout << FormatFileResult(file, result) << std::endl;
+        }
+    }
+
+    return FormatReportTotals(totalTests, totalFailed, totalSkipped);
+}
+
+int ShowDetailedReport(const std::set<RunnerTestResult>& results) {
     const auto totalTests = results.size();
 
     std::set<RunnerTestResult> failedTests {};
@@ -87,33 +186,25 @@ int ShowReport(const std::set<RunnerTestResult>& results) {
 
     if(!failedTests.empty()) {
         for(const auto &result : failedTests) {
-            std::cerr << result.Key << ": " << std::endl;
+            std::cerr << result.Key << ": \n";
 
             for(const auto &reg : result.RegisterMisses) {
-                std::cerr << "register " << reg.Register << " (expected: " << reg.Expected << "; actual: " << reg.Actual << ")" << std::endl;
+                std::cerr << "register " << reg.Register << " (expected: " << reg.Expected << "; actual: " << reg.Actual << ")\n";
             }
 
             for(const auto &mem : result.MemoryMisses) {
-                std::cerr << "memory [addr: " << mem.Address << "] (expected: " << static_cast<uint16_t>(mem.Expected) << "; actual: " << static_cast<uint16_t>(mem.Actual) << ")" << std::endl;
+                std::cerr << "memory [addr: " << mem.Address << "] (expected: " << static_cast<uint16_t>(mem.Expected) << "; actual: " << static_cast<uint16_t>(mem.Actual) << ")\n";
             }
 
             for(const auto &ex : result.ExceptionsThrown) {
-                std::cerr << "exception thrown: " << ex << std::endl;
+                std::cerr << "exception thrown: " << ex << '\n';
             }
 
             std::cerr << std::endl;
         }
     }
 
-    std::cout << "summary: " << totalTests - failedTests.size() - skippedTests.size() << " / " << totalTests << " tests passed" << std::endl;
-    if(!failedTests.empty()) {
-        std::cerr << " FAILED: " << failedTests.size() << " tests" << std::endl;
-    }
-    if(!skippedTests.empty()) {
-        std::cout << "SKIPPED: " << skippedTests.size() << " tests" << std::endl;
-    }
-
-    return failedTests.empty() ? 0 : 1;
+    return FormatReportTotals(totalTests, failedTests.size(), skippedTests.size());
 }
 
 std::set<std::string> FindTestFiles(const std::vector<std::string>& paths, const bool recursive) {
@@ -165,6 +256,7 @@ int main(const int argc, char** argv) {
     testCpu = opts["cpu"].as<std::string>();
     testPaths = opts["tests"].as<std::vector<std::string>>();
     const auto testRecursive = opts["recursive"].as<bool>();
+    const auto countsOnly = opts["count"].as<bool>();
 
     // Invalid CPU detection.
     if(!supportedCpus.count(testCpu)) {
@@ -198,5 +290,5 @@ int main(const int argc, char** argv) {
     // Dispatch, gather results, and report them to the user.
     const auto runner = supportedCpus.at(testCpu).Create();
     const auto results = runner->RunTests(testFiles);
-    return ShowReport(results);
+    return countsOnly ? ShowCondensedReport(results) : ShowDetailedReport(results);
 }

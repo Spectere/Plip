@@ -7,7 +7,7 @@ set(test_name "plip-test")
 set(jsmoo_test_name "plip-test-jsmoo")
 
 project(${gui_name})
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)

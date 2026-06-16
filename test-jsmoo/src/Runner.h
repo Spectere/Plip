@@ -48,6 +48,7 @@ public:
             } catch(Plip::PlipEmulationException& ex) {
                 RunnerTestResult result {};
                 result.Key = FormatKey(test);
+                result.Filename = test.Filename;
                 result.Skipped = ex.SkipsUnitTest;
 
                 if(result.Skipped)
@@ -160,6 +161,7 @@ private:
         const auto cpu = std::make_unique<RunnerCpuType>();
 
         result.Key = FormatKey(test);
+        result.Filename = test.Filename;
 
         // Set initial memory state.
         for(const auto [ addr, val ] : test.InitialState.Memory) {
@@ -178,6 +180,12 @@ private:
         // Check final state and submit report.
         result.RegisterMisses = cpu->CompareState(test.FinalState);
 
+        // Verify PC.
+        if(cpu->GetPc() != test.FinalState.ProgramCounter) {
+            result.RegisterMisses.push_back({ "PC", test.FinalState.ProgramCounter, cpu->GetPc() });
+        }
+
+        // Verify memory.
         for(const auto [ addr, expected ] : test.FinalState.Memory) {
             if(const auto actual = cpu->ReadMemory(addr); actual != expected) {
                 result.MemoryMisses.push_back({ addr, expected, actual });

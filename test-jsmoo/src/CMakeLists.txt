@@ -12,8 +12,10 @@ add_executable(${jsmoo_test_name}
                                         RunnerTestState.h
                                         TestableCpu.h
 
+                                        Cpu/MockMos6502.h
                                         Cpu/MockSharpSm83.h
 
+    Runner/RunnerMos6502.cpp            Runner/RunnerMos6502.h
     Runner/RunnerSharpSm83.cpp          Runner/RunnerSharpSm83.h
 )
 
