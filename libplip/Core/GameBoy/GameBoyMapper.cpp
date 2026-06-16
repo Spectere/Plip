@@ -23,8 +23,6 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
     m_cartRomBanks = m_cartRom->GetLength() / RomBank0Length;
 
     // Catch unimplemented mappers.
-    // ReSharper disable once CppIncompleteSwitchStatement
-    // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
     switch(m_mbcType) {
         case MBC_Type::Mbc6: throw PlipEmulationException("Unsupported mapper: MBC6");
         case MBC_Type::Mbc7: throw PlipEmulationException("Unsupported mapper: MBC7");
@@ -32,6 +30,17 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
         case MBC_Type::PocketCamera: throw PlipEmulationException("Unsupported mapper: Pocket Camera");
         case MBC_Type::BandaiTama5: throw PlipEmulationException("Unsupported mapper: Bandai TAMA5");
         case MBC_Type::HuC3: throw PlipEmulationException("Unsupported mapper: HuC3");
+
+        // Shut up, clang.
+        case MBC_Type::Mbc1:
+        case MBC_Type::Mbc1M:
+        case MBC_Type::Mbc2:
+        case MBC_Type::Mbc3:
+        case MBC_Type::Mbc5:
+        case MBC_Type::HuC1:
+        case MBC_Type::None:
+        case MBC_Type::Unknown:
+            break;
     }
 
     // For debugging purposes.
