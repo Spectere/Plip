@@ -163,7 +163,7 @@ namespace Plip::Core::GameBoy {
         PlipMemoryRom* m_cartRom = nullptr;
         PlipMemoryRam* m_videoRam;
         PlipMemoryRam* m_workRam;
-        PlipMemoryRam* m_oam = new PlipMemoryRam(0x100, 0xFF);
+        PlipMemoryRam* m_oam = new PlipMemoryRam(0xA0, 0xFF);
         GameBoyIoRegisters* m_ioRegisters;
         PlipMemoryRam* m_highRam = new PlipMemoryRam(0x80, 0xFF);
         PlipMemory* m_cartRam = nullptr;

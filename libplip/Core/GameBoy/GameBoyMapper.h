@@ -32,14 +32,15 @@ namespace Plip::Core::GameBoy {
         static constexpr auto HighRamAddress = 0xFF80;
 
         GameBoyMapper(PlipMemory* bootRom, PlipMemory* cartRom, PlipMemory* videoRam, PlipMemory* workRam, PlipMemory* oam, PlipMemory* ioRegisters, PlipMemory* highRam);
+
+        void AssignBlock(PlipMemory* memory, uint32_t address, uint32_t offset = 0) override;
+        void AssignBlock(PlipMemory* memory, uint32_t address, uint32_t offset, uint32_t length) override;
         PlipMemory* ConfigureMapper(MBC_Type mbcType, bool hasRtc, int cartRamBanks);
         void DisableBootRom();
         void EnableCartridgeRam(bool enable);
         [[nodiscard]] uint8_t GetByte(uint32_t address, bool privileged) const override;
-        [[nodiscard]] uint8_t GetByte_HuC1(uint32_t address, bool privileged) const;
-        [[nodiscard]] uint8_t GetByte_Mbc3(uint32_t address, bool privileged) const;
+        uint32_t GetLength() override { return 0x10000; }  // 64 KiB
         [[nodiscard]] std::map<std::string, DebugValue> GetMbcDebugInfo() const;
-        void RemapMemory(bool remapRom, bool remapRam);
         void Reset();
         void RestoreCartridgeMemoryAccessibility() const;
         void SetByte(uint32_t address, uint8_t value, bool privileged = false) override;
@@ -50,6 +51,8 @@ namespace Plip::Core::GameBoy {
         bool SetByte_Mbc5(uint32_t address, uint8_t value);
         void SetVideoRamBank(int bank);
         void SetWorkRamBank(int bank);
+        void UnassignAllBlocks() override;
+        void UnassignBlock(uint32_t address, uint32_t length) override;
 
         void RTC_Clock();
         void RTC_Dump(std::fstream& file) const;
@@ -87,14 +90,15 @@ namespace Plip::Core::GameBoy {
         uint8_t m_bankRegister0 {};
         uint8_t m_bankRegister1 {};
         uint8_t m_bankRegister2 {};
+        bool m_bootRomAccessible {};
         bool m_cartHasRam {};
-        int m_cartRamBanks {};
-        uint32_t m_cartRomBanks = 0;
+        uint8_t m_cartRamBank {};
+        int m_cartRamBankCount {};
+        uint32_t m_cartRomBankCount = 0;
         bool m_hasRtc {};
         bool m_hucIrMode {};
         std::string m_mbcName = "UNKNOWN";
         MBC_Type m_mbcType = MBC_Type::None;
-        uint8_t m_ramBank {};
         bool m_ramEnabled {};
         uint8_t m_rom0Bank {};
         uint16_t m_rom1Bank {};

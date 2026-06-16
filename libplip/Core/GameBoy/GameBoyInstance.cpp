@@ -211,9 +211,7 @@ void GameBoyInstance::DmaCompleteOam() const {
     m_workRam->SetReadable(true);
     m_workRam->SetWritable(true);
 
-    if(m_cartRamBanks > 0) {
-        m_gbMemory->RestoreCartridgeMemoryAccessibility();
-    }
+    m_gbMemory->RestoreCartridgeMemoryAccessibility();
 
     PPU_SetMemoryPermissions();  // Sets the writable state of VRAM/OAM.
 }

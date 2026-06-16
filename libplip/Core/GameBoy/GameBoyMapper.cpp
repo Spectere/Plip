@@ -3,6 +3,7 @@
  * A custom PlipMemoryMap that emulates the Game Boy's MBC chips.
  */
 
+#include <cassert>
 #include <ctime>
 
 #include "GameBoyMapper.h"
@@ -16,11 +17,27 @@ GameBoyMapper::GameBoyMapper(PlipMemory* bootRom, PlipMemory* cartRom, PlipMemor
     SetInvalidByte(0xFF);
 }
 
+void GameBoyMapper::AssignBlock(PlipMemory* memory, uint32_t address, uint32_t offset) {
+    throw PlipEmulationException("GameBoyMapper::AssignBlock must not be used.");
+}
+
+void GameBoyMapper::AssignBlock(PlipMemory* memory, uint32_t address, uint32_t offset, uint32_t length) {
+    throw PlipEmulationException("GameBoyMapper::AssignBlock must not be used.");
+}
+
+void GameBoyMapper::UnassignAllBlocks() {
+    throw PlipEmulationException("GameBoyMapper::UnassignAllBlocks must not be used.");
+}
+
+void GameBoyMapper::UnassignBlock(uint32_t address, uint32_t length) {
+    throw PlipEmulationException("GameBoyMapper::UnassignBlock must not be used.");
+}
+
 Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const bool hasRtc, const int cartRamBanks) {
     m_mbcType = mbcType;
     m_hasRtc = hasRtc;
-    m_cartRamBanks = cartRamBanks;
-    m_cartRomBanks = m_cartRom->GetLength() / RomBank0Length;
+    m_cartRamBankCount = cartRamBanks;
+    m_cartRomBankCount = m_cartRom->GetLength() / RomBank0Length;
 
     // Catch unimplemented mappers.
     switch(m_mbcType) {
@@ -85,9 +102,7 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
 }
 
 void GameBoyMapper::DisableBootRom() {
-    // Remap bank 0. This allows this to work with all models with no muss or fuss.
-    UnassignBlock(0x0000, RomBank0Length);
-    AssignBlock(m_cartRom, 0x0000, 0x0000, RomBank0Length);
+    m_bootRomAccessible = false;
 }
 
 void GameBoyMapper::EnableCartridgeRam(const bool enable) {
@@ -100,41 +115,64 @@ void GameBoyMapper::EnableCartridgeRam(const bool enable) {
 }
 
 uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) const {
-    switch(m_mbcType) {
-        case MBC_Type::Mbc3:
-            return GetByte_Mbc3(address, privileged);
-        case MBC_Type::HuC1:
-            return GetByte_HuC1(address, privileged);
-        case MBC_Type::None:
-        case MBC_Type::Mbc1:
-        case MBC_Type::Mbc1M:
-        case MBC_Type::Mbc2:
-        case MBC_Type::Mbc5:
-        case MBC_Type::Mbc6:
-        case MBC_Type::Mbc7:
-        case MBC_Type::Mmm01:
-        case MBC_Type::PocketCamera:
-        case MBC_Type::BandaiTama5:
-        case MBC_Type::HuC3:
-        default:
-            return PlipMemoryMap::GetByte(address, privileged);
-    }
-}
+    // Boot ROM handler.
+    if(m_bootRomAccessible) {
+        if(address < 0x100) {
+            return m_bootRom->GetByte(address, privileged);
+        }
 
-uint8_t GameBoyMapper::GetByte_HuC1(uint32_t address, bool privileged) const {
-    if(m_hucIrMode && address >= 0xA000 && address < 0xC000) {
-        return 0xC0;  // IR receiver does not see light.
+        if(m_largeBootRom && (address >= 0x200 && address < 0x900)) {
+            // CGB extensions. 0x100-0x1FF is zeroed on all the dumps I've seen (and SameBoy's ROM set),
+            // so we don't need to adjust the address.
+            return m_bootRom->GetByte(address, privileged);
+        }
     }
 
-    return PlipMemoryMap::GetByte(address, privileged);
-}
+    // GB memory map.
+    if(address >= HighRamAddress) return m_highRam->GetByte(address & 0x7F, privileged);
+    if(address >= IoRegistersAddress) return m_ioRegisters->GetByte(address & 0x7F, privileged);
+    if(address >= UnusableAddress) return m_unusable->GetByte(address - 0xFEA0, privileged);
+    if(address >= OamAddress) return m_oam->GetByte(address & 0xFF, privileged);
+    if(address >= WorkRamAddress) {
+        // WRAM and Echo RAM.
+        if(address & 0x1000) {
+            // Upper 4 KiB. CGB WRAM bank switching must be respected.
+            assert((!m_largeBootRom && m_wramBank == 1) || m_largeBootRom);  // m_wramBank must always be 1 on DMG. TODO: Assert based on system type, not boot ROM size.
+            return m_workRam->GetByte((0x1000 * m_wramBank) + (address & 0xFFF), privileged);
+        }
 
-uint8_t GameBoyMapper::GetByte_Mbc3(const uint32_t address, const bool privileged) const {
-    if((address >= 0xA000 && address <= 0xBFFF) && (m_ramBank >= 0x08 && m_ramBank <= 0x0C)) {
-        return RTC_RegisterGet(m_ramBank);
+        // Lower 4 KiB. Easy-peasy.
+        return m_workRam->GetByte(address & 0xFFF, privileged);
     }
+    if(address >= CartRamAddress) {
+        // Mapper registers.
+        if(m_mbcType == MBC_Type::Mbc3) {
+            if(m_cartRamBank >= 0x08 && m_cartRamBank <= 0x0C) {
+                // RTC
+                return RTC_RegisterGet(m_cartRamBank);
+            }
+        } else if(m_mbcType == MBC_Type::HuC1) {
+            if(m_hucIrMode) {
+                // IR receiver
+                return 0xC0;  // IR receiver does not see light.
+            }
+        }
 
-    return PlipMemoryMap::GetByte(address, privileged);
+        // 8 KiB cart RAM mapping (if applicable).
+        if(!m_cartHasRam) {
+            // No cart RAM--open bus.
+            return 0xFF;
+        }
+
+        return m_cartRam->GetByte((m_cartRamBank * CartRamLength) + (address & 0x1FFF), privileged);
+    }
+    if(address >= VideoRamAddress) {
+        // VRAM
+        assert((!m_largeBootRom && m_vramBank == 0) || m_largeBootRom);  // m_vramBank must always be 0 on DMG. TODO: Assert based on system type, not boot ROM size.
+        return m_videoRam->GetByte((m_vramBank * VideoRamLength) + (address & 0x1FFF), privileged);
+    }
+    if(address >= RomBank1Address) return m_cartRom->GetByte((m_rom1Bank * RomBank1Length) + (address & 0x3FFF));
+    return m_cartRom->GetByte((m_rom0Bank * RomBank0Length) + (address & 0x3FFF), privileged);
 }
 
 std::map<std::string, Plip::DebugValue> GameBoyMapper::GetMbcDebugInfo() const {
@@ -144,12 +182,12 @@ std::map<std::string, Plip::DebugValue> GameBoyMapper::GetMbcDebugInfo() const {
         { "Bank Register 0", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister0)) },
         { "Bank Register 1", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister1)) },
         { "Bank Register 2", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_bankRegister2)) },
-        { "RAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ramBank)) },
-        { "RAM Bank Count", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_cartRamBanks)) },
+        { "RAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_cartRamBank)) },
+        { "RAM Bank Count", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_cartRamBankCount)) },
         { "RAM Enabled", DebugValue(m_ramEnabled) },
         { "ROM $0000 Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_rom0Bank)) },
         { "ROM $4000 Bank", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_rom1Bank)) },
-        { "ROM Bank Count", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_cartRomBanks)) },
+        { "ROM Bank Count", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_cartRomBankCount)) },
         { "VRAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_vramBank) )},
         { "WRAM Bank", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_wramBank) )},
     };
@@ -166,70 +204,19 @@ std::map<std::string, Plip::DebugValue> GameBoyMapper::GetMbcDebugInfo() const {
     return debugList;
 }
 
-void GameBoyMapper::RemapMemory(const bool remapRom, const bool remapRam) {
-    if(remapRom) {
-        UnassignBlock(RomBank0Address, RomBank0Length + RomBank1Length);
-
-        const auto romLength = m_cartRom->GetLength();
-        const auto rom0Offset = (RomBank0Length * m_rom0Bank) % romLength;
-        const auto rom1Offset = (RomBank1Length * m_rom1Bank) % romLength;
-
-        AssignBlock(m_cartRom, RomBank0Address, rom0Offset, RomBank0Length);
-        AssignBlock(m_cartRom, RomBank1Address, rom1Offset, RomBank1Length);
-    }
-
-    if(remapRam && m_cartHasRam) {
-        UnassignBlock(CartRamAddress, CartRamLength);
-
-        const auto ramLength = m_cartRam->GetLength();
-        const auto ramOffset = (CartRamLength * m_ramBank) % ramLength;
-        AssignBlock(m_cartRam, CartRamAddress, ramOffset, CartRamLength);
-    }
-}
-
 void GameBoyMapper::Reset() {
-    UnassignAllBlocks();
+    // Reset VRAM/WRAM banks.
+    m_vramBank = 0;
+    m_wramBank = 1;
 
-    // Initialize system memory map.
-    AssignBlock(m_videoRam, VideoRamAddress);
-    AssignBlock(m_workRam, WorkRamAddress);
-    AssignBlock(m_oam, OamAddress);
-    AssignBlock(m_unusable, UnusableAddress);
-    AssignBlock(m_ioRegisters, IoRegistersAddress);
-    AssignBlock(m_highRam, HighRamAddress);
-    AssignBlock(m_cartRom, RomBank0Address, 0, RomBank0Length + RomBank1Length);
-
-    // Map cartridge memory (if it exists) and disable it by default (unless we're using HuC1).
+    // Disable cart RAM by default (unless we're using HuC1).
     if(m_cartHasRam) {
-        if(m_mbcType == MBC_Type::Mbc2) {
-            // MBC2 has a very limited amount of memory, so it's expected to repeatedly
-            // wrap around the $A000-BFFF region.
-            const auto mbc2RamLength = m_cartRam->GetLength();
-            for(auto i = CartRamAddress; i < CartRamAddress + CartRamLength; i += mbc2RamLength) {
-                AssignBlock(m_cartRam, i, 0, mbc2RamLength);
-            }
-        } else {
-            AssignBlock(m_cartRam, CartRamAddress, 0, CartRamLength);
-        }
-
         if(m_mbcType != MBC_Type::HuC1) EnableCartridgeRam(false);
     }
 
-    // Load the boot ROM into 0x0000-0x00FF (and 0x0200-0x08FF for CGB) (overlaying the cartridge ROM).
-    AssignBlock(m_bootRom, 0x0000, 0x0000, 0x0100);
+    // Reset boot ROM accessibility.
+    m_bootRomAccessible = true;
     m_largeBootRom = m_bootRom->GetLength() > 0x0100;
-
-    if(m_largeBootRom) {
-        // Boot ROM is extended. Map the rest of it to 0x0200.
-
-        if(m_bootRom->GetLength() > 0x0800) {
-            // 0x0100-0x0200 are probably 0x00. Skip those and map from 0x0200-0x08FF.
-            AssignBlock(m_bootRom, 0x0200, 0x0200, 0x0700);
-        } else {
-            // The ROM is (hopefully) 2048 bytes long. Translate 0x0100-0x07FF to 0x0200-0x08FF.
-            AssignBlock(m_bootRom, 0x0200, 0x0100, 0x0700);
-        }
-    }
 }
 
 void GameBoyMapper::RestoreCartridgeMemoryAccessibility() const {
@@ -392,8 +379,8 @@ void GameBoyMapper::RTC_SetCpuClockRate(const int clockRate) {
 }
 
 void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const bool privileged) {
+    // Mapper register writes.
     bool mbcHandledWrite = false;
-
     switch(m_mbcType) {
         case MBC_Type::Mbc1:
         case MBC_Type::Mbc1M:
@@ -422,27 +409,47 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
             break;
     }
 
-    if(!mbcHandledWrite) {
-        PlipMemoryMap::SetByte(address, value, privileged);
+    if(mbcHandledWrite) return;
+
+    if(address >= HighRamAddress) m_highRam->SetByte(address & 0x7F, value, privileged);
+    else if(address >= IoRegistersAddress) m_ioRegisters->SetByte(address & 0x7F, value, privileged);
+    else if(address >= UnusableAddress) m_unusable->SetByte(address - 0xFEA0, value, privileged);
+    else if(address >= OamAddress) m_oam->SetByte(address & 0xFF, value, privileged);
+    else if(address >= WorkRamAddress) {
+        // WRAM and Echo RAM.
+        if(address & 0x1000) {
+            // Upper 4 KiB. CGB WRAM bank switching must be respected
+            assert((!m_largeBootRom && m_wramBank == 1) || m_largeBootRom);  // m_wramBank must always be 1 on DMG. TODO: Assert based on system type, not boot ROM size.
+            m_workRam->SetByte((0x1000 * m_wramBank) + (address & 0xFFF), value, privileged);
+        } else {
+            // Lower 4 KiB
+            m_workRam->SetByte(address & 0xFFF, value, privileged);
+        }
     }
+    else if(address >= CartRamAddress && m_cartHasRam) {
+        // Cart RAM
+        m_cartRam->SetByte((m_cartRamBank * CartRamLength) + (address & 0x1FFF), value, privileged);
+    }
+    else if(address >= VideoRamAddress) {
+        // VRAM
+        assert((!m_largeBootRom && m_vramBank == 0) || m_largeBootRom);  // m_vramBank must always be 0 on DMG. TODO: Assert based on system type, not boot ROM size.
+        m_videoRam->SetByte((m_vramBank * VideoRamLength) + (address & 0x1FFF), value, privileged);
+    }
+
+    // ROM "writes" would be handled by the mapper (above).
 }
 
 bool GameBoyMapper::SetByte_HuC1(const uint32_t address, const uint8_t value) {
-    bool bankSwitchRam = false;
-    bool bankSwitchRom = false;
-
     if(address < 0x2000) {
         // IR select. Enable IR with $0E and disable (allow RAM access) with anything else.
         m_hucIrMode = (value & 0xF) == 0xE;
         m_ramEnabled = !m_hucIrMode;
     } else if(address < 0x4000) {
         // ROM bank selection.
-        bankSwitchRom = true;
         m_rom1Bank = m_bankRegister0 = value & 0b111111;
     } else if(address < 0x6000) {
         // RAM bank selection.
-        bankSwitchRam = true;
-        m_ramBank = m_bankRegister1 = value & 0b11;
+        m_cartRamBank = m_bankRegister1 = value & 0b11;
     } else if(address < 0x8000) {
         // Unknown--does not appear to do anything. Ignore this write.
     } else if(m_hucIrMode && address >= 0xA000 && address < 0xC000) {
@@ -450,11 +457,6 @@ bool GameBoyMapper::SetByte_HuC1(const uint32_t address, const uint8_t value) {
         return false;
     } else {
         return false;
-    }
-
-    // Swap banks if requested.
-    if(bankSwitchRom || bankSwitchRam) {
-        RemapMemory(bankSwitchRom, bankSwitchRam);
     }
 
     return true;
@@ -504,18 +506,15 @@ bool GameBoyMapper::SetByte_Mbc1(const uint32_t address, const uint8_t value) {
         if(m_bankingMode == 0) {
             // Simple banking mode--only bank switch $4000-$7FFF. RAM is locked on bank 0.
             m_rom0Bank = 0;
-            m_ramBank = 0;
+            m_cartRamBank = 0;
         } else {
             // Advanced banking mode--bank switch $0000-$3FFF (or RAM on $A000-BFFF) using register 1.
             if(m_register1SelectsRomBank) {
                 m_rom0Bank = m_bankRegister1 << (m_mbcType == MBC_Type::Mbc1M ? 4 : 5);
             } else {
-                m_ramBank = m_bankRegister1;
+                m_cartRamBank = m_bankRegister1;
             }
         }
-
-        // Remap memory.
-        RemapMemory(true, true);
     }
 
     return true;
@@ -528,7 +527,6 @@ bool GameBoyMapper::SetByte_Mbc2(const uint32_t address, const uint8_t value) {
         // ROM bank switch.
         m_bankRegister0 = value & 0b1111;
         m_rom1Bank = m_bankRegister0 > 0 ? m_bankRegister0 : 1;
-        RemapMemory(true, false);
     } else {
         // RAM enable/disable.
         EnableCartridgeRam((value & 0xF) == 0xA);
@@ -551,7 +549,7 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
     } else if(address < 0x6000) {
         // Bank register 1 (RAM bank or RTC register selector).
         m_bankRegister1 = value;
-        m_ramBank = m_bankRegister1;
+        m_cartRamBank = m_bankRegister1;
         if(value < 0x04) {
             bankSwitchRam = true;
         }
@@ -563,8 +561,8 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
         m_rtcLatchLastValueWritten = value;
     } else if(address >= 0xA000 && address < 0xC000) {
         // RTC register 08-0C.
-        if(m_ramBank >= 0x08 && m_ramBank <= 0x0C) {
-            RTC_RegisterSet(m_ramBank, value);
+        if(m_cartRamBank >= 0x08 && m_cartRamBank <= 0x0C) {
+            RTC_RegisterSet(m_cartRamBank, value);
         } else {
             return false;
         }
@@ -582,9 +580,6 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
                 m_rom1Bank = 1;
             }
         }
-
-        // Remap memory.
-        RemapMemory(bankSwitchRom, bankSwitchRam);
     }
 
     return true;
@@ -618,24 +613,20 @@ bool GameBoyMapper::SetByte_Mbc5(const uint32_t address, const uint8_t value) {
         if(bankSwitchRom) {
             m_rom1Bank = (m_bankRegister1 << 8) | m_bankRegister0;
         }
-
-        // Remap memory.
-        RemapMemory(bankSwitchRom, bankSwitchRam);
     }
 
     return true;
 }
 
 void GameBoyMapper::SetVideoRamBank(const int bank) {
-    m_vramBank = bank;
+    assert(m_largeBootRom);  // Invalid on DMG.  TODO: We should assert this based on active system type, NOT ROM size.
 
-    UnassignBlock(VideoRamAddress, VideoRamLength);
-    AssignBlock(m_videoRam, VideoRamAddress, VideoRamLength * m_vramBank, VideoRamLength);
+    m_vramBank = bank & 0b1;
 }
 
 void GameBoyMapper::SetWorkRamBank(const int bank) {
-    m_wramBank = bank;
+    assert(m_largeBootRom);  // Invalid on DMG.  TODO: We should assert this based on active system type, NOT ROM size.
 
-    UnassignBlock(WorkRamAddress, WorkRamLength);
-    AssignBlock(m_workRam, WorkRamAddress, WorkRamLength * m_wramBank, WorkRamLength);
+    m_wramBank = bank & 0b111;
+    if(m_wramBank == 0) m_wramBank = 1;  // Shift to bank 1.
 }

@@ -20,7 +20,7 @@ PlipMemoryRom::PlipMemoryRom(const void *data, const uint32_t length, const uint
 
 uint8_t PlipMemoryRom::GetByte(const uint32_t address, const bool privileged) {
     if(m_readable || privileged) {
-        return m_data[address];
+        return m_data[address % m_length];
     }
 
     return m_unprivilegedValue;
