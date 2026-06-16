@@ -12,6 +12,7 @@ namespace Plip::Core::GameBoy {
         Mbc1M,
         Mbc2,
         Mbc3,
+        Mbc30,
         Mbc5,
         Mbc6,
         Mbc7,

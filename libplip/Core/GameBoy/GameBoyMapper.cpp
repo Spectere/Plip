@@ -53,6 +53,7 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
         case MBC_Type::Mbc1M:
         case MBC_Type::Mbc2:
         case MBC_Type::Mbc3:
+        case MBC_Type::Mbc30:
         case MBC_Type::Mbc5:
         case MBC_Type::HuC1:
         case MBC_Type::None:
@@ -67,6 +68,7 @@ Plip::PlipMemory* GameBoyMapper::ConfigureMapper(const MBC_Type mbcType, const b
         case MBC_Type::Mbc1M: m_mbcName = "MBC1M"; break;
         case MBC_Type::Mbc2: m_mbcName = "MBC2"; break;
         case MBC_Type::Mbc3: m_mbcName = "MBC3"; break;
+        case MBC_Type::Mbc30: m_mbcName = "MBC30"; break;
         case MBC_Type::Mbc5: m_mbcName = "MBC5"; break;
         case MBC_Type::Mbc6: m_mbcName = "MBC6"; break;
         case MBC_Type::Mbc7: m_mbcName = "MBC7"; break;
@@ -145,7 +147,7 @@ uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) co
     }
     if(address >= CartRamAddress) {
         // Mapper registers.
-        if(m_mbcType == MBC_Type::Mbc3) {
+        if(m_mbcType == MBC_Type::Mbc3 || m_mbcType == MBC_Type::Mbc30) {
             if(m_cartRamBank >= 0x08 && m_cartRamBank <= 0x0C) {
                 // RTC
                 return RTC_RegisterGet(m_cartRamBank);
@@ -388,6 +390,7 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
             mbcHandledWrite = SetByte_Mbc2(address, value);
             break;
         case MBC_Type::Mbc3:
+        case MBC_Type::Mbc30:
             mbcHandledWrite = SetByte_Mbc3(address, value);
             break;
         case MBC_Type::Mbc5:
@@ -540,7 +543,7 @@ bool GameBoyMapper::SetByte_Mbc3(const uint32_t address, const uint8_t value) {
         EnableCartridgeRam((value & 0xF) == 0xA);
     } else if(address < 0x4000) {
         // Bank register 0 (ROM bank selector).
-        m_bankRegister0 = value & 0b01111111;
+        m_bankRegister0 = value & (m_mbcType == MBC_Type::Mbc3 ? 0b01111111 : 0xFF);
         bankSwitchRom = true;
     } else if(address < 0x6000) {
         // Bank register 1 (RAM bank or RTC register selector).

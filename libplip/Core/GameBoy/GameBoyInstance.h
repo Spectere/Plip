@@ -56,7 +56,7 @@ namespace Plip::Core::GameBoy {
         void DmaInitCgb(DmaTransferMode transferMode);
         void DmaInitOam(int sourceAddress);
         int GetCartridgeRamBankCount() const;
-        static bool IsMultiRomCartridge(PlipMemory* cart);
+        bool IsMultiRomCartridge() const;
         void ReadJoypad();
         void ReadCartridgeFeatures();
         void RegisterInput() const;
@@ -111,7 +111,7 @@ namespace Plip::Core::GameBoy {
         static constexpr int HeaderLogoOffset = 0x104;
 
         bool m_cgbMode {};
-        Cpu::SharpLr35902 *m_cpu;
+        Cpu::SharpLr35902 *m_cpu {};
         double m_cycleTime {};
         double m_deltaTimeRemaining {};
         bool m_doubleSpeed {};
@@ -155,9 +155,10 @@ namespace Plip::Core::GameBoy {
         bool m_hasSensor = false;
 
         uint16_t m_cartRamBanks = 0;
+        uint32_t m_cartRomBanks {};
 
         // System memory map
-        GameBoyMapper* m_gbMemory;
+        GameBoyMapper* m_gbMemory {};
 
         PlipMemoryRom* m_bootRom;
         PlipMemoryRom* m_cartRom = nullptr;
@@ -193,10 +194,10 @@ namespace Plip::Core::GameBoy {
 
         int m_apuClockDivisor = 2;
 
-        PulseChannel* m_channel1;
-        PulseChannel* m_channel2;
-        WaveChannel* m_channel3;
-        NoiseChannel* m_channel4;
+        PulseChannel* m_channel1 {};
+        PulseChannel* m_channel2 {};
+        WaveChannel* m_channel3 {};
+        NoiseChannel* m_channel4 {};
 
         std::array<bool, 4> m_channelEnable { true, true, true, true };
 

@@ -523,17 +523,15 @@ int GameBoyInstance::GetCartridgeRamBankCount() const {
     }
 }
 
-bool GameBoyInstance::IsMultiRomCartridge(PlipMemory* cart) {
-    const auto bankCount = cart->GetLength() / GameBoyMapper::RomBank0Length;
-
+bool GameBoyInstance::IsMultiRomCartridge() const {
     // Page through the banks and look a header with the logo in the expected position.
     // Start with 1, as we know the logo will exist in bank 0.
-    for(auto i = 1; i < bankCount; ++i) {
+    for(auto i = 1; i < m_cartRomBanks; ++i) {
         const auto startOffset = (GameBoyMapper::RomBank0Length * i) + HeaderLogoOffset;
         bool mismatch = false;
 
         for(auto x = 0; x < LogoSize; ++x) {
-            mismatch = (cart->GetByte(startOffset + x) != Logo[x]);
+            mismatch = (m_cartRom->GetByte(startOffset + x) != Logo[x]);
             if(mismatch) break;
         }
 
@@ -547,6 +545,7 @@ bool GameBoyInstance::IsMultiRomCartridge(PlipMemory* cart) {
 
 void GameBoyInstance::ReadCartridgeFeatures() {
     const auto cartType = m_cartRom->GetByte(0x0147);
+    m_cartRomBanks = m_cartRom->GetLength() / GameBoyMapper::RomBank0Length;
 
     // MBC
     switch(cartType) {
@@ -554,13 +553,16 @@ void GameBoyInstance::ReadCartridgeFeatures() {
             m_mbc = MBC_Type::None;
             break;
         case 0x01: case 0x02: case 0x03:
-            m_mbc = MBC_Type::Mbc1;
+            // MBC1M carts do not have a distinct value. We need to take another heuristic into account
+            // to detect multicarts.
+            m_mbc = IsMultiRomCartridge() ? MBC_Type::Mbc1M : MBC_Type::Mbc1;
             break;
         case 0x05: case 0x06:
             m_mbc = MBC_Type::Mbc2;
             break;
         case 0x0F: case 0x10: case 0x11: case 0x12: case 0x13:
-            m_mbc = MBC_Type::Mbc3;
+            // MBC30 carts are MBC3 carts with more than 127 ROM banks and do not have a distinct value.
+            m_mbc = m_cartRomBanks > 127 ? MBC_Type::Mbc30 : MBC_Type::Mbc3;
             break;
         case 0x0B: case 0x0C: case 0x0D:
             m_mbc = MBC_Type::Mmm01;
@@ -592,12 +594,6 @@ void GameBoyInstance::ReadCartridgeFeatures() {
                << PlipUtility::FormatHex(cartType, 2);
             throw PlipEmulationException(ex.str().c_str());
         }
-    }
-
-    // MBC1M carts do not have a distinct value. We need to take another heuristic into account
-    // to detect multicarts.
-    if(m_mbc == MBC_Type::Mbc1 && IsMultiRomCartridge(m_cartRom)) {
-        m_mbc = MBC_Type::Mbc1M;
     }
 
     // RAM
