@@ -137,7 +137,6 @@ uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) co
         // WRAM and Echo RAM.
         if(address & 0x1000) {
             // Upper 4 KiB. CGB WRAM bank switching must be respected.
-            assert((!m_largeBootRom && m_wramBank == 1) || m_largeBootRom);  // m_wramBank must always be 1 on DMG. TODO: Assert based on system type, not boot ROM size.
             return m_workRam->GetByte((0x1000 * m_wramBank) + (address & 0xFFF), privileged);
         }
 
@@ -168,7 +167,6 @@ uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) co
     }
     if(address >= VideoRamAddress) {
         // VRAM
-        assert((!m_largeBootRom && m_vramBank == 0) || m_largeBootRom);  // m_vramBank must always be 0 on DMG. TODO: Assert based on system type, not boot ROM size.
         return m_videoRam->GetByte((m_vramBank * VideoRamLength) + (address & 0x1FFF), privileged);
     }
     if(address >= RomBank1Address) return m_cartRom->GetByte((m_rom1Bank * RomBank1Length) + (address & 0x3FFF));
@@ -419,7 +417,6 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
         // WRAM and Echo RAM.
         if(address & 0x1000) {
             // Upper 4 KiB. CGB WRAM bank switching must be respected
-            assert((!m_largeBootRom && m_wramBank == 1) || m_largeBootRom);  // m_wramBank must always be 1 on DMG. TODO: Assert based on system type, not boot ROM size.
             m_workRam->SetByte((0x1000 * m_wramBank) + (address & 0xFFF), value, privileged);
         } else {
             // Lower 4 KiB
@@ -432,7 +429,6 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
     }
     else if(address >= VideoRamAddress) {
         // VRAM
-        assert((!m_largeBootRom && m_vramBank == 0) || m_largeBootRom);  // m_vramBank must always be 0 on DMG. TODO: Assert based on system type, not boot ROM size.
         m_videoRam->SetByte((m_vramBank * VideoRamLength) + (address & 0x1FFF), value, privileged);
     }
 
