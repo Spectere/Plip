@@ -14,7 +14,7 @@ add_executable(${jsmoo_test_name}
 
                                         Cpu/MockSharpSm83.h
 
-    RunnerSharpSm83.cpp                 RunnerSharpSm83.h
+    Runner/RunnerSharpSm83.cpp          Runner/RunnerSharpSm83.h
 )
 
 target_include_directories(${jsmoo_test_name}

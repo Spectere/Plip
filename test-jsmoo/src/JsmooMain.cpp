@@ -13,7 +13,7 @@
 #include "cxxopts.hpp"
 
 #include "Runner.h"
-#include "RunnerSharpSm83.h"
+#include "Runner/RunnerSharpSm83.h"
 #include "TestableCpu.h"
 
 namespace fs = std::filesystem;

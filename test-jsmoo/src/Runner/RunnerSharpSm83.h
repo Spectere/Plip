@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "Cpu/MockSharpSm83.h"
-#include "RunnerCpu.h"
+#include "../Cpu/MockSharpSm83.h"
+#include "../RunnerCpu.h"
 
 class RunnerSharpSm83 : public RunnerCpu {
 public:
