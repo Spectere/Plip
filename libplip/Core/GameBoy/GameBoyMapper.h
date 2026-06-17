@@ -9,9 +9,9 @@
 
 #include "GameBoyIoRegisters.h"
 #include "MBC_Type.h"
-#include "../../Memory/PlipMemory.h"
-#include "../../Memory/PlipMemoryMap.h"
-#include "../../Memory/PlipMemoryRom.h"
+#include "Memory/PlipMemory.h"
+#include "Memory/PlipMemoryMap.h"
+#include "Memory/PlipMemoryRom.h"
 
 namespace Plip::Core::GameBoy {
     class GameBoyMapper final : public PlipMemoryMap {

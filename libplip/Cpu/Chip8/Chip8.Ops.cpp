@@ -6,9 +6,8 @@
 #include <iomanip>
 #include <sstream>
 
-#include "../../PlipEmulationException.h"
-
 #include "Chip8.h"
+#include "PlipEmulationException.h"
 
 using Plip::Cpu::Chip8;
 

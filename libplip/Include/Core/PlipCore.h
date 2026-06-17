@@ -10,14 +10,14 @@
 #include <string>
 #include <vector>
 
-#include "../DebugAudioChannel.h"
-#include "../DebugValue.h"
-#include "../PlipError.h"
-#include "../PlipKeyValuePairCollection.h"
-#include "../Audio/PlipAudio.h"
-#include "../Input/PlipInput.h"
-#include "../Video/PlipVideo.h"
-#include "../Memory/PlipMemoryMap.h"
+#include "DebugAudioChannel.h"
+#include "DebugValue.h"
+#include "PlipError.h"
+#include "PlipKeyValuePairCollection.h"
+#include "Audio/PlipAudio.h"
+#include "Input/PlipInput.h"
+#include "Video/PlipVideo.h"
+#include "Memory/PlipMemoryMap.h"
 
 namespace Plip {
     enum class PlipValidCore {

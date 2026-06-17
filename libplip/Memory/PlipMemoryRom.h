@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include "PlipMemory.h"
+#include "Memory/PlipMemory.h"
 
 namespace Plip {
     class PlipMemoryRom : public PlipMemory {

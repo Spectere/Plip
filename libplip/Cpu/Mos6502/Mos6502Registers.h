@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-#include "../../PlipSupport.h"
+#include "PlipSupport.h"
 
 namespace Plip::Cpu {
     struct Mos6502Registers {

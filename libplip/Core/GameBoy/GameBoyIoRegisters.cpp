@@ -5,7 +5,7 @@
 
 #include "GameBoyIoRegisters.h"
 
-#include "../../PlipSupport.h"
+#include "PlipSupport.h"
 
 using Plip::Core::GameBoy::GameBoyIoRegisters;
 

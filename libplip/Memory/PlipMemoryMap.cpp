@@ -5,7 +5,7 @@
 
 #include <tuple>
 
-#include "PlipMemoryMap.h"
+#include "Memory/PlipMemoryMap.h"
 
 using Plip::PlipMemoryMap;
 

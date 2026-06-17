@@ -9,8 +9,8 @@
 
 #include "Chip8.h"
 
-#include "../../PlipEmulationException.h"
-#include "../../PlipUtility.h"
+#include "PlipEmulationException.h"
+#include "PlipUtility.h"
 
 using Plip::Cpu::Chip8;
 

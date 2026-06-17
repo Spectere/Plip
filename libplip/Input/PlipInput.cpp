@@ -3,7 +3,7 @@
  * Provides an interface between the emulation core and the frontend.
  */
 
-#include "PlipInput.h"
+#include "Input/PlipInput.h"
 
 using Plip::PlipInput;
 

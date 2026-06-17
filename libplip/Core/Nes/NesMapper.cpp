@@ -5,7 +5,7 @@
 
 #include "NesMapper.h"
 
-#include "../../PlipInitializationException.h"
+#include "PlipInitializationException.h"
 #include "Mapper/M001_NROM.h"
 
 namespace Plip::Core::Nes {

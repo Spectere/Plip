@@ -6,7 +6,7 @@
 #pragma once
 
 #include "SharpSm83Registers.h"
-#include "../PlipCpu.h"
+#include "Cpu/PlipCpu.h"
 
 namespace Plip::Cpu {
     enum class SharpSm83ImeState {

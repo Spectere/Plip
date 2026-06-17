@@ -9,12 +9,12 @@
 
 #include <string>
 
-#include "../PlipCore.h"
-#include "../../DebugValue.h"
-#include "../../PlipError.h"
-#include "../../Cpu/Chip8/Chip8.h"
-#include "../../Input/PlipInput.h"
-#include "../../Memory/PlipMemoryRam.h"
+#include "Core/PlipCore.h"
+#include "DebugValue.h"
+#include "PlipError.h"
+#include "Cpu/Chip8/Chip8.h"
+#include "Input/PlipInput.h"
+#include "Memory/PlipMemoryRam.h"
 
 namespace Plip::Core::Chip8 {
     class Chip8Instance final : public PlipCore {

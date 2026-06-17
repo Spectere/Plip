@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "../../Memory/PlipMemory.h"
+#include "Memory/PlipMemory.h"
 
 namespace Plip::Core::Nes {
     enum class ApuRegister {
@@ -34,13 +34,13 @@ namespace Plip::Core::Nes {
         Joy1 = 0x16,
         Joy2 = 0x17,
     };
-    
+
     class NesApuRegisters final : public PlipMemory {
     public:
         [[nodiscard]] uint8_t GetByte(const uint32_t address, const bool privileged) override {
             return GetByte(static_cast<ApuRegister>(address), privileged);
         }
-        
+
         void SetByte(const uint32_t address, const uint8_t value, const bool privileged) override {
             SetByte(static_cast<ApuRegister>(address), value, privileged);
         }
@@ -52,7 +52,7 @@ namespace Plip::Core::Nes {
         [[nodiscard]] bool GetControllerStrobe() const { return m_controllerStrobe; }
         void SetControllerPort1(const uint8_t value) { m_joy1 = value; }
         void SetControllerPort2(const uint8_t value) { m_joy2 = value; }
-        
+
     private:
         uint8_t m_pulse1DutyCycleVolume {};
         uint8_t m_pulse1SweepControl {};
@@ -78,5 +78,5 @@ namespace Plip::Core::Nes {
         uint8_t m_joy2 {};
 
         bool m_controllerStrobe {};
-    }; 
+    };
 }

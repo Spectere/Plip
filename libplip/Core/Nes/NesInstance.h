@@ -11,10 +11,10 @@
 
 #include "NesMemory.h"
 #include "NesTiming.h"
-#include "../PlipCore.h"
-#include "../../Cpu/Mos6502/Mos6502.h"
-#include "../../Memory/PlipMemoryRam.h"
-#include "../../Memory/PlipMemoryRom.h"
+#include "Core/PlipCore.h"
+#include "Cpu/Mos6502/Mos6502.h"
+#include "Memory/PlipMemoryRam.h"
+#include "Memory/PlipMemoryRom.h"
 
 namespace Plip::Core::Nes {
     class NesInstance final : public PlipCore {

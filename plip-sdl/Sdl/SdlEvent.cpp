@@ -5,9 +5,9 @@
 
 #include <SDL3/SDL.h>
 
-#include "SdlEvent.h"
-
 #include "PlipUtility.h"
+
+#include "SdlEvent.h"
 
 using PlipSdl::SdlEvent;
 

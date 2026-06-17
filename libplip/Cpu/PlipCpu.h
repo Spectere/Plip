@@ -8,8 +8,8 @@
 #include <map>
 #include <string>
 
-#include "../DebugValue.h"
-#include "../Memory/PlipMemoryMap.h"
+#include "DebugValue.h"
+#include "Memory/PlipMemoryMap.h"
 
 namespace Plip::Cpu {
     class PlipCpu {

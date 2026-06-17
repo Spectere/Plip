@@ -7,8 +7,8 @@
 
 #include "AudioChannel.h"
 #include "GameBoyModel.h"
-#include "../../Cpu/SharpSm83/SharpSm83.h"
-#include "../../Memory/PlipMemory.h"
+#include "Cpu/SharpSm83/SharpSm83.h"
+#include "Memory/PlipMemory.h"
 
 namespace Plip::Core::GameBoy {
     enum class DmaTransferMode {

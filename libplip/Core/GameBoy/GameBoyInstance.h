@@ -15,10 +15,10 @@
 #include "MBC_Type.h"
 #include "PPU_Mode.h"
 #include "PPU_OutputStage.h"
-#include "../PlipCore.h"
-#include "../../Cpu/SharpSm83/SharpSm83.h"
-#include "../../Memory/PlipMemoryRam.h"
-#include "../../Memory/PlipMemoryRom.h"
+#include "Core/PlipCore.h"
+#include "Cpu/SharpSm83/SharpSm83.h"
+#include "Memory/PlipMemoryRam.h"
+#include "Memory/PlipMemoryRom.h"
 
 namespace Plip::Core::GameBoy {
     class GameBoyInstance final : public PlipCore {

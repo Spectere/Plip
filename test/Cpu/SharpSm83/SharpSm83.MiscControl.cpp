@@ -6,6 +6,7 @@
 #include "catch2/catch_test_macros.hpp"
 
 #include "PlipEmulationException.h"
+
 #include "SharpSm83Common.h"
 
 TEST("NOP", "NOP") {

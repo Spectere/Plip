@@ -10,8 +10,8 @@
 #include <string>
 
 #include "NesMapper.h"
-#include "../../Cpu/Mos6502/Mos6502.h"
-#include "../../Memory/PlipMemory.h"
+#include "Cpu/Mos6502/Mos6502.h"
+#include "Memory/PlipMemory.h"
 
 namespace Plip::Core::Nes {
     enum class PpuRegister {

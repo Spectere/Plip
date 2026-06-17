@@ -8,7 +8,7 @@
 #include "NesApuRegisters.h"
 #include "NesMapper.h"
 #include "NesPpuRegisters.h"
-#include "../../Memory/PlipMemoryMap.h"
+#include "Memory/PlipMemoryMap.h"
 
 namespace Plip::Core::Nes {
     class NesMemory final : public PlipMemoryMap {

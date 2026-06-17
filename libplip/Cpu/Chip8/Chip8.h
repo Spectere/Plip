@@ -7,9 +7,9 @@
 
 #include <random>
 
-#include "../PlipCpu.h"
-#include "../../DebugValue.h"
-#include "../../Input/PlipInput.h"
+#include "Cpu/PlipCpu.h"
+#include "DebugValue.h"
+#include "Input/PlipInput.h"
 
 namespace Plip::Cpu {
     class Chip8 final : public PlipCpu {

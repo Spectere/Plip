@@ -28,7 +28,6 @@ add_executable(${gui_name}
 
 target_include_directories(${gui_name}
     PRIVATE
-        ${CMAKE_SOURCE_DIR}/libplip
         ${CXXOPTS_DIR}/include
 
     PUBLIC

@@ -3,11 +3,10 @@
  * Defines an emulation core.
  */
 
-#include "PlipCore.h"
-
 #include <utility>
 
-#include "../PlipKeyValuePairCollection.h"
+#include "Core/PlipCore.h"
+#include "PlipKeyValuePairCollection.h"
 
 using Plip::PlipCore;
 

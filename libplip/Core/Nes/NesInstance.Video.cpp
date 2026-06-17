@@ -6,9 +6,9 @@
 #include <cassert>
 
 #include "NesInstance.h"
-#include "../../PlipEmulationException.h"
-#include "../../PlipIo.h"
-#include "../../PlipUtility.h"
+#include "PlipEmulationException.h"
+#include "PlipIo.h"
+#include "PlipUtility.h"
 
 using Plip::Core::Nes::NesInstance;
 

@@ -7,8 +7,8 @@
 
 #include <cstdint>
 
-#include "../../PlipEmulationException.h"
-#include "../../PlipSupport.h"
+#include "PlipEmulationException.h"
+#include "PlipSupport.h"
 
 namespace Plip::Cpu {
     struct SharpSm83Registers {

@@ -9,7 +9,7 @@
 
 #include "Chip8Instance.h"
 
-#include "../../PlipIo.h"
+#include "PlipIo.h"
 
 using Plip::Core::Chip8::Chip8Instance;
 

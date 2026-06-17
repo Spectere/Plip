@@ -3,8 +3,8 @@
  * Provides a toolkit-agnostic video interface.
  */
 
-#include "PlipVideo.h"
-#include "PlipVideoException.h"
+#include "Video/PlipVideo.h"
+#include "Video/PlipVideoException.h"
 
 using Plip::PlipVideo;
 

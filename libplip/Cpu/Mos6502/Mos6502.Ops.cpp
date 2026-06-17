@@ -5,8 +5,8 @@
  */
 
 #include "Mos6502.h"
-#include "../../PlipEmulationException.h"
-#include "../../PlipInvalidOpcodeException.h"
+#include "PlipEmulationException.h"
+#include "PlipInvalidOpcodeException.h"
 
 using Plip::Cpu::Mos6502;
 

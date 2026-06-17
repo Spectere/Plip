@@ -5,10 +5,10 @@
 
 #include "GameBoyInstance.h"
 
-#include "../../Memory/PlipMemory.h"
-#include "../../PlipInitializationException.h"
-#include "../../PlipIo.h"
-#include "../../PlipUtility.h"
+#include "Memory/PlipMemory.h"
+#include "PlipInitializationException.h"
+#include "PlipIo.h"
+#include "PlipUtility.h"
 
 using Plip::Core::GameBoy::GameBoyInstance;
 

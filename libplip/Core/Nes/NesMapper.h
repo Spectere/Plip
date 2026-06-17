@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "../../Memory/PlipMemory.h"
+#include "Memory/PlipMemory.h"
 
 namespace Plip::Core::Nes {
     class NesMapper {

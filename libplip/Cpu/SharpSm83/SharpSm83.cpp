@@ -4,7 +4,7 @@
  */
 
 #include "SharpSm83.h"
-#include "../../PlipSupport.h"
+#include "PlipSupport.h"
 
 using Plip::Cpu::SharpSm83;
 

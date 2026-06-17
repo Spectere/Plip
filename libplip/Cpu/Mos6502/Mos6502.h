@@ -6,7 +6,7 @@
 #pragma once
 
 #include "Mos6502Registers.h"
-#include "../PlipCpu.h"
+#include "Cpu/PlipCpu.h"
 
 namespace Plip::Cpu {
     enum class Mos6502Version {

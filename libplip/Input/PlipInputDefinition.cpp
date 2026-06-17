@@ -3,7 +3,7 @@
  * Allows the core to define an input for the frontend to handle.
  */
 
-#include "PlipInputDefinition.h"
+#include "Input/PlipInputDefinition.h"
 
 using Plip::PlipInputDefinition;
 

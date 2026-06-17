@@ -5,9 +5,9 @@
  */
 
 #include "SharpSm83.h"
-#include "../../PlipEmulationException.h"
-#include "../../PlipInvalidOpcodeException.h"
-#include "../../PlipSupport.h"
+#include "PlipEmulationException.h"
+#include "PlipInvalidOpcodeException.h"
+#include "PlipSupport.h"
 
 using Plip::Cpu::SharpSm83;
 

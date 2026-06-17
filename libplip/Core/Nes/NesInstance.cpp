@@ -5,7 +5,7 @@
 
 #include "NesInstance.h"
 
-#include "../../PlipIo.h"
+#include "PlipIo.h"
 
 using Plip::Core::Nes::NesInstance;
 

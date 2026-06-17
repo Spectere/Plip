@@ -3,8 +3,9 @@
  * Tests the CPU core's lack of support for invalid opcodes. :^)
  */
 
-#include "PlipInvalidOpcodeException.h"
 #include "catch2/catch_test_macros.hpp"
+
+#include "PlipInvalidOpcodeException.h"
 
 #include "SharpSm83Common.h"
 

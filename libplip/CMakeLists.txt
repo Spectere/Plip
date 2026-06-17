@@ -13,32 +13,21 @@ add_custom_target(
 )
 
 add_library(${lib_name}
-                                                    DebugAudioChannel.h
-                                                    DebugValue.h
-                                                    PlipEmulationException.h
-                                                    PlipError.h
-                                                    PlipInitializationException.h
-    PlipInstance.cpp                                PlipInstance.h
-                                                    PlipInvalidOpcodeException.h
+    PlipInstance.cpp
     PlipIo.cpp                                      PlipIo.h
-                                                    PlipKeyValuePairCollection.h
                                                     PlipSupport.h
-    PlipUtility.cpp                                 PlipUtility.h
-
-                                                    Audio/PlipAudio.h
+    PlipUtility.cpp
 
     Cpu/PlipCpu.cpp                                 Cpu/PlipCpu.h
 
-    Input/PlipInput.cpp                             Input/PlipInput.h
-    Input/PlipInputDefinition.cpp                   Input/PlipInputDefinition.h
+    Input/PlipInput.cpp
+    Input/PlipInputDefinition.cpp
 
-                                                    Memory/PlipMemory.h
-    Memory/PlipMemoryMap.cpp                        Memory/PlipMemoryMap.h
+    Memory/PlipMemoryMap.cpp
     Memory/PlipMemoryRam.cpp                        Memory/PlipMemoryRam.h
     Memory/PlipMemoryRom.cpp                        Memory/PlipMemoryRom.h
 
-    Video/PlipVideo.cpp                             Video/PlipVideo.h
-                                                    Video/PlipVideoException.h
+    Video/PlipVideo.cpp
 
     ########
     # CPUs #
@@ -63,8 +52,9 @@ add_library(${lib_name}
     # Cores #
     #########
 
+    Core/PlipCore.cpp
+
     # CHIP-8
-    Core/PlipCore.cpp                               Core/PlipCore.h
     Core/Chip8/Chip8Instance.cpp                    Core/Chip8/Chip8Instance.h
 
     # GameBoy
@@ -97,3 +87,10 @@ if(BIG_ENDIAN)
 endif()
 
 add_dependencies(${lib_name} GENERATE_LIB_VERSION_HEADER)
+
+target_include_directories(${lib_name}
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/Include
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
