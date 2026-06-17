@@ -45,16 +45,14 @@ uint8_t SharpSm83::Pop8FromStack() {
 }
 
 uint16_t SharpSm83::Pop16FromStack() {
-    uint8_t high;
-    uint8_t low;
-
-    Pop16FromStack(high, low);
-    return (high << 8) | low;
+    const auto [ high, low ] = Pop16FromStackSplit();
+    return (low  << 8) | high;
 }
 
-void SharpSm83::Pop16FromStack(uint8_t &high, uint8_t &low) {
-    low = Pop8FromStack();
-    high = Pop8FromStack();
+std::pair<uint8_t, uint8_t> SharpSm83::Pop16FromStackSplit() {
+    const auto low = Pop8FromStack();
+    const auto high = Pop8FromStack();
+    return { low, high };
 }
 
 void SharpSm83::Push8ToStack(const uint8_t value) {
@@ -556,9 +554,7 @@ long SharpSm83::DecodeAndExecute() {
             // POP zz
             // 3 cycles, BC/DE/HL: - - - -, AF: Z N H C
             const auto destReg16Idx = GetOpParam16();
-            uint8_t valLow;
-            uint8_t valHigh;
-            Pop16FromStack(valHigh, valLow);
+            const auto [ valLow, valHigh ] = Pop16FromStackSplit();
             if(destReg16Idx == SharpSm83Registers::RegIndex16Af) {
                 // AF shares an index with SP, but it must be handled differently.
                 m_registers.A = valHigh;

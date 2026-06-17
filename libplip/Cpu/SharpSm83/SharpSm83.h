@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include "SharpSm83Registers.h"
 #include "Cpu/PlipCpu.h"
 
@@ -73,7 +75,7 @@ namespace Plip::Cpu {
         uint8_t OpSwapNibbles(uint8_t value);
         uint8_t Pop8FromStack();
         uint16_t Pop16FromStack();
-        void Pop16FromStack(uint8_t& high, uint8_t& low);
+        std::pair<uint8_t, uint8_t> Pop16FromStackSplit();
         void Push8ToStack(uint8_t value);
         void Push16ToStack(uint16_t value);
         void Push16ToStack(uint8_t high, uint8_t low);
