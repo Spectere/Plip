@@ -81,6 +81,10 @@ namespace Plip::Cpu {
         [[nodiscard]] bool TestConditional(int conditional) const;
 
         void AdvanceMCycle(const int cycles = 1) { m_cycleCount += MCycleLength * cycles; }
+        [[nodiscard]] uint8_t GetOpParamX() const { return (m_op >> 3) & 0b111; }
+        [[nodiscard]] uint8_t GetOpParamY() const { return m_op & 0b111; }
+        [[nodiscard]] uint8_t GetOpParam16() const { return (m_op >> 4) & 0b11; }
+        [[nodiscard]] uint8_t GetOpConditional() const { return (m_op >> 3) & 0b11; }
 
         void CheckAddCarry(const int left, const int right)
             { m_registers.SetCarryFlagTo((left + right) > 0xFF); }
