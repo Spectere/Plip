@@ -53,6 +53,8 @@ namespace Plip::Cpu {
         static constexpr int SpeedSwitchDelay = 8200;  // In T-cycles
         static constexpr int MCycleLength = 4;
 
+        int m_cycleCount {};
+
         long DecodeAndExecute();
         void DecodeAndExecuteCb();
         uint16_t GetPointerAddress(int pointerIndex);
@@ -76,5 +78,45 @@ namespace Plip::Cpu {
         void Push16ToStack(uint8_t high, uint8_t low);
         void ServiceInterrupt(int activeInterrupts);
         [[nodiscard]] bool TestConditional(int conditional) const;
+
+        void CheckAddCarry(const int left, const int right)
+            { m_registers.SetCarryFlagTo((left + right) > 0xFF); }
+        void CheckAddHalfCarry(const int left, const int right, const int carry = 0)
+            { m_registers.SetHalfCarryFlagTo(((left & 0xF) + (right & 0xF) + carry) > 0xF); }
+        void CheckSubBorrow(const int left, const int right, const int borrow = 0)
+            { m_registers.SetCarryFlagTo((left - right - borrow) < 0); }
+        void CheckSubHalfBorrow(const int left, const int right, const int borrow = 0)
+            { m_registers.SetHalfCarryFlagTo(((left & 0xF) - (right & 0xF) - borrow) < 0); }
+
+        void AdvanceMCycle(const int cycles = 1) { m_cycleCount += MCycleLength * cycles; }
+
+        [[nodiscard]] uint8_t FetchAtAddress(const uint16_t addr) {
+            const auto val = m_memory->GetByte(addr);
+            AdvanceMCycle();
+            return val;
+        }
+
+        [[nodiscard]] uint8_t FetchAtPc() {
+            const auto val = m_memory->GetByte(m_registers.PC);
+            if(!m_holdPc) ++m_registers.PC; else m_holdPc = false;
+            AdvanceMCycle();
+            return val;
+        }
+
+        [[nodiscard]] uint16_t FetchAtPc16() {
+            const auto low = FetchAtPc();
+            const auto high = FetchAtPc();
+            return (high << 8) | low;
+        }
+
+        void JumpAbsolute(const uint16_t addr) {
+            m_registers.PC = addr;
+            AdvanceMCycle();
+        }
+
+        void StoreAtAddress(const uint16_t addr, const uint8_t val) {
+            m_memory->SetByte(addr, val);
+            AdvanceMCycle();
+        }
     };
 }

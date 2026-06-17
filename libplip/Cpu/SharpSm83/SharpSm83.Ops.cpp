@@ -11,77 +11,7 @@
 
 using Plip::Cpu::SharpSm83;
 
-static int cycleCount = 0;
 static uint8_t op;
-
-#define ADVANCE_M_CYCLE() { cycleCount += MCycleLength; }
-
-#define CHECK_ADD_CARRY(left, right) { \
-    if(((uint16_t)(left)) + ((uint16_t)(right)) > 0xFF) m_registers.SetCarryFlag(); \
-    else m_registers.ClearCarryFlag(); \
-}
-
-#define CHECK_ADD_HALF_CARRY(left, right) { \
-    if(((left) & 0x0F) + ((right) & 0x0F) > 0x0F) m_registers.SetHalfCarryFlag(); \
-    else m_registers.ClearHalfCarryFlag(); \
-}
-
-#define CHECK_ADD_HALF_CARRY_WITH_CARRY(left, right, carry) { \
-    if(((left) & 0x0F) + ((right) & 0x0F) + carry > 0x0F) m_registers.SetHalfCarryFlag(); \
-    else m_registers.ClearHalfCarryFlag(); \
-}
-
-#define CHECK_SUB_BORROW(left, right) { \
-    if((static_cast<int>(left) - static_cast<int>(right)) < 0) m_registers.SetCarryFlag(); \
-    else m_registers.ClearCarryFlag(); \
-}
-
-#define CHECK_SUB_BORROW_WITH_BORROW(left, right, borrow) { \
-    if((static_cast<int>(left) - static_cast<int>(right)) - borrow < 0) m_registers.SetCarryFlag(); \
-    else m_registers.ClearCarryFlag(); \
-}
-
-#define CHECK_SUB_HALF_BORROW(left, right) { \
-    if((static_cast<int>(left) & 0x0F) - (static_cast<int>(right) & 0x0F) < 0) m_registers.SetHalfCarryFlag(); \
-    else m_registers.ClearHalfCarryFlag(); \
-}
-
-#define CHECK_SUB_HALF_BORROW_WITH_BORROW(left, right, borrow) { \
-    if((static_cast<int>(left) & 0x0F) - (static_cast<int>(right) & 0x0F) - borrow < 0) m_registers.SetHalfCarryFlag(); \
-    else m_registers.ClearHalfCarryFlag(); \
-}
-
-#define CHECK_ZERO(val) { \
-    if((val) == 0) m_registers.SetZeroFlag(); \
-    else m_registers.ClearZeroFlag(); \
-}
-
-#define FETCH_PC(var) { \
-    var = m_memory->GetByte(m_registers.PC); \
-    if(!m_holdPc) ++m_registers.PC; else m_holdPc = false; \
-    ADVANCE_M_CYCLE(); \
-}
-
-#define FETCH_PC16(var) { \
-    uint8_t low;  FETCH_PC(low); \
-    uint8_t high; FETCH_PC(high); \
-    var = (high << 8) | low; \
-}
-
-#define FETCH_ADDR(var, addr) { \
-    var = m_memory->GetByte(addr); \
-    ADVANCE_M_CYCLE(); \
-}
-
-#define STORE_ADDR(addr, val) { \
-    m_memory->SetByte(addr, val); \
-    ADVANCE_M_CYCLE(); \
-}
-
-#define JUMP_ABSOLUTE(addr) { \
-    m_registers.PC = addr; \
-    ADVANCE_M_CYCLE(); \
-}
 
 #define REG_IE (m_memory->GetByte(0xFFFF))
 #define REG_IF (m_memory->GetByte(0xFF0F))
@@ -126,9 +56,7 @@ uint16_t SharpSm83::GetPointerAddress(const int pointerIndex) {
 }
 
 uint8_t SharpSm83::Pop8FromStack() {
-    uint8_t value;
-    FETCH_ADDR(value, m_registers.SP++);
-    return value;
+    return FetchAtAddress(m_registers.SP++);
 }
 
 uint16_t SharpSm83::Pop16FromStack() {
@@ -145,7 +73,7 @@ void SharpSm83::Pop16FromStack(uint8_t &high, uint8_t &low) {
 }
 
 void SharpSm83::Push8ToStack(const uint8_t value) {
-    STORE_ADDR(--m_registers.SP, value);
+    StoreAtAddress(--m_registers.SP, value);
 }
 
 void SharpSm83::Push16ToStack(const uint16_t value) {
@@ -160,11 +88,11 @@ void SharpSm83::Push16ToStack(const uint8_t high, const uint8_t low) {
 void SharpSm83::OpAddToRegisterA(const int value, const bool addWithCarry) {
     const auto carry = (addWithCarry && m_registers.GetCarryFlag()) ? 1 : 0;
 
-    CHECK_ADD_HALF_CARRY_WITH_CARRY(m_registers.A, value, carry);
-    CHECK_ADD_CARRY(m_registers.A, value + carry);
+    CheckAddHalfCarry(m_registers.A, value, carry);
+    CheckAddCarry(m_registers.A, value + carry);
     m_registers.A += value + carry;
     m_registers.ClearSubtractFlag();
-    CHECK_ZERO(m_registers.A);
+    m_registers.SetZeroFlagTo(!m_registers.A);
 }
 
 void SharpSm83::OpBitwiseAndRegisterA(const uint8_t value) {
@@ -172,7 +100,7 @@ void SharpSm83::OpBitwiseAndRegisterA(const uint8_t value) {
     m_registers.ClearCarryFlag();
     m_registers.SetHalfCarryFlag();
     m_registers.ClearSubtractFlag();
-    CHECK_ZERO(m_registers.A);
+    m_registers.SetZeroFlagTo(!m_registers.A);
 }
 
 void SharpSm83::OpBitwiseOrRegisterA(const uint8_t value) {
@@ -180,7 +108,7 @@ void SharpSm83::OpBitwiseOrRegisterA(const uint8_t value) {
     m_registers.ClearCarryFlag();
     m_registers.ClearHalfCarryFlag();
     m_registers.ClearSubtractFlag();
-    CHECK_ZERO(m_registers.A);
+    m_registers.SetZeroFlagTo(!m_registers.A);
 }
 
 void SharpSm83::OpBitwiseXorRegisterA(const uint8_t value) {
@@ -188,12 +116,12 @@ void SharpSm83::OpBitwiseXorRegisterA(const uint8_t value) {
     m_registers.ClearCarryFlag();
     m_registers.ClearHalfCarryFlag();
     m_registers.ClearSubtractFlag();
-    CHECK_ZERO(m_registers.A);
+    m_registers.SetZeroFlagTo(!m_registers.A);
 }
 
 void SharpSm83::OpJumpRelative(const int8_t offset) {
     m_registers.PC += offset;
-    ADVANCE_M_CYCLE();
+    AdvanceMCycle();
 }
 
 bool SharpSm83::TestConditional(const int conditional) const {
@@ -208,8 +136,7 @@ bool SharpSm83::TestConditional(const int conditional) const {
 }
 
 void SharpSm83::OpReturn() {
-    const auto addr = Pop16FromStack();
-    JUMP_ABSOLUTE(addr);
+    JumpAbsolute(Pop16FromStack());
 }
 
 uint8_t SharpSm83::OpRotateLeft(uint8_t value, const bool throughCarry, const bool checkZeroFlag) {
@@ -252,7 +179,7 @@ uint8_t SharpSm83::OpShiftLeft(uint8_t value) {
 
     (value & 0b10000000) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
     value <<= 1;
-    CHECK_ZERO(value);
+    m_registers.SetZeroFlagTo(!value);
 
     return value;
 }
@@ -264,7 +191,7 @@ uint8_t SharpSm83::OpShiftRight(uint8_t value, const bool arithmetic) {
     (value & 0b1) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
     value >>= 1;
     if(arithmetic && (value & 0b01000000)) value |= 0b10000000;
-    CHECK_ZERO(value);
+    m_registers.SetZeroFlagTo(!value);
 
     return value;
 }
@@ -273,10 +200,10 @@ void SharpSm83::OpSubtractFromRegisterA(const int value, const bool subtractWith
     const auto borrow = ((subtractWithBorrow && m_registers.GetCarryFlag()) ? 1 : 0);
     const uint8_t result = m_registers.A - value - borrow;
 
-    CHECK_SUB_HALF_BORROW_WITH_BORROW(m_registers.A, value, borrow);
-    CHECK_SUB_BORROW_WITH_BORROW(m_registers.A, value, borrow);
+    CheckSubHalfBorrow(m_registers.A, value, borrow);
+    CheckSubBorrow(m_registers.A, value, borrow);
     m_registers.SetSubtractFlag();
-    CHECK_ZERO(result);
+    m_registers.SetZeroFlagTo(!result);
 
     if(!discardResult) m_registers.A = result;
 }
@@ -287,7 +214,7 @@ uint8_t SharpSm83::OpSwapNibbles(uint8_t value) {
     m_registers.ClearCarryFlag();
 
     value = (value << 4) | (value >> 4);
-    CHECK_ZERO(value);
+    m_registers.SetZeroFlagTo(!value);
 
     return value;
 }
@@ -308,11 +235,11 @@ void SharpSm83::ServiceInterrupt(const int activeInterrupts) {
     }
 
     Push16ToStack(m_registers.PC);
-    JUMP_ABSOLUTE(destAddr);
+    JumpAbsolute(destAddr);
 }
 
 long SharpSm83::DecodeAndExecute() {
-    cycleCount = 0;
+    m_cycleCount = 0;
 
     const auto activeInterrupts = REG_IE & REG_IF & 0b11111;
     if(m_halt) {
@@ -329,12 +256,12 @@ long SharpSm83::DecodeAndExecute() {
     }
 
     if(m_ime == SharpSm83ImeState::Enabled && activeInterrupts) {
-        ADVANCE_M_CYCLE(); ADVANCE_M_CYCLE();
+        AdvanceMCycle(2);
         ServiceInterrupt(activeInterrupts);
-        return cycleCount;
+        return m_cycleCount;
     }
 
-    FETCH_PC(op);
+    op = FetchAtPc();
     switch(op) {
         //
         // Miscellaneous / Control Instructions
@@ -353,7 +280,7 @@ long SharpSm83::DecodeAndExecute() {
 
             // In CGB mode, STOP is used to put the CPU into double speed mode.
             if(!BIT_TEST(m_memory->GetByte(0xFF4D), 0)) {
-                ADVANCE_M_CYCLE();
+                AdvanceMCycle();
                 break;
             }
 
@@ -378,7 +305,7 @@ long SharpSm83::DecodeAndExecute() {
                 // to the intricacies of the silicon, but we'll just simulate it by decrementing
                 // PC and calling the interrupt handler.
                 --m_registers.PC;
-                ADVANCE_M_CYCLE();
+                AdvanceMCycle();
                 ServiceInterrupt(activeInterrupts);
             } else {
                 m_halt = true;
@@ -406,8 +333,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0x18: {
             // JR imm8s
             // 3 cycles, - - - -
-            uint8_t immValue;
-            FETCH_PC(immValue);
+            const uint8_t immValue = FetchAtPc();
             OpJumpRelative(static_cast<int8_t>(immValue));
             break;
         }
@@ -415,8 +341,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0x20: case 0x28: case 0x30: case 0x38: {
             // JR c, imm8s
             // 3/2 cycles, - - - -
-            uint8_t immValue;
-            FETCH_PC(immValue);
+            const uint8_t immValue = FetchAtPc();
 
             if(TestConditional(OP_COND)) {
                 OpJumpRelative(static_cast<int8_t>(immValue));
@@ -449,26 +374,24 @@ long SharpSm83::DecodeAndExecute() {
             if(TestConditional(OP_COND)) {
                 OpReturn();
             }
-            ADVANCE_M_CYCLE();
+            AdvanceMCycle();
             break;
         }
 
         case 0xC3: {
             // JP imm16
             // 4 cycles, - - - -
-            uint16_t addr;
-            FETCH_PC16(addr);
-            JUMP_ABSOLUTE(addr);
+            const uint16_t addr = FetchAtPc16();
+            JumpAbsolute(addr);
             break;
         }
 
         case 0xC2: case 0xCA: case 0xD2: case 0xDA: {
             // JP c, imm16
             // 4/3 cycles, - - - -
-            uint16_t addr;
-            FETCH_PC16(addr);
+            const uint16_t addr = FetchAtPc16();
             if(TestConditional(OP_COND)) {
-                JUMP_ABSOLUTE(addr);
+                JumpAbsolute(addr);
             }
             break;
         }
@@ -478,7 +401,7 @@ long SharpSm83::DecodeAndExecute() {
             // 4 cycles, - - - -
             const uint16_t vector = OP_VEC * 8;
             Push16ToStack(m_registers.PC);
-            JUMP_ABSOLUTE(vector);
+            JumpAbsolute(vector);
             break;
         }
 
@@ -492,21 +415,19 @@ long SharpSm83::DecodeAndExecute() {
         case 0xCD: {
             // CALL imm16
             // 6 cycles, - - - -
-            uint16_t destAddr;
-            FETCH_PC16(destAddr);
+            const uint16_t destAddr = FetchAtPc16();
             Push16ToStack(m_registers.PC);
-            JUMP_ABSOLUTE(destAddr);
+            JumpAbsolute(destAddr);
             break;
         }
 
         case 0xC4: case 0xCC: case 0xD4: case 0xDC: {
             // CALL c, imm16
             // 6/3 cycles, - - - -
-            uint16_t destAddr;
-            FETCH_PC16(destAddr);
+            const uint16_t destAddr = FetchAtPc16();
             if(TestConditional(OP_COND)) {
                 Push16ToStack(m_registers.PC);
-                JUMP_ABSOLUTE(destAddr);
+                JumpAbsolute(destAddr);
             }
             break;
         }
@@ -518,7 +439,7 @@ long SharpSm83::DecodeAndExecute() {
             // LD [xx], A
             // 2 cycles, - - - -
             const auto addr = GetPointerAddress(OP_PTR);
-            STORE_ADDR(addr, m_registers.A);
+            StoreAtAddress(addr, m_registers.A);
             break;
         }
 
@@ -526,8 +447,7 @@ long SharpSm83::DecodeAndExecute() {
             // LD x, imm8
             // 2 cycles, - - - -
             const auto destRegIdx = OP_REG_X;
-            uint8_t imm8;
-            FETCH_PC(imm8);
+            const uint8_t imm8 = FetchAtPc();
             m_registers.Set8ByIndex(destRegIdx, imm8);
             break;
         }
@@ -536,8 +456,7 @@ long SharpSm83::DecodeAndExecute() {
             // LD A, [xx]
             // 2 cycles, - - - -
             const auto addr = GetPointerAddress(OP_PTR);
-            uint8_t val;
-            FETCH_ADDR(val, addr);
+            const uint8_t val = FetchAtAddress(addr);
             m_registers.A = val;
             break;
         }
@@ -545,9 +464,8 @@ long SharpSm83::DecodeAndExecute() {
         case 0x36: {
             // LD [HL], imm8
             // 3 cycles, - - - -
-            uint8_t imm8;
-            FETCH_PC(imm8);
-            STORE_ADDR(m_registers.GetHl(), imm8);
+            const uint8_t imm8 = FetchAtPc();
+            StoreAtAddress(m_registers.GetHl(), imm8);
             break;
         }
 
@@ -570,8 +488,7 @@ long SharpSm83::DecodeAndExecute() {
             // LD x, [HL]
             // 2 cycles, - - - -
             const auto destRegIdx = OP_REG_X;
-            uint8_t val;
-            FETCH_ADDR(val, m_registers.GetHl());
+            const uint8_t val = FetchAtAddress(m_registers.GetHl());
             m_registers.Set8ByIndex(destRegIdx, val);
             break;
         }
@@ -579,61 +496,55 @@ long SharpSm83::DecodeAndExecute() {
         case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x77: {
             // LD [HL], y
             // 2 cycles, - - - -
-            STORE_ADDR(m_registers.GetHl(), m_registers.Get8ByIndex(OP_REG_Y));
+            StoreAtAddress(m_registers.GetHl(), m_registers.Get8ByIndex(OP_REG_Y));
             break;
         }
 
         case 0xE0: {
             // LD [imm8], A
             // 3 cycles, - - - -
-            uint8_t offset;
-            FETCH_PC(offset);
-            STORE_ADDR(0xFF00 | offset, m_registers.A);
+            const uint8_t offset = FetchAtPc();
+            StoreAtAddress(0xFF00 | offset, m_registers.A);
             break;
         }
 
         case 0xE2: {
             // LDH [C], A
             // 2 cycles, - - - -
-            STORE_ADDR(0xFF00 | m_registers.C, m_registers.A);
+            StoreAtAddress(0xFF00 | m_registers.C, m_registers.A);
             break;
         }
 
         case 0xEA: {
             // LD [imm16], A
             // 4 cycles, - - - -
-            uint8_t memLow;
-            uint8_t memHigh;
-            FETCH_PC(memLow);
-            FETCH_PC(memHigh);
-            STORE_ADDR((memHigh << 8) | memLow, m_registers.A);
+            const uint8_t memLow = FetchAtPc();
+            const uint8_t memHigh = FetchAtPc();
+            StoreAtAddress((memHigh << 8) | memLow, m_registers.A);
             break;
         }
 
         case 0xF0: {
             // LDH A, [imm8]
             // 3 cycles, - - - -
-            uint8_t offset;
-            FETCH_PC(offset);
-            FETCH_ADDR(m_registers.A, 0xFF00 | offset);
+            const uint8_t offset = FetchAtPc();
+            m_registers.A = FetchAtAddress(0xFF00 | offset);
             break;
         }
 
         case 0xF2: {
             // LDH A, [C]
             // 2 cycles, - - - -
-            FETCH_ADDR(m_registers.A, 0xFF00 | m_registers.C);
+            m_registers.A = FetchAtAddress(0xFF00 | m_registers.C);
             break;
         }
 
         case 0xFA: {
             // LD A, [imm16]
             // 4 cycles, - - - -
-            uint8_t memLow;
-            uint8_t memHigh;
-            FETCH_PC(memLow);
-            FETCH_PC(memHigh);
-            FETCH_ADDR(m_registers.A, (memHigh << 8) | memLow);
+            const uint8_t memLow = FetchAtPc();
+            const uint8_t memHigh = FetchAtPc();
+            m_registers.A = FetchAtAddress((memHigh << 8) | memLow);
             break;
         }
 
@@ -644,10 +555,8 @@ long SharpSm83::DecodeAndExecute() {
             // LD xx, imm16
             // 3 cycles, - - - -
             const auto destRegIdx = OP_REG16;
-            uint8_t valLow;
-            uint8_t valHigh;
-            FETCH_PC(valLow);
-            FETCH_PC(valHigh);
+            const uint8_t valLow = FetchAtPc();
+            const uint8_t valHigh = FetchAtPc();
             m_registers.Set16ByIndex(destRegIdx, (valHigh << 8) | valLow);
             break;
         }
@@ -655,14 +564,12 @@ long SharpSm83::DecodeAndExecute() {
         case 0x08: {
             // LD [imm16], SP
             // 5 cycles, - - - - -
-            uint8_t addrLow;
-            uint8_t addrHigh;
-            FETCH_PC(addrLow);
-            FETCH_PC(addrHigh);
+            const uint8_t addrLow = FetchAtPc();
+            const uint8_t addrHigh = FetchAtPc();
 
             const uint16_t addr = (addrHigh << 8) | addrLow;
-            STORE_ADDR(addr, m_registers.SP);
-            STORE_ADDR(addr + 1, m_registers.SP >> 8);
+            StoreAtAddress(addr, m_registers.SP);
+            StoreAtAddress(addr + 1, m_registers.SP >> 8);
             break;
         }
 
@@ -699,15 +606,14 @@ long SharpSm83::DecodeAndExecute() {
                 valHigh = val >> 8;
             }
             Push16ToStack(valHigh, valLow);
-            ADVANCE_M_CYCLE();
+            AdvanceMCycle();
             break;
         }
 
         case 0xF8: {
             // LD HL, SP + imm8s
             // 3 cycles, 0 0 H C
-            int8_t val;
-            FETCH_PC(val);
+            const auto val = std::bit_cast<int8_t>(FetchAtPc());
 
             m_registers.SetHl(m_registers.SP + val);
 
@@ -722,7 +628,7 @@ long SharpSm83::DecodeAndExecute() {
                 ? m_registers.SetHalfCarryFlag()
                 : m_registers.ClearHalfCarryFlag();
 
-            ADVANCE_M_CYCLE();
+            AdvanceMCycle();
             break;
         }
 
@@ -730,7 +636,7 @@ long SharpSm83::DecodeAndExecute() {
             // LD SP, HL
             // 2 cycles, - - - -
             m_registers.SP = m_registers.GetHl();
-            ADVANCE_M_CYCLE();
+            AdvanceMCycle();
             break;
         }
 
@@ -743,11 +649,11 @@ long SharpSm83::DecodeAndExecute() {
             const auto destRegIdx = OP_REG_X;
             uint8_t regValue = m_registers.Get8ByIndex(destRegIdx);
 
-            CHECK_ADD_HALF_CARRY(regValue, 1);
+            CheckAddHalfCarry(regValue, 1);
             m_registers.ClearSubtractFlag();
 
             m_registers.Set8ByIndex(destRegIdx, ++regValue);
-            CHECK_ZERO(regValue);
+            m_registers.SetZeroFlagTo(!regValue);
 
             break;
         }
@@ -758,11 +664,11 @@ long SharpSm83::DecodeAndExecute() {
             const auto destRegIdx = OP_REG_X;
             uint8_t regValue = m_registers.Get8ByIndex(destRegIdx);
 
-            CHECK_SUB_HALF_BORROW(regValue, 1);
+            CheckSubHalfBorrow(regValue, 1);
             m_registers.SetSubtractFlag();
 
             m_registers.Set8ByIndex(destRegIdx, --regValue);
-            CHECK_ZERO(regValue);
+            m_registers.SetZeroFlagTo(!regValue);
 
             break;
         }
@@ -770,14 +676,13 @@ long SharpSm83::DecodeAndExecute() {
         case 0x34: {
             // INC [HL]
             // 3 cycles, Z 0 H -
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
 
-            CHECK_ADD_HALF_CARRY(memValue, 1);
+            CheckAddHalfCarry(memValue, 1);
             m_registers.ClearSubtractFlag();
 
-            STORE_ADDR(m_registers.GetHl(), ++memValue);
-            CHECK_ZERO(memValue);
+            StoreAtAddress(m_registers.GetHl(), ++memValue);
+            m_registers.SetZeroFlagTo(!memValue);
 
             break;
         }
@@ -785,14 +690,13 @@ long SharpSm83::DecodeAndExecute() {
         case 0x35: {
             // DEC [HL]
             // 3 cycles, Z 0 H -
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
 
-            CHECK_SUB_HALF_BORROW(memValue, 1);
+            CheckSubHalfBorrow(memValue, 1);
             m_registers.SetSubtractFlag();
 
-            STORE_ADDR(m_registers.GetHl(), --memValue);
-            CHECK_ZERO(memValue);
+            StoreAtAddress(m_registers.GetHl(), --memValue);
+            m_registers.SetZeroFlagTo(!memValue);
 
             break;
         }
@@ -817,7 +721,7 @@ long SharpSm83::DecodeAndExecute() {
                 m_registers.A += adjustment;
             }
 
-            CHECK_ZERO(m_registers.A);
+            m_registers.SetZeroFlagTo(!m_registers.A);
             m_registers.ClearHalfCarryFlag();
 
             break;
@@ -869,8 +773,7 @@ long SharpSm83::DecodeAndExecute() {
             // ADD A, [HL] (0x86)
             // ADC A, [HL] (0x8E)
             // 2 cycles, Z 0 H C
-            int memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            const int memValue = FetchAtAddress(m_registers.GetHl());
             OpAddToRegisterA(memValue, op == 0x8E);
 
             break;
@@ -880,8 +783,7 @@ long SharpSm83::DecodeAndExecute() {
             // ADD A, imm8 (0xC6)
             // ADC A, imm8 (0xCE)
             // 2 cycles, Z 0 H C
-            int immValue;
-            FETCH_PC(immValue);
+            const int immValue = FetchAtPc();
             OpAddToRegisterA(immValue, op == 0xCE);
 
             break;
@@ -902,8 +804,7 @@ long SharpSm83::DecodeAndExecute() {
             // SUB A, [HL] (0x96)
             // SBC A, [HL] (0x9E)
             // 2 cycles, Z 1 H C
-            int memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            const int memValue = FetchAtAddress(m_registers.GetHl());
             OpSubtractFromRegisterA(memValue, op == 0x9E, false);
 
             break;
@@ -913,8 +814,7 @@ long SharpSm83::DecodeAndExecute() {
             // SUB A, imm8 (0xD6)
             // SBC A, imm8 (0xDE)
             // 2 cycles, Z 1 H C
-            int immValue;
-            FETCH_PC(immValue);
+            const int immValue = FetchAtPc();
             OpSubtractFromRegisterA(immValue, op == 0xDE, false);
 
             break;
@@ -932,8 +832,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0xA6: {
             // AND A, [HL]
             // 2 cycles, Z 0 1 0
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            const uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             OpBitwiseAndRegisterA(memValue);
 
             break;
@@ -942,8 +841,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0xE6: {
             // AND A, imm8
             // 2 cycles, Z 0 1 0
-            uint8_t immValue;
-            FETCH_PC(immValue);
+            const uint8_t immValue = FetchAtPc();
             OpBitwiseAndRegisterA(immValue);
 
             break;
@@ -961,8 +859,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0xAE: {
             // XOR A, [HL]
             // 2 cycles, Z 0 0 0
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            const uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             OpBitwiseXorRegisterA(memValue);
 
             break;
@@ -971,8 +868,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0xEE: {
             // XOR A, imm8
             // 2 cycles, Z 0 0 0
-            uint8_t immValue;
-            FETCH_PC(immValue);
+            const uint8_t immValue = FetchAtPc();
             OpBitwiseXorRegisterA(immValue);
 
             break;
@@ -990,8 +886,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0xB6: {
             // OR A, [HL]
             // 2 cycles, Z 0 0 0
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            const uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             OpBitwiseOrRegisterA(memValue);
 
             break;
@@ -1000,8 +895,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0xF6: {
             // OR A, imm8
             // 2 cycles, Z 0 0 0
-            uint8_t immValue;
-            FETCH_PC(immValue);
+            const uint8_t immValue = FetchAtPc();
             OpBitwiseOrRegisterA(immValue);
 
             break;
@@ -1019,8 +913,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0xBE: {
             // CP A, [HL]
             // 2 cycles, Z 1 H C
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            const uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             OpSubtractFromRegisterA(memValue, false, true);
 
             break;
@@ -1029,8 +922,7 @@ long SharpSm83::DecodeAndExecute() {
         case 0xFE: {
             // CP A, imm8
             // 2 cycles, Z 1 H C
-            uint8_t immValue;
-            FETCH_PC(immValue);
+            const uint8_t immValue = FetchAtPc();
             OpSubtractFromRegisterA(immValue, false, true);
 
             break;
@@ -1046,7 +938,7 @@ long SharpSm83::DecodeAndExecute() {
             const auto regValue = m_registers.Get16ByIndex(destRegIdx);
             m_registers.Set16ByIndex(destRegIdx, regValue + 1);
 
-            ADVANCE_M_CYCLE();
+            AdvanceMCycle();
             break;
         }
 
@@ -1057,7 +949,7 @@ long SharpSm83::DecodeAndExecute() {
             const auto regValue = m_registers.Get16ByIndex(destRegIdx);
             m_registers.Set16ByIndex(destRegIdx, regValue - 1);
 
-            ADVANCE_M_CYCLE();
+            AdvanceMCycle();
             break;
         }
 
@@ -1068,30 +960,29 @@ long SharpSm83::DecodeAndExecute() {
             const auto regValue = m_registers.Get16ByIndex(srcRegIdx);
 
             int part = regValue & 0xFF;
-            auto lowCarry = (m_registers.L + part) > 0xFF;
+            const auto lowCarry = (m_registers.L + part) > 0xFF;
             m_registers.L += part;
 
             part = regValue >> 8;
             const auto carry = lowCarry ? 1 : 0;
-            CHECK_ADD_CARRY(m_registers.H, part + carry);
-            CHECK_ADD_HALF_CARRY_WITH_CARRY(m_registers.H, part, carry);
+            CheckAddCarry(m_registers.H, part + carry);
+            CheckAddHalfCarry(m_registers.H, part, carry);
             m_registers.H += part + carry;
             m_registers.ClearSubtractFlag();
 
-            ADVANCE_M_CYCLE();
+            AdvanceMCycle();
             break;
         }
 
         case 0xE8: {
             // ADD SP, imm8s
             // 4 cycles, 0 0 H C
-            uint8_t immValue;
-            FETCH_PC(immValue);
+            const uint8_t immValue = FetchAtPc();
 
             m_registers.ClearSubtractFlag();
             m_registers.ClearZeroFlag();
-            CHECK_ADD_HALF_CARRY(m_registers.SP & 0x0F, immValue);
-            CHECK_ADD_CARRY(m_registers.SP & 0xFF, immValue);
+            CheckAddHalfCarry(m_registers.SP & 0x0F, immValue);
+            CheckAddCarry(m_registers.SP & 0xFF, immValue);
 
             if(immValue & 0b10000000) {
                 // imm8s is negative
@@ -1100,7 +991,7 @@ long SharpSm83::DecodeAndExecute() {
                 m_registers.SP += immValue;
             }
 
-            ADVANCE_M_CYCLE(); ADVANCE_M_CYCLE();
+            AdvanceMCycle(2);
             break;
         }
 
@@ -1144,11 +1035,11 @@ long SharpSm83::DecodeAndExecute() {
             throw PlipInvalidOpcodeException(op);
     }
 
-    return cycleCount;
+    return m_cycleCount;
 }
 
 void SharpSm83::DecodeAndExecuteCb() {
-    FETCH_PC(op);
+    op = FetchAtPc();
 
     switch(op) {
         case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x07:
@@ -1167,10 +1058,9 @@ void SharpSm83::DecodeAndExecuteCb() {
             // RLC [HL] (0x06)
             // RL [HL] (0x16)
             // 4 cycles, Z 0 0 C
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             memValue = OpRotateLeft(memValue, op == 0x16, true);
-            STORE_ADDR(m_registers.GetHl(), memValue);
+            StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
 
@@ -1190,10 +1080,9 @@ void SharpSm83::DecodeAndExecuteCb() {
             // RRC [HL] (0x0E)
             // RR [HL] (0x1E)
             // 4 cycles, Z 0 0 C
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             memValue = OpRotateRight(memValue, op == 0x1E, true);
-            STORE_ADDR(m_registers.GetHl(), memValue);
+            StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
 
@@ -1208,10 +1097,9 @@ void SharpSm83::DecodeAndExecuteCb() {
         case 0x26: {
             // SLA [HL]
             // 4 cycles, Z 0 0 C
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             memValue = OpShiftLeft(memValue);
-            STORE_ADDR(m_registers.GetHl(), memValue);
+            StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
 
@@ -1226,10 +1114,9 @@ void SharpSm83::DecodeAndExecuteCb() {
         case 0x2E: {
             // SRA [HL]
             // 4 cycles, Z 0 0 C
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             memValue = OpShiftRight(memValue, true);
-            STORE_ADDR(m_registers.GetHl(), memValue);
+            StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
 
@@ -1244,10 +1131,9 @@ void SharpSm83::DecodeAndExecuteCb() {
         case 0x36: {
             // SWAP [HL]
             // 4 cycles, Z 0 0 0
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             memValue = OpSwapNibbles(memValue);
-            STORE_ADDR(m_registers.GetHl(), memValue);
+            StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
 
@@ -1262,10 +1148,9 @@ void SharpSm83::DecodeAndExecuteCb() {
         case 0x3E: {
             // SRL [HL]
             // 4 cycles, Z 0 0 C
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             memValue = OpShiftRight(memValue, false);
-            STORE_ADDR(m_registers.GetHl(), memValue);
+            StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
 
@@ -1289,8 +1174,7 @@ void SharpSm83::DecodeAndExecuteCb() {
         case 0x46: case 0x4E: case 0x56: case 0x5E: case 0x66: case 0x6E: case 0x76: case 0x7E: {
             // BIT imm3, y
             // 3 cycles, Z 0 1 -
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            const uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             ((memValue >> OP_BIT) & 0b1) ? m_registers.ClearZeroFlag() : m_registers.SetZeroFlag();
             m_registers.ClearSubtractFlag();
             m_registers.SetHalfCarryFlag();
@@ -1315,10 +1199,9 @@ void SharpSm83::DecodeAndExecuteCb() {
         case 0x86: case 0x8E: case 0x96: case 0x9E: case 0xA6: case 0xAE: case 0xB6: case 0xBE: {
             // RES imm3, [HL]
             // 4 cycles, - - - -
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             memValue = BIT_CLEAR(memValue, OP_BIT);
-            STORE_ADDR(m_registers.GetHl(), memValue);
+            StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
 
@@ -1340,10 +1223,9 @@ void SharpSm83::DecodeAndExecuteCb() {
         case 0xC6: case 0xCE: case 0xD6: case 0xDE: case 0xE6: case 0xEE: case 0xF6: case 0xFE: {
             // SET imm3, [HL]
             // 4 cycles, - - - -
-            uint8_t memValue;
-            FETCH_ADDR(memValue, m_registers.GetHl());
+            uint8_t memValue = FetchAtAddress(m_registers.GetHl());
             memValue = BIT_SET(memValue, OP_BIT);
-            STORE_ADDR(m_registers.GetHl(), memValue);
+            StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
 
