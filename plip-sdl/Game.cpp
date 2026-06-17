@@ -66,10 +66,12 @@ void Game::Run() const {
 
                 case PlipUiEvent::TurboDisable:
                     m_gui->State.TurboEnabled = false;
+                    m_plip->GetCore()->SuspendAudio(false);
                     break;
 
                 case PlipUiEvent::TurboEnable:
                     m_gui->State.TurboEnabled = true;
+                    m_plip->GetCore()->SuspendAudio(true);
                     break;
 
                 case PlipUiEvent::WindowResized:

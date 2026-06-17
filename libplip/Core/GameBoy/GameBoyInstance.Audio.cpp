@@ -61,6 +61,10 @@ void GameBoyInstance::APU_Cycle() {
     }
 }
 
+void GameBoyInstance::APU_Dump() {
+    m_audioBuffer.clear();
+}
+
 void GameBoyInstance::APU_Send() {
     m_audio->Enqueue(m_audioBuffer);
     m_audioBuffer.clear();

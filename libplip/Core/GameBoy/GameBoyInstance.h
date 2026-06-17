@@ -67,6 +67,7 @@ namespace Plip::Core::GameBoy {
         static float APU_Clock_Channel(WaveChannel* channel);
         static float APU_Clock_Channel(NoiseChannel* channel);
         void APU_Cycle();
+        void APU_Dump();
         void APU_Init();
         void APU_Reset();
         void APU_Send();

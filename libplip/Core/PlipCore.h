@@ -52,6 +52,7 @@ namespace Plip {
         virtual void Reset() = 0;
         void SetBreakpoints(const std::set<uint64_t> &breakpoints) { m_breakpoints = breakpoints; }
         virtual void Shutdown() {}
+        void SuspendAudio(const bool value) { m_audioSuspended = value; }
 
     protected:
         explicit PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKeyValuePairCollection config);
@@ -68,7 +69,8 @@ namespace Plip {
 
         std::set<uint64_t> m_breakpoints {};
 
-        double m_singleStepTime = {};
+        bool m_audioSuspended {};
+        double m_singleStepTime {};
 
     private:
         uint64_t m_activeBreakpoint = UINT64_MAX;

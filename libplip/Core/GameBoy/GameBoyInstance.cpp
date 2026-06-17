@@ -126,7 +126,8 @@ void GameBoyInstance::Delta(const double ns) {
             APU_Cycle();
 
             if(m_audio->IsActive() && m_audioBuffer.size() >= m_apuOutputSendThreshold) {
-                APU_Send();
+                if(!m_audioSuspended) APU_Send();
+                else APU_Dump();
             }
         }
 
