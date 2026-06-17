@@ -28,9 +28,9 @@ namespace Plip::Cpu {
         SharpLr35902(long hz, PlipMemoryMap* memoryMap, bool gbcMode);
         virtual ~SharpLr35902() = default;
 
-        bool IsChangingSpeed() const { return m_changingSpeed; }
-        bool IsDoubleSpeed() const { return m_doubleSpeed; }
-        bool IsHalted() const { return m_halt; }
+        [[nodiscard]] bool IsChangingSpeed() const { return m_changingSpeed; }
+        [[nodiscard]] bool IsDoubleSpeed() const { return m_doubleSpeed; }
+        [[nodiscard]] bool IsHalted() const { return m_halt; }
         long Cycle() override;
         [[nodiscard]] unsigned long GetPc() const override;
         [[nodiscard]] std::map<std::string, DebugValue> GetDebugInfo() const;

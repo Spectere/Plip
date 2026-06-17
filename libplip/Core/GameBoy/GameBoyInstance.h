@@ -31,9 +31,9 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         static std::string GetDmaStateString(DmaState state);
         static std::string GetDmaTransferModeString(DmaTransferMode mode);
-        std::vector<uint64_t> GetPcs() const override;
-        uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
-        uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
+        [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
+        [[nodiscard]] uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
+        [[nodiscard]] uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
         PlipError Load(const std::string &path) override;
         void Reset() override;
         void Shutdown() override;
@@ -55,8 +55,8 @@ namespace Plip::Core::GameBoy {
         void DmaFinishPreparations() const;
         void DmaInitCgb(DmaTransferMode transferMode);
         void DmaInitOam(int sourceAddress);
-        int GetCartridgeRamBankCount() const;
-        bool IsMultiRomCartridge() const;
+        [[nodiscard]] int GetCartridgeRamBankCount() const;
+        [[nodiscard]] bool IsMultiRomCartridge() const;
         void ReadJoypad();
         void ReadCartridgeFeatures();
         void RegisterInput() const;

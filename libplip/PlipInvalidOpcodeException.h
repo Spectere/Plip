@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -14,7 +13,7 @@
 namespace Plip {
     struct PlipInvalidOpcodeException final : std::runtime_error {
         template<typename T>
-        std::string integerToHexString(T value) {
+        static std::string integerToHexString(T value) {
             std::stringstream sStream;
             sStream << "0x" << std::setfill('0') << std::setw(sizeof(T) * 2) << std::uppercase << std::hex << value;
             return sStream.str();

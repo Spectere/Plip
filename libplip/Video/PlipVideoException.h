@@ -6,7 +6,6 @@
 #pragma once
 
 #include <stdexcept>
-#include <utility>
 
 namespace Plip {
     struct PlipVideoException final : std::runtime_error {

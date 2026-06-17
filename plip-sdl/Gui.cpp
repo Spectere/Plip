@@ -66,7 +66,7 @@ void Gui::DrawBreakpointControls() {
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bpHitHighlight);
                 }
 
-                ImGui::Text("0x%.8lX", bp);
+                ImGui::Text("0x%.8llX", static_cast<uint64_t>(bp));
 
                 ImGui::TableNextColumn();
                 ImGui::PushID(bp);

@@ -12,7 +12,6 @@
 #include "../PlipCore.h"
 #include "../../DebugValue.h"
 #include "../../PlipError.h"
-#include "../../PlipInstance.h"
 #include "../../Cpu/Chip8/Chip8.h"
 #include "../../Input/PlipInput.h"
 #include "../../Memory/PlipMemoryRam.h"
@@ -25,9 +24,9 @@ namespace Plip::Core::Chip8 {
 
         void Delta(double ns) override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
-        std::vector<uint64_t> GetPcs() const override;
-        uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
-        uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
+        [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
+        [[nodiscard]] uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
+        [[nodiscard]] uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
         PlipError Load(const std::string &path) override;
         void Reset() override {}
 

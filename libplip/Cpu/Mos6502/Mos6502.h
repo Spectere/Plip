@@ -34,7 +34,7 @@ namespace Plip::Cpu {
         void Reset(uint32_t pc) override;
 
         void ClearNmi() { m_nmiFlag = false; }
-        bool CpuHasCrashed() const { return OpKillExecuted; }
+        [[nodiscard]] bool CpuHasCrashed() const { return OpKillExecuted; }
         void FlagNmi() { m_nmiFlag = true; }
         void RaiseInterrupt();
 

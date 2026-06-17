@@ -16,12 +16,12 @@ namespace Plip {
         PlipKeyValuePairCollection() = default;
         explicit PlipKeyValuePairCollection(std::unordered_map<std::string, std::string> collection) : m_collection(std::move(collection)) {}
 
-        bool Contains(const std::string &key) const {
-            return m_collection.find(ToLower(key)) != m_collection.end();
+        [[nodiscard]] bool Contains(const std::string &key) const {
+            return m_collection.contains(ToLower(key));
         }
 
-        const std::string& GetValue(const std::string &key) const {
-            static const std::string empty = {};
+        [[nodiscard]] const std::string& GetValue(const std::string &key) const {
+            static constexpr std::string empty = {};
             try {
                 return m_collection.at(ToLower(key));
             } catch([[maybe_unused]] std::out_of_range &ex) {
@@ -50,7 +50,7 @@ namespace Plip {
 
     private:
         static std::string ToLower(std::string str) {
-            std::transform(str.cbegin(), str.cend(), str.begin(), [](const unsigned char c) {
+            std::ranges::transform(std::as_const(str), str.begin(), [](const unsigned char c) {
                 return std::tolower(c);
             });
 

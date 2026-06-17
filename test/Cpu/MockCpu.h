@@ -35,7 +35,7 @@ public:
         }
     }
 
-    void LoadData(int offset, const uint8_t byte) const {
+    void LoadData(const int offset, const uint8_t byte) const {
         memory->SetByte(offset, byte);
     }
 
@@ -46,7 +46,7 @@ private:
     static Plip::PlipMemoryMap* CreateMockMemoryMap() {
         const auto memoryMap = new Plip::PlipMemoryMap();
         memoryMap->AddBlock(new Plip::PlipMemoryRam(0x10000), 0);
-        
+
         return memoryMap;
     }
 
