@@ -4,8 +4,10 @@
  */
 
 #include <cassert>
+#include <ctime>
 
 #include "GameBoyMapper.h"
+
 #include "Mbc2Ram.h"
 
 using Plip::Core::GameBoy::GameBoyMapper;
