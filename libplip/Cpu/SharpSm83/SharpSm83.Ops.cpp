@@ -34,8 +34,6 @@ static constexpr int CondZ  = 0b01;
 static constexpr int CondNC = 0b10;
 static constexpr int CondC  = 0b11;
 
-void DecodeAndExecuteCb();
-
 uint16_t SharpSm83::GetPointerAddress(const int pointerIndex) {
     switch(pointerIndex) {
         case AddrBc: return m_registers.GetBc();
