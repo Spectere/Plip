@@ -51,7 +51,7 @@ static uint8_t op;
 
 #define STACK_PUSH_FLAGS() { STACK_PUSH(m_registers.P | (1 << m_registers.BreakCommandBit)); }
 
-#define STACK_PUSH_16(val) { STACK_PUSH(val >> 8); STACK_PUSH(val & 0xFF); }
+#define STACK_PUSH_16(val) { STACK_PUSH((val) >> 8); STACK_PUSH((val) & 0xFF); }
 
 #define BRANCH(cond) { \
     int8_t rel; \
@@ -687,8 +687,10 @@ long Mos6502::DecodeAndExecute() {
             // JSR
             uint8_t low, high;
             FETCH_PC(low);
+            STACK_PUSH_16(m_registers.PC);
             FETCH_PC(high);
-            CallAbsolute((high << 8) | low);
+            m_registers.PC = (high << 8) | low;
+            cycleCount += 3;
             break;
         }
 
@@ -808,10 +810,11 @@ long Mos6502::DecodeAndExecute() {
         case 0x00: {
             // BRK
             const uint16_t addr = (m_memory->GetByte(0xFFFF) << 8) | m_memory->GetByte(0xFFFE);
-            CallAbsolute(addr);
+            STACK_PUSH_16(m_registers.PC + 1);
             STACK_PUSH_FLAGS();
-            m_registers.SetBreakCommand();
-            cycleCount += 3;
+            m_registers.PC = addr;
+            m_registers.SetInterruptDisable();
+            cycleCount += 6;
             break;
         }
 
