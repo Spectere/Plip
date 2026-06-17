@@ -11,16 +11,11 @@
 
 using Plip::Cpu::SharpSm83;
 
-static uint8_t op;
-
-#define REG_IE (m_memory->GetByte(0xFFFF))
-#define REG_IF (m_memory->GetByte(0xFF0F))
-
-#define OP_REG_X ((op >> 3) & 0b111)
-#define OP_REG_Y (op & 0b111)
-#define OP_REG16 ((op >> 4) & 0b11)
+#define OP_REG_X ((m_op >> 3) & 0b111)
+#define OP_REG_Y (m_op & 0b111)
+#define OP_REG16 ((m_op >> 4) & 0b11)
 #define OP_PTR OP_REG16
-#define OP_COND ((op >> 3) & 0b11)
+#define OP_COND ((m_op >> 3) & 0b11)
 #define OP_VEC OP_REG_X
 #define OP_BIT OP_REG_X
 
@@ -227,7 +222,7 @@ void SharpSm83::ServiceInterrupt(const int activeInterrupts) {
         if((activeInterrupts & (1 << i)) > 0) {
             // Found one! Set the destination address, clear the flag, and jump.
             destAddr += i * 8;
-            m_memory->SetByte(0xFF0F, REG_IF ^ (1 << i));
+            m_memory->SetByte(0xFF0F, GetInterruptFlag() ^ (1 << i));
             break;
         }
     }
@@ -239,7 +234,7 @@ void SharpSm83::ServiceInterrupt(const int activeInterrupts) {
 long SharpSm83::DecodeAndExecute() {
     m_cycleCount = 0;
 
-    const auto activeInterrupts = REG_IE & REG_IF & 0b11111;
+    const auto activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111;
     if(m_halt) {
         if(activeInterrupts == 0) {
             // No pending interrupts. Do nothing.
@@ -259,8 +254,8 @@ long SharpSm83::DecodeAndExecute() {
         return m_cycleCount;
     }
 
-    op = FetchAtPc();
-    switch(op) {
+    m_op = FetchAtPc();
+    switch(m_op) {
         //
         // Miscellaneous / Control Instructions
         //
@@ -762,7 +757,7 @@ long SharpSm83::DecodeAndExecute() {
             // ADC A, y (0x88-0x8F)
             // 1 cycle, Z 0 H C
             const auto regValue = m_registers.Get8ByIndex(OP_REG_Y);
-            OpAddToRegisterA(regValue, op >= 0x88);
+            OpAddToRegisterA(regValue, m_op >= 0x88);
 
             break;
         }
@@ -772,7 +767,7 @@ long SharpSm83::DecodeAndExecute() {
             // ADC A, [HL] (0x8E)
             // 2 cycles, Z 0 H C
             const int memValue = FetchAtAddress(m_registers.GetHl());
-            OpAddToRegisterA(memValue, op == 0x8E);
+            OpAddToRegisterA(memValue, m_op == 0x8E);
 
             break;
         }
@@ -782,7 +777,7 @@ long SharpSm83::DecodeAndExecute() {
             // ADC A, imm8 (0xCE)
             // 2 cycles, Z 0 H C
             const int immValue = FetchAtPc();
-            OpAddToRegisterA(immValue, op == 0xCE);
+            OpAddToRegisterA(immValue, m_op == 0xCE);
 
             break;
         }
@@ -793,7 +788,7 @@ long SharpSm83::DecodeAndExecute() {
             // SBC A, y (0x98-0x9F)
             // 1 cycle, Z 1 H C
             const auto regValue = m_registers.Get8ByIndex(OP_REG_Y);
-            OpSubtractFromRegisterA(regValue, op >= 0x98, false);
+            OpSubtractFromRegisterA(regValue, m_op >= 0x98, false);
 
             break;
         }
@@ -803,7 +798,7 @@ long SharpSm83::DecodeAndExecute() {
             // SBC A, [HL] (0x9E)
             // 2 cycles, Z 1 H C
             const int memValue = FetchAtAddress(m_registers.GetHl());
-            OpSubtractFromRegisterA(memValue, op == 0x9E, false);
+            OpSubtractFromRegisterA(memValue, m_op == 0x9E, false);
 
             break;
         }
@@ -813,7 +808,7 @@ long SharpSm83::DecodeAndExecute() {
             // SBC A, imm8 (0xDE)
             // 2 cycles, Z 1 H C
             const int immValue = FetchAtPc();
-            OpSubtractFromRegisterA(immValue, op == 0xDE, false);
+            OpSubtractFromRegisterA(immValue, m_op == 0xDE, false);
 
             break;
         }
@@ -1030,16 +1025,16 @@ long SharpSm83::DecodeAndExecute() {
         }
 
         default:
-            throw PlipInvalidOpcodeException(op);
+            throw PlipInvalidOpcodeException(m_op);
     }
 
     return m_cycleCount;
 }
 
 void SharpSm83::DecodeAndExecuteCb() {
-    op = FetchAtPc();
+    m_op = FetchAtPc();
 
-    switch(op) {
+    switch(m_op) {
         case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x07:
         case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x17: {
             // RLC y (0x00-0x07)
@@ -1047,7 +1042,7 @@ void SharpSm83::DecodeAndExecuteCb() {
             // 2 cycles, Z 0 0 C
             const auto regIdx = OP_REG_Y;
             const auto regValue = m_registers.Get8ByIndex(regIdx);
-            const auto result = OpRotateLeft(regValue, op >= 0x10, true);
+            const auto result = OpRotateLeft(regValue, m_op >= 0x10, true);
             m_registers.Set8ByIndex(regIdx, result);
             break;
         }
@@ -1057,7 +1052,7 @@ void SharpSm83::DecodeAndExecuteCb() {
             // RL [HL] (0x16)
             // 4 cycles, Z 0 0 C
             uint8_t memValue = FetchAtAddress(m_registers.GetHl());
-            memValue = OpRotateLeft(memValue, op == 0x16, true);
+            memValue = OpRotateLeft(memValue, m_op == 0x16, true);
             StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
@@ -1069,7 +1064,7 @@ void SharpSm83::DecodeAndExecuteCb() {
             // 2 cycles, Z 0 0 C
             const auto regIdx = OP_REG_Y;
             const auto regValue = m_registers.Get8ByIndex(regIdx);
-            const auto result = OpRotateRight(regValue, op >= 0x18, true);
+            const auto result = OpRotateRight(regValue, m_op >= 0x18, true);
             m_registers.Set8ByIndex(regIdx, result);
             break;
         }
@@ -1079,7 +1074,7 @@ void SharpSm83::DecodeAndExecuteCb() {
             // RR [HL] (0x1E)
             // 4 cycles, Z 0 0 C
             uint8_t memValue = FetchAtAddress(m_registers.GetHl());
-            memValue = OpRotateRight(memValue, op == 0x1E, true);
+            memValue = OpRotateRight(memValue, m_op == 0x1E, true);
             StoreAtAddress(m_registers.GetHl(), memValue);
             break;
         }
@@ -1228,7 +1223,7 @@ void SharpSm83::DecodeAndExecuteCb() {
         }
 
         default: {
-            const uint16_t actualOpcode = 0xCB00 | op;
+            const uint16_t actualOpcode = 0xCB00 | m_op;
             throw PlipInvalidOpcodeException(actualOpcode);
         }
     }

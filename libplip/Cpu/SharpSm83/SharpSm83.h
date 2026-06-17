@@ -54,6 +54,7 @@ namespace Plip::Cpu {
         static constexpr int MCycleLength = 4;
 
         int m_cycleCount {};
+        uint8_t m_op {};
 
         long DecodeAndExecute();
         void DecodeAndExecuteCb();
@@ -79,6 +80,8 @@ namespace Plip::Cpu {
         void ServiceInterrupt(int activeInterrupts);
         [[nodiscard]] bool TestConditional(int conditional) const;
 
+        void AdvanceMCycle(const int cycles = 1) { m_cycleCount += MCycleLength * cycles; }
+
         void CheckAddCarry(const int left, const int right)
             { m_registers.SetCarryFlagTo((left + right) > 0xFF); }
         void CheckAddHalfCarry(const int left, const int right, const int carry = 0)
@@ -87,8 +90,6 @@ namespace Plip::Cpu {
             { m_registers.SetCarryFlagTo((left - right - borrow) < 0); }
         void CheckSubHalfBorrow(const int left, const int right, const int borrow = 0)
             { m_registers.SetHalfCarryFlagTo(((left & 0xF) - (right & 0xF) - borrow) < 0); }
-
-        void AdvanceMCycle(const int cycles = 1) { m_cycleCount += MCycleLength * cycles; }
 
         [[nodiscard]] uint8_t FetchAtAddress(const uint16_t addr) {
             const auto val = m_memory->GetByte(addr);
@@ -108,6 +109,9 @@ namespace Plip::Cpu {
             const auto high = FetchAtPc();
             return (high << 8) | low;
         }
+
+        [[nodiscard]] uint8_t GetInterruptEnable() const { return m_memory->GetByte(0xFFFF); }
+        [[nodiscard]] uint8_t GetInterruptFlag() const { return m_memory->GetByte(0xFF0F); }
 
         void JumpAbsolute(const uint16_t addr) {
             m_registers.PC = addr;
