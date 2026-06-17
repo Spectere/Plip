@@ -21,12 +21,6 @@ void GameBoyInstance::APU_Init() {
     m_channel2 = m_ioRegisters->Audio_GetChannelPulse2();
     m_channel3 = m_ioRegisters->Audio_GetChannelWave();
     m_channel4 = m_ioRegisters->Audio_GetChannelNoise();
-
-    APU_Reset();
-}
-
-void GameBoyInstance::APU_Reset() {
-    // TODO
 }
 
 void GameBoyInstance::APU_Cycle() {
@@ -59,6 +53,10 @@ void GameBoyInstance::APU_Cycle() {
         m_audioBuffer.push_back((mixLeft / ApuMixDivisor) * ApuFinalMixMultiplier);
         m_audioBuffer.push_back((mixRight / ApuMixDivisor) * ApuFinalMixMultiplier);
     }
+}
+
+void GameBoyInstance::APU_Dump() {
+    m_audioBuffer.clear();
 }
 
 void GameBoyInstance::APU_Send() {

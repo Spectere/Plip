@@ -30,8 +30,8 @@ Gui::~Gui() {
     ImGui::DestroyContext();
 }
 
-void Gui::DrawAudioControls() {
-    for(const auto ch : m_debugAudioChannels) {
+void Gui::DrawAudioControls() const {
+    for(const auto& ch : m_debugAudioChannels) {
         ImGui::Checkbox(ch.Description.c_str(), ch.Value);
     }
 }
@@ -54,7 +54,7 @@ void Gui::DrawBreakpointControls() {
             State.BreakpointsUpdated = true;
         }
 
-        if(State.Breakpoints.size() > 0) {
+        if(!State.Breakpoints.empty()) {
             ImGui::Separator();
 
             ImGui::BeginTable("breakpoints", 2);
@@ -66,10 +66,10 @@ void Gui::DrawBreakpointControls() {
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bpHitHighlight);
                 }
 
-                ImGui::Text("0x%.8lX", bp);
+                ImGui::Text("0x%.8llX", static_cast<uint64_t>(bp));
 
                 ImGui::TableNextColumn();
-                ImGui::PushID(bp);
+                ImGui::PushID(static_cast<int>(bp));  // TODO: Revisit this if we (somehow) implement systems with 32-bit addressing.
                 if(ImGui::Button("x")) {
                     removeBp = true;
                     removeBpVal = bp;
@@ -105,22 +105,22 @@ void Gui::DrawCoreDebugInfo() {
                         break;
 
                     case Plip::DebugValueType::Int8:
-                        ImGui::Text("0x%.2lX (%lu)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.2llX (%llu)", static_cast<uint64_t>(value.ValueInt), static_cast<uint64_t>(value.ValueInt));
                         break;
 
                     case Plip::DebugValueType::Int16Le:
                     case Plip::DebugValueType::Int16Be:
-                        ImGui::Text("0x%.4lX (%lu)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.4llX (%llu)", static_cast<uint64_t>(value.ValueInt), static_cast<uint64_t>(value.ValueInt));
                         break;
 
                     case Plip::DebugValueType::Int32Le:
                     case Plip::DebugValueType::Int32Be:
-                        ImGui::Text("0x%.8lX (%lu)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.8llX (%llu)", static_cast<uint64_t>(value.ValueInt), static_cast<uint64_t>(value.ValueInt));
                         break;
 
                     case Plip::DebugValueType::Int64Le:
                     case Plip::DebugValueType::Int64Be:
-                        ImGui::Text("0x%.16lX (%lu)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.16llX (%llu)", static_cast<uint64_t>(value.ValueInt), static_cast<uint64_t>(value.ValueInt));
                         break;
 
                     case Plip::DebugValueType::String:
@@ -204,17 +204,17 @@ void Gui::DrawMemoryTools() {
         constexpr auto memoryNormal = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
         constexpr auto memoryHighlight = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
         constexpr auto memoryPcAddress = ImVec4(0.4f, 0.8f, 1.0f, 1.0f);
-        for(auto y = 0; y < State.MemoryDisplayRows; y++) {
+        for(auto y = 0; y < GuiState::MemoryDisplayRows; y++) {
             ImGui::TextColored(
                 memoryAddress,
-                "%.8X", State.MemoryDisplayBase + (State.MemoryDisplayColumns * y)
+                "%.8X", State.MemoryDisplayBase + (GuiState::MemoryDisplayColumns * y)
             );
 
-            for(auto x = 0; x < State.MemoryDisplayColumns; x++) {
-                const auto currentAddress = State.MemoryDisplayBase + (y * State.MemoryDisplayColumns) + x;
+            for(auto x = 0; x < GuiState::MemoryDisplayColumns; x++) {
+                const auto currentAddress = State.MemoryDisplayBase + (y * GuiState::MemoryDisplayColumns) + x;
 
                 ImVec4 addressColor = memoryNormal;
-                if(std::find(State.PcAddresses.begin(), State.PcAddresses.end(), currentAddress) != State.PcAddresses.end()) {
+                if(std::ranges::find(State.PcAddresses, currentAddress) != State.PcAddresses.end()) {
                     addressColor = memoryPcAddress;
                 } else if(currentAddress == State.ReadAddress) {
                     addressColor = memoryHighlight;
@@ -223,7 +223,7 @@ void Gui::DrawMemoryTools() {
                 ImGui::SameLine();
                 ImGui::TextColored(
                     addressColor,
-                    "%.2X", State.MemoryContents[(y * State.MemoryDisplayColumns) + x]
+                    "%.2X", State.MemoryContents[(y * GuiState::MemoryDisplayColumns) + x]
                 );
             }
         }

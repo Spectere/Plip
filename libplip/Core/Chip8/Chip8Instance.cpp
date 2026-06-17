@@ -90,7 +90,7 @@ void Chip8Instance::Delta(const double ns) {
         }
 
         if(!m_breakpoints.empty()) {
-            auto bp = std::find(m_breakpoints.begin(), m_breakpoints.end(), m_cpu->GetPc());
+            auto bp = std::ranges::find(m_breakpoints, m_cpu->GetPc());
             if(bp != m_breakpoints.end()) {
                 SetActiveBreakpoint(*bp);
                 break;

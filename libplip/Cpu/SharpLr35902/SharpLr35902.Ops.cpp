@@ -121,7 +121,7 @@ uint16_t SharpLr35902::GetPointerAddress(const int pointerIndex) {
             return addr;
         }
         default:
-            throw new PlipEmulationException("BUG: Attempted to resolve a pointer using an out of range index.");
+            throw PlipEmulationException("BUG: Attempted to resolve a pointer using an out of range index.");
     }
 }
 
@@ -203,7 +203,7 @@ bool SharpLr35902::TestConditional(const int conditional) const {
         case CondZ:  return m_registers.GetZeroFlag();
         case CondNZ: return !m_registers.GetZeroFlag();
         default:
-            throw new PlipEmulationException("BUG: Conditional value out of range.");
+            throw PlipEmulationException("BUG: Conditional value out of range.");
     }
 }
 
@@ -673,7 +673,7 @@ long SharpLr35902::DecodeAndExecute() {
             uint8_t valLow;
             uint8_t valHigh;
             Pop16FromStack(valHigh, valLow);
-            if(destReg16Idx == m_registers.RegIndex16Af) {
+            if(destReg16Idx == SharpLr35902Registers::RegIndex16Af) {
                 // AF shares an index with SP, but it must be handled differently.
                 m_registers.A = valHigh;
                 m_registers.F = valLow & 0xF0;  // lower 4 bits are discarded
@@ -689,7 +689,7 @@ long SharpLr35902::DecodeAndExecute() {
             const auto srcReg16Idx = OP_REG16;
             uint8_t valLow;
             uint8_t valHigh;
-            if(srcReg16Idx == m_registers.RegIndex16Af) {
+            if(srcReg16Idx == SharpLr35902Registers::RegIndex16Af) {
                 // AF shares an index with SP, but it must be handled differently.
                 valLow = m_registers.F & 0xF0;
                 valHigh = m_registers.A;

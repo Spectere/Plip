@@ -19,13 +19,13 @@ namespace Plip::Cpu {
         static constexpr int OverflowFlagBit = 6;
         static constexpr int NegativeFlagBit = 7;
 
-        uint8_t A;
+        uint8_t A {};
         uint8_t P = 0b00100000;
-        uint8_t X;
-        uint8_t Y;
+        uint8_t X {};
+        uint8_t Y {};
 
-        uint16_t PC;
-        uint8_t S;
+        uint16_t PC {};
+        uint8_t S {};
 
         void ClearBreakCommand() { P = BIT_CLEAR(P, BreakCommandBit); }
         [[nodiscard]] bool GetBreakCommand() const { return BIT_TEST(P, BreakCommandBit); }

@@ -21,10 +21,10 @@ namespace Plip::Core::Nes {
     public:
         NesInstance(PlipAudio* audio, PlipInput* input, PlipVideo* video, const PlipKeyValuePairCollection &config);
         ~NesInstance() override;
-        
+
         void Delta(double ns) override;
-        std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
-        std::vector<uint64_t> GetPcs() const override;
+        [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
+        [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
         PlipError Load(const std::string& path) override;
         void Reset() override;
 
@@ -46,7 +46,7 @@ namespace Plip::Core::Nes {
         [[nodiscard]] std::map<std::string, DebugValue> PPU_GetDebugInfo() const;
         PlipError PPU_LoadPalette(const std::string& path);
         void PPU_ReadMemory(bool spriteQueue, bool holdStage = false);
-        
+
         //
         // Fields
         //
@@ -55,7 +55,7 @@ namespace Plip::Core::Nes {
         static constexpr uint32_t MasterClockRateNtsc = 21477272;
         static constexpr uint32_t ClockDivisorNtsc = 12;
         static constexpr uint32_t CpuClockNtsc = MasterClockRateNtsc / ClockDivisorNtsc;
-        
+
         static constexpr uint32_t MasterClockRatePal = 26601712;
         static constexpr uint32_t ClockDivisorPal = 16;
         static constexpr uint32_t CpuClockPal = MasterClockRatePal / ClockDivisorPal;
@@ -121,9 +121,9 @@ namespace Plip::Core::Nes {
         static constexpr int m_trainerSize = 512;
         static constexpr int m_workRamAmount = 2 * 1024;  // 2KiB each
         static constexpr int m_ppuRamAmount  = 2 * 1024;
-        
+
         NesMemory* m_nesMemory {};
-        
+
         NesApuRegisters* m_apuRegisters {};
         NesPpuRegisters* m_ppuRegisters {};
 

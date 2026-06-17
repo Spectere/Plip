@@ -31,9 +31,9 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         static std::string GetDmaStateString(DmaState state);
         static std::string GetDmaTransferModeString(DmaTransferMode mode);
-        std::vector<uint64_t> GetPcs() const override;
-        uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
-        uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
+        [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
+        [[nodiscard]] uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
+        [[nodiscard]] uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
         PlipError Load(const std::string &path) override;
         void Reset() override;
         void Shutdown() override;
@@ -55,8 +55,8 @@ namespace Plip::Core::GameBoy {
         void DmaFinishPreparations() const;
         void DmaInitCgb(DmaTransferMode transferMode);
         void DmaInitOam(int sourceAddress);
-        int GetCartridgeRamBankCount() const;
-        bool IsMultiRomCartridge() const;
+        [[nodiscard]] int GetCartridgeRamBankCount() const;
+        [[nodiscard]] bool IsMultiRomCartridge() const;
         void ReadJoypad();
         void ReadCartridgeFeatures();
         void RegisterInput() const;
@@ -67,8 +67,8 @@ namespace Plip::Core::GameBoy {
         static float APU_Clock_Channel(WaveChannel* channel);
         static float APU_Clock_Channel(NoiseChannel* channel);
         void APU_Cycle();
+        void APU_Dump();
         void APU_Init();
-        void APU_Reset();
         void APU_Send();
 
         // GameBoyInstance.Video
@@ -76,9 +76,10 @@ namespace Plip::Core::GameBoy {
         void PPU_DotClock(uint8_t lcdControl, uint8_t lcdStatus);
         bool PPU_DotClock_OamScan();
         bool PPU_DotClock_Output(uint8_t lcdControl);
-        void PPU_DotClock_Output_Drawing(uint8_t lcdControl);
-        int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, int offsetX, int offsetY, uint16_t tileMapAddress, uint16_t tileDataAddress0, uint16_t tileDataAddress1, bool lcdcPriority) const;
-        bool PPU_DrawObject(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor, bool lcdcPriority) const;
+        void PPU_DotClock_Output_Drawing(uint8_t lcdControl) const;
+        [[nodiscard]] int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, int offsetX, int offsetY, uint16_t tileMapAddress, uint16_t
+                                                     tileDataAddress0, uint16_t tileDataAddress1) const;
+        [[nodiscard]] bool PPU_DrawObject(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor, bool lcdcPriority) const;
         void PPU_FinishTransition(uint8_t lcdStatus);
         void PPU_FinishTransition_OamScan(uint8_t lcdStatus);
         void PPU_FinishTransition_VBlank(uint8_t lcdStatus);

@@ -13,7 +13,7 @@ void NesPpuRegisters::CopyPrimaryOamToSecondary(const uint8_t address) {
 
 uint8_t NesPpuRegisters::GetByte(const PpuRegister ppuRegister, [[maybe_unused]] bool privileged) {
     constexpr uint8_t openBus = 0xFF;  // TODO: I don't think this is accurate on the NES. Correct this later.
-    
+
     switch(ppuRegister) {
         case PpuRegister::PpuStatus: {
             const uint8_t returnValue =
@@ -21,7 +21,7 @@ uint8_t NesPpuRegisters::GetByte(const PpuRegister ppuRegister, [[maybe_unused]]
                  | (m_ppuStatusSprite0Hit     ? 0b01000000 : 0)
                  | (m_ppuStatusSpriteOverflow ? 0b00100000 : 0)
                  | (openBus                   & 0b00011111);
-            
+
             m_ppuRegWriteLatch = false;  // Reading PPUSTATUS clears the w register...
             m_ppuStatusVBlank = false;    // ...and VBlank.
             return returnValue;
@@ -30,7 +30,7 @@ uint8_t NesPpuRegisters::GetByte(const PpuRegister ppuRegister, [[maybe_unused]]
         case PpuRegister::OamData: {
             return GetByteOam(m_oamAddress);
         }
-        
+
         case PpuRegister::PpuData: {
             // TODO: Emulate glitchy behavior when reading from PPUDATA during rendering.
             if(m_ppuAddress >= 0x3F00 && m_ppuAddress < 0x4000) {
@@ -94,7 +94,7 @@ void NesPpuRegisters::Reset() {
 
     // et al
     m_ppuScrollX = m_ppuScrollY = 0;
-    
+
     m_ppuRegWriteLatch = false;
 
     m_oddFrame = false;
@@ -116,7 +116,7 @@ void NesPpuRegisters::SetByte(const PpuRegister ppuRegister, const uint8_t value
             if(m_ppuStatusVBlank) {
                 m_cpu->FlagNmi();
             }
-            
+
             break;
         }
 

@@ -161,7 +161,7 @@ TEST("JR C, imm8s- (C)", "JR-C,imm8sN-C") {  // 0x38
 
 TEST("RET", "RET") {  // 0xC9
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xC9 });
+    LoadData(0x00, 0xC9);
     cpu->SetSp(0x1FE);
 
     EXECUTE(4);
@@ -170,7 +170,7 @@ TEST("RET", "RET") {  // 0xC9
 
 TEST("RETI", "RETI") {  // 0xD9
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xD9 });
+    LoadData(0x00, 0xD9);
     cpu->SetSp(0x1FE);
     cpu->SetImeState(Cpu::SharpLr35902ImeState::Disabled);
 
@@ -181,7 +181,7 @@ TEST("RETI", "RETI") {  // 0xD9
 
 TEST("RET NZ (NZ)", "RET-NZ-NZ") {  // 0xC0
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xC0 });
+    LoadData(0x00, 0xC0);
     cpu->SetSp(0x1FE);
 
     EXECUTE(5);
@@ -190,7 +190,7 @@ TEST("RET NZ (NZ)", "RET-NZ-NZ") {  // 0xC0
 
 TEST("RET NZ (Z)", "RET-NZ-Z") {  // 0xC0
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xC0 });
+    LoadData(0x00, 0xC0);
     cpu->SetSp(0x1FE);
     cpu->SetZeroFlag();
 
@@ -200,7 +200,7 @@ TEST("RET NZ (Z)", "RET-NZ-Z") {  // 0xC0
 
 TEST("RET Z (NZ)", "RET-Z-NZ") {  // 0xC8
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xC8 });
+    LoadData(0x00, 0xC8);
     cpu->SetSp(0x1FE);
 
     EXECUTE(2);
@@ -209,7 +209,7 @@ TEST("RET Z (NZ)", "RET-Z-NZ") {  // 0xC8
 
 TEST("RET Z (Z)", "RET-Z-Z") {  // 0xC8
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xC8 });
+    LoadData(0x00, 0xC8);
     cpu->SetSp(0x1FE);
     cpu->SetZeroFlag();
 
@@ -219,7 +219,7 @@ TEST("RET Z (Z)", "RET-Z-Z") {  // 0xC8
 
 TEST("RET NC (NC)", "RET-NC-NC") {  // 0xD0
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xD0 });
+    LoadData(0x00, 0xD0);
     cpu->SetSp(0x1FE);
 
     EXECUTE(5);
@@ -228,7 +228,7 @@ TEST("RET NC (NC)", "RET-NC-NC") {  // 0xD0
 
 TEST("RET NC (C)", "RET-NC-C") {  // 0xD0
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xD0 });
+    LoadData(0x00, 0xD0);
     cpu->SetSp(0x1FE);
     cpu->SetCarryFlag();
 
@@ -238,7 +238,7 @@ TEST("RET NC (C)", "RET-NC-C") {  // 0xD0
 
 TEST("RET C (NC)", "RET-C-NC") {  // 0xD8
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xD8 });
+    LoadData(0x00, 0xD8);
     cpu->SetSp(0x1FE);
 
     EXECUTE(2);
@@ -247,7 +247,7 @@ TEST("RET C (NC)", "RET-C-NC") {  // 0xD8
 
 TEST("RET C (C)", "RET-C-C") {  // 0xD8
     LoadData(0x1FE, { 0x00, 0x01 });
-    LoadData(0x00, { 0xD8 });
+    LoadData(0x00, 0xD8);
     cpu->SetSp(0x1FE);
     cpu->SetCarryFlag();
 
@@ -323,7 +323,7 @@ TEST("JP C, imm16 (C)", "JP-C,imm16-C") {  // 0xDA
 }
 
 TEST("RST $00", "RST-00") {  // 0xC7
-    LoadData(0x100, { 0xC7 });
+    LoadData(0x100, 0xC7);
     cpu->Reset(0x100);
 
     EXECUTE(4);
@@ -331,7 +331,7 @@ TEST("RST $00", "RST-00") {  // 0xC7
 }
 
 TEST("RST $08", "RST-08") {  // 0xCF
-    LoadData(0x100, { 0xCF });
+    LoadData(0x100, 0xCF);
     cpu->Reset(0x100);
 
     EXECUTE(4);
@@ -339,7 +339,7 @@ TEST("RST $08", "RST-08") {  // 0xCF
 }
 
 TEST("RST $10", "RST-10") {  // 0xD7
-    LoadData(0x100, { 0xD7 });
+    LoadData(0x100, 0xD7);
     cpu->Reset(0x100);
 
     EXECUTE(4);
@@ -347,7 +347,7 @@ TEST("RST $10", "RST-10") {  // 0xD7
 }
 
 TEST("RST $18", "RST-18") {  // 0xDF
-    LoadData(0x100, { 0xDF });
+    LoadData(0x100, 0xDF);
     cpu->Reset(0x100);
 
     EXECUTE(4);
@@ -355,7 +355,7 @@ TEST("RST $18", "RST-18") {  // 0xDF
 }
 
 TEST("RST $20", "RST-20") {  // 0xE7
-    LoadData(0x100, { 0xE7 });
+    LoadData(0x100, 0xE7);
     cpu->Reset(0x100);
 
     EXECUTE(4);
@@ -363,7 +363,7 @@ TEST("RST $20", "RST-20") {  // 0xE7
 }
 
 TEST("RST $28", "RST-28") {  // 0xEF
-    LoadData(0x100, { 0xEF });
+    LoadData(0x100, 0xEF);
     cpu->Reset(0x100);
 
     EXECUTE(4);
@@ -371,7 +371,7 @@ TEST("RST $28", "RST-28") {  // 0xEF
 }
 
 TEST("RST $30", "RST-30") {  // 0xF7
-    LoadData(0x100, { 0xF7 });
+    LoadData(0x100, 0xF7);
     cpu->Reset(0x100);
 
     EXECUTE(4);
@@ -379,7 +379,7 @@ TEST("RST $30", "RST-30") {  // 0xF7
 }
 
 TEST("RST $38", "RST-38") {  // 0xFF
-    LoadData(0x100, { 0xFF });
+    LoadData(0x100, 0xFF);
     cpu->Reset(0x100);
 
     EXECUTE(4);
@@ -388,7 +388,7 @@ TEST("RST $38", "RST-38") {  // 0xFF
 
 TEST("JP HL", "JP-HL") {  // 0xE9
     cpu->SetHl(0x100);
-    LoadData(0x00, { 0xE9 });
+    LoadData(0x00, 0xE9);
 
     EXECUTE(1);
     CHECK(cpu->GetPc() == 0x100);

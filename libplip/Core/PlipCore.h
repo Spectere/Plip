@@ -41,17 +41,18 @@ namespace Plip {
 
         void ClearActiveBreakpoint() { m_activeBreakpoint = UINT64_MAX; }
         virtual void Delta(double ns) = 0;
-        uint64_t GetActiveBreakpoint() const { return m_activeBreakpoint; }
+        [[nodiscard]] uint64_t GetActiveBreakpoint() const { return m_activeBreakpoint; }
         virtual std::vector<DebugAudioChannel> GetDebugAudioChannels() { return {}; }
-        virtual std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const = 0;
+        [[nodiscard]] virtual std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const = 0;
         [[nodiscard]] PlipMemoryMap* GetMemoryMap() const { return m_memory; }
-        virtual std::vector<uint64_t> GetPcs() const = 0;
-        virtual uint64_t GetTotalCpuCycles() const { return 0; }
-        virtual uint64_t GetTotalVBlankCount() const { return 0; }
+        [[nodiscard]] virtual std::vector<uint64_t> GetPcs() const = 0;
+        [[nodiscard]] virtual uint64_t GetTotalCpuCycles() const { return 0; }
+        [[nodiscard]] virtual uint64_t GetTotalVBlankCount() const { return 0; }
         virtual PlipError Load(const std::string &path) = 0;
         virtual void Reset() = 0;
         void SetBreakpoints(const std::set<uint64_t> &breakpoints) { m_breakpoints = breakpoints; }
         virtual void Shutdown() {}
+        void SuspendAudio(const bool value) { m_audioSuspended = value; }
 
     protected:
         explicit PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKeyValuePairCollection config);
@@ -68,7 +69,8 @@ namespace Plip {
 
         std::set<uint64_t> m_breakpoints {};
 
-        double m_singleStepTime = {};
+        bool m_audioSuspended {};
+        double m_singleStepTime {};
 
     private:
         uint64_t m_activeBreakpoint = UINT64_MAX;

@@ -271,7 +271,7 @@ uint8_t Mos6502::OpRotateRight(uint8_t value) {
     return value;
 }
 
-void Mos6502::OpSubtractWithBorrow(uint8_t value) {
+void Mos6502::OpSubtractWithBorrow(const uint8_t value) {
     if(AluIsInDecimalMode()) {
         m_registers.A = SubDecimal(value);
     } else {
@@ -931,7 +931,7 @@ void Mos6502::DecodeAndExecuteNmosUnofficial() {
             uint8_t value;
             FETCH_PC(value);
             const uint8_t andResult = m_registers.A & m_registers.X;
-            int subResult = andResult - value;
+            const int subResult = andResult - value;
             (subResult < 0) ? m_registers.SetCarryFlag() : m_registers.ClearCarryFlag();
             CHECK_ZERO(subResult);
             CHECK_NEGATIVE(subResult);

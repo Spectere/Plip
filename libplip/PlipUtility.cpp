@@ -27,6 +27,6 @@ std::string PlipUtility::FormatHex(const uintmax_t value, const int precision) {
 
 std::string PlipUtility::StringToLower(const std::string &str) {
     std::string lower = str;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::ranges::transform(lower, lower.begin(), ::tolower);
     return lower;
 }

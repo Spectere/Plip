@@ -14,9 +14,9 @@
 namespace PlipSdl {
     class Config {
     public:
-        bool Contains(const std::string &key) const;
-        bool Contains(const std::string &section, const std::string &key) const;
-        Plip::PlipKeyValuePairCollection ConvertSectionToPlipKvpCollection(const std::string &key) const;
+        [[nodiscard]] bool Contains(const std::string &key) const;
+        [[nodiscard]] bool Contains(const std::string &section, const std::string &key) const;
+        [[nodiscard]] Plip::PlipKeyValuePairCollection ConvertSectionToPlipKvpCollection(const std::string &key) const;
         const std::string &GetValue(const std::string &key);
         const std::string &GetValue(const std::string &section, const std::string &key);
         bool LoadFile(const std::string &filename);

@@ -1,6 +1,6 @@
 // DebugValue.h
 //
-// TODO: Insert description here.
+// An item meant to be displayed on the frontend's debug UI.
 
 #pragma once
 

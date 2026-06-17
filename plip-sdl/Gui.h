@@ -30,7 +30,7 @@ namespace PlipSdl {
         GuiState State = {};
 
     private:
-        void DrawAudioControls();
+        void DrawAudioControls() const;
         void DrawBreakpointControls();
         void DrawCoreDebugInfo();
         void DrawEmulatorControls();

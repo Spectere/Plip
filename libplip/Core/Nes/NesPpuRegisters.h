@@ -27,13 +27,13 @@ namespace Plip::Core::Nes {
 
     class NesPpuRegisters final : public PlipMemory {
     public:
-        explicit NesPpuRegisters(NesMapper* mapper) : m_mapper(mapper) {}
-        
-        [[nodiscard]] uint8_t GetByte(const uint32_t address, const bool privileged = false) override {
+        explicit NesPpuRegisters(NesMapper* mapper, Cpu::Mos6502* cpu) : m_cpu(cpu), m_mapper(mapper) { }
+
+        [[nodiscard]] uint8_t GetByte(const uint32_t address, const bool privileged) override {
             return GetByte(static_cast<PpuRegister>(address), privileged);
         }
 
-        void SetByte(const uint32_t address, const uint8_t value, const bool privileged = false) override {
+        void SetByte(const uint32_t address, const uint8_t value, const bool privileged) override {
             SetByte(static_cast<PpuRegister>(address), value, privileged);
         }
 
@@ -54,9 +54,8 @@ namespace Plip::Core::Nes {
         [[nodiscard]] bool GetOddFrame() const { return m_oddFrame; }
         [[nodiscard]] bool GetVBlankNmi() const { return m_ppuCtrlNmiEnabled; }
 
-        void SetCpu(Cpu::Mos6502* cpu) { m_cpu = cpu; }
         void SetCycle(const int cycle) { m_cycle = cycle; }
-        void SetStatusSpriteOverflow(const bool value) { m_ppuStatusSpriteOverflow = value; } 
+        void SetStatusSpriteOverflow(const bool value) { m_ppuStatusSpriteOverflow = value; }
         void SetStatusSprite0Hit(const bool value) { m_ppuStatusSprite0Hit = value; }
         void SetStatusVBlank(const bool value) { m_ppuStatusVBlank = value; }
 
@@ -74,11 +73,11 @@ namespace Plip::Core::Nes {
         static constexpr int m_paletteSize = 0x20;
         std::array<uint8_t, m_paletteSize> m_palette {};
 
-        Cpu::Mos6502* m_cpu {};
+        Cpu::Mos6502* m_cpu;
         NesMapper* m_mapper;
 
         int m_cycle {};
-        
+
         // PPUCTRL
         uint8_t m_ppuDebugCtrl {};
         uint8_t m_ppuCtrlBaseNamespaceAddress {};
@@ -104,7 +103,7 @@ namespace Plip::Core::Nes {
         bool m_ppuStatusSpriteOverflow = true;
         bool m_ppuStatusSprite0Hit {};
         bool m_ppuStatusVBlank = true;
-        
+
         uint8_t m_ppuStatus = 0b10100000;
         uint8_t m_oamAddress {};
         uint8_t m_ppuScrollX {};

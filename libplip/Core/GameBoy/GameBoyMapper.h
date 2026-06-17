@@ -10,6 +10,7 @@
 #include "GameBoyIoRegisters.h"
 #include "MBC_Type.h"
 #include "../../Memory/PlipMemory.h"
+#include "../../Memory/PlipMemoryMap.h"
 #include "../../Memory/PlipMemoryRom.h"
 
 namespace Plip::Core::GameBoy {
@@ -33,7 +34,7 @@ namespace Plip::Core::GameBoy {
 
         GameBoyMapper(PlipMemory* bootRom, PlipMemory* cartRom, PlipMemory* videoRam, PlipMemory* workRam, PlipMemory* oam, PlipMemory* ioRegisters, PlipMemory* highRam);
 
-        void AssignBlock(PlipMemory* memory, uint32_t address, uint32_t offset = 0) override;
+        void AssignBlock(PlipMemory* memory, uint32_t address, uint32_t offset) override;
         void AssignBlock(PlipMemory* memory, uint32_t address, uint32_t offset, uint32_t length) override;
         PlipMemory* ConfigureMapper(MBC_Type mbcType, bool hasRtc, int cartRamBanks);
         void DisableBootRom();
@@ -43,7 +44,7 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] std::map<std::string, DebugValue> GetMbcDebugInfo() const;
         void Reset();
         void RestoreCartridgeMemoryAccessibility() const;
-        void SetByte(uint32_t address, uint8_t value, bool privileged = false) override;
+        void SetByte(uint32_t address, uint8_t value, bool privileged) override;
         bool SetByte_HuC1(uint32_t address, uint8_t value);
         bool SetByte_Mbc1(uint32_t address, uint8_t value);
         bool SetByte_Mbc2(uint32_t address, uint8_t value);

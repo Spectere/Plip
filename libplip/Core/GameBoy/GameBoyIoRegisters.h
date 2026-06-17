@@ -101,11 +101,11 @@ namespace Plip::Core::GameBoy {
         GameBoyIoRegisters(GameBoyModel gbModel, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam);
         ~GameBoyIoRegisters() = default;
 
-        uint8_t GetByte(const uint32_t address, const bool privileged = false) override {
+        uint8_t GetByte(const uint32_t address, const bool privileged) override {
             return GetByte(static_cast<IoRegister>(address));
         }
 
-        void SetByte(const uint32_t address, const uint8_t value, const bool privileged = false) override {
+        void SetByte(const uint32_t address, const uint8_t value, const bool privileged) override {
             SetByte(static_cast<IoRegister>(address), value);
         }
 

@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <cstdint>
-
 #include "../../PlipEmulationException.h"
 #include "../../PlipSupport.h"
 
@@ -80,7 +78,7 @@ namespace Plip::Cpu {
                 case RegIndex16Hl: return GetHl();
                 case RegIndex16Sp: return SP;
                 default:
-                    throw new PlipEmulationException("BUG: Attempted to get a 16-bit register with an out of range index.");
+                    throw PlipEmulationException("BUG: Attempted to get a 16-bit register with an out of range index.");
             }
         }
 
@@ -103,7 +101,7 @@ namespace Plip::Cpu {
                     SP = value;
                     break;
                 default:
-                    throw new PlipEmulationException("BUG: Attempted to set a 16-bit register with an out of range index.");
+                    throw PlipEmulationException("BUG: Attempted to set a 16-bit register with an out of range index.");
             }
         }
 
@@ -123,7 +121,7 @@ namespace Plip::Cpu {
                 case RegIndexH: return &H;
                 case RegIndexL: return &L;
                 default:
-                    throw new PlipEmulationException("BUG: Attempted to get an 8-bit register with an out of range index.");
+                    throw PlipEmulationException("BUG: Attempted to get an 8-bit register with an out of range index.");
             }
         }
 

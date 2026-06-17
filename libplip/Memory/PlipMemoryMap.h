@@ -24,11 +24,14 @@ namespace Plip {
 
         void AddBlock(PlipMemory *memory, uint32_t offset = 0);
         void AddBlock(PlipMemory *memory, uint32_t offset, uint32_t length);
-        virtual void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset = 0);
+        void AssignBlock(PlipMemory *memory, const uint32_t address) { AssignBlock(memory, address, 0); }
+        virtual void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset);
         virtual void AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset, uint32_t length);
-        [[nodiscard]] virtual uint8_t GetByte(uint32_t address, bool privileged = false) const;
+        [[nodiscard]] uint8_t GetByte(const uint32_t address) { return GetByte(address, false); }
+        [[nodiscard]] virtual uint8_t GetByte(uint32_t address, bool privileged) const;
         virtual uint32_t GetLength();
-        virtual void SetByte(uint32_t address, uint8_t value, bool privileged = false);
+        void SetByte(const uint32_t address, const uint8_t value) { SetByte(address, value, false); }
+        virtual void SetByte(uint32_t address, uint8_t value, bool privileged);
         void SetInvalidByte(uint8_t value);
         virtual void UnassignAllBlocks();
         virtual void UnassignBlock(uint32_t address, uint32_t length);

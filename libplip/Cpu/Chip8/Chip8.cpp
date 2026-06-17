@@ -40,7 +40,7 @@ long Chip8::Cycle() {
         }
     }
 
-    if(m_waitForKey) return m_cycle;
+    if(m_waitForKey) return static_cast<long>(m_cycle);
 
     switch(inst & 0xF000) {
         case 0x0000:
@@ -70,7 +70,7 @@ long Chip8::Cycle() {
         default: throw PlipEmulationException("unexpected opcode");
     }
 
-    return m_cycle;
+    return static_cast<long>(m_cycle);
 }
 
 void Chip8::DelayTimer() {

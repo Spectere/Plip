@@ -77,6 +77,8 @@ public:
 private:
     std::vector<RunnerTest> m_tests;
 
+    // TODO: False flag, likely the same cause as CPP-45594. Revisit this later.
+    // ReSharper disable once CppDFAUnreachableFunctionCall
     static std::vector<RunnerTestCycle> ConvertTestCycles(const json& def) {
         std::vector<RunnerTestCycle> cycles {};
 
@@ -97,6 +99,8 @@ private:
         return cycles;
     }
 
+    // TODO: False flag, likely the same cause as CPP-45594. Revisit this later.
+    // ReSharper disable once CppDFAUnreachableFunctionCall
     static std::vector<RunnerTestMemory> ConvertTestMemory(const json& def) {
         std::vector<RunnerTestMemory> mem {};
 
@@ -112,6 +116,8 @@ private:
         return mem;
     }
 
+    // TODO: False flag, likely the same cause as CPP-45594. Revisit this later.
+    // ReSharper disable once CppDFAUnreachableFunctionCall
     static RunnerTestState ConvertTestState(const json& def) {
         RunnerTestState state {};
 
@@ -129,6 +135,8 @@ private:
         return state;
     }
 
+    // TODO: False flag, likely the same cause as CPP-45594. Revisit this later.
+    // ReSharper disable once CppDFAUnreachableFunctionCall
     static RunnerTest ConvertTestDefinition(const std::string& filename, const json& def) {
         RunnerTest test {};
 
@@ -141,15 +149,14 @@ private:
         return test;
     }
 
-    std::string FormatKey(const RunnerTest& test) {
+    static std::string FormatKey(const RunnerTest& test) {
         return test.Filename + " [" + test.TestName + "]";
     }
 
     void LoadTestCollection(const std::string& filename) {
         std::ifstream file(filename);
-        const auto data = json::parse(file);
 
-        for(const auto &test : data) {
+        for(const auto data = json::parse(file); const auto &test : data) {
             m_tests.push_back(ConvertTestDefinition(filename, test));
         }
 
