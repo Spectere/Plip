@@ -1,21 +1,21 @@
-/* SharpLr35902.h
+/* SharpSm83.h
  *
- * An implementation of a Sharp LR35902 CPU (SM83 core).
+ * An implementation of a Sharp SM83-based CPU.
  */
 
 #pragma once
 
-#include "SharpLr35902Registers.h"
+#include "SharpSm83Registers.h"
 #include "../PlipCpu.h"
 
 namespace Plip::Cpu {
-    enum class SharpLr35902ImeState {
+    enum class SharpSm83ImeState {
         Disabled,
         PendingEnable,
         Enabled
     };
 
-    enum class SharpLr35902Interrupt {
+    enum class SharpSm83Interrupt {
         VBlank = 0b00001,
         Lcd    = 0b00010,
         Timer  = 0b00100,
@@ -23,10 +23,10 @@ namespace Plip::Cpu {
         Joypad = 0b10000
     };
 
-    class SharpLr35902 : public PlipCpu {
+    class SharpSm83 : public PlipCpu {
     public:
-        SharpLr35902(long hz, PlipMemoryMap* memoryMap, bool gbcMode);
-        virtual ~SharpLr35902() = default;
+        SharpSm83(long hz, PlipMemoryMap* memoryMap, bool gbcMode);
+        virtual ~SharpSm83() = default;
 
         [[nodiscard]] bool IsChangingSpeed() const { return m_changingSpeed; }
         [[nodiscard]] bool IsDoubleSpeed() const { return m_doubleSpeed; }
@@ -40,8 +40,8 @@ namespace Plip::Cpu {
     protected:
         bool m_halt = false;
         bool m_holdPc = false;
-        SharpLr35902Registers m_registers {};
-        SharpLr35902ImeState m_ime = SharpLr35902ImeState::Enabled;
+        SharpSm83Registers m_registers {};
+        SharpSm83ImeState m_ime = SharpSm83ImeState::Enabled;
         long m_baseSpeed {};
         bool m_gbcMode {};
         bool m_doubleSpeed {};

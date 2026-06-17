@@ -1,11 +1,11 @@
-/* SharpLr35902.Jumps.cpp
+/* SharpSm83.Jumps.cpp
  *
  * Tests the CPU core's ability to perform (un)conditional jumps and calls.
  */
 
 #include "catch2/catch_test_macros.hpp"
 
-#include "SharpLr35902Common.h"
+#include "SharpSm83Common.h"
 
 TEST("JR imm8s+", "JR-imm8sP") {  // 0x18
     LoadData(0x100, { 0x18, 0x7E });
@@ -172,11 +172,11 @@ TEST("RETI", "RETI") {  // 0xD9
     LoadData(0x1FE, { 0x00, 0x01 });
     LoadData(0x00, 0xD9);
     cpu->SetSp(0x1FE);
-    cpu->SetImeState(Cpu::SharpLr35902ImeState::Disabled);
+    cpu->SetImeState(Cpu::SharpSm83ImeState::Disabled);
 
     EXECUTE(4);
     CHECK(cpu->GetPc() == 0x100);
-    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(cpu->GetImeState() == Cpu::SharpSm83ImeState::Enabled);
 }
 
 TEST("RET NZ (NZ)", "RET-NZ-NZ") {  // 0xC0

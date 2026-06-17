@@ -16,7 +16,7 @@
 #include "PPU_Mode.h"
 #include "PPU_OutputStage.h"
 #include "../PlipCore.h"
-#include "../../Cpu/SharpLr35902/SharpLr35902.h"
+#include "../../Cpu/SharpSm83/SharpSm83.h"
 #include "../../Memory/PlipMemoryRam.h"
 #include "../../Memory/PlipMemoryRom.h"
 
@@ -112,7 +112,7 @@ namespace Plip::Core::GameBoy {
         static constexpr int HeaderLogoOffset = 0x104;
 
         bool m_cgbMode {};
-        Cpu::SharpLr35902 *m_cpu {};
+        Cpu::SharpSm83 *m_cpu {};
         double m_cycleTime {};
         double m_deltaTimeRemaining {};
         bool m_doubleSpeed {};

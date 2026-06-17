@@ -1,19 +1,19 @@
-/* SharpLr35902Common.h
+/* SharpSm83Common.h
  *
- * The test fixture for the Sharp LR35902 CPU.
+ * The test fixture for Sharp SM83-based CPUs.
  */
 
 #pragma once
 
 #include "../MockCpu.h"
 
-#include "Cpu/SharpLr35902/SharpLr35902.h"
+#include "Cpu/SharpSm83/SharpSm83.h"
 
 using namespace Plip;
 
-#define TEST_NAME(name) "[Sharp LR35902 CPU] " name
-#define OP(op) "[lr35902cpu][" op "]"
-#define TEST(name, op) TEST_CASE_METHOD(MockCpu<MockSharpLr35902>, TEST_NAME(name), OP(op))
+#define TEST_NAME(name) "[Sharp SM83 CPU] " name
+#define OP(op) "[sm83cpu][" op "]"
+#define TEST(name, op) TEST_CASE_METHOD(MockCpu<MockSharpSm83>, TEST_NAME(name), OP(op))
 
 #define CHECK_CARRY_CLEAR CHECK(cpu->GetCarryFlag() == false)
 #define CHECK_CARRY_SET CHECK(cpu->GetCarryFlag() == true)
@@ -34,7 +34,7 @@ using namespace Plip;
 // Ugly hack that allows us to use M-cycles in this test harness.
 #define EXECUTE(expectedCycles) CHECK(cpu->Cycle() == (expectedCycles * 4));
 
-class MockSharpLr35902 final : public Cpu::SharpLr35902 {
+class MockSharpSm83 final : public Cpu::SharpSm83 {
 public:
     static constexpr int RegIndexB  = 0b000;
     static constexpr int RegIndexC  = 0b001;
@@ -45,7 +45,7 @@ public:
     static constexpr int RegIndexHl = 0b110;
     static constexpr int RegIndexA  = 0b111;
 
-    MockSharpLr35902(const long hz, PlipMemoryMap* memoryMap) : SharpLr35902(hz, memoryMap, false) { }
+    MockSharpSm83(const long hz, PlipMemoryMap* memoryMap) : SharpSm83(hz, memoryMap, false) { }
 
     void ClearCarryFlag() { m_registers.ClearCarryFlag(); }
     [[nodiscard]] bool GetCarryFlag() const { return m_registers.GetCarryFlag(); }
@@ -63,8 +63,8 @@ public:
     [[nodiscard]] bool GetZeroFlag() const { return m_registers.GetZeroFlag(); }
     void SetZeroFlag() { return m_registers.SetZeroFlag(); }
 
-    [[nodiscard]] Cpu::SharpLr35902ImeState GetImeState() const { return m_ime; }
-    void SetImeState(const Cpu::SharpLr35902ImeState newState) { m_ime = newState; }
+    [[nodiscard]] Cpu::SharpSm83ImeState GetImeState() const { return m_ime; }
+    void SetImeState(const Cpu::SharpSm83ImeState newState) { m_ime = newState; }
 
     [[nodiscard]] bool GetGbcMode() const { return m_gbcMode; }
     void SetGbcMode(const bool value) { m_gbcMode = value; }

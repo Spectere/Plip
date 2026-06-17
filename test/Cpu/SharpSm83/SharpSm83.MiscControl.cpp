@@ -1,4 +1,4 @@
-/* SharpLr35902.Bits.cpp
+/* SharpSm83.Bits.cpp
  *
  * Tests the CPU core's support for miscellaneous/control instructions.
  */
@@ -6,7 +6,7 @@
 #include "catch2/catch_test_macros.hpp"
 
 #include "PlipEmulationException.h"
-#include "SharpLr35902Common.h"
+#include "SharpSm83Common.h"
 
 TEST("NOP", "NOP") {
     // Brace yourself...
@@ -44,7 +44,7 @@ TEST("HALT (IME+)", "HALT-IME-E") {
 }
 
 TEST("HALT (IME~)", "HALT-IME-P") {
-    cpu->SetImeState(Cpu::SharpLr35902ImeState::PendingEnable);
+    cpu->SetImeState(Cpu::SharpSm83ImeState::PendingEnable);
     LoadData(0x00, 0x76);
 
     EXECUTE(1);
@@ -60,7 +60,7 @@ TEST("HALT (IME~)", "HALT-IME-P") {
 }
 
 TEST("HALT (IME-)", "HALT-IME-D") {
-    cpu->SetImeState(Cpu::SharpLr35902ImeState::Disabled);
+    cpu->SetImeState(Cpu::SharpSm83ImeState::Disabled);
     LoadData(0x00, 0x76);
 
     EXECUTE(1);
@@ -76,7 +76,7 @@ TEST("HALT (IME-)", "HALT-IME-D") {
 }
 
 TEST("HALT Bug (IME-)", "HALT-Bug-IME-D") {
-    cpu->SetImeState(Cpu::SharpLr35902ImeState::Disabled);
+    cpu->SetImeState(Cpu::SharpSm83ImeState::Disabled);
     memory->SetByte(0xFF0F, 0b00011100);
     memory->SetByte(0xFFFF, 0b00000111);
     LoadData(0x00, 0x76);
@@ -96,21 +96,21 @@ TEST("HALT Bug (IME-)", "HALT-Bug-IME-D") {
 }
 
 TEST("HALT Bug (IME~)", "HALT-Bug-IME-P") {
-    cpu->SetImeState(Cpu::SharpLr35902ImeState::PendingEnable);
+    cpu->SetImeState(Cpu::SharpSm83ImeState::PendingEnable);
     cpu->SetSp(0x200);
     memory->SetByte(0xFF0F, 0b00000001);
     memory->SetByte(0xFFFF, 0b00000001);
     LoadData(0x00, 0x76);
 
     EXECUTE(5);
-    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(cpu->GetImeState() == Cpu::SharpSm83ImeState::Disabled);
     CHECK(cpu->GetPc() == 0x40);
     CHECK(memory->GetByte(0x1FE) == 0x00);
     CHECK(memory->GetByte(0x1FF) == 0x00);
 }
 
 TEST("HALT Bug (RST)", "HALT-Bug-RST") {
-    cpu->SetImeState(Cpu::SharpLr35902ImeState::Disabled);
+    cpu->SetImeState(Cpu::SharpSm83ImeState::Disabled);
     cpu->SetSp(0x200);
     memory->SetByte(0xFF0F, 0b00000001);
     memory->SetByte(0xFFFF, 0b00000001);
@@ -130,7 +130,7 @@ TEST("DI", "DI") {
     LoadData(0x00, 0xF3);
 
     EXECUTE(1);
-    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
+    CHECK(cpu->GetImeState() == Cpu::SharpSm83ImeState::Disabled);
 }
 
 TEST("EI", "EI") {
@@ -138,11 +138,11 @@ TEST("EI", "EI") {
 
     // Check for pending enable...
     EXECUTE(1);
-    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::PendingEnable);
+    CHECK(cpu->GetImeState() == Cpu::SharpSm83ImeState::PendingEnable);
 
     // Interrupts should be fully enabled after a NOP.
     cpu->Cycle();
-    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(cpu->GetImeState() == Cpu::SharpSm83ImeState::Enabled);
 }
 
 TEST("EI (Multiple)", "EI-multiple") {
@@ -150,12 +150,12 @@ TEST("EI (Multiple)", "EI-multiple") {
 
     // Check for pending enable...
     EXECUTE(1);
-    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::PendingEnable);
+    CHECK(cpu->GetImeState() == Cpu::SharpSm83ImeState::PendingEnable);
 
     // Repeatedly check for enabled.
     cpu->Cycle();
-    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(cpu->GetImeState() == Cpu::SharpSm83ImeState::Enabled);
     cpu->Cycle();
-    CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Enabled);
+    CHECK(cpu->GetImeState() == Cpu::SharpSm83ImeState::Enabled);
 }
 

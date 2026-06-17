@@ -121,13 +121,13 @@ void GameBoyIoRegisters::Joypad_SetMatrix(const uint8_t inputsPressed) {
 
     // Check for falling edges on the pressed inputs. If there are any, raise an interrupt.
     if((m_inputsPressedLast & ~m_inputsPressed) & 0xF) {
-        RaiseInterrupt(Cpu::SharpLr35902Interrupt::Joypad);
+        RaiseInterrupt(Cpu::SharpSm83Interrupt::Joypad);
     }
 
     m_inputsPressedLast = m_regJoypad;
 }
 
-void GameBoyIoRegisters::RaiseInterrupt(const Cpu::SharpLr35902Interrupt interrupt) {
+void GameBoyIoRegisters::RaiseInterrupt(const Cpu::SharpSm83Interrupt interrupt) {
     m_interruptFlag = m_interruptFlag | static_cast<int>(interrupt);
 }
 
@@ -659,7 +659,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 void GameBoyIoRegisters::Timer_Cycle(const uint64_t mCycle) {
     // Perform TIMA reload if necessary.
     if(m_timerTimaReloadStatus == ReloadScheduled) {
-        RaiseInterrupt(Cpu::SharpLr35902Interrupt::Timer);
+        RaiseInterrupt(Cpu::SharpSm83Interrupt::Timer);
         m_regTimerCounter = m_regTimerModulo;
         m_timerTimaReloadStatus = ReloadJustOccurred;
     } else if(m_timerTimaReloadStatus == ReloadJustOccurred) {

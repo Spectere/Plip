@@ -54,7 +54,7 @@ void GameBoyInstance::PPU_Cycle() {
         m_ppuLyc = regLy == m_ioRegisters->GetByte(IoRegister::LcdYCompare);
         if(BIT_TEST(currentLcdStatus, 6) && m_ppuLyc) {
             // LYC == LY interrupt
-            m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+            m_ioRegisters->RaiseInterrupt(Cpu::SharpSm83Interrupt::Lcd);
         }
 
         assert(m_ppuDotClock < PPU_ScanlineTime);
@@ -399,7 +399,7 @@ void GameBoyInstance::PPU_FinishTransition(const uint8_t lcdStatus) {
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
             if(BIT_TEST(lcdStatus, 3)) {
-                m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+                m_ioRegisters->RaiseInterrupt(Cpu::SharpSm83Interrupt::Lcd);
             }
             break;
 
@@ -432,7 +432,7 @@ void GameBoyInstance::PPU_FinishTransition_OamScan(const uint8_t lcdStatus) {
 
     if(BIT_TEST(lcdStatus, 5)) {
         // OAM interrupt.
-        m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+        m_ioRegisters->RaiseInterrupt(Cpu::SharpSm83Interrupt::Lcd);
     }
 }
 
@@ -444,9 +444,9 @@ void GameBoyInstance::PPU_FinishTransition_VBlank(const uint8_t lcdStatus) {
 
     m_ppuLcdOff = false;
 
-    m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::VBlank);
+    m_ioRegisters->RaiseInterrupt(Cpu::SharpSm83Interrupt::VBlank);
     if(BIT_TEST(lcdStatus, 4)) {
-        m_ioRegisters->RaiseInterrupt(Cpu::SharpLr35902Interrupt::Lcd);
+        m_ioRegisters->RaiseInterrupt(Cpu::SharpSm83Interrupt::Lcd);
     }
 
     ++m_totalVBlankCount;

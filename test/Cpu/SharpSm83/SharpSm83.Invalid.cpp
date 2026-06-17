@@ -1,4 +1,4 @@
-/* SharpLr35902.Bits.cpp
+/* SharpSm83.Bits.cpp
  *
  * Tests the CPU core's lack of support for invalid opcodes. :^)
  */
@@ -6,7 +6,7 @@
 #include "PlipInvalidOpcodeException.h"
 #include "catch2/catch_test_macros.hpp"
 
-#include "SharpLr35902Common.h"
+#include "SharpSm83Common.h"
 
 TEST("0xD3", "0xD3") {
     LoadData(0x00, 0xD3);

@@ -1,4 +1,4 @@
-/* SharpLr35902Common.h
+/* Mos6502Common.h
  *
  * Part of the test fixture for the MOS 6502 CPU.
  * This file functions as a common header among the tests for all 6502 instruction groups.

@@ -4,18 +4,18 @@
 
 #pragma once
 
-#include "Cpu/SharpLr35902/SharpLr35902.h"
+#include "Cpu/SharpSm83/SharpSm83.h"
 
 using namespace Plip;
 
-class MockSharpSm83 final : public Cpu::SharpLr35902 {
+class MockSharpSm83 final : public Cpu::SharpSm83 {
 public:
-    MockSharpSm83(const long hz, PlipMemoryMap* memoryMap) : SharpLr35902(hz, memoryMap, false) { }
+    MockSharpSm83(const long hz, PlipMemoryMap* memoryMap) : SharpSm83(hz, memoryMap, false) { }
 
-    [[nodiscard]] bool GetIme() const { return m_ime != Cpu::SharpLr35902ImeState::Disabled; }
+    [[nodiscard]] bool GetIme() const { return m_ime != Cpu::SharpSm83ImeState::Disabled; }
     [[nodiscard]] bool GetInterruptEnabled() const { return m_enableInterrupts; }
-    [[nodiscard]] Cpu::SharpLr35902Registers* GetRegisterPointer() { return &m_registers; }
+    [[nodiscard]] Cpu::SharpSm83Registers* GetRegisterPointer() { return &m_registers; }
     void SetInterruptEnabled(const bool val) { m_enableInterrupts = val; }
-    void SetIme(const bool val) { m_ime = val ? Cpu::SharpLr35902ImeState::Enabled
-                                              : Cpu::SharpLr35902ImeState::Disabled; }
+    void SetIme(const bool val) { m_ime = val ? Cpu::SharpSm83ImeState::Enabled
+                                              : Cpu::SharpSm83ImeState::Disabled; }
 };

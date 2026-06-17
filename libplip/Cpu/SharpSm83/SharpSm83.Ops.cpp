@@ -1,15 +1,15 @@
-/* SharpLr35902.Ops.cpp
+/* SharpSm83.Ops.cpp
  *
- * An implementation of a Sharp LR35902 CPU (SM83 core).
+ * An implementation of a Sharp SM83-based CPU.
  * This file implements the decode and execution steps.
  */
 
-#include "SharpLr35902.h"
+#include "SharpSm83.h"
 #include "../../PlipEmulationException.h"
 #include "../../PlipInvalidOpcodeException.h"
 #include "../../PlipSupport.h"
 
-using Plip::Cpu::SharpLr35902;
+using Plip::Cpu::SharpSm83;
 
 static int cycleCount = 0;
 static uint8_t op;
@@ -106,7 +106,7 @@ static constexpr int CondC  = 0b11;
 
 void DecodeAndExecuteCb();
 
-uint16_t SharpLr35902::GetPointerAddress(const int pointerIndex) {
+uint16_t SharpSm83::GetPointerAddress(const int pointerIndex) {
     switch(pointerIndex) {
         case AddrBc: return m_registers.GetBc();
         case AddrDe: return m_registers.GetDe();
@@ -125,13 +125,13 @@ uint16_t SharpLr35902::GetPointerAddress(const int pointerIndex) {
     }
 }
 
-uint8_t SharpLr35902::Pop8FromStack() {
+uint8_t SharpSm83::Pop8FromStack() {
     uint8_t value;
     FETCH_ADDR(value, m_registers.SP++);
     return value;
 }
 
-uint16_t SharpLr35902::Pop16FromStack() {
+uint16_t SharpSm83::Pop16FromStack() {
     uint8_t high;
     uint8_t low;
 
@@ -139,25 +139,25 @@ uint16_t SharpLr35902::Pop16FromStack() {
     return (high << 8) | low;
 }
 
-void SharpLr35902::Pop16FromStack(uint8_t &high, uint8_t &low) {
+void SharpSm83::Pop16FromStack(uint8_t &high, uint8_t &low) {
     low = Pop8FromStack();
     high = Pop8FromStack();
 }
 
-void SharpLr35902::Push8ToStack(const uint8_t value) {
+void SharpSm83::Push8ToStack(const uint8_t value) {
     STORE_ADDR(--m_registers.SP, value);
 }
 
-void SharpLr35902::Push16ToStack(const uint16_t value) {
+void SharpSm83::Push16ToStack(const uint16_t value) {
     Push16ToStack(value >> 8, value);
 }
 
-void SharpLr35902::Push16ToStack(const uint8_t high, const uint8_t low) {
+void SharpSm83::Push16ToStack(const uint8_t high, const uint8_t low) {
     Push8ToStack(high);
     Push8ToStack(low);
 }
 
-void SharpLr35902::OpAddToRegisterA(const int value, const bool addWithCarry) {
+void SharpSm83::OpAddToRegisterA(const int value, const bool addWithCarry) {
     const auto carry = (addWithCarry && m_registers.GetCarryFlag()) ? 1 : 0;
 
     CHECK_ADD_HALF_CARRY_WITH_CARRY(m_registers.A, value, carry);
@@ -167,7 +167,7 @@ void SharpLr35902::OpAddToRegisterA(const int value, const bool addWithCarry) {
     CHECK_ZERO(m_registers.A);
 }
 
-void SharpLr35902::OpBitwiseAndRegisterA(const uint8_t value) {
+void SharpSm83::OpBitwiseAndRegisterA(const uint8_t value) {
     m_registers.A &= value;
     m_registers.ClearCarryFlag();
     m_registers.SetHalfCarryFlag();
@@ -175,7 +175,7 @@ void SharpLr35902::OpBitwiseAndRegisterA(const uint8_t value) {
     CHECK_ZERO(m_registers.A);
 }
 
-void SharpLr35902::OpBitwiseOrRegisterA(const uint8_t value) {
+void SharpSm83::OpBitwiseOrRegisterA(const uint8_t value) {
     m_registers.A |= value;
     m_registers.ClearCarryFlag();
     m_registers.ClearHalfCarryFlag();
@@ -183,7 +183,7 @@ void SharpLr35902::OpBitwiseOrRegisterA(const uint8_t value) {
     CHECK_ZERO(m_registers.A);
 }
 
-void SharpLr35902::OpBitwiseXorRegisterA(const uint8_t value) {
+void SharpSm83::OpBitwiseXorRegisterA(const uint8_t value) {
     m_registers.A ^= value;
     m_registers.ClearCarryFlag();
     m_registers.ClearHalfCarryFlag();
@@ -191,12 +191,12 @@ void SharpLr35902::OpBitwiseXorRegisterA(const uint8_t value) {
     CHECK_ZERO(m_registers.A);
 }
 
-void SharpLr35902::OpJumpRelative(const int8_t offset) {
+void SharpSm83::OpJumpRelative(const int8_t offset) {
     m_registers.PC += offset;
     ADVANCE_M_CYCLE();
 }
 
-bool SharpLr35902::TestConditional(const int conditional) const {
+bool SharpSm83::TestConditional(const int conditional) const {
     switch(conditional) {
         case CondC:  return m_registers.GetCarryFlag();
         case CondNC: return !m_registers.GetCarryFlag();
@@ -207,12 +207,12 @@ bool SharpLr35902::TestConditional(const int conditional) const {
     }
 }
 
-void SharpLr35902::OpReturn() {
+void SharpSm83::OpReturn() {
     const auto addr = Pop16FromStack();
     JUMP_ABSOLUTE(addr);
 }
 
-uint8_t SharpLr35902::OpRotateLeft(uint8_t value, const bool throughCarry, const bool checkZeroFlag) {
+uint8_t SharpSm83::OpRotateLeft(uint8_t value, const bool throughCarry, const bool checkZeroFlag) {
     m_registers.ClearSubtractFlag();
     m_registers.ClearHalfCarryFlag();
 
@@ -229,7 +229,7 @@ uint8_t SharpLr35902::OpRotateLeft(uint8_t value, const bool throughCarry, const
     return value;
 }
 
-uint8_t SharpLr35902::OpRotateRight(uint8_t value, const bool throughCarry, const bool checkZeroFlag) {
+uint8_t SharpSm83::OpRotateRight(uint8_t value, const bool throughCarry, const bool checkZeroFlag) {
     m_registers.ClearSubtractFlag();
     m_registers.ClearHalfCarryFlag();
 
@@ -246,7 +246,7 @@ uint8_t SharpLr35902::OpRotateRight(uint8_t value, const bool throughCarry, cons
     return value;
 }
 
-uint8_t SharpLr35902::OpShiftLeft(uint8_t value) {
+uint8_t SharpSm83::OpShiftLeft(uint8_t value) {
     m_registers.ClearSubtractFlag();
     m_registers.ClearHalfCarryFlag();
 
@@ -257,7 +257,7 @@ uint8_t SharpLr35902::OpShiftLeft(uint8_t value) {
     return value;
 }
 
-uint8_t SharpLr35902::OpShiftRight(uint8_t value, const bool arithmetic) {
+uint8_t SharpSm83::OpShiftRight(uint8_t value, const bool arithmetic) {
     m_registers.ClearSubtractFlag();
     m_registers.ClearHalfCarryFlag();
 
@@ -269,7 +269,7 @@ uint8_t SharpLr35902::OpShiftRight(uint8_t value, const bool arithmetic) {
     return value;
 }
 
-void SharpLr35902::OpSubtractFromRegisterA(const int value, const bool subtractWithBorrow, const bool discardResult) {
+void SharpSm83::OpSubtractFromRegisterA(const int value, const bool subtractWithBorrow, const bool discardResult) {
     const auto borrow = ((subtractWithBorrow && m_registers.GetCarryFlag()) ? 1 : 0);
     const uint8_t result = m_registers.A - value - borrow;
 
@@ -281,7 +281,7 @@ void SharpLr35902::OpSubtractFromRegisterA(const int value, const bool subtractW
     if(!discardResult) m_registers.A = result;
 }
 
-uint8_t SharpLr35902::OpSwapNibbles(uint8_t value) {
+uint8_t SharpSm83::OpSwapNibbles(uint8_t value) {
     m_registers.ClearSubtractFlag();
     m_registers.ClearHalfCarryFlag();
     m_registers.ClearCarryFlag();
@@ -292,9 +292,9 @@ uint8_t SharpLr35902::OpSwapNibbles(uint8_t value) {
     return value;
 }
 
-void SharpLr35902::ServiceInterrupt(const int activeInterrupts) {
+void SharpSm83::ServiceInterrupt(const int activeInterrupts) {
     // Disable interrupts and call the appropriate handler.
-    m_ime = SharpLr35902ImeState::Disabled;
+    m_ime = SharpSm83ImeState::Disabled;
 
     uint16_t destAddr = 0x40;
     for(auto i = 0; i < 5; i++) {
@@ -311,7 +311,7 @@ void SharpLr35902::ServiceInterrupt(const int activeInterrupts) {
     JUMP_ABSOLUTE(destAddr);
 }
 
-long SharpLr35902::DecodeAndExecute() {
+long SharpSm83::DecodeAndExecute() {
     cycleCount = 0;
 
     const auto activeInterrupts = REG_IE & REG_IF & 0b11111;
@@ -322,13 +322,13 @@ long SharpLr35902::DecodeAndExecute() {
         }
 
         m_halt = false;
-        if(m_ime != SharpLr35902ImeState::Enabled) {
+        if(m_ime != SharpSm83ImeState::Enabled) {
             // Interrupts are disabled. Wake up, but don't service the interrupt.
             return MCycleLength;
         }
     }
 
-    if(m_ime == SharpLr35902ImeState::Enabled && activeInterrupts) {
+    if(m_ime == SharpSm83ImeState::Enabled && activeInterrupts) {
         ADVANCE_M_CYCLE(); ADVANCE_M_CYCLE();
         ServiceInterrupt(activeInterrupts);
         return cycleCount;
@@ -366,12 +366,12 @@ long SharpLr35902::DecodeAndExecute() {
         case 0x76: {
             // HALT
             // 1 cycle, - - - -
-            if(m_ime == SharpLr35902ImeState::Disabled && activeInterrupts != 0) {
+            if(m_ime == SharpSm83ImeState::Disabled && activeInterrupts != 0) {
                 // HALT bug triggered. The CPU will not be halted, interrupts will
                 // not be serviced, and the PC will be NOT be incremented during the
                 // next fetch.
                 m_holdPc = true;
-            } else if(m_ime == SharpLr35902ImeState::PendingEnable && activeInterrupts != 0) {
+            } else if(m_ime == SharpSm83ImeState::PendingEnable && activeInterrupts != 0) {
                 // HALT bug triggered. When HALT follows EI, the address containing the
                 // HALT op is pushed onto the stack, the interrupt is serviced, and execution
                 // resumes at the HALT instruction. The reason this happens is probably due
@@ -389,7 +389,7 @@ long SharpLr35902::DecodeAndExecute() {
         case 0xF3: {
             // DI
             // 1 cycle, - - - -
-            m_ime = SharpLr35902ImeState::Disabled;
+            m_ime = SharpSm83ImeState::Disabled;
             break;
         }
 
@@ -439,7 +439,7 @@ long SharpLr35902::DecodeAndExecute() {
             // Equivalent to EI, RET, so interrupts are enabled immediately after this
             // instruction.
             OpReturn();
-            m_ime = SharpLr35902ImeState::Enabled;
+            m_ime = SharpSm83ImeState::Enabled;
             break;
         }
 
@@ -673,7 +673,7 @@ long SharpLr35902::DecodeAndExecute() {
             uint8_t valLow;
             uint8_t valHigh;
             Pop16FromStack(valHigh, valLow);
-            if(destReg16Idx == SharpLr35902Registers::RegIndex16Af) {
+            if(destReg16Idx == SharpSm83Registers::RegIndex16Af) {
                 // AF shares an index with SP, but it must be handled differently.
                 m_registers.A = valHigh;
                 m_registers.F = valLow & 0xF0;  // lower 4 bits are discarded
@@ -689,7 +689,7 @@ long SharpLr35902::DecodeAndExecute() {
             const auto srcReg16Idx = OP_REG16;
             uint8_t valLow;
             uint8_t valHigh;
-            if(srcReg16Idx == SharpLr35902Registers::RegIndex16Af) {
+            if(srcReg16Idx == SharpSm83Registers::RegIndex16Af) {
                 // AF shares an index with SP, but it must be handled differently.
                 valLow = m_registers.F & 0xF0;
                 valHigh = m_registers.A;
@@ -1147,7 +1147,7 @@ long SharpLr35902::DecodeAndExecute() {
     return cycleCount;
 }
 
-void SharpLr35902::DecodeAndExecuteCb() {
+void SharpSm83::DecodeAndExecuteCb() {
     FETCH_PC(op);
 
     switch(op) {

@@ -1,6 +1,6 @@
-/* SharpLr35902Registers.h
+/* SharpSm83Registers.h
  *
- * The registers struct used by the Sharp LR35902 CPU implementation.
+ * The registers struct used by the Sharp SM83 CPU implementation.
  */
 
 #pragma once
@@ -11,7 +11,7 @@
 #include "../../PlipSupport.h"
 
 namespace Plip::Cpu {
-    struct SharpLr35902Registers {
+    struct SharpSm83Registers {
         static constexpr int CarryFlagBit     = 4;
         static constexpr int HalfCarryFlagBit = 5;
         static constexpr int SubtractFlagBit  = 6;

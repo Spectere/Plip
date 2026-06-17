@@ -465,7 +465,7 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
     m_cartRam = m_gbMemory->ConfigureMapper(m_mbc, m_hasRtc, m_cartRamBanks);
 
     // Create CPU.
-    m_cpu = new Cpu::SharpLr35902(BaseClockRate, m_memory, m_model == GameBoyModel::CGB);
+    m_cpu = new Cpu::SharpSm83(BaseClockRate, m_memory, m_model == GameBoyModel::CGB);
     m_cycleTime = m_cpu->GetCycleTime();
 
     // Reset system.

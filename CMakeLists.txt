@@ -152,13 +152,13 @@ add_library(${lib_name}
 
     # MOS 6502
     libplip/Cpu/Mos6502/Mos6502.cpp                 libplip/Cpu/Mos6502/Mos6502.h
-    libplip/Cpu/Mos6502/Mos6502Registers.h
+                                                    libplip/Cpu/Mos6502/Mos6502Registers.h
     libplip/Cpu/Mos6502/Mos6502.Ops.cpp
 
     # Sharp LR35902
-    libplip/Cpu/SharpLr35902/SharpLr35902.cpp       libplip/Cpu/SharpLr35902/SharpLr35902.h
-                                                    libplip/Cpu/SharpLr35902/SharpLr35902Registers.h
-    libplip/Cpu/SharpLr35902/SharpLr35902.Ops.cpp
+    libplip/Cpu/SharpSm83/SharpSm83.cpp             libplip/Cpu/SharpSm83/SharpSm83.h
+                                                    libplip/Cpu/SharpSm83/SharpSm83Registers.h
+    libplip/Cpu/SharpSm83/SharpSm83.Ops.cpp
 
 
     #########
@@ -279,17 +279,17 @@ add_executable(${test_name}
     test/Cpu/Mos6502/Mos6502.System.cpp
     test/Cpu/Mos6502/Mos6502.Unofficial.cpp
 
-    # Sharp LR35902
-    test/Cpu/SharpLr35902/SharpLr35902Common.h
-    test/Cpu/SharpLr35902/SharpLr35902.Arith8.cpp
-    test/Cpu/SharpLr35902/SharpLr35902.Arith16.cpp
-    test/Cpu/SharpLr35902/SharpLr35902.Bits.cpp
-    test/Cpu/SharpLr35902/SharpLr35902.Interrupts.cpp
-    test/Cpu/SharpLr35902/SharpLr35902.Invalid.cpp
-    test/Cpu/SharpLr35902/SharpLr35902.Jumps.cpp
-    test/Cpu/SharpLr35902/SharpLr35902.Ld8.cpp
-    test/Cpu/SharpLr35902/SharpLr35902.Ld16.cpp
-    test/Cpu/SharpLr35902/SharpLr35902.MiscControl.cpp
+    # Sharp SM83
+    test/Cpu/SharpSm83/SharpSm83Common.h
+    test/Cpu/SharpSm83/SharpSm83.Arith8.cpp
+    test/Cpu/SharpSm83/SharpSm83.Arith16.cpp
+    test/Cpu/SharpSm83/SharpSm83.Bits.cpp
+    test/Cpu/SharpSm83/SharpSm83.Interrupts.cpp
+    test/Cpu/SharpSm83/SharpSm83.Invalid.cpp
+    test/Cpu/SharpSm83/SharpSm83.Jumps.cpp
+    test/Cpu/SharpSm83/SharpSm83.Ld8.cpp
+    test/Cpu/SharpSm83/SharpSm83.Ld16.cpp
+    test/Cpu/SharpSm83/SharpSm83.MiscControl.cpp
 )
 
 target_include_directories(${test_name}

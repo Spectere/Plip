@@ -1,11 +1,11 @@
-/* SharpLr35902.Arith16.cpp
+/* SharpSm83.Arith16.cpp
  *
  * Tests the CPU core's ability to perform 16-bit arithmetic and logical operations.
  */
 
 #include "catch2/catch_test_macros.hpp"
 
-#include "SharpLr35902Common.h"
+#include "SharpSm83Common.h"
 
 TEST("INC BC", "INC-BC") {  // 0x03
     cpu->SetBc(0xFF);

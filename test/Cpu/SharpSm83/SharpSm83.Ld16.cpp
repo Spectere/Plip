@@ -1,11 +1,11 @@
-/* SharpLr35902.Ld16.cpp
+/* SharpSm83.Ld16.cpp
  *
  * Tests the CPU core's ability to load 16-bit values.
  */
 
 #include "catch2/catch_test_macros.hpp"
 
-#include "SharpLr35902Common.h"
+#include "SharpSm83Common.h"
 
 TEST("LD BC, imm16", "LD-BC,imm16") {  // 0x01
     LoadData(0x00, { 0x01, 0x34, 0x12 });
@@ -51,14 +51,14 @@ TEST("POP BC", "POP-BC") {  // 0xC1
     LoadData(0x00, 0xC1);
 
     EXECUTE(3);
-    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexB) == 0x12);
-    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexC) == 0x34);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpSm83::RegIndexB) == 0x12);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpSm83::RegIndexC) == 0x34);
     CHECK(cpu->GetSp() == 0x1000);
 }
 
 TEST("PUSH BC", "PUSH-BC") {  // 0xC5
-    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexB, 0x12);
-    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexC, 0x34);
+    cpu->SetRegister8ByIndex(MockSharpSm83::RegIndexB, 0x12);
+    cpu->SetRegister8ByIndex(MockSharpSm83::RegIndexC, 0x34);
     cpu->SetSp(0x1000);
     LoadData(0x00, 0xC5);
 
@@ -75,14 +75,14 @@ TEST("POP DE", "POP-DE") {  // 0xD1
     LoadData(0x00, 0xD1);
 
     EXECUTE(3);
-    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexD) == 0x12);
-    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexE) == 0x34);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpSm83::RegIndexD) == 0x12);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpSm83::RegIndexE) == 0x34);
     CHECK(cpu->GetSp() == 0x1000);
 }
 
 TEST("PUSH DE", "PUSH-DE") {  // 0xD5
-    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexD, 0x12);
-    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexE, 0x34);
+    cpu->SetRegister8ByIndex(MockSharpSm83::RegIndexD, 0x12);
+    cpu->SetRegister8ByIndex(MockSharpSm83::RegIndexE, 0x34);
     cpu->SetSp(0x1000);
     LoadData(0x00, 0xD5);
 
@@ -99,14 +99,14 @@ TEST("POP HL", "POP-HL") {  // 0xE1
     LoadData(0x00, 0xE1);
 
     EXECUTE(3);
-    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexH) == 0x12);
-    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexL) == 0x34);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpSm83::RegIndexH) == 0x12);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpSm83::RegIndexL) == 0x34);
     CHECK(cpu->GetSp() == 0x1000);
 }
 
 TEST("PUSH HL", "PUSH-HL") {  // 0xE5
-    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexH, 0x12);
-    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexL, 0x34);
+    cpu->SetRegister8ByIndex(MockSharpSm83::RegIndexH, 0x12);
+    cpu->SetRegister8ByIndex(MockSharpSm83::RegIndexL, 0x34);
     cpu->SetSp(0x1000);
     LoadData(0x00, 0xE5);
 
@@ -123,7 +123,7 @@ TEST("POP AF", "POP-AF") {  // 0xF1
     LoadData(0x00, 0xF1);
 
     EXECUTE(3);
-    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexA) == 0x12);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpSm83::RegIndexA) == 0x12);
     CHECK(cpu->GetCarryFlag());
     CHECK(cpu->GetHalfCarryFlag());
     CHECK(cpu->GetSubtractFlag());
@@ -132,7 +132,7 @@ TEST("POP AF", "POP-AF") {  // 0xF1
 }
 
 TEST("PUSH AF", "PUSH-AF") {  // 0xF5
-    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexA, 0x12);
+    cpu->SetRegister8ByIndex(MockSharpSm83::RegIndexA, 0x12);
     cpu->SetCarryFlag();
     cpu->SetHalfCarryFlag();
     cpu->SetSubtractFlag();

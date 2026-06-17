@@ -7,7 +7,7 @@
 
 #include "AudioChannel.h"
 #include "GameBoyModel.h"
-#include "../../Cpu/SharpLr35902/SharpLr35902.h"
+#include "../../Cpu/SharpSm83/SharpSm83.h"
 #include "../../Memory/PlipMemory.h"
 
 namespace Plip::Core::GameBoy {
@@ -119,7 +119,7 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] bool GetBootRomDisabled() const { return m_bootRomDisabled; }
         [[nodiscard]] bool GetIsDoubleSpeedArmed() const { return m_speedSwitchArmed; }
         [[nodiscard]] int GetPerformWorkRamBankSwitch() const { return m_performWorkRamBankSwitch; }
-        void RaiseInterrupt(Cpu::SharpLr35902Interrupt interrupt);
+        void RaiseInterrupt(Cpu::SharpSm83Interrupt interrupt);
         void SetDoubleSpeed(const bool doubleSpeed) {
             m_doubleSpeedActive = doubleSpeed;
             m_speedSwitchArmed = false;
