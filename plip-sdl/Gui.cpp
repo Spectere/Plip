@@ -105,22 +105,22 @@ void Gui::DrawCoreDebugInfo() {
                         break;
 
                     case Plip::DebugValueType::Int8:
-                        ImGui::Text("0x%.2lX (%lu)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.2llX (%llu)", static_cast<uint64_t>(value.ValueInt), static_cast<uint64_t>(value.ValueInt));
                         break;
 
                     case Plip::DebugValueType::Int16Le:
                     case Plip::DebugValueType::Int16Be:
-                        ImGui::Text("0x%.4lX (%lu)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.4llX (%llu)", static_cast<uint64_t>(value.ValueInt), static_cast<uint64_t>(value.ValueInt));
                         break;
 
                     case Plip::DebugValueType::Int32Le:
                     case Plip::DebugValueType::Int32Be:
-                        ImGui::Text("0x%.8lX (%lu)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.8llX (%llu)", static_cast<uint64_t>(value.ValueInt), static_cast<uint64_t>(value.ValueInt));
                         break;
 
                     case Plip::DebugValueType::Int64Le:
                     case Plip::DebugValueType::Int64Be:
-                        ImGui::Text("0x%.16lX (%lu)", value.ValueInt, value.ValueInt);
+                        ImGui::Text("0x%.16llX (%llu)", static_cast<uint64_t>(value.ValueInt), static_cast<uint64_t>(value.ValueInt));
                         break;
 
                     case Plip::DebugValueType::String:
