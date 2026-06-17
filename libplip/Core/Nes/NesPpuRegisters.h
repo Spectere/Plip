@@ -29,11 +29,11 @@ namespace Plip::Core::Nes {
     public:
         explicit NesPpuRegisters(NesMapper* mapper, Cpu::Mos6502* cpu) : m_cpu(cpu), m_mapper(mapper) { }
 
-        [[nodiscard]] uint8_t GetByte(const uint32_t address, const bool privileged = false) override {
+        [[nodiscard]] uint8_t GetByte(const uint32_t address, const bool privileged) override {
             return GetByte(static_cast<PpuRegister>(address), privileged);
         }
 
-        void SetByte(const uint32_t address, const uint8_t value, const bool privileged = false) override {
+        void SetByte(const uint32_t address, const uint8_t value, const bool privileged) override {
             SetByte(static_cast<PpuRegister>(address), value, privileged);
         }
 

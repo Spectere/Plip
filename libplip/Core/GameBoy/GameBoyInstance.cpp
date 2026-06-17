@@ -5,6 +5,7 @@
 
 #include "GameBoyInstance.h"
 
+#include "../../Memory/PlipMemory.h"
 #include "../../PlipInitializationException.h"
 #include "../../PlipIo.h"
 #include "../../PlipUtility.h"
@@ -428,7 +429,7 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
             { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) },
             { "Boot ROM Enabled", DebugValue(!m_bootRomDisableFlag) },
             { "DMA State", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_dmaState)) },
-            { "IE", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_highRam->GetByte(0x80))) },
+            { "IE", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_highRam->GetByte(0x80, true))) },
             { "IF", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::InterruptFlag))) },
             { "CGB Mode", DebugValue(m_cgbMode) },
         }},
@@ -505,7 +506,7 @@ Plip::PlipError GameBoyInstance::Load(const std::string &path) {
 int GameBoyInstance::GetCartridgeRamBankCount() const {
     if(!m_hasCartRam) return 0;
 
-    switch(const auto ramSize = m_cartRom->GetByte(CartRamSizeOffset)) {
+    switch(const auto ramSize = m_cartRom->GetByte(CartRamSizeOffset, true)) {
         case 0x00:  // 0KB
         case 0x01:  // 2KB
         case 0x02:  // 8KB
@@ -537,7 +538,7 @@ bool GameBoyInstance::IsMultiRomCartridge() const {
         bool mismatch = false;
 
         for(auto x = 0; x < LogoSize; ++x) {
-            mismatch = (m_cartRom->GetByte(startOffset + x) != Logo[x]);
+            mismatch = (m_cartRom->GetByte(startOffset + x, true) != Logo[x]);
             if(mismatch) break;
         }
 
@@ -550,7 +551,7 @@ bool GameBoyInstance::IsMultiRomCartridge() const {
 }
 
 void GameBoyInstance::ReadCartridgeFeatures() {
-    const auto cartType = m_cartRom->GetByte(0x0147);
+    const auto cartType = m_cartRom->GetByte(0x0147, true);
     m_cartRomBanks = m_cartRom->GetLength() / GameBoyMapper::RomBank0Length;
 
     // MBC

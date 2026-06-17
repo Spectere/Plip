@@ -15,9 +15,9 @@ namespace Plip {
         explicit PlipMemoryRam(uint32_t amount, uint8_t unprivilegedValue = 0);
         virtual ~PlipMemoryRam() = default;
 
-        uint8_t GetByte(uint32_t address, bool privileged = false) override;
+        uint8_t GetByte(uint32_t address, bool privileged) override;
         uint32_t GetLength() override;
-        void SetByte(uint32_t address, uint8_t value, bool privileged = false) override;
+        void SetByte(uint32_t address, uint8_t value, bool privileged) override;
 
     protected:
         uint32_t m_length;
