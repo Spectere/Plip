@@ -19,9 +19,9 @@ std::fstream PlipIo::CreateFile(const std::string& path) {
 
 void PlipIo::DumpMemoryToDisk(std::fstream& file, PlipMemory *memory) {
     const auto memoryLength = memory->GetLength();
-    
+
     for(auto i = 0; i < memoryLength; i++) {
-        file.put(memory->GetByte(i, true));
+        file.put(std::bit_cast<char>(memory->GetByte(i, true)));
     }
     file.flush();
 }
@@ -49,7 +49,7 @@ uintmax_t PlipIo::GetSize(const std::string& path) {
     return file_size(fs::path(path));
 }
 
-std::fstream PlipIo::LoadFile(const std::string& path, bool writable) {
+std::fstream PlipIo::LoadFile(const std::string& path, const bool writable) {
     return std::fstream(
         path.c_str(),
         writable
@@ -68,7 +68,7 @@ std::vector<char> PlipIo::ReadFile(const std::string& path, const uintmax_t size
 
 std::vector<char> PlipIo::ReadFile(std::fstream& file, const int offset, const uintmax_t size) {
     std::vector<char> data(size);
-    
+
     // Unlikely, but let's handle it anyway.
     if(size > std::numeric_limits<std::streamsize>::max()) {
         throw std::runtime_error("File size is larger than supported.");

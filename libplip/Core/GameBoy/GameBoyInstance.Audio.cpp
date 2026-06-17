@@ -21,12 +21,6 @@ void GameBoyInstance::APU_Init() {
     m_channel2 = m_ioRegisters->Audio_GetChannelPulse2();
     m_channel3 = m_ioRegisters->Audio_GetChannelWave();
     m_channel4 = m_ioRegisters->Audio_GetChannelNoise();
-
-    APU_Reset();
-}
-
-void GameBoyInstance::APU_Reset() {
-    // TODO
 }
 
 void GameBoyInstance::APU_Cycle() {

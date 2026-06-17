@@ -43,8 +43,7 @@ void Game::Run() const {
     while(running) {
         const auto frameStartTime = steady_clock::now();
 
-        auto uiEvents = m_event->ProcessEvents();
-        for(const auto &event : uiEvents) {
+        for(auto uiEvents = m_event->ProcessEvents(); const auto &event : uiEvents) {
             switch(event) {
                 case PlipUiEvent::Quit:
                     running = false;
@@ -83,7 +82,7 @@ void Game::Run() const {
             }
         }
 
-        m_gui->NewFrame();
+        Gui::NewFrame();
         if(m_gui->GetEnabled()) {
             if(m_gui->State.PerformRead) {
                 auto memoryBase = m_gui->State.ReadAddress;

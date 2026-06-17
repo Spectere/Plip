@@ -26,7 +26,7 @@ NesInstance::NesInstance(PlipAudio* audio, PlipInput* input, PlipVideo* video, c
     m_videoFormat = PlipVideo::GetFormatInfo(video->GetFormat());
     m_videoBufferSize = m_videoFormat.pixelWidth * ScreenWidth * ScreenHeight;
     m_videoBuffer = new uint8_t[m_videoBufferSize];
-    
+
     // Initialize input.
     RegisterInput();
 }
@@ -83,12 +83,12 @@ Plip::PlipError NesInstance::Load(const std::string& path) {
     // Read the ROM
     const auto romSize = PlipIo::GetSize(m_cartPath);
     auto romFile = PlipIo::LoadFile(m_cartPath);
-    
+
     // Read the ROM header.
     if(romSize < 16) {
         return PlipError::RomFileTruncated;
     }
-    
+
     if(const auto romHeader = PlipIo::ReadFile(romFile, 16); !ReadRomHeader(romHeader)) {
         return PlipError::UnrecognizedMedia;
     }
@@ -128,8 +128,7 @@ Plip::PlipError NesInstance::Load(const std::string& path) {
         m_cartPrgNvramSize, m_cartChrNvramSize
     );
 
-    m_ppuRegisters = new NesPpuRegisters(m_mapper);
-    
+
     m_nesMemory = new NesMemory(m_workRam, m_ppuRegisters, m_apuRegisters, m_mapper, m_ppuRam);
     delete m_memory;
     m_memory = m_nesMemory;
@@ -150,16 +149,14 @@ Plip::PlipError NesInstance::Load(const std::string& path) {
             break;
     }
     m_cpu = new Cpu::Mos6502(cpuClock, m_memory, Cpu::Mos6502Version::Ricoh2A03);
+    m_ppuRegisters = new NesPpuRegisters(m_mapper, m_cpu);  // PPU must be able to raise interrupts
 
-    // Pass the CPU to the PPU registers object to allow it to raise NMIs.
-    m_ppuRegisters->SetCpu(m_cpu);
-    
     return PlipError::Success;
 }
 
 void NesInstance::ReadControllers() {
     if(!m_apuRegisters->GetControllerStrobe()) return;
-    
+
     m_input1 = m_input2 = 0;
 
     READ_INPUT1(InputP1_A);
@@ -206,14 +203,14 @@ bool NesInstance::ReadRomHeader(const std::vector<char>& headerData) {
 void NesInstance::ReadRomHeaderINes(const std::vector<char>& headerData) {
     // Reference: https://www.nesdev.org/wiki/INES
     m_cartUsesINesHeader = true;
-    
+
     m_cartPrgRomSize = (static_cast<uint8_t>(headerData[4])) * 16384;
     m_cartChrRomSize = static_cast<uint8_t>(headerData[5]) * 8192;
 
     // Some rippers/tools used the formerly "unused" header bytes.
     // If there's anything in bytes 11-14, we need to be a bit more careful.
     const auto trustHigherBytes = !(headerData[11] == 0 && headerData[12] == 0 && headerData[13] == 0 && headerData[14]);
-    
+
     m_cartMapper = (headerData[7] & 0xF0) | ((headerData[6] & 0xF0) >> 4);
     if(!trustHigherBytes) {
         m_cartMapper &= 0x0F;  // Well, so much for that...

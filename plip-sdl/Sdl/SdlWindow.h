@@ -12,7 +12,7 @@
 namespace PlipSdl {
     class SdlWindow final : public Plip::PlipVideo {
     public:
-        explicit SdlWindow(const std::string &title = "", bool integerScaling = false, int lockScale = -1, int forceWidth = -1, int forceHeight = -1);
+        explicit SdlWindow(std::string title = "", bool integerScaling = false, int lockScale = -1, int forceWidth = -1, int forceHeight = -1);
         ~SdlWindow();
 
         bool BeginDraw() override;

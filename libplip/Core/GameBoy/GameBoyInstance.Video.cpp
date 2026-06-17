@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstring>
 
 #include "GameBoyInstance.h"
 
@@ -147,7 +146,7 @@ bool GameBoyInstance::PPU_DotClock_OamScan() {
 
         // DMG prioritizes candidates with a lower X position.
         if(!m_cgbMode) {
-            std::sort(m_ppuObjectDrawList.begin(), m_ppuObjectDrawList.end(), [](const PPU_Object lhs, const PPU_Object rhs) {
+            std::ranges::sort(m_ppuObjectDrawList, [](const PPU_Object lhs, const PPU_Object rhs) {
                 return lhs.X < rhs.X;
             });
         }
@@ -220,7 +219,7 @@ bool GameBoyInstance::PPU_DotClock_Output(const uint8_t lcdControl) {
     return m_ppuLcdXCoordinate <= ScreenWidth - 1;
 }
 
-void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
+void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) const {
     const uint32_t pixelOffset = (m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate;
 
     assert(m_ppuLcdXCoordinate < ScreenWidth);
@@ -228,7 +227,7 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
 
     if(!BIT_TEST(lcdControl, 7)) {
         // The LCD should not be disabled here. Plot an error pixel.
-        PPU_Plot_DMG(255, pixelOffset);
+        PPU_Plot_DMG(255, std::bit_cast<int>(pixelOffset));
     }
 
     int lastBgColor = 0;
@@ -244,18 +243,18 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
         const auto tileDataAddressLow = PPU_TileBase + (tilesUseBlock2 ? 0x1000 : 0);
         constexpr uint16_t tileDataAddressHigh = PPU_TileBase + 0x800;
 
-        lastBgColor = PPU_DrawBackgroundOrWindow(pixelOffset, false, backgroundPalette, m_ppuScrollX, scrollY, backgroundTileMapAddress, tileDataAddressLow, tileDataAddressHigh, lcdcEnabledOrPriority);
+        lastBgColor = PPU_DrawBackgroundOrWindow(pixelOffset, false, backgroundPalette, m_ppuScrollX, scrollY, backgroundTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
 
         if(m_ppuWindowEnabled) {
             // Window drawing is enabled.
             const auto windowTileMapAddress = PPU_TileMapBase + (BIT_TEST(lcdControl, 6) ? PPU_TileMapBlockOffset : 0);
 
-            const auto windowColor = PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, m_ppuWindowX, m_ppuWindowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh, lcdcEnabledOrPriority);
+            const auto windowColor = PPU_DrawBackgroundOrWindow(pixelOffset, true, backgroundPalette, m_ppuWindowX, m_ppuWindowY, windowTileMapAddress, tileDataAddressLow, tileDataAddressHigh);
             if(windowColor >= 0) lastBgColor = windowColor;
         }
     } else {
         // Background/Window drawing is disabled.
-        PPU_Plot_DMG(0b00, pixelOffset);
+        PPU_Plot_DMG(0b00, std::bit_cast<int>(pixelOffset));
     }
 
     if(BIT_TEST(lcdControl, 1)) {
@@ -268,7 +267,8 @@ void GameBoyInstance::PPU_DotClock_Output_Drawing(const uint8_t lcdControl) {
     }
 }
 
-int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const int offsetX, const int offsetY, const uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1, const bool lcdcPriority) const {
+int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, const bool isWindow, const uint8_t palette, const int offsetX, const int offsetY, const
+                                                uint16_t tileMapAddress, const uint16_t tileDataAddress0, const uint16_t tileDataAddress1) const {
     uint8_t surfacePixelX {};
     uint8_t surfacePixelY {};
 
@@ -325,11 +325,11 @@ int GameBoyInstance::PPU_DrawBackgroundOrWindow(const uint32_t pixelOffset, cons
     const auto pixelColor = (palette >> (pixelData * 2)) & 0b11;
 
     if(m_model == GameBoyModel::DMG) {
-        PPU_Plot_DMG(pixelColor, pixelOffset);
+        PPU_Plot_DMG(pixelColor, std::bit_cast<int>(pixelOffset));
         return pixelColor;
     }
 
-    PPU_Plot_CGB(false, cgbPalette, m_cgbMode ? pixelData : pixelColor, pixelOffset);
+    PPU_Plot_CGB(false, cgbPalette, m_cgbMode ? pixelData : pixelColor, std::bit_cast<int>(pixelOffset));
     return pixelData | (priority ? (1 << 7) : 0);
 }
 
@@ -385,9 +385,9 @@ bool GameBoyInstance::PPU_DrawObject(const uint32_t pixelOffset, const PPU_Objec
 
     // Finally, draw the point!
     if(m_model == GameBoyModel::DMG) {
-        PPU_Plot_DMG(pixelColor, pixelOffset);
+        PPU_Plot_DMG(pixelColor, std::bit_cast<int>(pixelOffset));
     } else {
-        PPU_Plot_CGB(true, cgbPalette, m_cgbMode ? pixelData : pixelColor, pixelOffset);
+        PPU_Plot_CGB(true, cgbPalette, m_cgbMode ? pixelData : pixelColor, std::bit_cast<int>(pixelOffset));
     }
     return true;
 }

@@ -100,7 +100,7 @@ void GameBoyInstance::Delta(const double ns) {
 
             if(m_hasRtc) {
                 // Update RTC clock rate.
-                m_gbMemory->RTC_SetCpuClockRate(m_cpu->GetHz());
+                m_gbMemory->RTC_SetCpuClockRate(static_cast<int>(m_cpu->GetHz()));
             }
         }
 
@@ -166,7 +166,7 @@ void GameBoyInstance::Delta(const double ns) {
 
         // Breakpoints
         if(!m_breakpoints.empty()) {
-            auto bp = std::find(m_breakpoints.begin(), m_breakpoints.end(), m_cpu->GetPc());
+            auto bp = std::ranges::find(m_breakpoints, m_cpu->GetPc());
             if(bp != m_breakpoints.end()) {
                 SetActiveBreakpoint(*bp);
                 break;
@@ -701,12 +701,9 @@ void GameBoyInstance::Reset() {
     // Reset PPU.
     PPU_Reset();
 
-    // Reset APU.
-    APU_Reset();
-
     // Initialize RTC counter (if applicable).
     if(m_hasRtc) {
-        m_gbMemory->RTC_SetCpuClockRate(m_cpu->GetHz());
+        m_gbMemory->RTC_SetCpuClockRate(static_cast<int>(m_cpu->GetHz()));
         m_gbMemory->RTC_ResetSubSecondClock();
     }
 

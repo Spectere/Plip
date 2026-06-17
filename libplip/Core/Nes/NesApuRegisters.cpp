@@ -8,8 +8,6 @@
 using Plip::Core::Nes::NesApuRegisters;
 
 uint8_t NesApuRegisters::GetByte(const ApuRegister apuRegister, [[maybe_unused]] bool privileged) {
-    constexpr uint8_t openBus = 0xFF;  // TODO: I don't think this is accurate on the NES. Correct this later.
-    
     switch(apuRegister) {
         case ApuRegister::Pulse1DutyCycleVolume:
         case ApuRegister::Pulse1SweepControl:
@@ -33,6 +31,7 @@ uint8_t NesApuRegisters::GetByte(const ApuRegister apuRegister, [[maybe_unused]]
         case ApuRegister::DmcSampleLength:
         case ApuRegister::OamDma:
         default: {
+            constexpr uint8_t openBus = 0xFF;
             return openBus;
         }
         case ApuRegister::SoundChannelsEnable: { return m_soundChannelsEnable; }

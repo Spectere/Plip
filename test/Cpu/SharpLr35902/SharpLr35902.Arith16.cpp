@@ -9,7 +9,7 @@
 
 TEST("INC BC", "INC-BC") {  // 0x03
     cpu->SetBc(0xFF);
-    LoadData(0x00, { 0x03 });
+    LoadData(0x00, 0x03);
 
     EXECUTE(2);
     CHECK(cpu->GetBc() == 0x0100);
@@ -17,7 +17,7 @@ TEST("INC BC", "INC-BC") {  // 0x03
 
 TEST("INC DE", "INC-DE") {  // 0x13
     cpu->SetDe(0xFF);
-    LoadData(0x00, { 0x13 });
+    LoadData(0x00, 0x13);
 
     EXECUTE(2);
     CHECK(cpu->GetDe() == 0x0100);
@@ -25,7 +25,7 @@ TEST("INC DE", "INC-DE") {  // 0x13
 
 TEST("INC HL", "INC-HL") {  // 0x23
     cpu->SetHl(0xFF);
-    LoadData(0x00, { 0x23 });
+    LoadData(0x00, 0x23);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x0100);
@@ -33,7 +33,7 @@ TEST("INC HL", "INC-HL") {  // 0x23
 
 TEST("INC SP", "INC-SP") {  // 0x33
     cpu->SetSp(0xFF);
-    LoadData(0x00, { 0x33 });
+    LoadData(0x00, 0x33);
 
     EXECUTE(2);
     CHECK(cpu->GetSp() == 0x0100);
@@ -41,7 +41,7 @@ TEST("INC SP", "INC-SP") {  // 0x33
 
 TEST("DEC BC", "DEC-BC") {  // 0x0B
     cpu->SetBc(0x100);
-    LoadData(0x00, { 0x0B });
+    LoadData(0x00, 0x0B);
 
     EXECUTE(2);
     CHECK(cpu->GetBc() == 0x00FF);
@@ -49,7 +49,7 @@ TEST("DEC BC", "DEC-BC") {  // 0x0B
 
 TEST("DEC DE", "DEC-DE") {  // 0x1B
     cpu->SetDe(0x100);
-    LoadData(0x00, { 0x1B });
+    LoadData(0x00, 0x1B);
 
     EXECUTE(2);
     CHECK(cpu->GetDe() == 0x00FF);
@@ -57,7 +57,7 @@ TEST("DEC DE", "DEC-DE") {  // 0x1B
 
 TEST("DEC HL", "DEC-HL") {  // 0x2B
     cpu->SetHl(0x100);
-    LoadData(0x00, { 0x2B });
+    LoadData(0x00, 0x2B);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x00FF);
@@ -65,7 +65,7 @@ TEST("DEC HL", "DEC-HL") {  // 0x2B
 
 TEST("DEC SP", "DEC-SP") {  // 0x3B
     cpu->SetSp(0x100);
-    LoadData(0x00, { 0x3B });
+    LoadData(0x00, 0x3B);
 
     EXECUTE(2);
     CHECK(cpu->GetSp() == 0x00FF);
@@ -74,7 +74,7 @@ TEST("DEC SP", "DEC-SP") {  // 0x3B
 TEST("ADD HL, BC (NH, NC)", "ADD-HL,BC-NH,NC") {  // 0x09
     cpu->SetHl(0x1234);
     cpu->SetBc(0x4321);
-    LoadData(0x00, { 0x09 });
+    LoadData(0x00, 0x09);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x5555);
@@ -86,7 +86,7 @@ TEST("ADD HL, BC (NH, NC)", "ADD-HL,BC-NH,NC") {  // 0x09
 TEST("ADD HL, BC (H, NC)", "ADD-HL,BC-H,NC") {  // 0x09
     cpu->SetHl(0x0A00);
     cpu->SetBc(0x0700);
-    LoadData(0x00, { 0x09 });
+    LoadData(0x00, 0x09);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x1100);
@@ -98,7 +98,7 @@ TEST("ADD HL, BC (H, NC)", "ADD-HL,BC-H,NC") {  // 0x09
 TEST("ADD HL, BC (NH, C)", "ADD-HL,BC-NH,C") {  // 0x09
     cpu->SetHl(0xF000);
     cpu->SetBc(0x2000);
-    LoadData(0x00, { 0x09 });
+    LoadData(0x00, 0x09);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x1000);
@@ -110,7 +110,7 @@ TEST("ADD HL, BC (NH, C)", "ADD-HL,BC-NH,C") {  // 0x09
 TEST("ADD HL, BC (H, C)", "ADD-HL,BC-H,C") {  // 0x09
     cpu->SetHl(0xFFFF);
     cpu->SetBc(0x0001);
-    LoadData(0x00, { 0x09 });
+    LoadData(0x00, 0x09);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x0000);
@@ -122,7 +122,7 @@ TEST("ADD HL, BC (H, C)", "ADD-HL,BC-H,C") {  // 0x09
 TEST("ADD HL, DE (NH, NC)", "ADD-HL,DE-NH,NC") {  // 0x19
     cpu->SetHl(0x1234);
     cpu->SetDe(0x4321);
-    LoadData(0x00, { 0x19 });
+    LoadData(0x00, 0x19);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x5555);
@@ -134,7 +134,7 @@ TEST("ADD HL, DE (NH, NC)", "ADD-HL,DE-NH,NC") {  // 0x19
 TEST("ADD HL, DE (H, NC)", "ADD-HL,DE-H,NC") {  // 0x19
     cpu->SetHl(0x0A00);
     cpu->SetDe(0x0700);
-    LoadData(0x00, { 0x19 });
+    LoadData(0x00, 0x19);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x1100);
@@ -146,7 +146,7 @@ TEST("ADD HL, DE (H, NC)", "ADD-HL,DE-H,NC") {  // 0x19
 TEST("ADD HL, DE (NH, C)", "ADD-HL,DE-NH,C") {  // 0x19
     cpu->SetHl(0xF000);
     cpu->SetDe(0x2000);
-    LoadData(0x00, { 0x19 });
+    LoadData(0x00, 0x19);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x1000);
@@ -158,7 +158,7 @@ TEST("ADD HL, DE (NH, C)", "ADD-HL,DE-NH,C") {  // 0x19
 TEST("ADD HL, DE (H, C)", "ADD-HL,DE-H,C") {  // 0x19
     cpu->SetHl(0xFFFF);
     cpu->SetDe(0x0001);
-    LoadData(0x00, { 0x19 });
+    LoadData(0x00, 0x19);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x0000);
@@ -169,7 +169,7 @@ TEST("ADD HL, DE (H, C)", "ADD-HL,DE-H,C") {  // 0x19
 
 TEST("ADD HL, HL (NH, NC)", "ADD-HL,HL-NH,NC") {  // 0x29
     cpu->SetHl(0x1234);
-    LoadData(0x00, { 0x29 });
+    LoadData(0x00, 0x29);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x2468);
@@ -180,7 +180,7 @@ TEST("ADD HL, HL (NH, NC)", "ADD-HL,HL-NH,NC") {  // 0x29
 
 TEST("ADD HL, HL (H, NC)", "ADD-HL,HL-H,NC") {  // 0x29
     cpu->SetHl(0x0900);
-    LoadData(0x00, { 0x29 });
+    LoadData(0x00, 0x29);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x1200);
@@ -191,7 +191,7 @@ TEST("ADD HL, HL (H, NC)", "ADD-HL,HL-H,NC") {  // 0x29
 
 TEST("ADD HL, HL (NH, C)", "ADD-HL,HL-NH,C") {  // 0x29
     cpu->SetHl(0x9000);
-    LoadData(0x00, { 0x29 });
+    LoadData(0x00, 0x29);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x2000);
@@ -202,7 +202,7 @@ TEST("ADD HL, HL (NH, C)", "ADD-HL,HL-NH,C") {  // 0x29
 
 TEST("ADD HL, HL (H, C)", "ADD-HL,HL-H,C") {  // 0x29
     cpu->SetHl(0x8888);
-    LoadData(0x00, { 0x29 });
+    LoadData(0x00, 0x29);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x1110);
@@ -214,7 +214,7 @@ TEST("ADD HL, HL (H, C)", "ADD-HL,HL-H,C") {  // 0x29
 TEST("ADD HL, SP (NH, NC)", "ADD-HL,SP-NH,NC") {  // 0x39
     cpu->SetHl(0x1234);
     cpu->SetSp(0x4321);
-    LoadData(0x00, { 0x39 });
+    LoadData(0x00, 0x39);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x5555);
@@ -226,7 +226,7 @@ TEST("ADD HL, SP (NH, NC)", "ADD-HL,SP-NH,NC") {  // 0x39
 TEST("ADD HL, SP (H, NC)", "ADD-HL,SP-H,NC") {  // 0x39
     cpu->SetHl(0x0A00);
     cpu->SetSp(0x0700);
-    LoadData(0x00, { 0x39 });
+    LoadData(0x00, 0x39);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x1100);
@@ -238,7 +238,7 @@ TEST("ADD HL, SP (H, NC)", "ADD-HL,SP-H,NC") {  // 0x39
 TEST("ADD HL, SP (NH, C)", "ADD-HL,SP-NH,C") {  // 0x39
     cpu->SetHl(0xF000);
     cpu->SetSp(0x2000);
-    LoadData(0x00, { 0x39 });
+    LoadData(0x00, 0x39);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x1000);
@@ -250,7 +250,7 @@ TEST("ADD HL, SP (NH, C)", "ADD-HL,SP-NH,C") {  // 0x39
 TEST("ADD HL, SP (H, C)", "ADD-HL,SP-H,C") {  // 0x39
     cpu->SetHl(0xFFFF);
     cpu->SetSp(0x0001);
-    LoadData(0x00, { 0x39 });
+    LoadData(0x00, 0x39);
 
     EXECUTE(2);
     CHECK(cpu->GetHl() == 0x0000);

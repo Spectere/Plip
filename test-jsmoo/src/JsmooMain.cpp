@@ -188,12 +188,12 @@ int ShowDetailedReport(const std::set<RunnerTestResult>& results) {
         for(const auto &result : failedTests) {
             std::cerr << result.Key << ": \n";
 
-            for(const auto &reg : result.RegisterMisses) {
-                std::cerr << "register " << reg.Register << " (expected: " << reg.Expected << "; actual: " << reg.Actual << ")\n";
+            for(const auto &[reg, expected, actual] : result.RegisterMisses) {
+                std::cerr << "register " << reg << " (expected: " << expected << "; actual: " << actual << ")\n";
             }
 
-            for(const auto &mem : result.MemoryMisses) {
-                std::cerr << "memory [addr: " << mem.Address << "] (expected: " << static_cast<uint16_t>(mem.Expected) << "; actual: " << static_cast<uint16_t>(mem.Actual) << ")\n";
+            for(const auto &[addr, expected, actual] : result.MemoryMisses) {
+                std::cerr << "memory [addr: " << addr << "] (expected: " << static_cast<uint16_t>(expected) << "; actual: " << static_cast<uint16_t>(actual) << ")\n";
             }
 
             for(const auto &ex : result.ExceptionsThrown) {
@@ -259,7 +259,7 @@ int main(const int argc, char** argv) {
     const auto countsOnly = opts["count"].as<bool>();
 
     // Invalid CPU detection.
-    if(!supportedCpus.count(testCpu)) {
+    if(!supportedCpus.contains(testCpu)) {
         std::cerr << "The CPU '" << testCpu << "' is not supported by this utility." << std::endl;
         return 1;
     }

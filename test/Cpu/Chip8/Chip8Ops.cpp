@@ -2,8 +2,6 @@
 //
 // Unit tests for the CHIP-8 CPU.
 
-#include <PlipEmulationException.h>
-
 #include "catch2/catch_test_macros.hpp"
 
 #include "Cpu/Chip8/Chip8.h"
@@ -76,14 +74,12 @@ void DoLoadAllRegisters(const MockCpu<Cpu::Chip8>* fixture) {
 }
 
 void Execute(const MockCpu<Cpu::Chip8>* fixture, const std::vector<uint8_t> &data) {
-    constexpr auto cycleLimit = 1000;
-
     fixture->LoadData(InitialPc, data);
     fixture->cpu->Reset(InitialPc);
     int cycles = 0;
     while(fixture->cpu->GetPc() != InitialPc + data.size()) {
         fixture->cpu->Cycle();
-        if(++cycles >= cycleLimit) {
+        if(++cycles >= 1000) {
             throw std::runtime_error("Infinite loop detected.");
         }
     }

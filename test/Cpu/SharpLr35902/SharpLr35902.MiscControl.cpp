@@ -18,18 +18,18 @@ TEST("STOP (CGB)", "STOP-CGB") {
     // but we can ensure that the call does *not* throw.
     cpu->SetGbcMode(true);
 
-    LoadData(0x00, { 0x10 });
+    LoadData(0x00, 0x10);
     REQUIRE_NOTHROW(cpu->Cycle());
 }
 
 TEST("STOP (DMG)", "STOP-DMG") {
     // On DMG, STOP halts the CPU. The CPU core throws an exception as execution cannot continue.
-    LoadData(0x00, { 0x10 });
+    LoadData(0x00, 0x10);
     REQUIRE_THROWS_AS(cpu->Cycle(), PlipEmulationException);
 }
 
 TEST("HALT (IME+)", "HALT-IME-E") {
-    LoadData(0x00, { 0x76 });
+    LoadData(0x00, 0x76);
 
     EXECUTE(1);
     CHECK(cpu->GetHalt() == true);
@@ -45,7 +45,7 @@ TEST("HALT (IME+)", "HALT-IME-E") {
 
 TEST("HALT (IME~)", "HALT-IME-P") {
     cpu->SetImeState(Cpu::SharpLr35902ImeState::PendingEnable);
-    LoadData(0x00, { 0x76 });
+    LoadData(0x00, 0x76);
 
     EXECUTE(1);
     CHECK(cpu->GetHalt() == true);
@@ -61,7 +61,7 @@ TEST("HALT (IME~)", "HALT-IME-P") {
 
 TEST("HALT (IME-)", "HALT-IME-D") {
     cpu->SetImeState(Cpu::SharpLr35902ImeState::Disabled);
-    LoadData(0x00, { 0x76 });
+    LoadData(0x00, 0x76);
 
     EXECUTE(1);
     CHECK(cpu->GetHalt() == true);
@@ -79,7 +79,7 @@ TEST("HALT Bug (IME-)", "HALT-Bug-IME-D") {
     cpu->SetImeState(Cpu::SharpLr35902ImeState::Disabled);
     memory->SetByte(0xFF0F, 0b00011100);
     memory->SetByte(0xFFFF, 0b00000111);
-    LoadData(0x00, { 0x76 });
+    LoadData(0x00, 0x76);
 
     EXECUTE(1);
 
@@ -100,7 +100,7 @@ TEST("HALT Bug (IME~)", "HALT-Bug-IME-P") {
     cpu->SetSp(0x200);
     memory->SetByte(0xFF0F, 0b00000001);
     memory->SetByte(0xFFFF, 0b00000001);
-    LoadData(0x00, { 0x76 });
+    LoadData(0x00, 0x76);
 
     EXECUTE(5);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
@@ -127,14 +127,14 @@ TEST("HALT Bug (RST)", "HALT-Bug-RST") {
 }
 
 TEST("DI", "DI") {
-    LoadData(0x00, { 0xF3 });
+    LoadData(0x00, 0xF3);
 
     EXECUTE(1);
     CHECK(cpu->GetImeState() == Cpu::SharpLr35902ImeState::Disabled);
 }
 
 TEST("EI", "EI") {
-    LoadData(0x00, { 0xFB });
+    LoadData(0x00, 0xFB);
 
     // Check for pending enable...
     EXECUTE(1);

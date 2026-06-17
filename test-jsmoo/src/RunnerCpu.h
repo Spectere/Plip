@@ -25,7 +25,7 @@ public:
 
     virtual void Step() = 0;
 
-    PlipMemoryMap* memory {};
+    Plip::PlipMemoryMap* memory {};
 
 protected:
     ~RunnerCpu() {
@@ -34,11 +34,11 @@ protected:
     }
 
 private:
-    PlipMemoryRam* m_ram {};
+    Plip::PlipMemoryRam* m_ram {};
 
     void CreateMemoryMap(const uint32_t size) {
-        memory = new PlipMemoryMap();
-        m_ram = new PlipMemoryRam(size);
+        memory = new Plip::PlipMemoryMap();
+        m_ram = new Plip::PlipMemoryRam(size);
         memory->AddBlock(m_ram, 0);
     }
 };

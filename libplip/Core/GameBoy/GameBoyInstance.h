@@ -69,7 +69,6 @@ namespace Plip::Core::GameBoy {
         void APU_Cycle();
         void APU_Dump();
         void APU_Init();
-        void APU_Reset();
         void APU_Send();
 
         // GameBoyInstance.Video
@@ -77,9 +76,10 @@ namespace Plip::Core::GameBoy {
         void PPU_DotClock(uint8_t lcdControl, uint8_t lcdStatus);
         bool PPU_DotClock_OamScan();
         bool PPU_DotClock_Output(uint8_t lcdControl);
-        void PPU_DotClock_Output_Drawing(uint8_t lcdControl);
-        int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, int offsetX, int offsetY, uint16_t tileMapAddress, uint16_t tileDataAddress0, uint16_t tileDataAddress1, bool lcdcPriority) const;
-        bool PPU_DrawObject(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor, bool lcdcPriority) const;
+        void PPU_DotClock_Output_Drawing(uint8_t lcdControl) const;
+        [[nodiscard]] int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, int offsetX, int offsetY, uint16_t tileMapAddress, uint16_t
+                                                     tileDataAddress0, uint16_t tileDataAddress1) const;
+        [[nodiscard]] bool PPU_DrawObject(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor, bool lcdcPriority) const;
         void PPU_FinishTransition(uint8_t lcdStatus);
         void PPU_FinishTransition_OamScan(uint8_t lcdStatus);
         void PPU_FinishTransition_VBlank(uint8_t lcdStatus);

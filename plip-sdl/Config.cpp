@@ -13,7 +13,7 @@ using PlipSdl::Config;
 
 static std::string Trim(std::string str) {
     // Trim front.
-    str.erase(str.cbegin(), std::find_if(str.cbegin(), str.cend(), [](const unsigned char c) {
+    str.erase(str.cbegin(), std::ranges::find_if(std::as_const(str), [](const unsigned char c) {
         return !std::isspace(c);
     }));
 
@@ -26,7 +26,7 @@ static std::string Trim(std::string str) {
 }
 
 static std::string ToLower(std::string str) {
-    std::transform(str.cbegin(), str.cend(), str.begin(), [](const unsigned char c) {
+    std::ranges::transform(std::as_const(str), str.begin(), [](const unsigned char c) {
         return std::tolower(c);
     });
 

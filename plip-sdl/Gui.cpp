@@ -30,8 +30,8 @@ Gui::~Gui() {
     ImGui::DestroyContext();
 }
 
-void Gui::DrawAudioControls() {
-    for(const auto ch : m_debugAudioChannels) {
+void Gui::DrawAudioControls() const {
+    for(const auto& ch : m_debugAudioChannels) {
         ImGui::Checkbox(ch.Description.c_str(), ch.Value);
     }
 }
@@ -54,7 +54,7 @@ void Gui::DrawBreakpointControls() {
             State.BreakpointsUpdated = true;
         }
 
-        if(State.Breakpoints.size() > 0) {
+        if(!State.Breakpoints.empty()) {
             ImGui::Separator();
 
             ImGui::BeginTable("breakpoints", 2);
@@ -69,7 +69,7 @@ void Gui::DrawBreakpointControls() {
                 ImGui::Text("0x%.8llX", static_cast<uint64_t>(bp));
 
                 ImGui::TableNextColumn();
-                ImGui::PushID(bp);
+                ImGui::PushID(static_cast<int>(bp));  // TODO: Revisit this if we (somehow) implement systems with 32-bit addressing.
                 if(ImGui::Button("x")) {
                     removeBp = true;
                     removeBpVal = bp;
@@ -204,17 +204,17 @@ void Gui::DrawMemoryTools() {
         constexpr auto memoryNormal = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
         constexpr auto memoryHighlight = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
         constexpr auto memoryPcAddress = ImVec4(0.4f, 0.8f, 1.0f, 1.0f);
-        for(auto y = 0; y < State.MemoryDisplayRows; y++) {
+        for(auto y = 0; y < GuiState::MemoryDisplayRows; y++) {
             ImGui::TextColored(
                 memoryAddress,
-                "%.8X", State.MemoryDisplayBase + (State.MemoryDisplayColumns * y)
+                "%.8X", State.MemoryDisplayBase + (GuiState::MemoryDisplayColumns * y)
             );
 
-            for(auto x = 0; x < State.MemoryDisplayColumns; x++) {
-                const auto currentAddress = State.MemoryDisplayBase + (y * State.MemoryDisplayColumns) + x;
+            for(auto x = 0; x < GuiState::MemoryDisplayColumns; x++) {
+                const auto currentAddress = State.MemoryDisplayBase + (y * GuiState::MemoryDisplayColumns) + x;
 
                 ImVec4 addressColor = memoryNormal;
-                if(std::find(State.PcAddresses.begin(), State.PcAddresses.end(), currentAddress) != State.PcAddresses.end()) {
+                if(std::ranges::find(State.PcAddresses, currentAddress) != State.PcAddresses.end()) {
                     addressColor = memoryPcAddress;
                 } else if(currentAddress == State.ReadAddress) {
                     addressColor = memoryHighlight;
@@ -223,7 +223,7 @@ void Gui::DrawMemoryTools() {
                 ImGui::SameLine();
                 ImGui::TextColored(
                     addressColor,
-                    "%.2X", State.MemoryContents[(y * State.MemoryDisplayColumns) + x]
+                    "%.2X", State.MemoryContents[(y * GuiState::MemoryDisplayColumns) + x]
                 );
             }
         }

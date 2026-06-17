@@ -20,7 +20,7 @@ void PlipInput::ClearInput() {
     m_coreInput.clear();
 }
 
-Plip::PlipInputData PlipInput::GetInput(const int id) {
+Plip::PlipInputData PlipInput::GetInput(const int id) const {
     return m_coreInput.find(id)->second.GetData();
 }
 

@@ -199,16 +199,14 @@ int main(int argc, char **argv) {
     }
 
     auto lockScale = -1;
-    if(opts["lock-scale"].count() > 0) {
-        lockScale = videoScale;
-    } else if(lockScaleConfig) {
+    if(opts["lock-scale"].count() > 0 || lockScaleConfig) {
         lockScale = videoScale;
     }
 
     if(opts["force-width"].count() > 0) {
         forceWidth = opts["force-width"].as<int>();
     }
-    
+
     if(opts["force-height"].count() > 0) {
         forceHeight = opts["force-height"].as<int>();
     }
@@ -222,8 +220,8 @@ int main(int argc, char **argv) {
 
     // Grab the core configuration.
     std::string coreSection = "core." + coreName;
-    auto coreConfig = config->ConvertSectionToPlipKvpCollection(coreSection);
 
+    auto coreConfig = config->ConvertSectionToPlipKvpCollection(coreSection);
     switch(plip->Load(coreTag, filename, coreConfig)) {
         case Plip::PlipError::FileNotFound:
             std::cout << "File not found (" << filename << ")!\n" << std::endl;

@@ -17,7 +17,7 @@ namespace Plip {
         void AddInput(int id, const PlipInputDefinition &input, const PlipInputData &initialData);
         void AddInput(std::unordered_map<int, PlipInputDefinition> inputList);
         void ClearInput();
-        PlipInputData GetInput(int id);
+        PlipInputData GetInput(int id) const;
         std::unordered_map<int, PlipInputDefinition> GetInputList() { return m_coreInput; }
         void UpdateInput(int id, PlipInputData data);
 

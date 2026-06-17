@@ -4,7 +4,6 @@
  */
 
 #include <cassert>
-#include <ctime>
 
 #include "GameBoyMapper.h"
 #include "Mbc2Ram.h"
@@ -238,11 +237,11 @@ void GameBoyMapper::RTC_Clock() {
 void GameBoyMapper::RTC_Dump(std::fstream &file) const {
     auto timestamp = std::time(nullptr);
     file.write(reinterpret_cast<std::istream::char_type*>(&timestamp), sizeof(timestamp));
-    file.put(m_rtcRegisters.Seconds);
-    file.put(m_rtcRegisters.Minutes);
-    file.put(m_rtcRegisters.Hours);
-    file.put(m_rtcRegisters.Days);
-    file.put(m_rtcRegisters.Flags);
+    file.put(std::bit_cast<char>(m_rtcRegisters.Seconds));
+    file.put(std::bit_cast<char>(m_rtcRegisters.Minutes));
+    file.put(std::bit_cast<char>(m_rtcRegisters.Hours));
+    file.put(std::bit_cast<char>(m_rtcRegisters.Days));
+    file.put(std::bit_cast<char>(m_rtcRegisters.Flags));
     file.flush();
 }
 
@@ -451,7 +450,7 @@ bool GameBoyMapper::SetByte_HuC1(const uint32_t address, const uint8_t value) {
         m_cartRamBank = m_bankRegister1 = value & 0b11;
     } else if(address < 0x8000) {
         // Unknown--does not appear to do anything. Ignore this write.
-    } else if(m_hucIrMode && address >= 0xA000 && address < 0xC000) {
+    } else if(m_hucIrMode && address >= 0xA000 && address < 0xC000) { // NOLINT(*-branch-clone)
         // IR register. Ignore this write.
         return false;
     } else {

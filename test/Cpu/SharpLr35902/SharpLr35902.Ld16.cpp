@@ -48,19 +48,19 @@ TEST("POP BC", "POP-BC") {  // 0xC1
     memory->SetByte(0x0FFF, 0x12);
     memory->SetByte(0x0FFE, 0x34);
     cpu->SetSp(0x0FFE);
-    LoadData(0x00, { 0xC1 });
+    LoadData(0x00, 0xC1);
 
     EXECUTE(3);
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexB) == 0x12);
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexC) == 0x34);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexB) == 0x12);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexC) == 0x34);
     CHECK(cpu->GetSp() == 0x1000);
 }
 
 TEST("PUSH BC", "PUSH-BC") {  // 0xC5
-    cpu->SetRegister8ByIndex(cpu->RegIndexB, 0x12);
-    cpu->SetRegister8ByIndex(cpu->RegIndexC, 0x34);
+    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexB, 0x12);
+    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexC, 0x34);
     cpu->SetSp(0x1000);
-    LoadData(0x00, { 0xC5 });
+    LoadData(0x00, 0xC5);
 
     EXECUTE(4);
     CHECK(memory->GetByte(0x0FFF) == 0x12);
@@ -72,19 +72,19 @@ TEST("POP DE", "POP-DE") {  // 0xD1
     memory->SetByte(0x0FFF, 0x12);
     memory->SetByte(0x0FFE, 0x34);
     cpu->SetSp(0x0FFE);
-    LoadData(0x00, { 0xD1 });
+    LoadData(0x00, 0xD1);
 
     EXECUTE(3);
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexD) == 0x12);
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexE) == 0x34);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexD) == 0x12);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexE) == 0x34);
     CHECK(cpu->GetSp() == 0x1000);
 }
 
 TEST("PUSH DE", "PUSH-DE") {  // 0xD5
-    cpu->SetRegister8ByIndex(cpu->RegIndexD, 0x12);
-    cpu->SetRegister8ByIndex(cpu->RegIndexE, 0x34);
+    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexD, 0x12);
+    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexE, 0x34);
     cpu->SetSp(0x1000);
-    LoadData(0x00, { 0xD5 });
+    LoadData(0x00, 0xD5);
 
     EXECUTE(4);
     CHECK(memory->GetByte(0x0FFF) == 0x12);
@@ -96,19 +96,19 @@ TEST("POP HL", "POP-HL") {  // 0xE1
     memory->SetByte(0x0FFF, 0x12);
     memory->SetByte(0x0FFE, 0x34);
     cpu->SetSp(0x0FFE);
-    LoadData(0x00, { 0xE1 });
+    LoadData(0x00, 0xE1);
 
     EXECUTE(3);
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexH) == 0x12);
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexL) == 0x34);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexH) == 0x12);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexL) == 0x34);
     CHECK(cpu->GetSp() == 0x1000);
 }
 
 TEST("PUSH HL", "PUSH-HL") {  // 0xE5
-    cpu->SetRegister8ByIndex(cpu->RegIndexH, 0x12);
-    cpu->SetRegister8ByIndex(cpu->RegIndexL, 0x34);
+    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexH, 0x12);
+    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexL, 0x34);
     cpu->SetSp(0x1000);
-    LoadData(0x00, { 0xE5 });
+    LoadData(0x00, 0xE5);
 
     EXECUTE(4);
     CHECK(memory->GetByte(0x0FFF) == 0x12);
@@ -120,10 +120,10 @@ TEST("POP AF", "POP-AF") {  // 0xF1
     memory->SetByte(0x0FFF, 0x12);
     memory->SetByte(0x0FFE, 0xF0);
     cpu->SetSp(0x0FFE);
-    LoadData(0x00, { 0xF1 });
+    LoadData(0x00, 0xF1);
 
     EXECUTE(3);
-    CHECK(cpu->GetRegister8ByIndex(cpu->RegIndexA) == 0x12);
+    CHECK(cpu->GetRegister8ByIndex(MockSharpLr35902::RegIndexA) == 0x12);
     CHECK(cpu->GetCarryFlag());
     CHECK(cpu->GetHalfCarryFlag());
     CHECK(cpu->GetSubtractFlag());
@@ -132,13 +132,13 @@ TEST("POP AF", "POP-AF") {  // 0xF1
 }
 
 TEST("PUSH AF", "PUSH-AF") {  // 0xF5
-    cpu->SetRegister8ByIndex(cpu->RegIndexA, 0x12);
+    cpu->SetRegister8ByIndex(MockSharpLr35902::RegIndexA, 0x12);
     cpu->SetCarryFlag();
     cpu->SetHalfCarryFlag();
     cpu->SetSubtractFlag();
     cpu->SetZeroFlag();
     cpu->SetSp(0x1000);
-    LoadData(0x00, { 0xF5 });
+    LoadData(0x00, 0xF5);
 
     EXECUTE(4);
     CHECK(memory->GetByte(0x0FFF) == 0x12);
@@ -256,7 +256,7 @@ TEST("LD HL, SP + imm8s (neg, NH, NC)", "LD-SP,imm8s (neg, NH, NC)") {  // 0xF8
 
 TEST("LD SP, HL", "LD-SP,HL") {  // 0xF9
     cpu->SetHl(0x1234);
-    LoadData(0x00, { 0xF9 });
+    LoadData(0x00, 0xF9);
 
     EXECUTE(2);
     CHECK(cpu->GetSp() == 0x1234);

@@ -29,7 +29,7 @@ void PlipMemoryMap::AddBlock(PlipMemory *memory, const uint32_t offset, const ui
     });
 }
 
-void PlipMemoryMap::AssignBlock(PlipMemory *memory, uint32_t address, uint32_t offset) {
+void PlipMemoryMap::AssignBlock(PlipMemory *memory, const uint32_t address, const uint32_t offset) {
     AssignBlock(memory, address, offset, memory->GetLength() - offset);
 }
 

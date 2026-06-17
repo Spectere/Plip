@@ -11,11 +11,12 @@
 #include "SdlWindow.h"
 
 #include <cmath>
+#include <utility>
 
 using PlipSdl::SdlWindow;
 
-SdlWindow::SdlWindow(const std::string &title, const bool integerScaling, const int lockScale, const int forceWidth, const int forceHeight)
-: m_baseTitle(title), m_integerScaling(integerScaling), m_lockScale(lockScale) {
+SdlWindow::SdlWindow(std::string title, const bool integerScaling, const int lockScale, const int forceWidth, const int forceHeight)
+: m_baseTitle(std::move(title)), m_integerScaling(integerScaling), m_lockScale(lockScale) {
     std::stringstream error;
 
     // Quick sanity check before we fully initialize the window.
