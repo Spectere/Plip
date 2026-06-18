@@ -1,6 +1,6 @@
 // Runner.h
 //
-// A multithreaded test dispatcher.
+// A generic test dispatcher.
 
 #pragma once
 
