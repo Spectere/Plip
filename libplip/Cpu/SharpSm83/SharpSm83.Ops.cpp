@@ -6,6 +6,7 @@
 
 #include "SharpSm83.h"
 #include "PlipEmulationException.h"
+#include "PlipInvalidOpcodeException.h"
 #include "PlipSupport.h"
 
 using Plip::Cpu::SharpSm83;
@@ -161,7 +162,6 @@ const std::array<SharpSm83::OpHandler, 256> SharpSm83::OpTableCb = []{
         if((i & 0x7) == 0x6) op[i] = &SharpSm83::Op_SWAP_memHL;
         else                 op[i] = &SharpSm83::Op_SWAP_reg;
     }
-    op[0x36] = &SharpSm83::Op_SWAP_memHL;
 
     for(auto i = 0x38; i < 0x40; ++i) {
         if((i & 0x7) == 0x6) op[i] = &SharpSm83::Op_SRL_memHL;
@@ -178,7 +178,7 @@ const std::array<SharpSm83::OpHandler, 256> SharpSm83::OpTableCb = []{
         else                 op[i] = &SharpSm83::Op_RES_reg;
     }
 
-    for(auto i = 0xC0; i <= 0xFF; ++i) {
+    for(auto i = 0xC0; i < 0x100; ++i) {
         if((i & 0x7) == 0x6) op[i] = &SharpSm83::Op_SET_memHL;
         else                 op[i] = &SharpSm83::Op_SET_reg;
     }
@@ -414,6 +414,14 @@ long SharpSm83::DecodeAndExecute() {
     return m_cycleCount;
 }
 
+
+// NOTE: Methods called via the optables *must* *not* be static/const. Prevent clang-tidy and CLion from
+// getting excited.
+
+// NOLINTBEGIN(*-make-member-function-const)
+// ReSharper disable CppMemberFunctionMayBeConst
+// ReSharper disable CppMemberFunctionMayBeStatic
+
 void SharpSm83::Op_CB() {
     m_op = FetchAtPc();
     (this->*OpTableCb[m_op])();
@@ -421,9 +429,15 @@ void SharpSm83::Op_CB() {
 
 
 //
+// Exceptional Exception Executors
+//
+void SharpSm83::Op_Invalid() { throw PlipInvalidOpcodeException(m_op); }
+void SharpSm83::Op_InvalidCB() { throw PlipInvalidOpcodeException(0xCB00 | m_op); }
+
+
+//
 // Miscellaneous / Control Instructions
 //
-// ReSharper disable once CppMemberFunctionMayBeStatic
 void SharpSm83::Op_NOP() { }
 
 void SharpSm83::Op_STOP() {
@@ -1228,3 +1242,7 @@ void SharpSm83::Op_SET_memHL() {
     memValue = BIT_SET(memValue, GetOpParamX());
     StoreAtAddress(m_registers.GetHl(), memValue);
 }
+
+// ReSharper restore CppMemberFunctionMayBeStatic
+// ReSharper restore CppMemberFunctionMayBeConst
+// NOLINTEND(*-make-member-function-const)

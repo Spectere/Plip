@@ -8,7 +8,6 @@
 #include <array>
 #include <utility>
 
-#include "PlipInvalidOpcodeException.h"
 #include "SharpSm83Registers.h"
 #include "Cpu/PlipCpu.h"
 
@@ -140,12 +139,8 @@ namespace Plip::Cpu {
         //
         // Ops
         //
-        // NOLINTBEGIN(*-make-member-function-const)
-        // ReSharper disable CppMemberFunctionMayBeConst
-        void Op_Invalid() { throw PlipInvalidOpcodeException(m_op); }
-        void Op_InvalidCB() { throw PlipInvalidOpcodeException(0xCB00 | m_op); }
-        // ReSharper restore CppMemberFunctionMayBeConst
-        // NOLINTEND(*-make-member-function-const)
+        void Op_Invalid();
+        void Op_InvalidCB();
 
         void Op_CB();
 
