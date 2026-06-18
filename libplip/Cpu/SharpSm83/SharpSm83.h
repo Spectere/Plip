@@ -5,8 +5,10 @@
 
 #pragma once
 
+#include <array>
 #include <utility>
 
+#include "PlipInvalidOpcodeException.h"
 #include "SharpSm83Registers.h"
 #include "Cpu/PlipCpu.h"
 
@@ -55,11 +57,11 @@ namespace Plip::Cpu {
         static constexpr int SpeedSwitchDelay = 8200;  // In T-cycles
         static constexpr int MCycleLength = 4;
 
+        int m_activeInterrupts {};
         int m_cycleCount {};
         uint8_t m_op {};
 
         long DecodeAndExecute();
-        void DecodeAndExecuteCb();
         uint16_t GetPointerAddress(int pointerIndex);
         void OpAddToRegisterA(int value, bool addWithCarry);
         void OpBitwiseAndRegisterA(uint8_t value);
@@ -82,6 +84,7 @@ namespace Plip::Cpu {
         void ServiceInterrupt(int activeInterrupts);
         [[nodiscard]] bool TestConditional(int conditional) const;
 
+        // Helper Methods
         void AdvanceMCycle(const int cycles = 1) { m_cycleCount += MCycleLength * cycles; }
         [[nodiscard]] uint8_t GetOpParamX() const { return (m_op >> 3) & 0b111; }
         [[nodiscard]] uint8_t GetOpParamY() const { return m_op & 0b111; }
@@ -128,5 +131,100 @@ namespace Plip::Cpu {
             m_memory->SetByte(addr, val);
             AdvanceMCycle();
         }
+
+        // Op Tables
+        using OpHandler = void (SharpSm83::*)();  // what even is this syntax? X_x
+        static const std::array<OpHandler, 256> OpTable;    // SharpSm83.Ops.cpp
+        static const std::array<OpHandler, 256> OpTableCb;  // SharpSm83.Ops.cpp
+
+        //
+        // Ops
+        //
+        // NOLINTBEGIN(*-make-member-function-const)
+        // ReSharper disable CppMemberFunctionMayBeConst
+        void Op_Invalid() { throw PlipInvalidOpcodeException(m_op); }
+        void Op_InvalidCB() { throw PlipInvalidOpcodeException(0xCB00 | m_op); }
+        // ReSharper restore CppMemberFunctionMayBeConst
+        // NOLINTEND(*-make-member-function-const)
+
+        void Op_CB();
+
+        // Miscellaneous / Control Instructions
+        void Op_NOP();
+        void Op_STOP();
+        void Op_HALT();
+        void Op_DI();
+        void Op_EI();
+
+        // Jumps/Calls
+        void Op_JR_imm8s();
+        void Op_JR_c_imm8s();
+        void Op_RET();
+        void Op_RETI();
+        void Op_RET_c();
+        void Op_JP_imm16();
+        void Op_JP_c_imm16();
+        void Op_RST_vec();
+        void Op_JP_HL();
+        void Op_CALL_imm16();
+        void Op_CALL_c_imm16();
+
+        // 8-bit Load Instructions
+        void Op_LD_mem_A();
+        void Op_LD_reg_imm8();
+        void Op_LD_A_mem();
+        void Op_LD_memHL_imm8();
+        void Op_LD_reg_reg();
+        void Op_LD_reg_memHL();
+        void Op_LD_memHL_reg();
+        void Op_LDH_memImm8_A();
+        void Op_LDH_memC_A();
+        void Op_LD_memImm16_A();
+        void Op_LDH_A_imm8();
+        void Op_LDH_A_memC();
+        void Op_LD_A_memImm16();
+
+        // 16-bit Load Instructions
+        void Op_LD_reg16_imm16();
+        void Op_LD_memImm16_SP();
+        void Op_POP_reg16();
+        void Op_PUSH_reg16();
+        void Op_LD_HL_SPimm8s();
+        void Op_LD_SP_HL();
+
+        // 8-bit Arithmetic / Logical Instructions
+        void Op_INC_reg();              void Op_INC_memHL();
+        void Op_DEC_reg();              void Op_DEC_memHL();
+        void Op_DAA();
+        void Op_CPL();
+        void Op_SCF();
+        void Op_CCF();
+        void Op_ADD_ADC_A_reg();        void Op_ADD_ADC_A_memHL();      void Op_ADD_ADC_A_imm8();
+        void Op_SUB_SBC_A_reg();        void Op_SUB_SBC_A_memHL();      void Op_SUB_SBC_A_imm8();
+        void Op_AND_A_reg();            void Op_AND_A_memHL();          void Op_AND_A_imm8();
+        void Op_XOR_A_reg();            void Op_XOR_A_memHL();          void Op_XOR_A_imm8();
+        void Op_OR_A_reg();             void Op_OR_A_memHL();           void Op_OR_A_imm8();
+        void Op_CP_A_reg();             void Op_CP_A_memHL();           void Op_CP_A_imm8();
+
+        // 16-bit Arithmetic
+        void Op_INC_reg16();
+        void Op_DEC_reg16();
+        void Op_ADD_HL_reg16();
+        void Op_ADD_SP_imm8s();
+
+        // 8-bit Shift, Rotate, and Bit Instructions
+        void Op_RLCA();                 void Op_RLA();
+        void Op_RRCA();                 void Op_RRA();
+
+        // Bit Manipulation (0xCB Ops)
+        void Op_RLC_RL_reg();           void Op_RLC_RL_memHL();
+        void Op_RRC_RR_reg();           void Op_RRC_RR_memHL();
+        void Op_SLA_reg();              void Op_SLA_memHL();
+        void Op_SRA_reg();              void Op_SRA_memHL();
+        void Op_SWAP_reg();             void Op_SWAP_memHL();
+        void Op_SRL_reg();              void Op_SRL_memHL();
+        void Op_BIT_reg();              void Op_BIT_memHL();
+        void Op_RES_reg();              void Op_RES_memHL();
+        void Op_SET_reg();              void Op_SET_memHL();
     };
 }
