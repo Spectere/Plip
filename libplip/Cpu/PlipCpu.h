@@ -19,6 +19,7 @@ namespace Plip::Cpu {
         void SetHz(long hz);
 
         virtual long Cycle() = 0;
+        [[nodiscard]] uint64_t GetLastOp() const { return m_lastOp; }
         [[nodiscard]] virtual unsigned long GetPc() const = 0;
         [[nodiscard]] virtual std::map<std::string, DebugValue> GetRegisters() const = 0;
         virtual void Reset(uint32_t pc) = 0;
@@ -31,6 +32,7 @@ namespace Plip::Cpu {
         long m_hz {};
         double m_cycle {};
         PlipMemoryMap *m_memory;
+        uint64_t m_lastOp;
 
     private:
         long m_remainingCycles {};

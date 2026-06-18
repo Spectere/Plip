@@ -70,6 +70,7 @@ long Chip8::Cycle() {
         default: throw PlipEmulationException("unexpected opcode");
     }
 
+    m_lastOp = inst;
     return static_cast<long>(m_cycle);
 }
 

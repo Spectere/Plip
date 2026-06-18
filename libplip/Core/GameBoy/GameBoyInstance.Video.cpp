@@ -469,7 +469,7 @@ std::map<std::string, Plip::DebugValue> GameBoyInstance::PPU_GetDebugInfo() cons
 }
 
 uint8_t GameBoyInstance::PPU_ScaleColorChannel(const uint8_t val) {
-    return val << 3;
+    return (val << 3) | (val >> 2);
 }
 
 void GameBoyInstance::PPU_Plot_CGB(const bool objPalette, const int palette, const int color, const int pos) const {
@@ -493,23 +493,23 @@ void GameBoyInstance::PPU_Plot_DMG(int color, const int pos) const {
 
     switch(color) {
         case 0b00:  // White
-            m_videoFormat.plot(m_videoBuffer, pos, 255, 255, 255);
+            m_videoFormat.plot(m_videoBuffer, pos, 0xFF, 0xFF, 0xFF);
             break;
 
         case 0b01:  // Light Grey
-            m_videoFormat.plot(m_videoBuffer, pos, 172, 172, 172);
+            m_videoFormat.plot(m_videoBuffer, pos, 0xAA, 0xAA, 0xAA);
             break;
 
         case 0b10:  // Dark Gray
-            m_videoFormat.plot(m_videoBuffer, pos, 86, 86, 86);
+            m_videoFormat.plot(m_videoBuffer, pos, 0x55, 0x55, 0x55);
             break;
 
         case 0b11:  // Black
-            m_videoFormat.plot(m_videoBuffer, pos, 0, 0, 0);
+            m_videoFormat.plot(m_videoBuffer, pos, 0x00, 0x00, 0x00);
             break;
 
         default:  // wtf? Red, I guess?
-            m_videoFormat.plot(m_videoBuffer, pos, 255, 0, 0);
+            m_videoFormat.plot(m_videoBuffer, pos, 0xFF, 0x00, 0x00);
             break;
     }
 }

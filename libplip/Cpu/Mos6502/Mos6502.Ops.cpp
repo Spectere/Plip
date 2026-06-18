@@ -838,6 +838,7 @@ long Mos6502::DecodeAndExecute() {
         }
     }
 
+    m_lastOp = op;
     return cycleCount;
 }
 

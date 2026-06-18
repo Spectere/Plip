@@ -411,6 +411,7 @@ long SharpSm83::DecodeAndExecute() {
 
     m_op = FetchAtPc();
     (this->*OpTable[m_op])();
+    m_lastOp = m_op;
     return m_cycleCount;
 }
 
@@ -425,6 +426,7 @@ long SharpSm83::DecodeAndExecute() {
 void SharpSm83::Op_CB() {
     m_op = FetchAtPc();
     (this->*OpTableCb[m_op])();
+    m_lastOp = 0xCB00 | m_op;
 }
 
 
