@@ -53,12 +53,12 @@ const std::array<SharpSm83::OpHandler, 256> SharpSm83::OpTable = []{
     op[0x0A] = op[0x1A] = op[0x2A] = op[0x3A] = &SharpSm83::Op_LD_A_mem;
     op[0x36] = &SharpSm83::Op_LD_memHL_imm8;
     for(auto i = 0x40; i < 0x80; ++i) {
-        if(i == 0x76) continue;         // HALT
+        if(i == 0x76) continue;  // HALT
 
-        if((i & 0x7) == 0x6) op[i] = &SharpSm83::Op_LD_reg_memHL;
-        else                 op[i] = &SharpSm83::Op_LD_reg_reg;
+        if((i & 0x7) == 0x6)        op[i] = &SharpSm83::Op_LD_reg_memHL;
+        else if((i & 0x78) == 0x70) op[i] = &SharpSm83::Op_LD_memHL_reg;
+        else                        op[i] = &SharpSm83::Op_LD_reg_reg;
     }
-    op[0x70] = op[0x71] = op[0x72] = op[0x73] = op[0x74] = op[0x75] = op[0x77] = &SharpSm83::Op_LD_memHL_reg;
     op[0xE0] = &SharpSm83::Op_LDH_memImm8_A;
     op[0xE2] = &SharpSm83::Op_LDH_memC_A;
     op[0xEA] = &SharpSm83::Op_LD_memImm16_A;
