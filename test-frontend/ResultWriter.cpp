@@ -166,7 +166,7 @@ void ResultWriter::WriteDetailedResult(std::ofstream& out, const TestResult& res
                 WriteImageResult(out, result.Key);
                 break;
             case ResultType::Registers:
-                WriteRegisterResults(out, result.Expected().Value.ValueRegs, result.Expected().Value.ValueRegs);
+                WriteRegisterResults(out, result.Expected().Value.ValueRegs, result.Actual.Value.ValueRegs);
                 break;
             case ResultType::None:
             default:
