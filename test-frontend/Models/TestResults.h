@@ -14,6 +14,7 @@ struct TestResult {
     UnitTest Test {};
     double Duration {};
     uint64_t Cycles {};
+    bool TimedOut {};
 
     std::string ComparisonError {};
     std::string InitializationError {};

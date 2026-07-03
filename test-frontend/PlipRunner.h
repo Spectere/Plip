@@ -188,6 +188,12 @@ private:
                 default:
                     throw std::runtime_error("BUG: Invalid stop event was not caught early!");
             }
+
+            // Quick little safeguard...
+            if(cycle >= testConfig.BailoutCycles) {
+                result.TimedOut = true;
+                break;
+            }
         }
 
         const auto end = steady_clock::now();

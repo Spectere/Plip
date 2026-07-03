@@ -18,6 +18,8 @@
 #include "PlipRunner.h"
 #include "ResultWriter.h"
 
+constexpr uint64_t DefaultBailoutCycles = 200000000;
+
 namespace fs = std::filesystem;
 using namespace nlohmann;
 
@@ -153,6 +155,11 @@ int main(const int argc, char** argv) {
     const auto resultsPath = fs::path(json["ResultsDirectory"].get<std::string>());
     const auto assetsPath = fs::path(json["AssetsDirectory"].get<std::string>());
 
+    uint64_t bailoutCycles = DefaultBailoutCycles;
+    if(json.contains("BailoutCycles")) {
+        bailoutCycles = json["BailoutCycles"].get<uint64_t>();
+    }
+
     uint64_t threads = 0;
     if(json.contains("Threads")) {
         threads = json["Threads"].get<uint64_t>();
@@ -183,6 +190,7 @@ int main(const int argc, char** argv) {
         .ResultsDirectory = fs::canonical(resultsPath),
         .AssetsDirectory = fs::canonical(assetsPath),
         .Threads = threads,
+        .BailoutCycles = bailoutCycles
     };
     configFile.close();
 

@@ -47,6 +47,7 @@ void ResultWriter::WriteHtml(const std::filesystem::path& filename, const std::s
         tbody td, tbody th { border: 1px solid #333; }
         a { color: white; }
         img { image-rendering: pixelated; }
+        .big-warning { background-color: #211; text-align: center; padding: 1em; color: #FFF; font-size: 24px; font-weight: bold; }
     </style>
 </head>
 
@@ -145,18 +146,34 @@ void ResultWriter::WriteDetailedResult(std::ofstream& out, const TestResult& res
             </tr>
             <tr>)==";
 
-    switch(result.Expected().Type) {
-        case ResultType::Image:
-            WriteImageResult(out, result.Key);
-            break;
-        case ResultType::Registers:
-            WriteRegisterResults(out, result.Expected().Value.ValueRegs, result.Expected().Value.ValueRegs);
-            break;
-        case ResultType::None:
-        default:
-            // Just in case it somehow managed to get through the first few checks...
-            out << R"(<td colspan="8"><font size="24">BUG: UNEXPECTED RESULT TYPE</td>)";
-            break;
+    if(result.TimedOut) {
+        out << R"==(
+                <td colspan="8" class="big-warning">Timed out!</td>)==";
+    } else if(result.ErrorOccurred()) {
+        out << R"==(
+                <td colspan="8" class="big-warning">
+)==";
+
+        if(!result.InitializationError.empty()) out << "<div>" << result.InitializationError << "</div>\n";
+        if(!result.ComparisonError.empty()) out << "<div>" << result.ComparisonError << "</div>\n";
+        if(!result.RunnerError.empty()) out << "<div>" << result.RunnerError << "</div>\n";
+
+        out << R"==(
+                </td>)==";
+    } else {
+        switch(result.Expected().Type) {
+            case ResultType::Image:
+                WriteImageResult(out, result.Key);
+                break;
+            case ResultType::Registers:
+                WriteRegisterResults(out, result.Expected().Value.ValueRegs, result.Expected().Value.ValueRegs);
+                break;
+            case ResultType::None:
+            default:
+                // Just in case it somehow managed to get through the first few checks...
+                out << R"(<td colspan="8" class="big-warning">BUG: UNEXPECTED RESULT TYPE</td>)";
+                break;
+        }
     }
 
     out << R"==(
