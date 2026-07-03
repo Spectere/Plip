@@ -5,6 +5,7 @@ set(gui_name "plip-sdl")
 set(lib_name "plip")
 set(test_name "plip-test")
 set(jsmoo_test_name "plip-test-jsmoo")
+set(frontend_test_name "plip-test-frontend")
 
 project(${gui_name})
 set(CMAKE_CXX_STANDARD 20)
@@ -87,6 +88,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
+# LodePNG
+FetchContent_Declare(
+    lodepng
+    GIT_REPOSITORY https://github.com/lvandeve/lodepng.git
+    GIT_TAG        ed6fe5825c6a4fbb7f58ab35a4231c7543cd452a
+)
+FetchContent_MakeAvailable(lodepng)
+
 # SDL3
 FetchContent_Declare(
     SDL3
@@ -112,3 +121,6 @@ add_subdirectory(test)
 
 # plip-test-jsmoo
 add_subdirectory(test-jsmoo/src)
+
+# plip-test-frontend
+add_subdirectory(test-frontend)

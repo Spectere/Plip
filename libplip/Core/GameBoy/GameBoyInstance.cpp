@@ -83,8 +83,10 @@ void GameBoyInstance::BootRomFlagHandler() {
 void GameBoyInstance::Delta(const double ns) {
     m_deltaTimeRemaining += ns;
 
-    ReadJoypad();
-    ClearActiveBreakpoint();
+    if(!m_headless) {
+        ReadJoypad();
+        ClearActiveBreakpoint();
+    }
 
     do {
         // Run CPU for one cycle.
@@ -698,6 +700,7 @@ void GameBoyInstance::Reset() {
 
     // Reset CPU.
     m_cpu->Reset(0x0000);
+    m_cycleTime = m_cpu->GetCycleTime();
 
     // Reset PPU.
     PPU_Reset();

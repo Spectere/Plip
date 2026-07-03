@@ -23,7 +23,9 @@ namespace Plip::Core::Chip8 {
         ~Chip8Instance() override;
 
         void Delta(double ns) override;
+        [[nodiscard]] std::map<std::string, DebugValue> GetCpuRegisters() override { return m_cpu->GetRegisters(); }
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
+        [[nodiscard]] uint64_t GetLastExecutedOpcode() const override { return m_cpu->GetLastOp(); }
         [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
         [[nodiscard]] uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
         [[nodiscard]] uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
@@ -69,6 +71,7 @@ namespace Plip::Core::Chip8 {
         std::vector<float> GenerateSquare();
         void WriteCharacterSet(uint32_t address) const;
 
+    private:
         static constexpr int ScreenWidth = 64;
         static constexpr int ScreenHeight = 32;
 

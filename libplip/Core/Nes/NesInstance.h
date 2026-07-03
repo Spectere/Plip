@@ -23,7 +23,9 @@ namespace Plip::Core::Nes {
         ~NesInstance() override;
 
         void Delta(double ns) override;
+        [[nodiscard]] std::map<std::string, DebugValue> GetCpuRegisters() override { return m_cpu->GetRegisters(); }
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
+        [[nodiscard]] uint64_t GetLastExecutedOpcode() const override { return m_cpu->GetLastOp(); }
         [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
         PlipError Load(const std::string& path) override;
         void Reset() override;

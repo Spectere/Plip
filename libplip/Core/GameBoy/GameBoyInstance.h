@@ -27,10 +27,12 @@ namespace Plip::Core::GameBoy {
         ~GameBoyInstance() override;
 
         void Delta(double ns) override;
+        [[nodiscard]] std::map<std::string, DebugValue> GetCpuRegisters() override { return m_cpu->GetRegisters(); }
         [[nodiscard]] std::vector<DebugAudioChannel> GetDebugAudioChannels() override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         static std::string GetDmaStateString(DmaState state);
         static std::string GetDmaTransferModeString(DmaTransferMode mode);
+        [[nodiscard]] uint64_t GetLastExecutedOpcode() const override { return m_cpu->GetLastOp(); }
         [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
         [[nodiscard]] uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
         [[nodiscard]] uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
@@ -113,7 +115,6 @@ namespace Plip::Core::GameBoy {
 
         bool m_cgbMode {};
         Cpu::SharpSm83 *m_cpu {};
-        double m_cycleTime {};
         double m_deltaTimeRemaining {};
         bool m_doubleSpeed {};
         GameBoyModel m_model;

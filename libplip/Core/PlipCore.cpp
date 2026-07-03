@@ -14,7 +14,7 @@ PlipCore::PlipCore(PlipAudio *audio, PlipInput *input, PlipVideo *video, PlipKey
     : m_audio(audio), m_input(input), m_video(video), m_config(std::move(config)) {}
 
 void PlipCore::Step() {
-    Delta(m_singleStepTime);
+    Delta(m_cycleTime);
 }
 
 std::vector<Plip::PlipCoreDescription> PlipCore::GetSupportedCores() {

@@ -40,12 +40,13 @@ void NesInstance::Delta(const double ns) {
     const auto cycleTime = m_cpu->GetCycleTime();
     auto timeRemaining = ns;
 
+    if(!m_headless) {
+        ReadControllers();
+    }
+
     do {
         // Run CPU for one cycle.
         m_cpu->Step();
-
-        // Input
-        ReadControllers();
 
         // PPU
         // Ticks thrice for every CPU cycle on NTSC (master clock divided by 4) and Dendy.

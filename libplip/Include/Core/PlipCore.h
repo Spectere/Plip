@@ -42,15 +42,18 @@ namespace Plip {
         void ClearActiveBreakpoint() { m_activeBreakpoint = UINT64_MAX; }
         virtual void Delta(double ns) = 0;
         [[nodiscard]] uint64_t GetActiveBreakpoint() const { return m_activeBreakpoint; }
+        [[nodiscard]] virtual std::map<std::string, DebugValue> GetCpuRegisters() = 0;
         virtual std::vector<DebugAudioChannel> GetDebugAudioChannels() { return {}; }
         [[nodiscard]] virtual std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const = 0;
         [[nodiscard]] PlipMemoryMap* GetMemoryMap() const { return m_memory; }
+        [[nodiscard]] virtual uint64_t GetLastExecutedOpcode() const = 0;
         [[nodiscard]] virtual std::vector<uint64_t> GetPcs() const = 0;
         [[nodiscard]] virtual uint64_t GetTotalCpuCycles() const { return 0; }
         [[nodiscard]] virtual uint64_t GetTotalVBlankCount() const { return 0; }
         virtual PlipError Load(const std::string &path) = 0;
         virtual void Reset() = 0;
         void SetBreakpoints(const std::set<uint64_t> &breakpoints) { m_breakpoints = breakpoints; }
+        void SetHeadless(const bool value) { m_headless = value; }
         virtual void Shutdown() {}
         void SuspendAudio(const bool value) { m_audioSuspended = value; }
 
@@ -70,7 +73,8 @@ namespace Plip {
         std::set<uint64_t> m_breakpoints {};
 
         bool m_audioSuspended {};
-        double m_singleStepTime {};
+        double m_cycleTime {};
+        bool m_headless {};
 
     private:
         uint64_t m_activeBreakpoint = UINT64_MAX;
