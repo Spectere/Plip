@@ -17,6 +17,7 @@ struct TestResult {
 
     std::string ComparisonError {};
     std::string InitializationError {};
+    std::string RunnerError {};
 
     Results Actual {};
     [[nodiscard]] Results Expected() const { return GetSubtest().Expected; }
@@ -29,7 +30,7 @@ struct TestResult {
     }
 
     [[nodiscard]] bool ErrorOccurred() const {
-        return !InitializationError.empty() || !ComparisonError.empty();
+        return !InitializationError.empty() || !ComparisonError.empty() || !RunnerError.empty();
     }
 
     [[nodiscard]] Subtest GetSubtest() const {

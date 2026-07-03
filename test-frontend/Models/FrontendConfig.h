@@ -9,4 +9,5 @@
 struct FrontendConfig {
     std::filesystem::path ResultsDirectory {};
     std::filesystem::path AssetsDirectory {};
+    uint64_t Threads {};
 };

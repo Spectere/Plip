@@ -4,9 +4,12 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <format>
 #include <set>
+#include <thread>
+#include <vector>
 
 #include "MockPlip/MockAudio.h"
 #include "MockPlip/MockVideo.h"
@@ -21,15 +24,65 @@ namespace fs = std::filesystem;
 class PlipRunner {
 public:
     [[nodiscard]] static std::set<TestResult> RunTests(const FrontendConfig& testConfig, const std::set<UnitTest>& unitTests) {
-        // Loop through all the tests and subtests.
-        std::set<TestResult> testResults;
+        if(testConfig.Threads == 1) {
+            // Single-threaded, serialized method.
+            std::set<TestResult> testResults;
+            for(const auto& unitTest : unitTests) {
+                for(auto i = 0; i < unitTest.Subtests.size(); ++i) {
+                    testResults.insert(RunTest(testConfig, unitTest, i));
+                }
+            }
+
+            return testResults;
+        }
+
+        //
+        // threads go brrrrr
+        //
+
+        // Flatten tests prior to dispatch.
+        std::vector<std::pair<const UnitTest*, size_t>> tasks;
         for(const auto& unitTest : unitTests) {
-            for(auto i = 0; i < unitTest.Subtests.size(); ++i) {
-                testResults.insert(RunTest(testConfig, unitTest, i));
+            for(size_t i = 0; i < unitTest.Subtests.size(); ++i) {
+                tasks.emplace_back(&unitTest, i);
             }
         }
 
-        return testResults;
+        std::vector<TestResult> results(tasks.size());
+        const size_t workerCount = std::max<uint64_t>(1, std::min<uint64_t>(testConfig.Threads, tasks.size()));
+        std::atomic<size_t> next {};
+
+        auto worker = [&] {
+            for(size_t i = next.fetch_add(1); i < tasks.size(); i = next.fetch_add(1)) {
+                const auto &[ unitTest, subtestId ] = tasks[i];
+                try {
+                    results[i] = RunTest(testConfig, *unitTest, subtestId);
+                } catch(const std::exception& ex) {
+                    TestResult result {};
+                    result.Key = FormatKey(*unitTest, subtestId);
+                    result.SubtestId = subtestId;
+                    result.Test = *unitTest;
+                    result.RunnerError = std::format("Unhandled exception: {}", ex.what());
+                    results[i] = std::move(result);
+                }
+            }
+        };
+
+        std::vector<std::thread> threadPool;
+        threadPool.reserve(workerCount);
+
+        for(size_t i = 0; i < workerCount; ++i) {
+            threadPool.emplace_back(worker);
+        }
+
+        for(auto& thread : threadPool) {
+            thread.join();
+        }
+
+        return std::set(
+            std::make_move_iterator(results.begin()),
+            std::make_move_iterator(results.end())
+        );
     }
 
 private:
@@ -44,7 +97,7 @@ private:
 
             // Keys in plip.conf are read in as lowercase. Cores expect this behavior.
             auto newKey = key;
-            std::ranges::transform(newKey, newKey.begin(), ::tolower);
+            std::ranges::transform(newKey, newKey.begin(), tolower);
 
             auto newValue = value;
             if(assetTag != std::string::npos) {

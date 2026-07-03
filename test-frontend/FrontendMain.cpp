@@ -153,6 +153,21 @@ int main(const int argc, char** argv) {
     const auto resultsPath = fs::path(json["ResultsDirectory"].get<std::string>());
     const auto assetsPath = fs::path(json["AssetsDirectory"].get<std::string>());
 
+    uint64_t threads = 0;
+    if(json.contains("Threads")) {
+        threads = json["Threads"].get<uint64_t>();
+    }
+
+    if(threads == 0) {
+        threads = std::thread::hardware_concurrency();
+
+        if(threads == 0) {
+            // thread::hardware_concurrency is not guaranteed to return a result.
+            // 4 is a reasonable fallback for modern CPUs.
+            threads = 4;
+        }
+    }
+
     // Create the results directories if it doesn't exist.
     if(!fs::exists(resultsPath) && !fs::create_directories(resultsPath)) {
         std::cerr << "An error occurred while creating the results directory." << std::endl;
@@ -167,6 +182,7 @@ int main(const int argc, char** argv) {
     const FrontendConfig testConfig {
         .ResultsDirectory = fs::canonical(resultsPath),
         .AssetsDirectory = fs::canonical(assetsPath),
+        .Threads = threads,
     };
     configFile.close();
 
@@ -188,6 +204,7 @@ int main(const int argc, char** argv) {
     }
 
     // Let's go!
+    std::cout << "Running " << testCount << " tests with " << testConfig.Threads << " threads..." << std::endl;
     const auto start = steady_clock::now();
     const auto results = PlipRunner::RunTests(testConfig, unitTests);
     const auto end = steady_clock::now();
