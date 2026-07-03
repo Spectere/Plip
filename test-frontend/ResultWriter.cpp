@@ -160,6 +160,8 @@ void ResultWriter::WriteDetailedResult(std::ofstream& out, const TestResult& res
 
         out << R"==(
                 </td>)==";
+    } else if(result.Test.ShowResultsAsScreenshot) {
+        WriteImageResult(out, result.Key, result.Expected().Type != ResultType::Image);
     } else {
         switch(result.Expected().Type) {
             case ResultType::Image:
@@ -183,14 +185,24 @@ void ResultWriter::WriteDetailedResult(std::ofstream& out, const TestResult& res
 )==";
 }
 
-void ResultWriter::WriteImageResult(std::ofstream& out, const std::string& key) {
-    out << R"==(
+void ResultWriter::WriteImageResult(std::ofstream& out, const std::string& key, const bool onlyActual) {
+    if(onlyActual) {
+        out << R"==(
+                <td colspan="4" class="result expected">
+                    &nbsp;
+                </td>
+                <td colspan="4" class="result actual">
+                    <img src="images/)==" << key << R"==(-actual.png" />
+                </td>)==";
+    } else {
+        out << R"==(
                 <td colspan="4" class="result expected">
                     <img src="images/)==" << key << R"==(-expected.png" />
                 </td>
                 <td colspan="4" class="result actual">
                     <img src="images/)==" << key << R"==(-actual.png" />
                 </td>)==";
+    }
 }
 
 void ResultWriter::WriteRegisterResults(std::ofstream& out, const std::map<std::string, uint64_t>& expected, const std::map<std::string, uint64_t>& actual) {

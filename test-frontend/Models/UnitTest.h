@@ -18,6 +18,7 @@ struct UnitTest {
     std::string Core {};
     std::string Rom {};
     StopEvent Stop {};
+    bool ShowResultsAsScreenshot {};
     std::vector<Subtest> Subtests {};
 
     friend bool operator<(const UnitTest& lhs, const UnitTest& rhs) {

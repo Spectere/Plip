@@ -228,6 +228,13 @@ private:
                 throw std::runtime_error("BUG: Invalid expected result type was not caught early!");
         }
 
+        if(unitTest.ShowResultsAsScreenshot && subtest.Expected.Type != ResultType::Image) {
+            // Test requests that the result be shown as a screenshot.
+            result.Actual.Value.ValueString = result.Key + "-actual.png";
+            fs::path resultImagePath = testConfig.ResultsDirectory / "images" / result.Actual.Value.ValueString;
+            mockVideo->SaveScreenshot(resultImagePath);
+        }
+
         // Compare results.
         ResultComparator::CompareResults(testConfig, result);
 

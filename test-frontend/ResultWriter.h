@@ -17,6 +17,6 @@ public:
 
 private:
     static void WriteDetailedResult(std::ofstream& out, const TestResult& result);
-    static void WriteImageResult(std::ofstream& out, const std::string& key);
+    static void WriteImageResult(std::ofstream& out, const std::string& key, bool onlyActual = false);
     static void WriteRegisterResults(std::ofstream& out, const std::map<std::string, uint64_t>& expected, const std::map<std::string, uint64_t>& actual);
 };

@@ -136,6 +136,7 @@ UnitTest LoadTest(const std::string& filename, const json& def, const FrontendCo
     test.Core = def["core"].get<std::string>();
     test.Rom = def["rom"].get<std::string>();
     test.Stop = LoadStopEvent(filename, def["stop"], config);
+    test.ShowResultsAsScreenshot = def.contains("showResultsAsScreenshot") ? def["showResultsAsScreenshot"].get<bool>() : false;
     test.Subtests = LoadSubtests(filename, def["tests"], config);
 
     test.Key = FormatKey(test);
@@ -198,7 +199,14 @@ int main(const int argc, char** argv) {
     std::set<UnitTest> unitTests {};
     for(const auto& file : testFiles) {
         std::ifstream f(file);
-        unitTests.insert(LoadTest(file, json::parse(f), testConfig));
+        const auto newTest = LoadTest(file, json::parse(f), testConfig);
+
+        if(unitTests.contains(newTest)) {
+            std::cerr << "Duplicate test detected: '" << newTest.Key << "'" << std::endl;
+            return 1;
+        }
+
+        unitTests.insert(newTest);
     }
 
     if(!fs::exists(testConfig.ResultsDirectory)) {
