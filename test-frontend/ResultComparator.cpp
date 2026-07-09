@@ -28,7 +28,7 @@ void ResultComparator::CompareResults(const FrontendConfig& config, TestResult& 
             break;
         }
         case ResultType::Memory: {
-            results.SubtestId = CompareMemory(results);
+            results.Success = CompareMemory(results);
             break;
         }
         case ResultType::None:
