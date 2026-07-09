@@ -28,7 +28,18 @@ void MockVideo::ResizeOutput(const int width, const int height, [[maybe_unused]]
 }
 
 void MockVideo::SaveScreenshot(const std::string& filename) const {
-    if(const auto error = lodepng::encode(filename, m_buffer.get(), m_width, m_height, LCT_RGB, 8)) {
+    lodepng::State state;
+    state.encoder.auto_convert = 0;
+    state.info_raw.colortype = LCT_RGB;
+    state.info_raw.bitdepth = 8;
+    state.info_png.color.colortype = LCT_RGBA;
+    state.info_png.color.bitdepth = 8;
+
+    std::vector<unsigned char> buffer;
+
+    if(const auto error = lodepng::encode(buffer, m_buffer.get(), m_width, m_height, state)) {
         throw std::runtime_error(std::format("Error '{}' writing screenshot '{}'", lodepng_error_text(error), filename));
     }
+
+    lodepng::save_file(buffer, filename);
 }
