@@ -223,6 +223,16 @@ private:
                 }
                 break;
             }
+            case ResultType::Memory: {
+                for(const auto [ addr, mem ] : result.Expected().Value.ValueMem) {
+                    MemoryValue actualVal = {
+                        .Value = plip->GetCore()->GetMemoryMap()->GetByte(addr, true),
+                        .ReportOnly = mem.ReportOnly
+                    };
+                    result.Actual.Value.ValueMem.insert_or_assign(addr, actualVal);
+                }
+                break;
+            }
             case ResultType::None:
             default:
                 throw std::runtime_error("BUG: Invalid expected result type was not caught early!");

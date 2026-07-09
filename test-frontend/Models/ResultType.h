@@ -8,4 +8,5 @@ enum class ResultType {
     None,
     Image,
     Registers,
+    Memory,
 };

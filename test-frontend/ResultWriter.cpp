@@ -4,6 +4,8 @@
 //
 // This sucks and should probably be reworked. :^(
 
+#include <format>
+
 #include "ResultWriter.h"
 
 void ResultWriter::WriteHtml(const std::filesystem::path& filename, const std::set<TestResult>& results) {
@@ -42,7 +44,7 @@ void ResultWriter::WriteHtml(const std::filesystem::path& filename, const std::s
         .reg-pass td { background-color: #363; }
         .reg-fail th { background-color: #933; }
         .reg-fail td { background-color: #633; }
-        th, td { padding: 4px 8px; }
+        th, td { padding: 4px 8px; text-align: center; }
         tbody th { background-color: #333; }
         tbody td, tbody th { border: 1px solid #333; }
         a { color: white; }
@@ -170,6 +172,9 @@ void ResultWriter::WriteDetailedResult(std::ofstream& out, const TestResult& res
             case ResultType::Registers:
                 WriteRegisterResults(out, result.Expected().Value.ValueRegs, result.Actual.Value.ValueRegs);
                 break;
+            case ResultType::Memory:
+                WriteMemoryResult(out, result.Expected().Value.ValueMem, result.Actual.Value.ValueMem);
+                break;
             case ResultType::None:
             default:
                 // Just in case it somehow managed to get through the first few checks...
@@ -205,6 +210,51 @@ void ResultWriter::WriteImageResult(std::ofstream& out, const std::string& key, 
     }
 }
 
+void ResultWriter::WriteMemoryResult(std::ofstream& out, const std::map<size_t, MemoryValue>& expected, const std::map<size_t, MemoryValue>& actual) {
+    out << R"==(
+                <td colspan="4" class="result expected">
+                    <table class="reg-result">)==";
+    for(const auto& [ addr, val ] : expected) {
+        out << R"==(
+                        <tr>
+                            <th>)==" << std::format("${:X}", addr) << R"==(</th>)==";
+        if(val.ReportOnly) {
+            out << R"==(
+                            <td>-</td>
+                        </tr>)==";
+        } else {
+            out << R"==(
+                            <td>)==" << std::format("${:X}", val.Value) << R"==(</td>
+                        </tr>)==";
+        }
+    }
+    out << R"==(
+                    </table>
+                </td>
+                <td colspan="4" class="result actual">
+                    <table class="reg-result">)==";
+    for(const auto& [ addr, val ] : actual) {
+        if(val.ReportOnly) {
+            out << R"==(
+                        <tr>)==";
+        } else {
+            const auto expectedVal(expected.find(addr));
+            const std::string cl = (expectedVal->second.Value != val.Value) ? "reg-fail" : "reg-pass";
+
+            out << R"==(
+                        <tr class=")==" << cl << R"==(">)==";
+        }
+
+        out << R"==(
+                            <th>)==" << std::format("${:X}", addr) << R"==(</th>
+                            <td>)==" << std::format("${:X}", val.Value) << R"==(</td>
+                        </tr>)==";
+    }
+    out << R"==(
+                        </table>
+                    </td>)==";
+}
+
 void ResultWriter::WriteRegisterResults(std::ofstream& out, const std::map<std::string, uint64_t>& expected, const std::map<std::string, uint64_t>& actual) {
     out << R"==(
                 <td colspan="4" class="result expected">
@@ -214,7 +264,7 @@ void ResultWriter::WriteRegisterResults(std::ofstream& out, const std::map<std::
         out << R"==(
                         <tr>
                             <th>)==" << reg << R"==(</th>
-                            <td>)==" << val << R"==(</td>
+                            <td>)==" << std::format("${:X}", val) << R"==(</td>
                         </tr>)==";
     }
 
@@ -234,7 +284,7 @@ void ResultWriter::WriteRegisterResults(std::ofstream& out, const std::map<std::
         out << R"==(
                         <tr class=")==" << cl << R"==(">
                             <th>)==" << reg << R"==(</th>
-                            <td>)==" << val << R"==(</td>
+                            <td>)==" << std::format("${:X}", val) << R"==(</td>
                         </tr>)==";
     }
 

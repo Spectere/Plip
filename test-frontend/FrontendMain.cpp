@@ -100,6 +100,18 @@ Results LoadExpectedResult(const std::string& filename, const json& def, const F
     } else if(type == "image") {
         expected.Type = ResultType::Image;
         expected.Value.ValueString = def["valueString"].get<std::string>();
+    } else if(type == "memory") {
+        expected.Type = ResultType::Memory;
+        for(const auto &[ i, mem ] : def["valueMem"].items()) {
+            const auto addr = mem["address"].get<size_t>();
+
+            const MemoryValue val = {
+                .Value = mem.contains("value") ? mem["value"].get<uint64_t>() : 0,
+                .ReportOnly = mem.contains("reportOnly") ? mem["reportOnly"].get<bool>() : false,
+            };
+
+            expected.Value.ValueMem.insert({ addr, val });
+        }
     } else {
         throw std::runtime_error("Invalid expected result type in file: " + filename);
     }

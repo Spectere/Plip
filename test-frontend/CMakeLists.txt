@@ -3,6 +3,7 @@ add_executable(${frontend_test_name}
     MockPlip/MockVideo.cpp              MockPlip/MockVideo.h
 
                                         Models/FrontendConfig.h
+                                        Models/MemoryValue.h
                                         Models/Results.h
                                         Models/ResultType.h
                                         Models/StopEvent.h

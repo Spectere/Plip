@@ -12,5 +12,6 @@ public:
 
 private:
     static bool CompareImages(TestResult& results, const std::string& expected, const std::string& actual);
+    static bool CompareMemory(TestResult& results);
     static bool CompareRegisters(TestResult& results);
 };

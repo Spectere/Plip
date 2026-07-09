@@ -8,6 +8,8 @@
 #include <map>
 #include <string>
 
+#include "MemoryValue.h"
+
 struct ValueType {
     float ValueFloat {};
     double ValueDouble {};
@@ -18,4 +20,5 @@ struct ValueType {
     std::string ValueString {};
 
     std::map<std::string, uint64_t> ValueRegs {};
+    std::map<size_t, MemoryValue> ValueMem {};
 };

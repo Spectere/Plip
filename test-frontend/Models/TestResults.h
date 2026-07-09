@@ -24,6 +24,7 @@ struct TestResult {
     [[nodiscard]] Results Expected() const { return GetSubtest().Expected; }
 
     bool Success {};
+    std::set<size_t> MismatchedMemoryAddresses {};
     std::set<std::string> MismatchedRegisters {};
 
     friend bool operator<(const TestResult& lhs, const TestResult& rhs) {

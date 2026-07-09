@@ -27,6 +27,10 @@ void ResultComparator::CompareResults(const FrontendConfig& config, TestResult& 
             results.Success = CompareRegisters(results);
             break;
         }
+        case ResultType::Memory: {
+            results.SubtestId = CompareMemory(results);
+            break;
+        }
         case ResultType::None:
         default:
             break;
@@ -67,6 +71,19 @@ bool ResultComparator::CompareImages(TestResult& results, const std::string& exp
     }
 
     return true;
+}
+
+bool ResultComparator::CompareMemory(TestResult& results) {
+    bool success = true;
+    for(const auto [ addr, val ] : results.Expected().Value.ValueMem) {
+        if(val.ReportOnly) continue;
+        if(results.Actual.Value.ValueMem[addr].Value != val.Value) {
+            results.MismatchedMemoryAddresses.insert(addr);
+            success = false;
+        }
+    }
+
+    return success;
 }
 
 bool ResultComparator::CompareRegisters(TestResult& results) {

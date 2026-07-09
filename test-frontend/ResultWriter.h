@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 
+#include "Models/MemoryValue.h"
 #include "Models/TestResults.h"
 
 class ResultWriter {
@@ -18,5 +19,6 @@ public:
 private:
     static void WriteDetailedResult(std::ofstream& out, const TestResult& result);
     static void WriteImageResult(std::ofstream& out, const std::string& key, bool onlyActual = false);
+    static void WriteMemoryResult(std::ofstream& out, const std::map<size_t, MemoryValue>& expected, const std::map<size_t, MemoryValue>& actual);
     static void WriteRegisterResults(std::ofstream& out, const std::map<std::string, uint64_t>& expected, const std::map<std::string, uint64_t>& actual);
 };
