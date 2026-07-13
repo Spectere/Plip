@@ -240,16 +240,19 @@ int main(const int argc, char** argv) {
     const auto timeSec = static_cast<double>(duration_cast<milliseconds>(time).count()) / 1000.0f;
 
     // Tally up failures.
+    size_t failureCount {};
     size_t errorCount {};
     for(const auto& result : results) {
-        if(!result.Success) ++errorCount;
+        if(!result.Success) ++failureCount;
+        if(result.ErrorOccurred()) ++errorCount;
     }
 
-    if(errorCount) std::cerr << " === " << errorCount << " FAILED" << " === " << std::endl;
+    if(failureCount) std::cerr << " === " << failureCount << " FAILED" << " ===" << std::endl;
+    if(errorCount) std::cerr << " === " << errorCount << " CRITICAL ERRORS" << " ===" << std::endl;
     std::cout << " === " << testCount << " tests executed in " << timeSec << "s ===" << std::endl;
 
     // Write results to an HTML file.
     ResultWriter::WriteHtml(testConfig.ResultsDirectory / "index.html", results);
 
-    return (errorCount > 0) ? 1 : 0;
+    return (failureCount || errorCount) ? 1 : 0;
 }

@@ -44,12 +44,13 @@ void ResultWriter::WriteHtml(const std::filesystem::path& filename, const std::s
         .reg-pass td { background-color: #363; }
         .reg-fail th { background-color: #933; }
         .reg-fail td { background-color: #633; }
-        th, td { padding: 4px 8px; text-align: center; }
+        th, td { padding: 4px 8px; }
         tbody th { background-color: #333; }
         tbody td, tbody th { border: 1px solid #333; }
         a { color: white; }
         img { image-rendering: pixelated; }
         .big-warning { background-color: #211; text-align: center; padding: 1em; color: #FFF; font-size: 24px; font-weight: bold; }
+        .center { text-align: center; }
     </style>
 </head>
 
@@ -220,7 +221,7 @@ void ResultWriter::WriteMemoryResult(std::ofstream& out, const std::map<size_t, 
                             <th>)==" << std::format("${:X}", addr) << R"==(</th>)==";
         if(val.ReportOnly) {
             out << R"==(
-                            <td>-</td>
+                            <td class="center">-</td>
                         </tr>)==";
         } else {
             out << R"==(
