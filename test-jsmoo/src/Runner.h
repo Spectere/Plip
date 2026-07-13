@@ -178,9 +178,33 @@ private:
         cpu->SetInitialState(test.InitialState);
 
         // Clock CPU for the requested number of cycles.
-        const auto cycleCount = test.Cycles.size();
-        for(auto i = 0; i < cycleCount; ++i) {
+        uint64_t cycleNum {};
+        for(const auto& cycle : test.Cycles) {
             cpu->Step();
+
+            if(cpu->CycleAccurateMemoryTest()) {
+                // Nitty-gritty cycling.
+                auto expectedState = MemoryBusState::None;
+                if(cycle.MemoryRequest && cycle.MemoryRead) expectedState = MemoryBusState::Read;
+                if(cycle.MemoryRequest && cycle.MemoryWrite) expectedState = MemoryBusState::Write;
+
+                if(expectedState != cpu->GetMemoryBusState()
+                    || cycle.Address != cpu->GetAddressBus()
+                    || cycle.Value != cpu->GetDataBus()) {
+                    // Fail. Log the results.
+                    result.CycleMemoryMisses.push_back({
+                        .CycleNumber = cycleNum,
+                        .MemoryBusStateExpected = expectedState,
+                        .MemoryBusStateActual = cpu->GetMemoryBusState(),
+                        .AddressBusExpected = cycle.Address,
+                        .AddressBusActual = cpu->GetAddressBus(),
+                        .DataBusExpected = cycle.Value,
+                        .DataBusActual = cpu->GetDataBus(),
+                    });
+                }
+            }
+
+            ++cycleNum;
         }
 
         // Check final state and submit report.

@@ -188,19 +188,29 @@ int ShowDetailedReport(const std::set<RunnerTestResult>& results) {
         for(const auto &result : failedTests) {
             std::cerr << result.Key << ": \n";
 
-            for(const auto &[reg, expected, actual] : result.RegisterMisses) {
+            for(const auto& [reg, expected, actual] : result.RegisterMisses) {
                 std::cerr << "register " << reg << " (expected: " << expected << "; actual: " << actual << ")\n";
             }
 
-            for(const auto &[addr, expected, actual] : result.MemoryMisses) {
+            for(const auto& [addr, expected, actual] : result.MemoryMisses) {
                 std::cerr << "memory [addr: " << addr << "] (expected: " << static_cast<uint16_t>(expected) << "; actual: " << static_cast<uint16_t>(actual) << ")\n";
+            }
+
+            for(const auto& cycleMiss : result.CycleMemoryMisses) {
+                std::cerr << "cycle " << cycleMiss.CycleNumber << " =>\n"
+                          << "    [state] expected: " << RunnerCycleError::BusStateString(cycleMiss.MemoryBusStateExpected) << "; "
+                                      << "actual: " << RunnerCycleError::BusStateString(cycleMiss.MemoryBusStateActual) << '\n'
+                          << "    [addr]  expected: " << cycleMiss.AddressBusExpected << "; "
+                                      << "actual: " << cycleMiss.AddressBusActual << '\n'
+                          << "    [data]  expected: " << static_cast<int>(cycleMiss.DataBusExpected) << "; "
+                                      << "actual: " << static_cast<int>(cycleMiss.DataBusActual) << '\n';
             }
 
             for(const auto &ex : result.ExceptionsThrown) {
                 std::cerr << "exception thrown: " << ex << '\n';
             }
 
-            std::cerr << std::endl;
+            std::cerr << std::endl;  // Wait, cerr is unbuffered! Oh well. :^)
         }
     }
 

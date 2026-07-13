@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "RunnerCpuError.h"
+#include "RunnerCycleError.h"
 #include "RunnerMemoryError.h"
 
 struct RunnerTestResult {
@@ -16,12 +17,13 @@ struct RunnerTestResult {
     std::vector<RunnerCpuError> RegisterMisses;
     std::vector<RunnerMemoryError> MemoryMisses;
     std::vector<std::string> ExceptionsThrown;
+    std::vector<RunnerCycleError> CycleMemoryMisses;
 
     bool Skipped;
     std::string SkipReason;
 
     [[nodiscard]] bool Success() const {
-        return RegisterMisses.empty() && MemoryMisses.empty() && ExceptionsThrown.empty();
+        return RegisterMisses.empty() && MemoryMisses.empty() && ExceptionsThrown.empty() && CycleMemoryMisses.empty();
     }
 
     friend bool operator<(const RunnerTestResult& lhs, const RunnerTestResult& rhs) {

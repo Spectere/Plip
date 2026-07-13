@@ -9,6 +9,7 @@
 #include <string>
 
 #include "DebugValue.h"
+#include "Cpu/MemoryBusState.h"
 #include "Memory/PlipMemoryMap.h"
 
 namespace Plip::Cpu {
@@ -25,6 +26,10 @@ namespace Plip::Cpu {
         virtual void Reset(uint32_t pc) = 0;
         virtual void Step();
 
+        [[nodiscard]] MemoryBusState GetMemoryBusState() const { return m_memoryBusState; }
+        [[nodiscard]] uint64_t GetAddressBus() const { return m_addressBus; }
+        [[nodiscard]] uint8_t GetDataBus() const { return m_dataBus; }
+
     protected:
         PlipCpu(long hz, PlipMemoryMap* memoryMap);
         ~PlipCpu() = default;
@@ -33,6 +38,10 @@ namespace Plip::Cpu {
         double m_cycle {};
         PlipMemoryMap *m_memory;
         uint64_t m_lastOp;
+
+        MemoryBusState m_memoryBusState = MemoryBusState::None;
+        uint64_t m_addressBus {};
+        uint8_t m_dataBus {};
 
     private:
         long m_remainingCycles {};

@@ -4,6 +4,7 @@ add_executable(${jsmoo_test_name}
                                         Runner.h
                                         RunnerCpu.h
                                         RunnerCpuError.h
+                                        RunnerCycleError.h
                                         RunnerMemoryError.h
                                         RunnerTest.h
                                         RunnerTestCycle.h

@@ -7,7 +7,7 @@
 #include <cstdint>
 
 struct RunnerTestCycle {
-    uint32_t Address;
+    uint64_t Address;
     uint8_t Value;
 
     bool MemoryRead;
