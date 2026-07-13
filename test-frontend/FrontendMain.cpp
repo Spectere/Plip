@@ -73,7 +73,7 @@ std::set<std::string> ParseCmdLine(const int argc, char **argv) {
     return validFiles;
 }
 
-StopEvent LoadStopEvent(const std::string& filename, const json& def, const FrontendConfig& config) {
+StopEvent LoadStopEvent(const std::string& filename, const json& def) {
     StopEvent ev {};
 
     if(const auto type = def["type"].get<std::string>(); type == "opcode") {
@@ -89,10 +89,10 @@ StopEvent LoadStopEvent(const std::string& filename, const json& def, const Fron
     return ev;
 }
 
-Results LoadExpectedResult(const std::string& filename, const json& def, const FrontendConfig& config) {
+Results LoadExpectedResult(const std::string& filename, const json& def) {
     Results expected {};
 
-    if(const auto type = def["type"]; type == "registers") {
+    if(const auto& type = def["type"]; type == "registers") {
         expected.Type = ResultType::Registers;
         for(const auto &reg : def["valueRegs"].items()) {
             expected.Value.ValueRegs.insert({ reg.key(), reg.value().get<uint64_t>() });
@@ -119,7 +119,7 @@ Results LoadExpectedResult(const std::string& filename, const json& def, const F
     return expected;
 }
 
-std::vector<Subtest> LoadSubtests(const std::string& filename, const json& def, const FrontendConfig& config) {
+std::vector<Subtest> LoadSubtests(const std::string& filename, const json& def) {
     std::vector<Subtest> subtests {};
 
     for(const auto &test : def) {
@@ -127,7 +127,7 @@ std::vector<Subtest> LoadSubtests(const std::string& filename, const json& def, 
 
         t.Name = test["name"].get<std::string>();
         t.Config = test["config"].get<std::unordered_map<std::string, std::string>>();
-        t.Expected = LoadExpectedResult(filename, test["expected"], config);
+        t.Expected = LoadExpectedResult(filename, test["expected"]);
 
         subtests.push_back(t);
     }
@@ -139,7 +139,7 @@ std::string FormatKey(const UnitTest& test) {
     return test.Core + "-" + test.Suite + "-" + test.Name;
 }
 
-UnitTest LoadTest(const std::string& filename, const json& def, const FrontendConfig& config) {
+UnitTest LoadTest(const std::string& filename, const json& def) {
     UnitTest test {};
 
     test.Filename = filename;
@@ -147,9 +147,9 @@ UnitTest LoadTest(const std::string& filename, const json& def, const FrontendCo
     test.Suite = def["suite"].get<std::string>();
     test.Core = def["core"].get<std::string>();
     test.Rom = def["rom"].get<std::string>();
-    test.Stop = LoadStopEvent(filename, def["stop"], config);
+    test.Stop = LoadStopEvent(filename, def["stop"]);
     test.ShowResultsAsScreenshot = def.contains("showResultsAsScreenshot") ? def["showResultsAsScreenshot"].get<bool>() : false;
-    test.Subtests = LoadSubtests(filename, def["tests"], config);
+    test.Subtests = LoadSubtests(filename, def["tests"]);
 
     test.Key = FormatKey(test);
 
@@ -211,7 +211,7 @@ int main(const int argc, char** argv) {
     std::set<UnitTest> unitTests {};
     for(const auto& file : testFiles) {
         std::ifstream f(file);
-        const auto newTest = LoadTest(file, json::parse(f), testConfig);
+        const auto newTest = LoadTest(file, json::parse(f));
 
         if(unitTests.contains(newTest)) {
             std::cerr << "Duplicate test detected: '" << newTest.Key << "'" << std::endl;

@@ -79,10 +79,10 @@ public:
             thread.join();
         }
 
-        return std::set(
+        return {
             std::make_move_iterator(results.begin()),
             std::make_move_iterator(results.end())
-        );
+        };
     }
 
 private:

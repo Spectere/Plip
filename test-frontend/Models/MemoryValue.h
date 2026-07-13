@@ -1,6 +1,6 @@
 // MemoryValue.h
 //
-// TODO: Add description here.
+// A memory testing result.
 
 #pragma once
 

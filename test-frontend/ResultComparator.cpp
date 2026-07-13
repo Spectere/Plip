@@ -88,9 +88,9 @@ bool ResultComparator::CompareMemory(TestResult& results) {
 
 bool ResultComparator::CompareRegisters(TestResult& results) {
     bool success = true;
-    for(const auto reg : results.Expected().Value.ValueRegs) {
-        if(results.Actual.Value.ValueRegs[reg.first] != reg.second) {
-            results.MismatchedRegisters.insert(reg.first);
+    for(const auto& [ reg, val ] : results.Expected().Value.ValueRegs) {
+        if(results.Actual.Value.ValueRegs[reg] != val) {
+            results.MismatchedRegisters.insert(reg);
             success = false;
         }
     }
