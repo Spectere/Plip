@@ -139,7 +139,6 @@ TEST("EI", "EI") {
 
     // Interrupts should be fully enabled after a NOP.
     cpu->Cycle();
-    cpu->Cycle();
     CHECK(cpu->GetImeEnabled() == true);
 }
 
@@ -151,7 +150,6 @@ TEST("EI (Multiple)", "EI-multiple") {
     CHECK(cpu->GetImePending() == true);
 
     // Repeatedly check for enabled.
-    cpu->Cycle();
     cpu->Cycle();
     CHECK(cpu->GetImeEnabled() == true);
     cpu->Cycle();

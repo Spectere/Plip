@@ -68,7 +68,16 @@ long SharpSm83::Cycle() {
         return 0;
     }
 
-    return DecodeAndExecute();
+    const auto cycleCount = DecodeAndExecute();
+
+    // Interrupt Enabling
+    // We'll keep this here, since it makes testing easier (sets the IME state immediately after the EI, instead
+    // of immediately before the next instruction--easier to inspect).
+    if(m_state == SharpSm83State::Decode && m_imeDelay > 0 && --m_imeDelay == 0) {
+        m_ime = true;
+    }
+
+    return cycleCount;
 }
 
 void SharpSm83::Step() {
