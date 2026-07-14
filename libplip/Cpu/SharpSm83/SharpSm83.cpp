@@ -73,9 +73,20 @@ long SharpSm83::Cycle() {
     if(m_enableInterrupts && m_ime == SharpSm83ImeState::Disabled) {
         m_ime = SharpSm83ImeState::PendingEnable;
         m_enableInterrupts = false;
-    } else if(m_ime == SharpSm83ImeState::PendingEnable) {
+    } else if(m_ime == SharpSm83ImeState::PendingEnable && m_state == SharpSm83State::Decode) {
         m_ime = SharpSm83ImeState::Enabled;
     }
 
     return cycleCount;
+}
+
+void SharpSm83::Step() {
+    // The original PlipCpu single-stepping isn't suited for cycle-accuracy, as it
+    // requires us to know exactly how many cycles the instruction is going to take
+    // on the first cycle. With our current implementation, we won't know how many
+    // cycles a conditional branch will take until the second cycle.
+    if(++m_tCycle >= MCycleLength) {
+        Cycle();
+        m_tCycle = 0;
+    }
 }

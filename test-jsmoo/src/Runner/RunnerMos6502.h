@@ -21,7 +21,7 @@ public:
     [[nodiscard]] uint64_t GetAddressBus() const override { return m_cpu->GetAddressBus(); }
     [[nodiscard]] uint8_t GetDataBus() const override { return m_cpu->GetDataBus(); }
 
-    void Step() override;
+    void Cycle() override;
 
 private:
     MockMos6502* m_cpu;

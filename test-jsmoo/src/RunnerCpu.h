@@ -28,7 +28,7 @@ public:
     virtual uint64_t GetAddressBus() const = 0;
     virtual uint8_t GetDataBus() const = 0;
 
-    virtual void Step() = 0;
+    virtual void Cycle() = 0;
 
     Plip::PlipMemoryMap* memory {};
 

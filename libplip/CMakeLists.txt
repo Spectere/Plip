@@ -42,9 +42,10 @@ add_library(${lib_name}
                                                     Cpu/Mos6502/Mos6502Registers.h
     Cpu/Mos6502/Mos6502.Ops.cpp
 
-    # Sharp LR35902
+    # Sharp SM83
     Cpu/SharpSm83/SharpSm83.cpp                     Cpu/SharpSm83/SharpSm83.h
                                                     Cpu/SharpSm83/SharpSm83Registers.h
+                                                    Cpu/SharpSm83/SharpSm83State.h
     Cpu/SharpSm83/SharpSm83.Ops.cpp
 
 

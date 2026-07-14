@@ -180,7 +180,7 @@ private:
         // Clock CPU for the requested number of cycles.
         uint64_t cycleNum {};
         for(const auto& cycle : test.Cycles) {
-            cpu->Step();
+            cpu->Cycle();
 
             if(cpu->CycleAccurateMemoryTest()) {
                 // Nitty-gritty cycling.
@@ -193,7 +193,7 @@ private:
                     || cycle.Value != cpu->GetDataBus()) {
                     // Fail. Log the results.
                     result.CycleMemoryMisses.push_back({
-                        .CycleNumber = cycleNum,
+                        .CycleNumber = cycleNum + 1,  // Use a 1-based count for this to match most CPU cycle documentation.
                         .MemoryBusStateExpected = expectedState,
                         .MemoryBusStateActual = cpu->GetMemoryBusState(),
                         .AddressBusExpected = cycle.Address,

@@ -59,6 +59,6 @@ void RunnerSharpSm83::SetInitialState(const RunnerTestState state) {
     }
 }
 
-void RunnerSharpSm83::Step() {
-    m_cpu->Step();
+void RunnerSharpSm83::Cycle() {
+    m_cpu->Cycle();
 }

@@ -23,6 +23,14 @@ endif()
 # Dependencies
 #
 
+# Catch2
+FetchContent_Declare(
+    catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG        25319fd3047c6bdcf3c0170e76fa526c77f99ca9  # v3.10.0
+)
+FetchContent_MakeAvailable(catch2)
+
 # cxxopts
 set(CXXOPTS_DIR ${CMAKE_BINARY_DIR}/lib/cxxopts)
 
@@ -107,6 +115,9 @@ add_subdirectory(libplip)
 
 # plip-sdl
 add_subdirectory(plip-sdl)
+
+# plip-test
+add_subdirectory(test)
 
 # plip-test-jsmoo
 add_subdirectory(test-jsmoo/src)

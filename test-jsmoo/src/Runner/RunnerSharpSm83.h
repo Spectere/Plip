@@ -13,7 +13,7 @@ public:
     virtual ~RunnerSharpSm83() { delete m_cpu; }
 
     std::vector<RunnerCpuError> CompareState(RunnerTestState state) override;
-    bool CycleAccurateMemoryTest() override { return false; }
+    bool CycleAccurateMemoryTest() override { return true; }
     [[nodiscard]] uint32_t GetPc() override { return m_cpu->GetPc(); }
     void SetInitialState(RunnerTestState state) override;
 
@@ -21,7 +21,7 @@ public:
     [[nodiscard]] uint64_t GetAddressBus() const override { return m_cpu->GetAddressBus(); }
     [[nodiscard]] uint8_t GetDataBus() const override { return m_cpu->GetDataBus(); }
 
-    void Step() override;
+    void Cycle() override;
 
 private:
     MockSharpSm83* m_cpu;

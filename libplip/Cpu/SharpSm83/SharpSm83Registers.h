@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include <set>
 
 #include "PlipEmulationException.h"
 #include "PlipSupport.h"

@@ -44,6 +44,6 @@ void RunnerMos6502::SetInitialState(RunnerTestState state) {
     }
 }
 
-void RunnerMos6502::Step() {
-    m_cpu->Step();
+void RunnerMos6502::Cycle() {
+    m_cpu->Cycle();
 }

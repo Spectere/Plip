@@ -6,9 +6,9 @@
 #pragma once
 
 #include <array>
-#include <utility>
 
 #include "SharpSm83Registers.h"
+#include "SharpSm83State.h"
 #include "Cpu/PlipCpu.h"
 
 namespace Plip::Cpu {
@@ -39,6 +39,7 @@ namespace Plip::Cpu {
         [[nodiscard]] std::map<std::string, DebugValue> GetDebugInfo() const;
         [[nodiscard]] std::map<std::string, DebugValue> GetRegisters() const override;
         void Reset(uint32_t pc) override;
+        void Step() override;
 
     protected:
         bool m_halt = false;
@@ -57,38 +58,50 @@ namespace Plip::Cpu {
         static constexpr int MCycleLength = 4;
 
         int m_activeInterrupts {};
-        int m_cycleCount {};
+        int m_mCycle {};
+        int m_tCycle = MCycleLength;  // Guarantees the the first T-cycle will always result in an M-cycle.
         uint8_t m_op {};
+        SharpSm83State m_state = SharpSm83State::Decode;
+
+        uint8_t m_cb {};   // Prefixed instruction.
+        uint8_t m_w {};    // Temporary storage.
+        uint8_t m_z {};    // Temporary storage.
 
         long DecodeAndExecute();
-        uint16_t GetPointerAddress(int pointerIndex);
+        void ServiceInterrupt(int activeInterrupts);
+
         void OpAddToRegisterA(int value, bool addWithCarry);
         void OpBitwiseAndRegisterA(uint8_t value);
         void OpBitwiseOrRegisterA(uint8_t value);
         void OpBitwiseXorRegisterA(uint8_t value);
-        void OpJumpRelative(int8_t offset);
-        void OpReturn();
+        void OpSubtractFromRegisterA(int value, bool subtractWithBorrow, bool discardResult);
         uint8_t OpRotateLeft(uint8_t value, bool throughCarry, bool checkZeroFlag);
         uint8_t OpRotateRight(uint8_t value, bool throughCarry, bool checkZeroFlag);
         uint8_t OpShiftLeft(uint8_t value);
         uint8_t OpShiftRight(uint8_t value, bool arithmetic);
-        void OpSubtractFromRegisterA(int value, bool subtractWithBorrow, bool discardResult);
         uint8_t OpSwapNibbles(uint8_t value);
-        uint8_t Pop8FromStack();
-        uint16_t Pop16FromStack();
-        std::pair<uint8_t, uint8_t> Pop16FromStackSplit();
-        void Push8ToStack(uint8_t value);
-        void Push16ToStack(uint16_t value);
-        void Push16ToStack(uint8_t high, uint8_t low);
-        void ServiceInterrupt(int activeInterrupts);
-        [[nodiscard]] bool TestConditional(int conditional) const;
 
         // Helper Methods
-        void AdvanceMCycle(const int cycles = 1) { m_cycleCount += MCycleLength * cycles; }
+        static constexpr int AddrBc  = 0b00;
+        static constexpr int AddrDe  = 0b01;
+        static constexpr int AddrHlI = 0b10;
+        static constexpr int AddrHlD = 0b11;
+
+        static constexpr int CondNZ = 0b00;
+        static constexpr int CondZ  = 0b01;
+        static constexpr int CondNC = 0b10;
+        static constexpr int CondC  = 0b11;
+
         [[nodiscard]] uint8_t GetOpParamX() const { return (m_op >> 3) & 0b111; }
         [[nodiscard]] uint8_t GetOpParamY() const { return m_op & 0b111; }
         [[nodiscard]] uint8_t GetOpParam16() const { return (m_op >> 4) & 0b11; }
         [[nodiscard]] uint8_t GetOpConditional() const { return (m_op >> 3) & 0b11; }
+
+        [[nodiscard]] uint8_t GetCbParamX() const { return (m_cb >> 3) & 0b111; }
+        [[nodiscard]] uint8_t GetCbParamY() const { return m_cb & 0b111; }
+
+        [[nodiscard]] uint8_t GetInterruptEnable() const { return m_memory->GetByte(0xFFFF); }
+        [[nodiscard]] uint8_t GetInterruptFlag() const { return m_memory->GetByte(0xFF0F); }
 
         void CheckAddCarry(const int left, const int right)
             { m_registers.SetCarryFlagTo((left + right) > 0xFF); }
@@ -99,37 +112,57 @@ namespace Plip::Cpu {
         void CheckSubHalfBorrow(const int left, const int right, const int borrow = 0)
             { m_registers.SetHalfCarryFlagTo(((left & 0xF) - (right & 0xF) - borrow) < 0); }
 
-        [[nodiscard]] uint8_t FetchAtAddress(const uint16_t addr) {
-            const auto val = m_memory->GetByte(addr);
-            AdvanceMCycle();
-            return val;
+        bool TestConditional(const int conditional) const {
+            switch(conditional) {
+                case CondC:  return m_registers.GetCarryFlag();
+                case CondNC: return !m_registers.GetCarryFlag();
+                case CondZ:  return m_registers.GetZeroFlag();
+                case CondNZ: return !m_registers.GetZeroFlag();
+                default:
+                    throw PlipEmulationException("BUG: Conditional value out of range.");
+            }
         }
 
-        [[nodiscard]] uint8_t FetchAtPc() {
-            const auto val = m_memory->GetByte(m_registers.PC);
+        uint8_t ReadMemory(const uint16_t address) {
+            m_memoryBusState = MemoryBusState::Read;
+            m_addressBus = address;
+            return m_dataBus = m_memory->GetByte(address);
+        }
+
+        void WriteMemory(const uint16_t address, const uint8_t value) {
+            m_memoryBusState = MemoryBusState::Write;
+            m_addressBus = address;
+            m_dataBus = value;
+            m_memory->SetByte(address, value);
+        }
+
+        uint8_t FetchAtPc() {
+            ReadMemory(m_registers.PC);
             if(!m_holdPc) ++m_registers.PC; else m_holdPc = false;
-            AdvanceMCycle();
-            return val;
+            return m_dataBus;
         }
 
-        [[nodiscard]] uint16_t FetchAtPc16() {
-            const auto low = FetchAtPc();
-            const auto high = FetchAtPc();
-            return (high << 8) | low;
+        uint16_t GetPointerAddress(const int pointerIndex) {
+            switch(pointerIndex) {
+                case AddrBc: return m_registers.GetBc();
+                case AddrDe: return m_registers.GetDe();
+                case AddrHlI: {
+                    const auto addr = m_registers.GetHl();
+                    m_registers.SetHl(addr + 1);
+                    return addr;
+                }
+                case AddrHlD: {
+                    const auto addr = m_registers.GetHl();
+                    m_registers.SetHl(addr - 1);
+                    return addr;
+                }
+                default:
+                    throw PlipEmulationException("BUG: Attempted to resolve a pointer using an out of range index.");
+            }
         }
 
-        [[nodiscard]] uint8_t GetInterruptEnable() const { return m_memory->GetByte(0xFFFF); }
-        [[nodiscard]] uint8_t GetInterruptFlag() const { return m_memory->GetByte(0xFF0F); }
-
-        void JumpAbsolute(const uint16_t addr) {
-            m_registers.PC = addr;
-            AdvanceMCycle();
-        }
-
-        void StoreAtAddress(const uint16_t addr, const uint8_t val) {
-            m_memory->SetByte(addr, val);
-            AdvanceMCycle();
-        }
+        uint8_t PopByte() { return ReadMemory(m_registers.SP++); }
+        void PushByte(const uint8_t val) { WriteMemory(--m_registers.SP, val); }
 
         // Op Tables
         using OpHandler = void (SharpSm83::*)();  // what even is this syntax? X_x
@@ -155,7 +188,6 @@ namespace Plip::Cpu {
         void Op_JR_imm8s();
         void Op_JR_c_imm8s();
         void Op_RET();
-        void Op_RETI();
         void Op_RET_c();
         void Op_JP_imm16();
         void Op_JP_c_imm16();
