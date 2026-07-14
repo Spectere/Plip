@@ -176,7 +176,7 @@ const std::array<SharpSm83::OpHandler, 256> SharpSm83::OpTableCb = []{
 }();
 
 void SharpSm83::ServiceInterrupt(const int activeInterrupts) {
-    if(m_mCycle == 1) { m_ime = SharpSm83ImeState::Disabled; }  // Disable interrupts.
+    if(m_mCycle == 1) { m_ime = false; }  // Disable interrupts.
     if(m_mCycle == 3) { PushByte(m_registers.PC >> 8); }
     if(m_mCycle == 4) { PushByte(m_registers.PC); }
     if(m_mCycle == 5) {
@@ -203,11 +203,8 @@ long SharpSm83::DecodeAndExecute() {
 
     // Interrupt Enabling
     if(m_state == SharpSm83State::Decode) {
-        if(m_enableInterrupts && m_ime == SharpSm83ImeState::Disabled) {
-            m_ime = SharpSm83ImeState::PendingEnable;
-            m_enableInterrupts = false;
-        } else if(m_ime == SharpSm83ImeState::PendingEnable) {
-            m_ime = SharpSm83ImeState::Enabled;
+        if(m_imeDelay > 0 && --m_imeDelay == 0) {
+            m_ime = true;
         }
     }
 
@@ -221,14 +218,14 @@ long SharpSm83::DecodeAndExecute() {
         }
 
         m_halt = false;
-        if(m_ime == SharpSm83ImeState::Disabled) {
+        if(!m_ime) {
             // Interrupts are disabled. Wake up, but don't service the interrupt.
             return MCycleLength;
         }
     }
 
     // Interrupt Servicing
-    if(m_ime == SharpSm83ImeState::Enabled && activeInterrupts && m_state == SharpSm83State::Decode) {
+    if(m_ime && activeInterrupts && m_state == SharpSm83State::Decode) {
         m_state = SharpSm83State::Interrupt;
         m_mCycle = 0;
     }
@@ -427,7 +424,7 @@ void SharpSm83::Op_STOP() {
 void SharpSm83::Op_HALT() {
     // HALT
     // 1 cycle, - - - -
-    if(const auto activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111; m_ime == SharpSm83ImeState::Disabled && activeInterrupts != 0) {
+    if(const auto activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111; !m_ime && activeInterrupts != 0) {
         // HALT bug triggered. The CPU will not be halted, interrupts will
         // not be serviced, and the PC will be NOT be incremented during the
         // next fetch.
@@ -442,15 +439,15 @@ void SharpSm83::Op_HALT() {
 void SharpSm83::Op_DI() {
     // DI
     // 1 cycle, - - - -
-    m_ime = SharpSm83ImeState::Disabled;
-    m_enableInterrupts = false;
+    m_ime = false;
+    m_imeDelay = 0;
     m_state = SharpSm83State::Decode;
 }
 
 void SharpSm83::Op_EI() {
     // EI
     // 1 cycle, - - - -
-    m_enableInterrupts = true;  // Enable interrupts after the next instruction executes.
+    if(m_imeDelay == 0) m_imeDelay = InitialImeDelay;
     m_state = SharpSm83State::Decode;
 }
 
@@ -490,7 +487,7 @@ void SharpSm83::Op_RET() {
     if(m_mCycle == 2) { m_z = PopByte(); }
     if(m_mCycle == 3) { m_w = PopByte(); }
     if(m_mCycle == 4) {
-        if(m_op == 0xD9) m_ime = SharpSm83ImeState::Enabled;  // RETI
+        if(m_op == 0xD9) m_ime = true;  // RETI
 
         m_registers.PC = (m_w << 8) | m_z;
         m_state = SharpSm83State::Decode;

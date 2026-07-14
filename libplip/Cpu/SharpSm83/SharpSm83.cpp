@@ -28,7 +28,7 @@ void SharpSm83::Reset(const uint32_t pc) {
     m_registers.SP = 0;
     m_registers.PC = pc;
 
-    m_ime = SharpSm83ImeState::Disabled;
+    m_ime = false;
 }
 
 std::map<std::string, Plip::DebugValue> SharpSm83::GetDebugInfo() const {

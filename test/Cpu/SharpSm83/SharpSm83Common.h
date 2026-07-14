@@ -63,8 +63,11 @@ public:
     [[nodiscard]] bool GetZeroFlag() const { return m_registers.GetZeroFlag(); }
     void SetZeroFlag() { return m_registers.SetZeroFlag(); }
 
-    [[nodiscard]] Cpu::SharpSm83ImeState GetImeState() const { return m_ime; }
-    void SetImeState(const Cpu::SharpSm83ImeState newState) { m_ime = newState; }
+    [[nodiscard]] bool GetImeEnabled() const { return m_ime; }
+    void SetImeEnabled(const bool newState) { m_ime = newState; }
+
+    [[nodiscard]] bool GetImePending() const { return m_imeDelay > 0; }
+    void SetImePending(const bool newState) { m_imeDelay = newState ? InitialImeDelay : 0; }
 
     [[nodiscard]] bool GetGbcMode() const { return m_gbcMode; }
     void SetGbcMode(const bool value) { m_gbcMode = value; }

@@ -12,12 +12,6 @@
 #include "Cpu/PlipCpu.h"
 
 namespace Plip::Cpu {
-    enum class SharpSm83ImeState {
-        Disabled,
-        PendingEnable,
-        Enabled
-    };
-
     enum class SharpSm83Interrupt {
         VBlank = 0b00001,
         Lcd    = 0b00010,
@@ -42,16 +36,18 @@ namespace Plip::Cpu {
         void Step() override;
 
     protected:
+        static constexpr int InitialImeDelay = 2;  // EI's effect is delayed by a single instruction.
+
         bool m_halt = false;
         bool m_holdPc = false;
         SharpSm83Registers m_registers {};
-        SharpSm83ImeState m_ime = SharpSm83ImeState::Disabled;
+        bool m_ime {};
+        int m_imeDelay {};
         long m_baseSpeed {};
         bool m_gbcMode {};
         bool m_doubleSpeed {};
         bool m_changingSpeed {};
         int m_speedChangeTimer {};
-        bool m_enableInterrupts {};
 
     private:
         static constexpr int SpeedSwitchDelay = 8200;  // In T-cycles
