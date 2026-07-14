@@ -124,7 +124,7 @@ void GameBoyIoRegisters::Joypad_SetMatrix(const uint8_t inputsPressed) {
         RaiseInterrupt(Cpu::SharpSm83Interrupt::Joypad);
     }
 
-    m_inputsPressedLast = m_regJoypad;
+    m_inputsPressedLast = m_inputsPressed;
 }
 
 void GameBoyIoRegisters::RaiseInterrupt(const Cpu::SharpSm83Interrupt interrupt) {
