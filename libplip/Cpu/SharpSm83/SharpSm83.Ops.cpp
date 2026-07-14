@@ -210,11 +210,8 @@ long SharpSm83::DecodeAndExecute() {
             return MCycleLength;
         }
 
+        // Interrupts are disabled. Wake up.
         m_halt = false;
-        if(!m_ime) {
-            // Interrupts are disabled. Wake up, but don't service the interrupt.
-            return MCycleLength;
-        }
     }
 
     // Interrupt Servicing
