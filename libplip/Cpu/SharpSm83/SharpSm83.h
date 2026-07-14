@@ -50,7 +50,7 @@ namespace Plip::Cpu {
         int m_speedChangeTimer {};
 
     private:
-        static constexpr int SpeedSwitchDelay = 8200;  // In T-cycles
+        static constexpr int SpeedSwitchDelay = 2050;  // In M-cycles
         static constexpr int MCycleLength = 4;
 
         int m_mCycle {};
