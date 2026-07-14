@@ -61,6 +61,20 @@ namespace Plip::Core::GameBoy {
             return (PanLeft ? 0x10 : 0) | (PanRight ? 0x01 : 0);
         }
 
+        virtual void Reset() {
+            Enabled = false;
+            TimerEnabled = false;
+
+            Period = PeriodDivider = 0;
+            InitialVolume = Volume = 0;
+
+            PanLeft = PanRight = false;
+
+            EnvelopeIncrease = false;
+            EnvelopeSweepPace = 0;
+            EnvelopeTimer = 0;
+        }
+
         void SetPanning(const uint8_t value) {
             PanLeft  = value & 0xF0;
             PanRight = value & 0x0F;
@@ -136,6 +150,15 @@ namespace Plip::Core::GameBoy {
                 Enabled = false;
             }
         }
+
+        void Reset() override {
+            AudioChannel::Reset();
+
+            DutyCycle = DutyPosition = 0;
+
+            Ch1SweepEnabled = Ch1SweepSubtract = false;
+            Ch1SweepPace = Ch1SweepStep = Ch1SweepTimer = Ch1SweepPaceCurrent = 0;
+        }
     };
 
     struct WaveChannel : AudioChannel {
@@ -160,6 +183,14 @@ namespace Plip::Core::GameBoy {
             // Extract the current sample and return it.
             const auto shift = (WaveRamIndex % 2 == 0) ? 4 : 0;
             return (WaveRam[WaveRamIndex / 2] >> shift) & 0b1111;
+        }
+
+        void Reset() override {
+            AudioChannel::Reset();
+
+            DacEnabled = false;
+            OutputLevel = 0;
+            WaveRamIndex = 0;
         }
     };
 

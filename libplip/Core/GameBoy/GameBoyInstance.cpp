@@ -400,6 +400,7 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "APU", {
             { "DIV-APU", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->Audio_GetDivApuCounter())) },
             { "Panning", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->Audio_GetChannelPanning())) },
+            { "APU Enabled", DebugValue(m_ioRegisters->Audio_GetEnabled()) },
             { "Ch1 Enabled", DebugValue(m_channel1->Enabled) },
             { "Ch2 Enabled", DebugValue(m_channel2->Enabled) },
             { "Ch3 DAC", DebugValue(m_channel3->DacEnabled) },

@@ -224,7 +224,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             if(!m_audioEnabled) break;
 
             m_audioPulse1.DutyCycle = (value & 0b11000000) >> 6;
-            m_audioPulse1.Length = ~(value & 0b111111) & 0b111111;
+            m_audioPulse1.Length = 64 - (value & 0b111111);
             break;
         }
 
@@ -287,7 +287,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
             if(!m_audioEnabled) break;
 
             m_audioPulse2.DutyCycle = (value & 0b11000000) >> 6;
-            m_audioPulse2.Length = ~(value & 0b111111) & 0b111111;
+            m_audioPulse2.Length = 64 - (value & 0b111111);
             break;
         }
 
@@ -348,7 +348,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         case IoRegister::SoundCh3Length: {
             if(!m_audioEnabled) break;
 
-            m_audioWave.Length = ~value;
+            m_audioWave.Length = 256 - value;
             break;
         }
 
@@ -391,7 +391,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         case IoRegister::SoundCh4Length: {
             if(!m_audioEnabled) break;
 
-            m_audioNoise.Length = ~(value & 0b111111) & 0b111111;
+            m_audioNoise.Length = 64 - (value & 0b111111);
             break;
         }
 
@@ -465,6 +465,12 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
         // $FF26
         case IoRegister::SoundEnable: {
             m_audioEnabled = BIT_TEST(value, 7);
+
+            m_audioPulse1.Reset();
+            m_audioPulse2.Reset();
+            m_audioWave  .Reset();
+            m_audioNoise .Reset();
+
             break;
         }
 

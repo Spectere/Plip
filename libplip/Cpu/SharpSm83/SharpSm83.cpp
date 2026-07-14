@@ -4,6 +4,7 @@
  */
 
 #include "SharpSm83.h"
+
 #include "PlipSupport.h"
 
 using Plip::Cpu::SharpSm83;
@@ -36,6 +37,8 @@ std::map<std::string, Plip::DebugValue> SharpSm83::GetDebugInfo() const {
         { "Halt", DebugValue(m_halt) },
         { "IME", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ime)) },
         { "Double Speed", DebugValue(m_doubleSpeed) },
+        { "Address Bus", DebugValue(DebugValueType::Int16Le, m_addressBus) },
+        { "Data Bus", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_dataBus)) },
     };
 }
 
