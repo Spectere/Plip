@@ -670,7 +670,7 @@ void GameBoyIoRegisters::Timer_Cycle(const uint64_t mCycle) {
 
     m_timerThisMCycle = mCycle;
 
-    // Either reset or increment the timer.
+    // Increment the timer.
     m_timerInternal += 1;
 
     // Work out which bit should potentially increment TIMA.
