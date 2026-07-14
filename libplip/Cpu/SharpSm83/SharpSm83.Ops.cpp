@@ -201,6 +201,16 @@ void SharpSm83::ServiceInterrupt(const int activeInterrupts) {
 long SharpSm83::DecodeAndExecute() {
     const auto activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111;
 
+    // Interrupt Enabling
+    if(m_state == SharpSm83State::Decode) {
+        if(m_enableInterrupts && m_ime == SharpSm83ImeState::Disabled) {
+            m_ime = SharpSm83ImeState::PendingEnable;
+            m_enableInterrupts = false;
+        } else if(m_ime == SharpSm83ImeState::PendingEnable) {
+            m_ime = SharpSm83ImeState::Enabled;
+        }
+    }
+
     // HALT Handler
     if(m_halt) {
         m_memoryBusState = MemoryBusState::None;

@@ -68,16 +68,7 @@ long SharpSm83::Cycle() {
         return 0;
     }
 
-    const auto cycleCount = DecodeAndExecute();
-
-    if(m_enableInterrupts && m_ime == SharpSm83ImeState::Disabled) {
-        m_ime = SharpSm83ImeState::PendingEnable;
-        m_enableInterrupts = false;
-    } else if(m_ime == SharpSm83ImeState::PendingEnable && m_state == SharpSm83State::Decode) {
-        m_ime = SharpSm83ImeState::Enabled;
-    }
-
-    return cycleCount;
+    return DecodeAndExecute();
 }
 
 void SharpSm83::Step() {
