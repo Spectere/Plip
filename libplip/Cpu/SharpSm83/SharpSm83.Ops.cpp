@@ -199,13 +199,13 @@ void SharpSm83::ServiceInterrupt(const int activeInterrupts) {
 
 // ReSharper disable once CppDFAConstantFunctionResult
 long SharpSm83::DecodeAndExecute() {
-    m_activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111;
+    const auto activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111;
 
     // HALT Handler
     if(m_halt) {
         m_memoryBusState = MemoryBusState::None;
 
-        if(m_activeInterrupts == 0) {
+        if(activeInterrupts == 0) {
             // No pending interrupts. Do nothing.
             return MCycleLength;
         }
@@ -218,14 +218,14 @@ long SharpSm83::DecodeAndExecute() {
     }
 
     // Interrupt Servicing
-    if(m_ime == SharpSm83ImeState::Enabled && m_activeInterrupts && m_state == SharpSm83State::Decode) {
+    if(m_ime == SharpSm83ImeState::Enabled && activeInterrupts && m_state == SharpSm83State::Decode) {
         m_state = SharpSm83State::Interrupt;
         m_mCycle = 0;
     }
 
     if(m_state == SharpSm83State::Interrupt) {
         ++m_mCycle;
-        ServiceInterrupt(m_activeInterrupts);
+        ServiceInterrupt(activeInterrupts);
         return MCycleLength;
     }
 
@@ -417,7 +417,7 @@ void SharpSm83::Op_STOP() {
 void SharpSm83::Op_HALT() {
     // HALT
     // 1 cycle, - - - -
-    if(m_ime == SharpSm83ImeState::Disabled && m_activeInterrupts != 0) {
+    if(const auto activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111; m_ime == SharpSm83ImeState::Disabled && activeInterrupts != 0) {
         // HALT bug triggered. The CPU will not be halted, interrupts will
         // not be serviced, and the PC will be NOT be incremented during the
         // next fetch.

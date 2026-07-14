@@ -45,7 +45,7 @@ namespace Plip::Cpu {
         bool m_halt = false;
         bool m_holdPc = false;
         SharpSm83Registers m_registers {};
-        SharpSm83ImeState m_ime = SharpSm83ImeState::Enabled;
+        SharpSm83ImeState m_ime = SharpSm83ImeState::Disabled;
         long m_baseSpeed {};
         bool m_gbcMode {};
         bool m_doubleSpeed {};
@@ -57,7 +57,6 @@ namespace Plip::Cpu {
         static constexpr int SpeedSwitchDelay = 8200;  // In T-cycles
         static constexpr int MCycleLength = 4;
 
-        int m_activeInterrupts {};
         int m_mCycle {};
         int m_tCycle = MCycleLength;  // Guarantees the the first T-cycle will always result in an M-cycle.
         uint8_t m_op {};
