@@ -432,7 +432,7 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
             { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) },
             { "Boot ROM Enabled", DebugValue(!m_bootRomDisableFlag) },
             { "DMA State", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_dmaState)) },
-            { "IE", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_highRam->GetByte(0x80, true))) },
+            { "IE", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_memory->GetByte(GameBoyMapper::InterruptEnableAddress, true))) },
             { "IF", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::InterruptFlag))) },
             { "CGB Mode", DebugValue(m_cgbMode) },
         }},

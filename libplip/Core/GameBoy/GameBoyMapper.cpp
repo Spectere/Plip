@@ -132,6 +132,7 @@ uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) co
     }
 
     // GB memory map.
+    if(address == InterruptEnableAddress) return m_ie;
     if(address >= HighRamAddress) return m_highRam->GetByte(address & 0x7F, privileged);
     if(address >= IoRegistersAddress) return m_ioRegisters->GetByte(address & 0x7F, privileged);
     if(address >= UnusableAddress) return m_unusable->GetByte(address - 0xFEA0, privileged);
@@ -413,7 +414,8 @@ void GameBoyMapper::SetByte(const uint32_t address, const uint8_t value, const b
 
     if(mbcHandledWrite) return;
 
-    if(address >= HighRamAddress) m_highRam->SetByte(address & 0x7F, value, privileged);
+    if(address == InterruptEnableAddress) m_ie = value;
+    else if(address >= HighRamAddress) m_highRam->SetByte(address & 0x7F, value, privileged);
     else if(address >= IoRegistersAddress) m_ioRegisters->SetByte(address & 0x7F, value, privileged);
     else if(address >= UnusableAddress) m_unusable->SetByte(address - 0xFEA0, value, privileged);
     else if(address >= OamAddress) m_oam->SetByte(address & 0xFF, value, privileged);

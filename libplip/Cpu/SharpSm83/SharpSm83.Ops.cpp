@@ -414,7 +414,7 @@ void SharpSm83::Op_STOP() {
 void SharpSm83::Op_HALT() {
     // HALT
     // 1 cycle, - - - -
-    if(const auto activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111; !m_ime && activeInterrupts != 0) {
+    if(const auto activeInterrupts = GetInterruptEnable() & GetInterruptFlag() & 0b11111; !m_ime && m_imeDelay == 0 && activeInterrupts != 0) {
         // HALT bug triggered. The CPU will not be halted, interrupts will
         // not be serviced, and the PC will be NOT be incremented during the
         // next fetch.

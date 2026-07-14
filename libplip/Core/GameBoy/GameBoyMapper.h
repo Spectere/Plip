@@ -31,6 +31,7 @@ namespace Plip::Core::GameBoy {
         static constexpr auto UnusableAddress = 0xFEA0;
         static constexpr auto IoRegistersAddress = 0xFF00;
         static constexpr auto HighRamAddress = 0xFF80;
+        static constexpr auto InterruptEnableAddress = 0xFFFF;
 
         GameBoyMapper(PlipMemory* bootRom, PlipMemory* cartRom, PlipMemory* videoRam, PlipMemory* workRam, PlipMemory* oam, PlipMemory* ioRegisters, PlipMemory* highRam);
 
@@ -91,6 +92,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_bankRegister0 {};
         uint8_t m_bankRegister1 {};
         uint8_t m_bankRegister2 {};
+        uint8_t m_ie {};
         bool m_bootRomAccessible {};
         bool m_cartHasRam {};
         uint8_t m_cartRamBank {};

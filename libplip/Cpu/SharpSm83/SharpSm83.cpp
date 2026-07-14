@@ -30,6 +30,7 @@ void SharpSm83::Reset(const uint32_t pc) {
     m_registers.PC = pc;
 
     m_ime = false;
+    m_imeDelay = 0;
 }
 
 std::map<std::string, Plip::DebugValue> SharpSm83::GetDebugInfo() const {
