@@ -162,7 +162,30 @@ private:
 
         const auto testFileDirectory = fs::canonical(unitTest.Filename).parent_path();
         const auto romPath = testFileDirectory / unitTest.Rom;
-        plip->Load(coreTag, romPath, coreConfigKvp);
+        const auto plipError = plip->Load(coreTag, romPath, coreConfigKvp);
+
+        switch(plipError) {
+            case Plip::PlipError::InvalidCore:
+                result.InitializationError = std::format("Invalid core '{}' specified.", unitTest.Core);
+                break;
+            case Plip::PlipError::FileNotFound:
+                result.InitializationError = std::format("ROM file '{}' not found.", unitTest.Filename);
+                break;
+            case Plip::PlipError::RomFileTruncated:
+                result.InitializationError = std::format("ROM file '{}' has been truncated.", unitTest.Filename);
+                break;
+            case Plip::PlipError::UnrecognizedMedia:
+                result.InitializationError = "Unrecognized media.";
+                break;
+            case Plip::PlipError::AssetFileTruncated:
+                result.InitializationError = "Asset file has been truncated.";
+                break;
+            case Plip::PlipError::Success:
+            default:
+                break;
+        }
+        if(result.ErrorOccurred()) return result;
+
         plip->GetCore()->SetHeadless(true);
 
         uint64_t cycle {};
