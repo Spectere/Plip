@@ -112,9 +112,13 @@ void GameBoyInstance::Delta(const double ns) {
         }
 
         // DMA
-        if(m_tCycleCount % 4 == 0) {  // Clock every M-cycle
+        if(m_tCycleCount % 4 == 0) {
+            // OAM always clocks every M-cycle (4 T-cycles).
             DMA_OAM_Cycle();
-            if(m_model == GameBoyModel::CGB) DMA_VDMA_Cycle();
+        }
+        if(m_model == GameBoyModel::CGB && m_tCycleCount % (m_doubleSpeed ? 4 : 2) == 0) {
+            // Clock every 2 T-cycles in normal mode, or every 4 T-cycles in double speed.
+            DMA_VDMA_Cycle();
         }
 
         // Input
