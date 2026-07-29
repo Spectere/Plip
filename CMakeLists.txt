@@ -19,6 +19,9 @@ elseif(WIN32)
     add_compile_definitions(WIN32)
 endif()
 
+include(TestBigEndian)
+TEST_BIG_ENDIAN(BIG_ENDIAN)
+
 #
 # Dependencies
 #
@@ -88,13 +91,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-# LodePNG
-FetchContent_Declare(
-    lodepng
-    GIT_REPOSITORY https://github.com/lvandeve/lodepng.git
-    GIT_TAG        ed6fe5825c6a4fbb7f58ab35a4231c7543cd452a
-)
-FetchContent_MakeAvailable(lodepng)
+# libpng
+find_package(PNG)
 
 # SDL3
 FetchContent_Declare(

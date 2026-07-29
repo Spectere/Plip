@@ -14,7 +14,14 @@ public:
     void Draw(void* data) override;
     void Clear() override;
     bool EndDraw() override { return true; }
-    Plip::PlipVideoFormat GetFormat() override { return Plip::PlipVideoFormat::RGB888; }
+    Plip::PlipVideoFormat GetFormat() override {
+#ifdef SYS_BIG_ENDIAN
+        return Plip::PlipVideoFormat::RGBA8888;
+#else
+        // PNG data is big endian. Request reversed byte order from libplip.
+        return Plip::PlipVideoFormat::ABGR8888;
+#endif // SYS_BIG_ENDIAN
+    }
     int GetHeight() override { return m_height; }
     int GetWidth() override { return m_width; }
     void ResizeOutput(int width, int height, double pixelAspectX, double pixelAspectY) override;

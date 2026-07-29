@@ -1,6 +1,3 @@
-include(TestBigEndian)
-TEST_BIG_ENDIAN(BIG_ENDIAN)
-
 add_custom_target(
     GENERATE_LIB_VERSION_HEADER
     COMMAND ${CMAKE_COMMAND}

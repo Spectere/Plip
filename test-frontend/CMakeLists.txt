@@ -16,8 +16,6 @@ add_executable(${frontend_test_name}
                                         PlipRunner.h
     ResultComparator.cpp                ResultComparator.h
     ResultWriter.cpp                    ResultWriter.h
-
-    ${lodepng_SOURCE_DIR}/lodepng.cpp
 )
 
 target_include_directories(${frontend_test_name}
@@ -30,4 +28,9 @@ target_include_directories(${frontend_test_name}
 target_link_libraries(${frontend_test_name}
     plip
     nlohmann_json::nlohmann_json
+    PNG::PNG
 )
+
+if(BIG_ENDIAN)
+    target_compile_definitions(${frontend_test_name} PRIVATE SYS_BIG_ENDIAN)
+endif()
