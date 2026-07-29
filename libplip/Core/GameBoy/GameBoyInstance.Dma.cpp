@@ -15,7 +15,17 @@ void GameBoyInstance::DMA_OAM_Cycle() {
             if(--m_dmaOamInitCycles == 0) {
                 // Set up DMA.
                 m_dmaOamState = DmaStateOam::Transferring;
-                m_dmaOamStartAddress = m_ioRegisters->DMA_GetOamAddress() << 8;
+                auto startAddrHighByte = m_ioRegisters->DMA_GetOamAddress();
+
+                if(startAddrHighByte >= 0xFE) {
+                    // The DMA controller only drives VRAM and the external bus. This hack exists to make it
+                    // work with our flat memory model. The *correct* solution would be to emulate the various
+                    // memory buses. Maybe some day. :)
+                    // The hack here is to simply pop off A13, effectively sending us back to WRAM.
+                    startAddrHighByte &= 0xDF;
+                }
+
+                m_dmaOamStartAddress = startAddrHighByte << 8;
                 m_dmaOamPtr = 0;
 
                 // Set memory accessibility.
