@@ -173,7 +173,7 @@ uint8_t GameBoyMapper::GetByte(const uint32_t address, const bool privileged) co
         // VRAM
         return m_videoRam->GetByte((m_vramBank * VideoRamLength) + (address & 0x1FFF), privileged);
     }
-    if(address >= RomBank1Address) return m_cartRom->GetByte((m_rom1Bank * RomBank1Length) + (address & 0x3FFF));
+    if(address >= RomBank1Address) return m_cartRom->GetByte((m_rom1Bank * RomBank1Length) + (address & 0x3FFF), privileged);
     return m_cartRom->GetByte((m_rom0Bank * RomBank0Length) + (address & 0x3FFF), privileged);
 }
 
