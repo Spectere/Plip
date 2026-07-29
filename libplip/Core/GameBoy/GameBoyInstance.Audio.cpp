@@ -25,7 +25,7 @@ void GameBoyInstance::APU_Init() {
 
 void GameBoyInstance::APU_Cycle() {
     // BaseClock / 4 == Pulse
-    if(m_totalCpuCycles % (m_apuClockDivisor * 2) == 0) {
+    if(m_tCycleCount % (m_apuClockDivisor * 2) == 0) {
         m_channel1Last = APU_Clock_Channel(m_channel1);
         m_channel2Last = APU_Clock_Channel(m_channel2);
     }

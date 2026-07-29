@@ -6,11 +6,9 @@
 #pragma once
 
 namespace Plip::Core::GameBoy {
-    enum class DmaState {
+    enum class DmaStateOam {
         Inactive,
         Preparing,
         Transferring,
-        WaitingForHBlank,
-        Finalize,
     };
 }

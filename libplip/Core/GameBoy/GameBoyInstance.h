@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <vector>
 
-#include "DmaState.h"
+#include "DmaStateOam.h"
 #include "GameBoyIoRegisters.h"
 #include "GameBoyMapper.h"
 #include "GameBoyModel.h"
@@ -30,15 +30,18 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] std::map<std::string, DebugValue> GetCpuRegisters() override { return m_cpu->GetRegisters(); }
         [[nodiscard]] std::vector<DebugAudioChannel> GetDebugAudioChannels() override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
-        static std::string GetDmaStateString(DmaState state);
+        static std::string GetDmaStateOamString(DmaStateOam state);
         static std::string GetDmaTransferModeString(DmaTransferMode mode);
         [[nodiscard]] uint64_t GetLastExecutedOpcode() const override { return m_cpu->GetLastOp(); }
         [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
-        [[nodiscard]] uint64_t GetTotalCpuCycles() const override { return m_totalCpuCycles; }
+        [[nodiscard]] uint64_t GetTotalCpuCycles() const override { return m_tCycleCount; }
         [[nodiscard]] uint64_t GetTotalVBlankCount() const override { return m_totalVBlankCount; }
         PlipError Load(const std::string &path) override;
         void Reset() override;
         void Shutdown() override;
+
+        // GameBoyInstance.Dma
+        void DMA_OAM_InitiateTransfer();
 
     private:
         struct PPU_Object {
@@ -50,13 +53,6 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance
         void BootRomFlagHandler();
-        void DmaCheck();
-        void DmaComplete();
-        void DmaCompleteOam() const;
-        void DmaCycle();
-        void DmaFinishPreparations() const;
-        void DmaInitCgb(DmaTransferMode transferMode);
-        void DmaInitOam(int sourceAddress);
         [[nodiscard]] int GetCartridgeRamBankCount() const;
         [[nodiscard]] bool IsMultiRomCartridge() const;
         void ReadJoypad();
@@ -72,6 +68,11 @@ namespace Plip::Core::GameBoy {
         void APU_Dump();
         void APU_Init();
         void APU_Send();
+
+        // GameBoyInstance.Dma
+        void DMA_OAM_Cycle();
+        void DMA_Oam_Finalize();
+        void DMA_OAM_SetMemoryAccessibility(bool value) const;
 
         // GameBoyInstance.Video
         void PPU_Cycle();
@@ -118,7 +119,7 @@ namespace Plip::Core::GameBoy {
         double m_deltaTimeRemaining {};
         bool m_doubleSpeed {};
         GameBoyModel m_model;
-        uint64_t m_totalCpuCycles {};
+        uint64_t m_tCycleCount {};
         uint64_t m_totalVBlankCount {};
         PlipVideoFormatInfo m_videoFormat {};
         uint8_t *m_videoBuffer;
@@ -175,18 +176,12 @@ namespace Plip::Core::GameBoy {
         bool m_bootRomDisableFlag = false;
 
         // DMA
-        bool m_dmaBatched {};
-        PPU_Mode m_batchLastPpuMode {};
-        int m_dmaBatchLength {};
-        bool m_dmaBlockCpu {};
-        bool m_dmaCgb {};
-        bool m_dmaCopyInvalidBytes {};
-        int m_dmaCopyLength {};
-        int m_dmaCurrentOffset {};
-        int m_dmaDestinationAddress {};
-        int m_dmaSourceAddress {};
-        DmaState m_dmaState {};
-        DmaTransferMode m_dmaTransferMode {};
+        static constexpr int DmaOamByteCount = 0xA0;
+
+        int m_dmaOamInitCycles = -1;
+        uint16_t m_dmaOamStartAddress {};
+        DmaStateOam m_dmaOamState = DmaStateOam::Inactive;
+        int m_dmaOamPtr {};
 
         // APU
         constexpr static float ApuMixDivisor = 60;  // 15 audible volume levels, 4 channels

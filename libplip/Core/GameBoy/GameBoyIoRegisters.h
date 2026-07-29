@@ -11,6 +11,8 @@
 #include "Memory/PlipMemory.h"
 
 namespace Plip::Core::GameBoy {
+    class GameBoyInstance;
+
     enum class DmaTransferMode {
         Inactive,
         Oam,
@@ -98,7 +100,7 @@ namespace Plip::Core::GameBoy {
 
     class GameBoyIoRegisters final : public PlipMemory {
     public:
-        GameBoyIoRegisters(GameBoyModel gbModel, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam);
+        GameBoyIoRegisters(GameBoyModel gbModel, GameBoyInstance* gbInstance, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam);
         ~GameBoyIoRegisters() = default;
 
         uint8_t GetByte(const uint32_t address, const bool privileged) override {
@@ -125,6 +127,9 @@ namespace Plip::Core::GameBoy {
             m_speedSwitchArmed = false;
         }
 
+        // DMA
+        [[nodiscard]] uint8_t DMA_GetOamAddress() const { return m_regOamDmaAddress; }
+
         // Joypad
         void Joypad_Cycle();
         void Joypad_SetMatrix(uint8_t inputsPressed);
@@ -149,21 +154,21 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] uint8_t Audio_GetVinPanning() const { return m_audioVinPanning; }
 
         // Video
-        void Video_AcknowledgeOamDmaCopy() { m_videoPerformOamDmaCopy = false; }
-        void Video_AcknowledgeHdmaCancellation() { m_videoHdmaTransferCancelled = false; }
+        //void Video_AcknowledgeOamDmaCopy() { m_videoPerformOamDmaCopy = false; }
+        //void Video_AcknowledgeHdmaCancellation() { m_videoHdmaTransferCancelled = false; }
         void Video_AcknowledgeVideoRamBankSwitch() { m_videoPerformVideoRamBankSwitch = -1; }
-        [[nodiscard]] int Video_GetOamDmaCopyAddress() const { return m_videoPerformOamDmaCopy ? m_regOamDmaAddress : -1; }
-        [[nodiscard]] int Video_GetHdmaDestinationAddress() const { return m_videoHdmaDestinationAddress; }
-        [[nodiscard]] int Video_GetHdmaSourceAddress() const { return m_videoHdmaSourceAddress; }
-        [[nodiscard]] bool Video_GetHdmaTransferCancelled() const { return m_videoHdmaTransferCancelled; }
-        [[nodiscard]] int Video_GetHdmaTransferLength() const { return m_videoHdmaTransferLength; }
-        [[nodiscard]] DmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
+        //[[nodiscard]] int Video_GetOamDmaCopyAddress() const { return m_videoPerformOamDmaCopy ? m_regOamDmaAddress : -1; }
+        //[[nodiscard]] int Video_GetHdmaDestinationAddress() const { return m_videoHdmaDestinationAddress; }
+        //[[nodiscard]] int Video_GetHdmaSourceAddress() const { return m_videoHdmaSourceAddress; }
+        //[[nodiscard]] bool Video_GetHdmaTransferCancelled() const { return m_videoHdmaTransferCancelled; }
+        //[[nodiscard]] int Video_GetHdmaTransferLength() const { return m_videoHdmaTransferLength; }
+        //[[nodiscard]] DmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
         [[nodiscard]] int Video_GetPerformVramBankSwitch() const { return m_videoPerformVideoRamBankSwitch; }
-        void Video_SetHdmaTransferComplete() {
-            m_videoHdmaTransferMode = DmaTransferMode::Inactive;
-            m_videoHdmaTransferRemaining = 0xFF;
-        }
-        void Video_SetHdmaTransferRemaining(const int remaining) { m_videoHdmaTransferRemaining = remaining; }
+        //void Video_SetHdmaTransferComplete() {
+        //    m_videoHdmaTransferMode = DmaTransferMode::Inactive;
+        //    m_videoHdmaTransferRemaining = 0xFF;
+        //}
+        //void Video_SetHdmaTransferRemaining(const int remaining) { m_videoHdmaTransferRemaining = remaining; }
         void Video_SetLcdStatus(const uint8_t value) { m_regLcdStatus = (m_regLcdStatus & 0b11111000) | (value & 0b111); }
         void Video_SetYCoordinate(const uint8_t value) { m_regLcdYCoordinate = value; }
 
@@ -180,6 +185,7 @@ namespace Plip::Core::GameBoy {
         bool m_bootRomDisabled {};
         uint8_t m_interruptFlag {};
         GameBoyModel m_model {};
+        GameBoyInstance* m_gbInstance {};
         bool m_dmgCompatibility = true;                 // CGB
         int m_performWorkRamBankSwitch = -1;            // CGB
         bool m_doubleSpeedActive = false;               // CGB
@@ -216,18 +222,21 @@ namespace Plip::Core::GameBoy {
         WaveChannel m_audioWave {};
         NoiseChannel m_audioNoise {};
 
+        // DMA
+        int m_dmaInitDelay {};
+
         // Video
-        bool m_videoPerformOamDmaCopy {};
+        //bool m_videoPerformOamDmaCopy {};
         PlipMemory* m_videoCgbBgPaletteRam {};          // CGB
         PlipMemory* m_videoCgbObjPaletteRam {};         // CGB
-        bool m_videoPerformHdmaCopy {};                 // CGB
+        //bool m_videoPerformHdmaCopy {};                 // CGB
         int m_videoPerformVideoRamBankSwitch = -1;      // CGB
-        uint16_t m_videoHdmaDestinationAddress {};      // CGB
-        uint16_t m_videoHdmaSourceAddress {};           // CGB
-        bool m_videoHdmaTransferCancelled {};           // CGB
-        int m_videoHdmaTransferLength {};               // CGB
-        DmaTransferMode m_videoHdmaTransferMode {};     // CGB
-        int m_videoHdmaTransferRemaining {};            // CGB
+        //uint16_t m_videoHdmaDestinationAddress {};      // CGB
+        //uint16_t m_videoHdmaSourceAddress {};           // CGB
+        //bool m_videoHdmaTransferCancelled {};           // CGB
+        //int m_videoHdmaTransferLength {};               // CGB
+        //DmaTransferMode m_videoHdmaTransferMode {};     // CGB
+        //int m_videoHdmaTransferRemaining {};            // CGB
         bool m_videoCgbObjectPriority {};               // CGB
         bool m_videoBgPaletteAutoIncrement {};          // CGB
         int m_videoBgPaletteIndex {};                   // CGB

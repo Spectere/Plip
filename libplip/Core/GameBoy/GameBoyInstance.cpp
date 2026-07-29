@@ -49,7 +49,7 @@ GameBoyInstance::GameBoyInstance(PlipAudio *audio, PlipInput *input, PlipVideo *
         m_videoRam = new PlipMemoryRam(0x2000, 0xFF);
         m_workRam = new PlipMemoryRam(0x2000, 0xFF);
     }
-    m_ioRegisters = new GameBoyIoRegisters(m_model, m_ppuCgbBgPaletteRam, m_ppuCgbObjPaletteRam);
+    m_ioRegisters = new GameBoyIoRegisters(m_model, this, m_ppuCgbBgPaletteRam, m_ppuCgbObjPaletteRam);
 
     // Initialize framebuffer and video subsystem.
     m_video->ResizeOutput(ScreenWidth, ScreenHeight, 1.0, 1.0);
@@ -90,8 +90,7 @@ void GameBoyInstance::Delta(const double ns) {
 
     do {
         // Run CPU for one cycle.
-        if(!m_dmaBlockCpu)
-            m_cpu->Step();
+        m_cpu->Step();
 
         if(const auto cpuDoubleSpeed = m_cpu->IsDoubleSpeed(); m_doubleSpeed != cpuDoubleSpeed) {
             m_doubleSpeed = cpuDoubleSpeed;
@@ -109,23 +108,18 @@ void GameBoyInstance::Delta(const double ns) {
 
         // Timer
         if(!m_cpu->IsChangingSpeed()) {
-            m_ioRegisters->Timer_Cycle(m_totalCpuCycles / 4);
+            m_ioRegisters->Timer_Cycle(m_tCycleCount / 4);
         }
 
         // DMA
-        if(m_dmaState == DmaState::Inactive) {
-            DmaCheck();
-        } else {
-            if(m_dmaTransferMode == DmaTransferMode::Oam) DmaCheck();  // OAM DMA transfers can be restarted.
-            DmaCycle();
-        }
+        DMA_OAM_Cycle();
 
         // Input
         m_ioRegisters->Joypad_SetMatrix(m_keypad);
         m_ioRegisters->Joypad_Cycle();
 
         // APU
-        if(m_totalCpuCycles % m_apuClockDivisor == 0) {
+        if(m_tCycleCount % m_apuClockDivisor == 0) {
             APU_Cycle();
 
             if(m_audio->IsActive() && m_audioBuffer.size() >= m_apuOutputSendThreshold) {
@@ -176,201 +170,17 @@ void GameBoyInstance::Delta(const double ns) {
             }
         }
 
-        ++m_totalCpuCycles;
+        ++m_tCycleCount;
         m_deltaTimeRemaining -= m_cycleTime;
     } while(m_cycleTime < m_deltaTimeRemaining);
 }
 
-void GameBoyInstance::DmaCheck() {
-    // OAM DMA
-    if(const auto oamDmaSourceAddress = m_ioRegisters->Video_GetOamDmaCopyAddress(); oamDmaSourceAddress >= 0) {
-        DmaInitOam(oamDmaSourceAddress);
-        m_ioRegisters->Video_AcknowledgeOamDmaCopy();
-    }
-
-    if(m_model == GameBoyModel::CGB) {
-        // HDMA/GDMA
-        if(const auto transferMode = m_ioRegisters->Video_GetHdmaTransferMode(); transferMode != DmaTransferMode::Inactive) {
-            DmaInitCgb(transferMode);
-        }
-    }
-}
-
-void GameBoyInstance::DmaComplete() {
-    switch(m_dmaTransferMode) {
-        case DmaTransferMode::Oam: {
-            DmaCompleteOam();
-            break;
-        }
-
-        default: break;
-    }
-
-    m_dmaCurrentOffset = 0;
-    m_dmaSourceAddress = 0;
-    m_dmaDestinationAddress = 0;
-    m_dmaTransferMode = DmaTransferMode::Inactive;
-}
-
-void GameBoyInstance::DmaCompleteOam() const {
-    // This is the cycle that the copy would normally complete. Flag the inaccessible
-    // memory as accessible again.
-    m_cartRom->SetReadable(true);
-
-    m_workRam->SetReadable(true);
-    m_workRam->SetWritable(true);
-
-    m_gbMemory->RestoreCartridgeMemoryAccessibility();
-
-    PPU_SetMemoryPermissions();  // Sets the writable state of VRAM/OAM.
-}
-
-void GameBoyInstance::DmaCycle() {
-    if(m_cpu->IsHalted()) return;
-
-    switch(m_dmaState) {
-        case DmaState::Preparing: {
-            m_dmaState = DmaState::Transferring;
-            DmaFinishPreparations();
-            break;
-        }
-
-        case DmaState::WaitingForHBlank: {
-            if(m_ppuMode != PPU_Mode::HBlank || m_batchLastPpuMode == PPU_Mode::HBlank) {
-                m_batchLastPpuMode = m_ppuMode;
-                break;
-            }
-
-            m_batchLastPpuMode = m_ppuMode;
-            m_dmaState = DmaState::Preparing;
-            m_dmaBatchLength = HBlankDmaBatchLength;
-            m_dmaBlockCpu = m_dmaCgb;
-            break;
-        }
-
-        case DmaState::Transferring: {
-            if(m_dmaTransferMode != DmaTransferMode::Oam && m_ioRegisters->Video_GetHdmaTransferCancelled()) {
-                m_ioRegisters->Video_AcknowledgeHdmaCancellation();
-                m_dmaState = DmaState::Inactive;
-                break;
-            }
-
-            const auto thisByte = m_dmaCopyInvalidBytes
-                ? 0xFF
-                : m_memory->GetByte(m_dmaSourceAddress + m_dmaCurrentOffset, true);
-
-            m_memory->SetByte(m_dmaDestinationAddress + m_dmaCurrentOffset, thisByte, true);
-
-            if(m_dmaCgb) {
-                m_ioRegisters->Video_SetHdmaTransferRemaining(m_dmaCopyLength - m_dmaCurrentOffset);
-            }
-
-            if(++m_dmaCurrentOffset >= m_dmaCopyLength) {
-                m_dmaState = DmaState::Finalize;
-                m_dmaBlockCpu = false;
-
-                if(m_dmaCgb) {
-                    m_ioRegisters->Video_SetHdmaTransferComplete();
-                }
-            }
-
-            if(m_dmaBatched && --m_dmaBatchLength == 0) {
-                m_dmaState = DmaState::WaitingForHBlank;
-            }
-
-            break;
-        }
-
-        case DmaState::Finalize: {
-            m_dmaState = DmaState::Inactive;
-            DmaComplete();
-            break;
-        }
-
-        case DmaState::Inactive:
-        default:
-            break;
-    }
-}
-
-void GameBoyInstance::DmaFinishPreparations() const {
-    if(m_dmaTransferMode == DmaTransferMode::Oam) {
-        // Flag ROM, WRAM, cart RAM, and OAM as inaccessible until the process is complete.
-        if(m_cartRamBanks > 0) {
-            m_cartRam->SetReadable(false);
-            m_cartRam->SetWritable(false);
-        }
-
-        m_videoRam->SetReadable(false);
-        m_videoRam->SetWritable(false);
-
-        m_oam->SetReadable(false);
-        m_oam->SetWritable(false);
-
-        if(m_model == GameBoyModel::CGB) {
-            // On CGB, cart ROM and WRAM are on separate buses, so flag them selectively.
-            if(m_dmaSourceAddress < 0x8000) {
-                m_cartRom->SetReadable(false);
-            } else if(m_dmaSourceAddress >= 0xC000 && m_dmaSourceAddress < 0xFE00) {
-                m_workRam->SetReadable(false);
-                m_workRam->SetWritable(false);
-            }
-        } else {
-            m_cartRom->SetReadable(false);
-
-            m_workRam->SetReadable(false);
-            m_workRam->SetWritable(false);
-        }
-    }
-}
-
-void GameBoyInstance::DmaInitCgb(const DmaTransferMode transferMode) {
-    // Common initialization.
-    m_dmaState = DmaState::Preparing;
-    m_dmaBlockCpu = m_dmaCgb = true;
-    m_dmaSourceAddress = m_ioRegisters->Video_GetHdmaSourceAddress();
-    m_dmaDestinationAddress = GameBoyMapper::VideoRamAddress | m_ioRegisters->Video_GetHdmaDestinationAddress();
-    m_dmaCopyLength = m_ioRegisters->Video_GetHdmaTransferLength();
-    m_dmaCurrentOffset = 0;
-
-    // GDMA/HDMA can only copy from certain locations.
-    m_dmaCopyInvalidBytes = (m_dmaSourceAddress >= 0x8000 && m_dmaSourceAddress < 0xA000) || m_dmaSourceAddress > 0xE000;
-
-    m_dmaTransferMode = transferMode;
-    switch(m_dmaTransferMode) {
-        case DmaTransferMode::HBlank: {
-            m_dmaBatched = true;
-            m_dmaBatchLength = HBlankDmaBatchLength;
-            m_dmaState = DmaState::WaitingForHBlank;
-            break;
-        }
-
-        case DmaTransferMode::Inactive:
-        default:
-            break;
-    }
-}
-
-void GameBoyInstance::DmaInitOam(const int sourceAddress) {
-    m_dmaState = DmaState::Preparing;
-    m_dmaBlockCpu = m_dmaCgb = false;
-    m_dmaSourceAddress = sourceAddress << 8;
-    m_dmaDestinationAddress = GameBoyMapper::OamAddress;
-    m_dmaCopyLength = OamDmaLength;
-    m_dmaTransferMode = DmaTransferMode::Oam;
-    m_dmaCurrentOffset = 0;
-    m_dmaBatched = false;
-    m_dmaCopyInvalidBytes = false;
-}
-
-std::string GameBoyInstance::GetDmaStateString(const DmaState state) {
+std::string GameBoyInstance::GetDmaStateOamString(const DmaStateOam state) {
     switch(state) {
-        case DmaState::Inactive:         return "Inactive";
-        case DmaState::Preparing:        return "Preparing";
-        case DmaState::Transferring:     return "Transferring";
-        case DmaState::WaitingForHBlank: return "Waiting (HBlank)";
-        case DmaState::Finalize:         return "Finalize";
-        default:                         return "UNKNOWN";
+        case DmaStateOam::Inactive:         return "Inactive";
+        case DmaStateOam::Preparing:        return "Preparing";
+        case DmaStateOam::Transferring:     return "Transferring";
+        default:                            return "UNKNOWN";
     }
 }
 
@@ -413,12 +223,12 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         }},
         { "MBC", m_gbMemory->GetMbcDebugInfo() },
         { "DMA", {
-            { "CPU Blocked", DebugValue(m_dmaBlockCpu) },
-            { "Current", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaCurrentOffset)) },
-            { "Dest", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaDestinationAddress)) },
-            { "Mode", DebugValue(GetDmaTransferModeString(m_dmaTransferMode)) },
-            { "Source", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaSourceAddress)) },
-            { "State", DebugValue(GetDmaStateString(m_dmaState)) },
+            //{ "CPU Blocked", DebugValue(m_dmaBlockCpu) },
+            //{ "Current", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaCurrentOffset)) },
+            //{ "Dest", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaDestinationAddress)) },
+            //{ "Mode", DebugValue(GetDmaTransferModeString(m_dmaTransferMode)) },
+            //{ "Source", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaSourceAddress)) },
+            { "OAM State", DebugValue(GetDmaStateOamString(m_dmaOamState)) },
         }},
         { "PPU", PPU_GetDebugInfo() },
         { "Timer", {
@@ -431,7 +241,7 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         { "System", {
             { "Keypad", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_keypad)) },
             { "Boot ROM Enabled", DebugValue(!m_bootRomDisableFlag) },
-            { "DMA State", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_dmaState)) },
+            //{ "DMA State", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_dmaState)) },
             { "IE", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_memory->GetByte(GameBoyMapper::InterruptEnableAddress, true))) },
             { "IF", DebugValue(DebugValueType::Int8, static_cast<uint64_t>(m_ioRegisters->GetByte(IoRegister::InterruptFlag))) },
             { "CGB Mode", DebugValue(m_cgbMode) },

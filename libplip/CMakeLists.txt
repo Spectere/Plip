@@ -57,9 +57,10 @@ add_library(${lib_name}
 
     # GameBoy
                                                     Core/GameBoy/AudioChannel.h
-                                                    Core/GameBoy/DmaState.h
+                                                    Core/GameBoy/DmaStateOam.h
     Core/GameBoy/GameBoyInstance.cpp                Core/GameBoy/GameBoyInstance.h
     Core/GameBoy/GameBoyInstance.Audio.cpp
+    Core/GameBoy/GameBoyInstance.Dma.cpp
     Core/GameBoy/GameBoyInstance.Video.cpp
     Core/GameBoy/GameBoyIoRegisters.cpp             Core/GameBoy/GameBoyIoRegisters.h
     Core/GameBoy/GameBoyMapper.cpp                  Core/GameBoy/GameBoyMapper.h

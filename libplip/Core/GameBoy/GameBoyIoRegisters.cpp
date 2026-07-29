@@ -5,14 +5,15 @@
 
 #include "GameBoyIoRegisters.h"
 
+#include "GameBoyInstance.h"
 #include "PlipSupport.h"
 
 using Plip::Core::GameBoy::GameBoyIoRegisters;
 
 #define CGB_SUPPORT (m_model == GameBoyModel::CGB)
 
-GameBoyIoRegisters::GameBoyIoRegisters(const GameBoyModel gbModel, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam)
-                                     : m_model(gbModel), m_videoCgbBgPaletteRam(cgbBgPaletteRam), m_videoCgbObjPaletteRam(cgbObjPaletteRam) {
+GameBoyIoRegisters::GameBoyIoRegisters(const GameBoyModel gbModel, GameBoyInstance* gbInstance, PlipMemory* cgbBgPaletteRam, PlipMemory* cgbObjPaletteRam)
+                                     : m_model(gbModel), m_gbInstance(gbInstance), m_videoCgbBgPaletteRam(cgbBgPaletteRam), m_videoCgbObjPaletteRam(cgbObjPaletteRam) {
     Reset();
 }
 
@@ -74,14 +75,15 @@ uint8_t GameBoyIoRegisters::GetByte(const IoRegister ioRegister) const {
             /* $FF4D */ case IoRegister::SpeedSwitch: { return 0b01111110 | (m_doubleSpeedActive ? 0b10000000 : 0) | (m_speedSwitchArmed ? 0b1 : 0); }
             /* $FF4F */ case IoRegister::VramBank: { return PadValue(m_regVramBank, 1); }
             /* $FF55 */ case IoRegister::VramDmaLengthModeStart: {
-                return (m_videoHdmaTransferMode != DmaTransferMode::Inactive ? 0b10000000 : 0)
-                     | ((m_videoHdmaTransferRemaining >> 4) & 0b01111111);
+                //return (m_videoHdmaTransferMode != DmaTransferMode::Inactive ? 0b10000000 : 0)
+                //     | ((m_videoHdmaTransferRemaining >> 4) & 0b01111111);
+                return 0;
             }
-            /* $FF68 */ case IoRegister::BackgroundPaletteIndex: { return (m_videoBgPaletteAutoIncrement ? 0b10000000 : 0) | 0b01000000 | (m_videoBgPaletteIndex & 0b111111); }
-            /* $FF69 */ case IoRegister::BackgroundPaletteData: { return m_videoCgbBgPaletteRam->GetByte(m_videoBgPaletteIndex); }
-            /* $FF6A */ case IoRegister::ObjectPaletteIndex: { return (m_videoObjPaletteAutoIncrement ? 0b10000000 : 0) | 0b01000000 | (m_videoObjPaletteIndex & 0b111111); }
-            /* $FF6B */ case IoRegister::ObjectPaletteData: { return m_videoCgbObjPaletteRam->GetByte(m_videoObjPaletteIndex); }
-            /* $FF6C */ case IoRegister::ObjectPriorityMode: { return 0xFF ^ (m_videoCgbObjectPriority ? 1 : 0); }
+            /* $FF68 */ //case IoRegister::BackgroundPaletteIndex: { return (m_videoBgPaletteAutoIncrement ? 0b10000000 : 0) | 0b01000000 | (m_videoBgPaletteIndex & 0b111111); }
+            /* $FF69 */ //case IoRegister::BackgroundPaletteData: { return m_videoCgbBgPaletteRam->GetByte(m_videoBgPaletteIndex); }
+            /* $FF6A */ //case IoRegister::ObjectPaletteIndex: { return (m_videoObjPaletteAutoIncrement ? 0b10000000 : 0) | 0b01000000 | (m_videoObjPaletteIndex & 0b111111); }
+            /* $FF6B */ //case IoRegister::ObjectPaletteData: { return m_videoCgbObjPaletteRam->GetByte(m_videoObjPaletteIndex); }
+            /* $FF6C */ //case IoRegister::ObjectPriorityMode: { return 0xFF ^ (m_videoCgbObjectPriority ? 1 : 0); }
             /* $FF70 */ case IoRegister::WramBank: { return PadValue(m_regWramBank, 3); }
 
             default: break;
@@ -508,8 +510,8 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
         // $FF46
         case IoRegister::OamDmaSourceAddress: {
-            m_videoPerformOamDmaCopy = true;
             m_regOamDmaAddress = value;
+            m_gbInstance->DMA_OAM_InitiateTransfer();
             break;
         }
 
@@ -572,36 +574,37 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
 
             // $FF4F
             case IoRegister::VramBank: {
-                m_videoPerformVideoRamBankSwitch = m_regVramBank = value & 0b1;
+                //m_videoPerformVideoRamBankSwitch = m_regVramBank = value & 0b1;
                 break;
             }
 
             // $FF51
             case IoRegister::VramDmaSourceHigh: {
-                m_videoHdmaSourceAddress = (value << 8) | (m_videoHdmaSourceAddress & 0xFF);
+                //m_videoHdmaSourceAddress = (value << 8) | (m_videoHdmaSourceAddress & 0xFF);
                 break;
             }
 
             // $FF52
             case IoRegister::VramDmaSourceLow: {
-                m_videoHdmaSourceAddress = (m_videoHdmaSourceAddress & 0xFF00) | (value & 0xF0);
+                //m_videoHdmaSourceAddress = (m_videoHdmaSourceAddress & 0xFF00) | (value & 0xF0);
                 break;
             }
 
             // $FF53
             case IoRegister::VramDmaDestinationHigh: {
-                m_videoHdmaDestinationAddress = ((value & 0b11111) << 8) | (m_videoHdmaDestinationAddress & 0xFF);
+                //m_videoHdmaDestinationAddress = ((value & 0b11111) << 8) | (m_videoHdmaDestinationAddress & 0xFF);
                 break;
             }
 
             // $FF54
             case IoRegister::VramDmaDestinationLow: {
-                m_videoHdmaDestinationAddress = (m_videoHdmaDestinationAddress & 0xFF00) | (value & 0xF0);
+                //m_videoHdmaDestinationAddress = (m_videoHdmaDestinationAddress & 0xFF00) | (value & 0xF0);
                 break;
             }
 
             // $FF55
             case IoRegister::VramDmaLengthModeStart: {
+                /*
                 if(m_videoHdmaTransferMode == DmaTransferMode::HBlank && BIT_TEST(value, 7)) {
                     // Writing to $FF55 bit 7 while performing an HBlank transfer will abort the transfer.
                     m_videoHdmaTransferMode = DmaTransferMode::Inactive;
@@ -610,6 +613,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
                     m_videoHdmaTransferMode = BIT_TEST(value, 7) ? DmaTransferMode::HBlank : DmaTransferMode::GeneralPurpose;
                     m_videoHdmaTransferLength = (value & 0b01111111) << 4;
                 }
+                */
                 break;
             }
 
