@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "DmaStateOam.h"
+#include "DmaModeVdma.h"
 #include "GameBoyIoRegisters.h"
 #include "GameBoyMapper.h"
 #include "GameBoyModel.h"
@@ -31,7 +32,7 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] std::vector<DebugAudioChannel> GetDebugAudioChannels() override;
         [[nodiscard]] std::map<std::string, std::map<std::string, DebugValue>> GetDebugInfo() const override;
         static std::string GetDmaStateOamString(DmaStateOam state);
-        static std::string GetDmaTransferModeString(DmaTransferMode mode);
+        static std::string GetDmaTransferModeString(DmaModeVdma mode);
         [[nodiscard]] uint64_t GetLastExecutedOpcode() const override { return m_cpu->GetLastOp(); }
         [[nodiscard]] std::vector<uint64_t> GetPcs() const override;
         [[nodiscard]] uint64_t GetTotalCpuCycles() const override { return m_tCycleCount; }
@@ -42,6 +43,11 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance.Dma
         void DMA_OAM_InitiateTransfer();
+
+        void DMA_VDMA_CancelTransfer() { DMA_VDMA_Finalize(); }
+        DmaModeVdma DMA_VDMA_GetMode() const { return m_vdmaMode; }
+        int DMA_VDMA_GetRemaining() const { return m_vdmaLength - m_vdmaOffset; }
+        void DMA_VDMA_InitiateTransfer(DmaModeVdma mode, uint16_t srcAddr, uint16_t destAddr, int length);
 
     private:
         struct PPU_Object {
@@ -70,9 +76,16 @@ namespace Plip::Core::GameBoy {
         void APU_Send();
 
         // GameBoyInstance.Dma
+        void DMA_Reset();
+
         void DMA_OAM_Cycle();
         void DMA_OAM_Finalize();
         void DMA_OAM_SetMemoryAccessibility(bool value) const;
+
+        void DMA_VDMA_Cycle();
+        void DMA_VDMA_Cycle_GDMA();
+        void DMA_VDMA_Cycle_HDMA();
+        void DMA_VDMA_Finalize();
 
         // GameBoyInstance.Video
         void PPU_Cycle();
@@ -182,6 +195,14 @@ namespace Plip::Core::GameBoy {
         uint16_t m_dmaOamStartAddress {};
         DmaStateOam m_dmaOamState = DmaStateOam::Inactive;
         int m_dmaOamPtr {};
+
+        DmaModeVdma m_vdmaMode = DmaModeVdma::Inactive;
+        bool m_vdmaBlockCpu {};
+        int m_vdmaLength {};
+        int m_vdmaOffset {};
+        uint16_t m_vdmaSrcAddr {};
+        uint16_t m_vdmaDestAddr {};
+        bool m_vdmaScanlineComplete {};
 
         // APU
         constexpr static float ApuMixDivisor = 60;  // 15 audible volume levels, 4 channels

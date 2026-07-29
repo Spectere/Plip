@@ -7,9 +7,18 @@
 
 using Plip::Core::GameBoy::GameBoyInstance;
 
-void GameBoyInstance::DMA_OAM_Cycle() {
-    if(m_tCycleCount % 4) return;
+void GameBoyInstance::DMA_Reset() {
+    m_vdmaMode = DmaModeVdma::Inactive;
+    m_vdmaLength = m_vdmaOffset = m_vdmaSrcAddr = m_vdmaDestAddr = 0;
+    m_vdmaScanlineComplete = false;
 
+    m_vdmaBlockCpu = false;
+}
+
+//
+// OAM DMA
+//
+void GameBoyInstance::DMA_OAM_Cycle() {
     switch(m_dmaOamState) {
         case DmaStateOam::Preparing: {
             if(--m_dmaOamInitCycles == 0) {
@@ -93,5 +102,82 @@ void GameBoyInstance::DMA_OAM_SetMemoryAccessibility(const bool value) const {
             m_cartRam->SetReadable(value);
             m_cartRam->SetWritable(value);
         }
+    }
+}
+
+//
+// VDMA (General Purpose/HBlank DMA -- CGB Only)
+//
+void GameBoyInstance::DMA_VDMA_Cycle() {
+    switch(m_vdmaMode) {
+        case DmaModeVdma::Inactive:
+            break;
+        case DmaModeVdma::GeneralPurpose:
+            DMA_VDMA_Cycle_GDMA();
+            break;
+        case DmaModeVdma::HBlank:
+            DMA_VDMA_Cycle_HDMA();
+            break;
+        default:
+            throw PlipEmulationException("Invalid VDMA mode.");
+    }
+}
+
+void GameBoyInstance::DMA_VDMA_Cycle_GDMA() {
+    // GDMA copies indiscriminately until it's finished.
+    const auto val = m_memory->GetByte((m_vdmaSrcAddr + m_vdmaOffset) & 0xFFFF, true);
+    m_memory->SetByte((m_vdmaDestAddr + m_vdmaOffset) & 0xFFFF, val, true);
+
+    if(++m_vdmaOffset >= m_vdmaLength) {
+        DMA_VDMA_Finalize();
+    }
+}
+
+void GameBoyInstance::DMA_VDMA_Cycle_HDMA() {
+    // HDMA copies 16 bytes per HBlank, unless cancelled.
+    if(m_cpu->IsHalted()) return;  // CPU is halted. Don't do anything.
+
+    if(m_vdmaMode == DmaModeVdma::HBlank && m_ppuMode != PPU_Mode::HBlank) {
+        m_vdmaScanlineComplete = false;
+        return;
+    }
+
+    if(m_vdmaScanlineComplete) {
+        // Wait for the next HBlank.
+        m_vdmaBlockCpu = false;
+        return;
+    }
+
+    // Start copying.
+    m_vdmaBlockCpu = true;
+
+    const auto val = m_memory->GetByte((m_vdmaSrcAddr + m_vdmaOffset) & 0xFFFF, true);
+    m_memory->SetByte((m_vdmaDestAddr + m_vdmaOffset) & 0xFFFF, val, true);
+
+    ++m_vdmaOffset;
+    if(m_vdmaOffset >= m_vdmaLength) {
+        DMA_VDMA_Finalize();
+    } else if((m_vdmaOffset & 0xF) == 0) {
+        // 16 bytes copied. Wait for the next HBlank.
+        m_vdmaScanlineComplete = true;
+    }
+}
+
+void GameBoyInstance::DMA_VDMA_Finalize() {
+    m_vdmaBlockCpu = false;
+    m_vdmaMode = DmaModeVdma::Inactive;
+}
+
+void GameBoyInstance::DMA_VDMA_InitiateTransfer(const DmaModeVdma mode, const uint16_t srcAddr, const uint16_t destAddr, const int length) {
+    m_vdmaMode = mode;
+    m_vdmaLength = length;
+    m_vdmaOffset = 0;
+    m_vdmaSrcAddr = srcAddr;
+    m_vdmaDestAddr = destAddr;
+    m_vdmaScanlineComplete = false;
+
+    if(m_vdmaMode == DmaModeVdma::GeneralPurpose) {
+        // Execution is blocked while GDMA is performed.
+        m_vdmaBlockCpu = true;
     }
 }

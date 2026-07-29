@@ -13,13 +13,6 @@
 namespace Plip::Core::GameBoy {
     class GameBoyInstance;
 
-    enum class DmaTransferMode {
-        Inactive,
-        Oam,
-        GeneralPurpose,
-        HBlank,
-    };
-
     enum class IoRegister {
         JoypadInput = 0x00,
         SerialData = 0x01,
@@ -130,6 +123,9 @@ namespace Plip::Core::GameBoy {
         // DMA
         [[nodiscard]] uint8_t DMA_GetOamAddress() const { return m_regOamDmaAddress; }
 
+        [[nodiscard]] uint16_t VDMA_GetSourceAddress() const { return m_vdmaSourceAddress; }
+        [[nodiscard]] uint16_t VDNA_GetDestinationAddress() const { return m_vdmaDestinationAddress; }
+
         // Joypad
         void Joypad_Cycle();
         void Joypad_SetMatrix(uint8_t inputsPressed);
@@ -158,8 +154,6 @@ namespace Plip::Core::GameBoy {
         //void Video_AcknowledgeHdmaCancellation() { m_videoHdmaTransferCancelled = false; }
         void Video_AcknowledgeVideoRamBankSwitch() { m_videoPerformVideoRamBankSwitch = -1; }
         //[[nodiscard]] int Video_GetOamDmaCopyAddress() const { return m_videoPerformOamDmaCopy ? m_regOamDmaAddress : -1; }
-        //[[nodiscard]] int Video_GetHdmaDestinationAddress() const { return m_videoHdmaDestinationAddress; }
-        //[[nodiscard]] int Video_GetHdmaSourceAddress() const { return m_videoHdmaSourceAddress; }
         //[[nodiscard]] bool Video_GetHdmaTransferCancelled() const { return m_videoHdmaTransferCancelled; }
         //[[nodiscard]] int Video_GetHdmaTransferLength() const { return m_videoHdmaTransferLength; }
         //[[nodiscard]] DmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
@@ -224,6 +218,8 @@ namespace Plip::Core::GameBoy {
 
         // DMA
         int m_dmaInitDelay {};
+        uint16_t m_vdmaDestinationAddress {};           // CGB
+        uint16_t m_vdmaSourceAddress {};                // CGB
 
         // Video
         //bool m_videoPerformOamDmaCopy {};
@@ -231,8 +227,6 @@ namespace Plip::Core::GameBoy {
         PlipMemory* m_videoCgbObjPaletteRam {};         // CGB
         //bool m_videoPerformHdmaCopy {};                 // CGB
         int m_videoPerformVideoRamBankSwitch = -1;      // CGB
-        //uint16_t m_videoHdmaDestinationAddress {};      // CGB
-        //uint16_t m_videoHdmaSourceAddress {};           // CGB
         //bool m_videoHdmaTransferCancelled {};           // CGB
         //int m_videoHdmaTransferLength {};               // CGB
         //DmaTransferMode m_videoHdmaTransferMode {};     // CGB

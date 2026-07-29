@@ -1,6 +1,6 @@
-/* DmaState.h
+/* DmaStateOam.h
  *
- * An enumeration that indicates which state a DMA transfer is in.
+ * An enumeration that indicates which state an OAM DMA transfer is in.
  */
 
 #pragma once

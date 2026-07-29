@@ -90,7 +90,7 @@ void GameBoyInstance::Delta(const double ns) {
 
     do {
         // Run CPU for one cycle.
-        m_cpu->Step();
+        if(!m_vdmaBlockCpu) m_cpu->Step();
 
         if(const auto cpuDoubleSpeed = m_cpu->IsDoubleSpeed(); m_doubleSpeed != cpuDoubleSpeed) {
             m_doubleSpeed = cpuDoubleSpeed;
@@ -112,7 +112,10 @@ void GameBoyInstance::Delta(const double ns) {
         }
 
         // DMA
-        DMA_OAM_Cycle();
+        if(m_tCycleCount % 4 == 0) {  // Clock every M-cycle
+            DMA_OAM_Cycle();
+            if(m_model == GameBoyModel::CGB) DMA_VDMA_Cycle();
+        }
 
         // Input
         m_ioRegisters->Joypad_SetMatrix(m_keypad);
@@ -184,13 +187,12 @@ std::string GameBoyInstance::GetDmaStateOamString(const DmaStateOam state) {
     }
 }
 
-std::string GameBoyInstance::GetDmaTransferModeString(const DmaTransferMode mode) {
+std::string GameBoyInstance::GetDmaTransferModeString(const DmaModeVdma mode) {
     switch(mode) {
-        case DmaTransferMode::Inactive:       return "Inactive";
-        case DmaTransferMode::Oam:            return "OAM";
-        case DmaTransferMode::GeneralPurpose: return "General";
-        case DmaTransferMode::HBlank:         return "HBlank";
-        default:                              return "UNKNOWN";
+        case DmaModeVdma::Inactive:        return "Inactive";
+        case DmaModeVdma::GeneralPurpose:  return "General";
+        case DmaModeVdma::HBlank:          return "HBlank";
+        default:                            return "UNKNOWN";
     }
 }
 
@@ -223,11 +225,11 @@ std::map<std::string, std::map<std::string, Plip::DebugValue>> GameBoyInstance::
         }},
         { "MBC", m_gbMemory->GetMbcDebugInfo() },
         { "DMA", {
-            //{ "CPU Blocked", DebugValue(m_dmaBlockCpu) },
-            //{ "Current", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaCurrentOffset)) },
-            //{ "Dest", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaDestinationAddress)) },
-            //{ "Mode", DebugValue(GetDmaTransferModeString(m_dmaTransferMode)) },
-            //{ "Source", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_dmaSourceAddress)) },
+            { "VDMA CPU Blocked", DebugValue(m_vdmaBlockCpu) },
+            { "VDMA Current", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_vdmaOffset)) },
+            { "VDMA Dest", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_vdmaDestAddr)) },
+            { "VDMA Mode", DebugValue(GetDmaTransferModeString(m_vdmaMode)) },
+            { "VDMA Source", DebugValue(DebugValueType::Int16Le, static_cast<uint64_t>(m_vdmaSrcAddr)) },
             { "OAM State", DebugValue(GetDmaStateOamString(m_dmaOamState)) },
         }},
         { "PPU", PPU_GetDebugInfo() },
@@ -525,6 +527,9 @@ void GameBoyInstance::Reset() {
     // Reset I/O registers.
     m_ioRegisters->Reset();
     RegisterWriteServiced();
+
+    // Reset DMA controller.
+    DMA_Reset();
 }
 
 void GameBoyInstance::Shutdown() {
