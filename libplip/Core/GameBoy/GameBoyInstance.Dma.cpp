@@ -135,22 +135,17 @@ void GameBoyInstance::DMA_VDMA_Cycle_GDMA() {
 
 void GameBoyInstance::DMA_VDMA_Cycle_HDMA() {
     // HDMA copies 16 bytes per HBlank, unless cancelled.
-    if(m_cpu->IsHalted()) return;  // CPU is halted. Don't do anything.
+    const auto lcdc = m_ioRegisters->GetByte(IoRegister::LcdControl);
+    m_vdmaBlockCpu = !m_cpu->IsHalted() && m_ppuMode == PPU_Mode::HBlank && (!m_vdmaScanlineComplete || BIT_TEST(lcdc, 7));
 
-    if(m_vdmaMode == DmaModeVdma::HBlank && m_ppuMode != PPU_Mode::HBlank) {
+    if(m_ppuMode != PPU_Mode::HBlank) {
         m_vdmaScanlineComplete = false;
         return;
     }
 
-    if(const auto lcdc = m_ioRegisters->GetByte(IoRegister::LcdControl); BIT_TEST(lcdc, 7) && m_vdmaScanlineComplete) {
-        // Wait for the next HBlank (unless the LCD's disabled--if it is, keep copying).
-        m_vdmaBlockCpu = false;
-        return;
-    }
+    if(!m_vdmaBlockCpu) return;  // CPU is not blocked--we're not copying. Abort.
 
     // Start copying.
-    m_vdmaBlockCpu = true;
-
     const auto val = m_memory->GetByte((m_vdmaSrcAddr + m_vdmaOffset) & 0xFFFF, true);
     DMA_VDMA_VramWrite(m_vdmaDestAddr + m_vdmaOffset, val);
 
