@@ -8,6 +8,13 @@
 using Plip::Core::GameBoy::GameBoyInstance;
 
 void GameBoyInstance::DMA_Reset() {
+    // OAM
+    m_dmaOamPtr = 0;
+    m_dmaOamState = DmaStateOam::Inactive;
+    m_dmaOamStartAddress = 0;
+    m_dmaOamInitCycles = 0;
+
+    // GDMA/HDMA
     m_vdmaMode = DmaModeVdma::Inactive;
     m_vdmaLength = m_vdmaOffset = m_vdmaSrcAddr = m_vdmaDestAddr = 0;
     m_vdmaScanlineComplete = false;
