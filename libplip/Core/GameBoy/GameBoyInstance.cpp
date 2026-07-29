@@ -534,6 +534,9 @@ void GameBoyInstance::Reset() {
 
     // Reset DMA controller.
     DMA_Reset();
+
+    // Ensure that the shared memory permissions are synced.
+    UpdateSharedPermissions();
 }
 
 void GameBoyInstance::Shutdown() {
@@ -548,4 +551,14 @@ void GameBoyInstance::Shutdown() {
         m_gbMemory->RTC_Dump(rtcDataFile);
         rtcDataFile.close();
     }
+}
+
+void GameBoyInstance::UpdateSharedPermissions() const {
+    const auto effectiveOam = m_dmaOamAccess && m_ppuOamAccess;
+    m_oam->SetReadable(effectiveOam);
+    m_oam->SetWritable(effectiveOam);
+
+    const auto effectiveVram = m_dmaVramAccess && m_ppuVramAccess;
+    m_videoRam->SetReadable(effectiveVram);
+    m_videoRam->SetWritable(effectiveVram);
 }

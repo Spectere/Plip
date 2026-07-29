@@ -8,11 +8,15 @@
 using Plip::Core::GameBoy::GameBoyInstance;
 
 void GameBoyInstance::DMA_Reset() {
+    m_dmaOamAccess = true;
+    m_dmaVramAccess = true;
+
     // OAM
     m_dmaOamPtr = 0;
     m_dmaOamState = DmaStateOam::Inactive;
     m_dmaOamStartAddress = 0;
     m_dmaOamInitCycles = 0;
+    DMA_OAM_SetMemoryAccessibility(true);
 
     // GDMA/HDMA
     m_vdmaMode = DmaModeVdma::Inactive;
@@ -78,12 +82,10 @@ void GameBoyInstance::DMA_OAM_InitiateTransfer() {
     m_dmaOamState = DmaStateOam::Preparing;
 }
 
-void GameBoyInstance::DMA_OAM_SetMemoryAccessibility(const bool value) const {
-    m_videoRam->SetReadable(value);
-    m_videoRam->SetWritable(value);
-
-    m_oam->SetReadable(value);
-    m_oam->SetWritable(value);
+void GameBoyInstance::DMA_OAM_SetMemoryAccessibility(const bool value) {
+    m_dmaOamAccess = value;
+    m_dmaVramAccess = value;
+    UpdateSharedPermissions();
 
     if(m_model == GameBoyModel::CGB) {
         // CGB keeps the cartridge and WRAM on separate busses.

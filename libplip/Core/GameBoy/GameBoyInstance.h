@@ -65,6 +65,7 @@ namespace Plip::Core::GameBoy {
         void ReadCartridgeFeatures();
         void RegisterInput() const;
         void RegisterWriteServiced() const;
+        void UpdateSharedPermissions() const;
 
         // GameBoyInstance.Audio
         static float APU_Clock_Channel(PulseChannel* channel);
@@ -80,13 +81,13 @@ namespace Plip::Core::GameBoy {
 
         void DMA_OAM_Cycle();
         void DMA_OAM_Finalize();
-        void DMA_OAM_SetMemoryAccessibility(bool value) const;
+        void DMA_OAM_SetMemoryAccessibility(bool value);
 
         void DMA_VDMA_Cycle();
         void DMA_VDMA_Cycle_GDMA();
         void DMA_VDMA_Cycle_HDMA();
         void DMA_VDMA_Finalize();
-        void DMA_VDMA_VramWrite(const uint32_t addr, const uint8_t val) {
+        void DMA_VDMA_VramWrite(const uint32_t addr, const uint8_t val) const {
             const auto vramAddr = (m_gbMemory->GetVramBank() * 0x2000) + (addr % 0x2000);
             m_videoRam->SetByte(vramAddr, val, true);
         }
@@ -107,8 +108,8 @@ namespace Plip::Core::GameBoy {
         void PPU_Plot_CGB(bool objPalette, int palette, int color, int pos) const;
         void PPU_Plot_DMG(int color, int pos) const;
         void PPU_Reset();
+        void PPU_SetMemoryPermissions();
         static uint8_t PPU_ScaleColorChannel(uint8_t val);
-        void PPU_SetMemoryPermissions() const;
         void PPU_VideoModeTransition();
 
         //
@@ -195,6 +196,9 @@ namespace Plip::Core::GameBoy {
         // DMA
         static constexpr int DmaOamByteCount = 0xA0;
 
+        bool m_dmaOamAccess = true;
+        bool m_dmaVramAccess = true;
+
         int m_dmaOamInitCycles = -1;
         uint16_t m_dmaOamStartAddress {};
         DmaStateOam m_dmaOamState = DmaStateOam::Inactive;
@@ -272,6 +276,9 @@ namespace Plip::Core::GameBoy {
         int m_ppuWindowX {};
         int m_ppuWindowY {};
         bool m_ppuSkip {};
+
+        bool m_ppuOamAccess = true;
+        bool m_ppuVramAccess = true;
 
 #ifndef NDEBUG
         static constexpr auto PPU_DBG_TotalDotClocksPerFrame = 70224;

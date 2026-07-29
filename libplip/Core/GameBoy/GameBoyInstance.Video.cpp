@@ -20,10 +20,9 @@ void GameBoyInstance::PPU_Cycle() {
     if(BIT_TEST(m_ppuLastLcdControl, 7) && !BIT_TEST(currentLcdControl, 7)) {
         // LCD was disabled during this cycle. Flag all memory as writable, blank the screen, and reset the PPU mode
         // to 0 (HBlank).
-        m_oam->SetReadable(true);
-        m_oam->SetWritable(true);
-        m_videoRam->SetReadable(true);
-        m_videoRam->SetWritable(true);
+        m_ppuOamAccess = true;
+        m_ppuVramAccess = true;
+        UpdateSharedPermissions();
 
         memset(m_videoBuffer, 0xFF, m_videoBufferSize);
         m_video->BeginDraw();
@@ -527,20 +526,22 @@ void GameBoyInstance::PPU_Reset() {
     m_ppuMode = PPU_Mode::OamScan;
     m_ppuLcdXCoordinate = 0;
     m_ppuLcdYCoordinate = 0;
+    m_ppuOamAccess = true;
+    m_ppuVramAccess = true;
 
 #ifndef NDEBUG
     m_DBG_ppuFrameDotClocks = m_ppuDotClock;
 #endif // NDEBUG
 }
 
-void GameBoyInstance::PPU_SetMemoryPermissions() const {
+void GameBoyInstance::PPU_SetMemoryPermissions() {
     switch(m_ppuMode) {
         case PPU_Mode::HBlank:
         case PPU_Mode::VBlank: {
-            m_oam->SetReadable(true);
-            m_oam->SetWritable(true);
-            m_videoRam->SetReadable(true);
-            m_videoRam->SetWritable(true);
+            m_ppuOamAccess = true;
+            m_ppuVramAccess = true;
+            UpdateSharedPermissions();
+
             m_ppuCgbBgPaletteRam->SetReadable(true);
             m_ppuCgbBgPaletteRam->SetWritable(true);
             m_ppuCgbObjPaletteRam->SetReadable(true);
@@ -548,10 +549,10 @@ void GameBoyInstance::PPU_SetMemoryPermissions() const {
             break;
         }
         case PPU_Mode::OamScan: {
-            m_oam->SetReadable(false);
-            m_oam->SetWritable(false);
-            m_videoRam->SetReadable(true);
-            m_videoRam->SetWritable(true);
+            m_ppuOamAccess = false;
+            m_ppuVramAccess = true;
+            UpdateSharedPermissions();
+
             m_ppuCgbBgPaletteRam->SetReadable(true);
             m_ppuCgbBgPaletteRam->SetWritable(true);
             m_ppuCgbObjPaletteRam->SetReadable(true);
@@ -559,10 +560,10 @@ void GameBoyInstance::PPU_SetMemoryPermissions() const {
             break;
         }
         case PPU_Mode::Output: {
-            m_oam->SetReadable(false);
-            m_oam->SetWritable(false);
-            m_videoRam->SetReadable(false);
-            m_videoRam->SetWritable(false);
+            m_ppuOamAccess = false;
+            m_ppuVramAccess = false;
+            UpdateSharedPermissions();
+
             m_ppuCgbBgPaletteRam->SetReadable(false);
             m_ppuCgbBgPaletteRam->SetWritable(false);
             m_ppuCgbObjPaletteRam->SetReadable(false);
