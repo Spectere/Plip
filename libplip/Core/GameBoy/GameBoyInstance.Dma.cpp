@@ -142,8 +142,8 @@ void GameBoyInstance::DMA_VDMA_Cycle_HDMA() {
         return;
     }
 
-    if(m_vdmaScanlineComplete) {
-        // Wait for the next HBlank.
+    if(const auto lcdc = m_ioRegisters->GetByte(IoRegister::LcdControl); BIT_TEST(lcdc, 7) && m_vdmaScanlineComplete) {
+        // Wait for the next HBlank (unless the LCD's disabled--if it is, keep copying).
         m_vdmaBlockCpu = false;
         return;
     }

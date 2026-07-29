@@ -30,7 +30,7 @@ void GameBoyInstance::PPU_Cycle() {
         m_video->Draw(m_videoBuffer);
         m_video->EndDraw();
 
-        m_ppuMode = PPU_Mode::OamScan;
+        m_ppuMode = PPU_Mode::HBlank;
         m_ppuDotClock = 0;
         m_ppuLcdXCoordinate = 0;
         m_ppuLcdYCoordinate = 0;
