@@ -609,7 +609,7 @@ void GameBoyIoRegisters::SetByte(const IoRegister ioRegister, const uint8_t valu
                 } else {
                     const auto vdmaMode = BIT_TEST(value, 7) ? DmaModeVdma::HBlank : DmaModeVdma::GeneralPurpose;
                     const auto vdmaLength = ((value & 0b01111111) + 1) << 4;
-                    m_gbInstance->DMA_VDMA_InitiateTransfer(vdmaMode, m_vdmaSourceAddress, 0x8000 | m_vdmaDestinationAddress, vdmaLength);
+                    m_gbInstance->DMA_VDMA_InitiateTransfer(vdmaMode, m_vdmaSourceAddress, m_vdmaDestinationAddress, vdmaLength);
                 }
                 break;
             }

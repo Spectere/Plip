@@ -42,6 +42,7 @@ namespace Plip::Core::GameBoy {
         void EnableCartridgeRam(bool enable);
         [[nodiscard]] uint8_t GetByte(uint32_t address, bool privileged) const override;
         uint32_t GetLength() override { return 0x10000; }  // 64 KiB
+        [[nodiscard]] int GetVramBank() const { return m_vramBank; }
         [[nodiscard]] std::map<std::string, DebugValue> GetMbcDebugInfo() const;
         void Reset();
         void RestoreCartridgeMemoryAccessibility() const;

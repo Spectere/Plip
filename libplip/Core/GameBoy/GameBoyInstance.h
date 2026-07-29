@@ -86,6 +86,10 @@ namespace Plip::Core::GameBoy {
         void DMA_VDMA_Cycle_GDMA();
         void DMA_VDMA_Cycle_HDMA();
         void DMA_VDMA_Finalize();
+        void DMA_VDMA_VramWrite(const uint32_t addr, const uint8_t val) {
+            const auto vramAddr = (m_gbMemory->GetVramBank() * 0x2000) + (addr % 0x2000);
+            m_videoRam->SetByte(vramAddr, val, true);
+        }
 
         // GameBoyInstance.Video
         void PPU_Cycle();

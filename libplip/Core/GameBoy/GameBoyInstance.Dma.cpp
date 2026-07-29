@@ -126,7 +126,7 @@ void GameBoyInstance::DMA_VDMA_Cycle() {
 void GameBoyInstance::DMA_VDMA_Cycle_GDMA() {
     // GDMA copies indiscriminately until it's finished.
     const auto val = m_memory->GetByte((m_vdmaSrcAddr + m_vdmaOffset) & 0xFFFF, true);
-    m_memory->SetByte((m_vdmaDestAddr + m_vdmaOffset) & 0xFFFF, val, true);
+    DMA_VDMA_VramWrite(m_vdmaDestAddr + m_vdmaOffset, val);
 
     if(++m_vdmaOffset >= m_vdmaLength) {
         DMA_VDMA_Finalize();
@@ -152,7 +152,7 @@ void GameBoyInstance::DMA_VDMA_Cycle_HDMA() {
     m_vdmaBlockCpu = true;
 
     const auto val = m_memory->GetByte((m_vdmaSrcAddr + m_vdmaOffset) & 0xFFFF, true);
-    m_memory->SetByte((m_vdmaDestAddr + m_vdmaOffset) & 0xFFFF, val, true);
+    DMA_VDMA_VramWrite(m_vdmaDestAddr + m_vdmaOffset, val);
 
     ++m_vdmaOffset;
     if(m_vdmaOffset >= m_vdmaLength) {
