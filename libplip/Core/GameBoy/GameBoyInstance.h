@@ -71,7 +71,7 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance.Dma
         void DMA_OAM_Cycle();
-        void DMA_Oam_Finalize();
+        void DMA_OAM_Finalize();
         void DMA_OAM_SetMemoryAccessibility(bool value) const;
 
         // GameBoyInstance.Video

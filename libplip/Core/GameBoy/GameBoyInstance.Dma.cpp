@@ -39,7 +39,7 @@ void GameBoyInstance::DMA_OAM_Cycle() {
             m_oam->SetByte(m_dmaOamPtr, val, true);
 
             if(++m_dmaOamPtr == DmaOamByteCount) {
-                DMA_Oam_Finalize();
+                DMA_OAM_Finalize();
             }
             break;
         }
@@ -50,7 +50,7 @@ void GameBoyInstance::DMA_OAM_Cycle() {
     }
 }
 
-void GameBoyInstance::DMA_Oam_Finalize() {
+void GameBoyInstance::DMA_OAM_Finalize() {
     m_dmaOamState = DmaStateOam::Inactive;
     DMA_OAM_SetMemoryAccessibility(true);
 }
