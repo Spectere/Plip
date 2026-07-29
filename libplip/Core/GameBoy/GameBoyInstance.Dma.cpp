@@ -84,34 +84,38 @@ void GameBoyInstance::DMA_OAM_InitiateTransfer() {
 
 void GameBoyInstance::DMA_OAM_SetMemoryAccessibility(const bool value) {
     m_dmaOamAccess = value;
-    m_dmaVramAccess = value;
-    UpdateSharedPermissions();
+    m_dmaVramAccess = true;
 
-    if(m_model == GameBoyModel::CGB) {
-        // CGB keeps the cartridge and WRAM on separate busses.
-        if(m_dmaOamStartAddress < 0x8000) {
-            m_cartRom->SetReadable(value);
+    auto cart = true;
+    auto wram = true;
 
-            if(m_cartRamBanks > 0) {
-                m_cartRam->SetReadable(value);
-                m_cartRam->SetWritable(value);
-            }
-        }
-        if(m_dmaOamStartAddress >= 0xC000 && m_dmaOamStartAddress < 0xFE00) {
-            m_workRam->SetReadable(value);
-            m_workRam->SetWritable(value);
-        }
-    } else {
-        m_workRam->SetReadable(value);
-        m_workRam->SetWritable(value);
+    if(!value) {
+        // Deny permissions where appropriate.
+        m_dmaVramAccess = !(m_dmaOamStartAddress >= 0x8000 && m_dmaOamStartAddress < 0xA000);
 
-        m_cartRom->SetReadable(value);
-
-        if(m_cartRamBanks > 0) {
-            m_cartRam->SetReadable(value);
-            m_cartRam->SetWritable(value);
+        if(m_model == GameBoyModel::CGB) {
+            // CGB keeps the cartridge and WRAM on separate buses, so lock based on address.
+            cart = !(m_dmaOamStartAddress < 0x8000 || (m_dmaOamStartAddress >= 0xA000 && m_dmaOamStartAddress < 0xC000));
+            wram = !(m_dmaOamStartAddress >= 0xC000 && m_dmaOamStartAddress < 0xFE00);
+        } else {
+            // DMG has an external bus and video RAM bus. If VRAM is accessible, these should not be, and vice versa.
+            wram = !m_dmaVramAccess;
+            cart = !m_dmaVramAccess;
         }
     }
+
+    // Set access here.
+    m_cartRom->SetReadable(cart);
+
+    if(m_cartRamBanks > 0) {
+        m_cartRam->SetReadable(cart);
+        m_cartRam->SetWritable(cart);
+    }
+
+    m_workRam->SetReadable(wram);
+    m_workRam->SetWritable(wram);
+
+    UpdateSharedPermissions();
 }
 
 //
