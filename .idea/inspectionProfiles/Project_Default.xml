@@ -1,7 +1,0 @@
-<component name="InspectionProjectProfileManager">
-  <profile version="1.0">
-    <option name="myName" value="Project Default" />
-    <inspection_tool class="CppRedundantParentheses" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" />
-    <inspection_tool class="CppTooWideScopeInitStatement" enabled="true" level="HINT" enabled_by_default="true" editorAttributes="HINT" />
-  </profile>
-</component>
