@@ -30,7 +30,7 @@ TEST_BIG_ENDIAN(BIG_ENDIAN)
 FetchContent_Declare(
     catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        25319fd3047c6bdcf3c0170e76fa526c77f99ca9  # v3.10.0
+    GIT_TAG        8b08d4d79514f45f7e4ce2a607ac9c94e920d1bb  # v3.15.3
 )
 FetchContent_MakeAvailable(catch2)
 
@@ -51,7 +51,7 @@ set(IMGUI_DIR ${CMAKE_BINARY_DIR}/lib/imgui)
 FetchContent_Populate(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG        bf75bfec48fc00f532af8926130b70c0e26eb099  # v1.92.3
+    GIT_TAG        f1cc2ae15e53a861a874c3034aae6798fde194ab  # v1.92.9b
     SOURCE_DIR     ${IMGUI_DIR}
 )
 
@@ -98,7 +98,7 @@ find_package(PNG)
 FetchContent_Declare(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG        a96677bdf6b4acb84af4ec294e5f60a4e8cbbe03  # 3.2.22
+    GIT_TAG        147a8ee32dbf9ac02f3794964490687b6bbda1bc  # 3.4.14
     GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(SDL3)
