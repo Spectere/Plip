@@ -97,7 +97,6 @@ void GameBoyInstance::Delta(const double ns) {
             m_ioRegisters->SetDoubleSpeed(m_doubleSpeed);
             m_cycleTime = m_cpu->GetCycleTime();
             m_ioRegisters->Timer_Reset();
-            m_ppuSkip = false;
             m_apuClockDivisor = m_doubleSpeed ? ApuClockDivisorDouble : ApuClockDivisorNormal;
 
             if(m_hasRtc) {
@@ -136,12 +135,7 @@ void GameBoyInstance::Delta(const double ns) {
         }
 
         // PPU
-        if(!m_ppuSkip || !m_cpu->IsDoubleSpeed()) {
-            PPU_Cycle();
-            m_ppuSkip = true;
-        } else {
-            m_ppuSkip = false;
-        }
+        PPU_Cycle();
 
         // RTC
         if(m_hasRtc) {

@@ -94,23 +94,12 @@ namespace Plip::Core::GameBoy {
 
         // GameBoyInstance.Video
         void PPU_Cycle();
-        void PPU_DotClock(uint8_t lcdControl, uint8_t lcdStatus);
-        bool PPU_DotClock_OamScan();
-        bool PPU_DotClock_Output(uint8_t lcdControl);
-        void PPU_DotClock_Output_Drawing(uint8_t lcdControl) const;
-        [[nodiscard]] int PPU_DrawBackgroundOrWindow(uint32_t pixelOffset, bool isWindow, uint8_t palette, int offsetX, int offsetY, uint16_t tileMapAddress, uint16_t
-                                                     tileDataAddress0, uint16_t tileDataAddress1) const;
-        [[nodiscard]] bool PPU_DrawObject(uint32_t pixelOffset, PPU_Object object, bool tallSprites, int thisBgColor, bool lcdcPriority) const;
-        void PPU_FinishTransition(uint8_t lcdStatus);
-        void PPU_FinishTransition_OamScan(uint8_t lcdStatus);
-        void PPU_FinishTransition_VBlank(uint8_t lcdStatus);
         [[nodiscard]] std::map<std::string, DebugValue> PPU_GetDebugInfo() const;
         void PPU_Plot_CGB(bool objPalette, int palette, int color, int pos) const;
         void PPU_Plot_DMG(int color, int pos) const;
         void PPU_Reset();
         void PPU_SetMemoryPermissions();
-        static uint8_t PPU_ScaleColorChannel(uint8_t val);
-        void PPU_VideoModeTransition();
+        static uint8_t PPU_ScaleColorChannel(const uint8_t val) { return (val << 3) | (val >> 2); }
 
         //
         // Fields
@@ -258,24 +247,8 @@ namespace Plip::Core::GameBoy {
         PlipMemoryRam* m_ppuCgbBgPaletteRam = new PlipMemoryRam(64, 0xFF);
         PlipMemoryRam* m_ppuCgbObjPaletteRam = new PlipMemoryRam(64, 0xFF);
         int m_ppuDotClock {};
-        int m_ppuDmaCyclesRemaining = -1;
-        int m_ppuDrawTime {};
-        uint8_t m_ppuLastLcdControl {};
-        bool m_ppuLcdOff = false;
-        bool m_ppuLyc {};
+        bool m_ppuLcdOff {};
         PPU_Mode m_ppuMode = PPU_Mode::OamScan;
-        bool m_ppuOamScanComplete = false;
-        std::vector<PPU_Object> m_ppuObjectDrawList {};
-        int m_ppuOutputClock {};
-        PPU_OutputStage m_ppuOutputStage {};
-        uint8_t m_ppuLcdXCoordinate {};
-        uint8_t m_ppuLcdYCoordinate {};
-        int m_ppuScrollX {};
-        bool m_ppuWindowEnabled {};
-        bool m_ppuWindowSetUp {};
-        int m_ppuWindowX {};
-        int m_ppuWindowY {};
-        bool m_ppuSkip {};
 
         bool m_ppuOamAccess = true;
         bool m_ppuVramAccess = true;
