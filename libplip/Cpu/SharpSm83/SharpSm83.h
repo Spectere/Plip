@@ -14,7 +14,7 @@
 namespace Plip::Cpu {
     enum class SharpSm83Interrupt {
         VBlank = 0b00001,
-        Lcd    = 0b00010,
+        Stat    = 0b00010,
         Timer  = 0b00100,
         Serial = 0b01000,
         Joypad = 0b10000

@@ -98,6 +98,7 @@ void GameBoyInstance::Delta(const double ns) {
             m_cycleTime = m_cpu->GetCycleTime();
             m_ioRegisters->Timer_Reset();
             m_apuClockDivisor = m_doubleSpeed ? ApuClockDivisorDouble : ApuClockDivisorNormal;
+            m_ppuSkip = false;
 
             if(m_hasRtc) {
                 // Update RTC clock rate.

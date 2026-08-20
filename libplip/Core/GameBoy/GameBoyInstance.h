@@ -6,6 +6,7 @@
 #pragma once
 
 #include <filesystem>
+#include <queue>
 #include <vector>
 
 #include "DmaStateOam.h"
@@ -14,8 +15,11 @@
 #include "GameBoyMapper.h"
 #include "GameBoyModel.h"
 #include "MBC_Type.h"
+#include "PPU_FetchTile.h"
+#include "PPU_FifoPixel.h"
+#include "PPU_FifoStage.h"
 #include "PPU_Mode.h"
-#include "PPU_OutputStage.h"
+#include "PPU_Object.h"
 #include "Core/PlipCore.h"
 #include "Cpu/SharpSm83/SharpSm83.h"
 #include "Memory/PlipMemoryRam.h"
@@ -50,13 +54,6 @@ namespace Plip::Core::GameBoy {
         void DMA_VDMA_InitiateTransfer(DmaModeVdma mode, uint16_t srcAddr, uint16_t destAddr, int length);
 
     private:
-        struct PPU_Object {
-            uint8_t Y;
-            uint8_t X;
-            uint8_t Index;
-            uint8_t Flags;
-        };
-
         // GameBoyInstance
         void BootRomFlagHandler();
         [[nodiscard]] int GetCartridgeRamBankCount() const;
@@ -93,13 +90,23 @@ namespace Plip::Core::GameBoy {
         }
 
         // GameBoyInstance.Video
-        void PPU_Cycle();
+        static uint8_t PPU_ScaleColorChannel(const uint8_t val) { return (val << 3) | (val >> 2); }
         [[nodiscard]] std::map<std::string, DebugValue> PPU_GetDebugInfo() const;
         void PPU_Plot_CGB(bool objPalette, int palette, int color, int pos) const;
         void PPU_Plot_DMG(int color, int pos) const;
         void PPU_Reset();
         void PPU_SetMemoryPermissions();
-        static uint8_t PPU_ScaleColorChannel(const uint8_t val) { return (val << 3) | (val >> 2); }
+
+        void PPU_Cycle();
+        void PPU_DisableLcdCheck(uint8_t lcdControl);
+        void PPU_Fetcher_Background(uint8_t lcdControl);
+        uint16_t PPU_GetBaseBgTileAddr(uint8_t idx, int lineOffset) const;
+        uint16_t PPU_GetFetchTileIndex() const;
+        void PPU_Mode_OamScan(uint8_t lcdControl, uint8_t lcdStatus);
+        void PPU_Mode_Output(uint8_t lcdControl, uint8_t lcdStatus);
+        void PPU_UpdateRegisters(uint8_t lcdStatus);
+        void PPU_TransitionMode(uint8_t lcdStatus);
+        void PPU_TransitionStatInterrupt(uint8_t lcdStatus) const;
 
         //
         // Fields
@@ -231,6 +238,8 @@ namespace Plip::Core::GameBoy {
         static constexpr auto PPU_LyRolloverClock = 4;
         static constexpr auto PPU_Scanlines = 154;
 
+        static constexpr auto PPU_FifoLength = 8;  // Pan Docs says 16. Others say 8. idk lol
+
         static constexpr auto PPU_TileBase = 0x0000;
         static constexpr auto PPU_TileBaseBlock2 = 0x1000;
         static constexpr auto PPU_TileMapBase = 0x1800;
@@ -247,8 +256,29 @@ namespace Plip::Core::GameBoy {
         PlipMemoryRam* m_ppuCgbBgPaletteRam = new PlipMemoryRam(64, 0xFF);
         PlipMemoryRam* m_ppuCgbObjPaletteRam = new PlipMemoryRam(64, 0xFF);
         int m_ppuDotClock {};
+        bool m_ppuInitOutput {};
+        uint8_t m_ppuLastLcdControl {};
         bool m_ppuLcdOff {};
+        int m_ppuLcdXCoordinate {};
+        int m_ppuFifoXCoordinate {};
+        int m_ppuLcdYCoordinate {};
+        int m_ppuOamScanIndex {};
+        uint8_t m_ppuScrollX {};
+        uint8_t m_ppuScrollY {};
+        std::vector<PPU_Object> m_ppuObjectDrawList = std::vector<PPU_Object>(PPU_ObjectsPerScanline);
         PPU_Mode m_ppuMode = PPU_Mode::OamScan;
+        bool m_ppuSkip {};
+
+        bool m_ppuBgUseMap1 {};
+        bool m_ppuBgUseBlock2 {};
+        PPU_FifoStage m_ppuFifoBgStage {};
+        PPU_FifoStage m_ppuFifoObjStage {};
+        std::queue<PPU_FifoPixel> m_ppuFifoBgPixel {};
+        std::queue<PPU_FifoPixel> m_ppuFifoObjPixel {};
+        PPU_FetchTile m_ppuThisBgTile {};
+        PPU_FetchTile m_ppuThisObjTile {};
+        bool m_ppuBgPriority {};
+        int m_ppuTileLine {};
 
         bool m_ppuOamAccess = true;
         bool m_ppuVramAccess = true;

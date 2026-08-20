@@ -150,19 +150,8 @@ namespace Plip::Core::GameBoy {
         [[nodiscard]] uint8_t Audio_GetVinPanning() const { return m_audioVinPanning; }
 
         // Video
-        //void Video_AcknowledgeOamDmaCopy() { m_videoPerformOamDmaCopy = false; }
-        //void Video_AcknowledgeHdmaCancellation() { m_videoHdmaTransferCancelled = false; }
         void Video_AcknowledgeVideoRamBankSwitch() { m_videoPerformVideoRamBankSwitch = -1; }
-        //[[nodiscard]] int Video_GetOamDmaCopyAddress() const { return m_videoPerformOamDmaCopy ? m_regOamDmaAddress : -1; }
-        //[[nodiscard]] bool Video_GetHdmaTransferCancelled() const { return m_videoHdmaTransferCancelled; }
-        //[[nodiscard]] int Video_GetHdmaTransferLength() const { return m_videoHdmaTransferLength; }
-        //[[nodiscard]] DmaTransferMode Video_GetHdmaTransferMode() const { return m_videoHdmaTransferMode; }
         [[nodiscard]] int Video_GetPerformVramBankSwitch() const { return m_videoPerformVideoRamBankSwitch; }
-        //void Video_SetHdmaTransferComplete() {
-        //    m_videoHdmaTransferMode = DmaTransferMode::Inactive;
-        //    m_videoHdmaTransferRemaining = 0xFF;
-        //}
-        //void Video_SetHdmaTransferRemaining(const int remaining) { m_videoHdmaTransferRemaining = remaining; }
         void Video_SetLcdStatus(const uint8_t value) { m_regLcdStatus = (m_regLcdStatus & 0b11111000) | (value & 0b111); }
         void Video_SetYCoordinate(const uint8_t value) { m_regLcdYCoordinate = value; }
 
