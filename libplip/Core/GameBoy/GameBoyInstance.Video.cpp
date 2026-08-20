@@ -364,7 +364,9 @@ void GameBoyInstance::PPU_Mode_OamScan(const uint8_t lcdControl, const uint8_t l
 void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lcdStatus) {
     if(m_ppuInitOutput) {
         m_ppuScrollX = m_ioRegisters->GetByte(IoRegister::ScrollX);
-        m_ppuFifoXCoordinate = m_ppuLcdXCoordinate = -8 - (m_ppuScrollX & 0b111);
+        m_ppuBgScrollPenalty = m_ppuScrollX & 0b111;
+        m_ppuFifoXCoordinate = -8;
+        m_ppuLcdXCoordinate = 0;
         m_ppuInitOutput = false;
     }
 
@@ -375,14 +377,18 @@ void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lc
         const auto pixel = m_ppuFifoBgPixel.front();
         m_ppuFifoBgPixel.pop();
 
-        if(m_ppuLcdXCoordinate >= 0) {
-            const auto pixelOffset = static_cast<int>((m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate);
-            const auto bgp = m_ioRegisters->GetByte(IoRegister::BgPalette);
-            const auto color = (bgp >> (pixel.Color * 2)) & 0b11;
-            PPU_Plot_DMG(color, pixelOffset);
-        }
+        if(m_ppuFifoXCoordinate > 0) {
+            if(m_ppuBgScrollPenalty <= 0) {
+                const auto pixelOffset = static_cast<int>((m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate);
+                const auto bgp = m_ioRegisters->GetByte(IoRegister::BgPalette);
+                const auto color = (bgp >> (pixel.Color * 2)) & 0b11;
+                PPU_Plot_DMG(color, pixelOffset);
 
-        ++m_ppuLcdXCoordinate;
+                ++m_ppuLcdXCoordinate;
+            } else {
+                --m_ppuBgScrollPenalty;
+            }
+        }
     }
 
     if(m_ppuLcdXCoordinate == ScreenWidth) {
@@ -425,6 +431,7 @@ void GameBoyInstance::PPU_Fetcher_Background(const uint8_t lcdControl) {
             m_ppuFifoBgStage = static_cast<PPU_FifoStage>(static_cast<int>(m_ppuFifoBgStage) + 1);
             break;
         case PPU_FifoStage::GetTileT2: {
+            const auto t = PPU_GetFetchTileIndex();
             const auto baseMapAddr = PPU_TileMapBase + (m_ppuBgUseMap1 ? PPU_TileMapBlockOffset : 0);
             const auto tileIdx = m_videoRam->GetByte(baseMapAddr + PPU_GetFetchTileIndex(), true);
             m_ppuThisBgTile.TileAddress = PPU_GetBaseBgTileAddr(tileIdx, m_ppuTileLine);

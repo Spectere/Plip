@@ -279,6 +279,7 @@ namespace Plip::Core::GameBoy {
         PPU_FetchTile m_ppuThisObjTile {};
         bool m_ppuBgPriority {};
         int m_ppuTileLine {};
+        int m_ppuBgScrollPenalty {};
 
         bool m_ppuOamAccess = true;
         bool m_ppuVramAccess = true;
