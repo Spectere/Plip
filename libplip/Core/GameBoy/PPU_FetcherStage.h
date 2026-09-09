@@ -1,11 +1,12 @@
 // PPU_FifoStage.h
 //
-// The current stage of the FIFO pixel fetcher.
+// The current stage of the PPU tile fetcher.
 
 #pragma once
 
 namespace Plip::Core::GameBoy {
-    enum class PPU_FifoStage {
+    enum class PPU_FetcherStage {
+        Idle,
         GetTileT1,          // Delay
         GetTileT2,          // Fetch
         GetTileDataLowT1,   // Delay

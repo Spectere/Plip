@@ -89,6 +89,25 @@ void GameBoyInstance::PPU_Reset() {
     m_ppuVramAccess = true;
     m_ppuSkip = false;
 
+    // Reset fetcher.
+    m_ppuFetcherResult.fill(0);
+    m_ppuFetchingObj = false;
+    m_ppuFetcherStage = PPU_FetcherStage::Idle;
+    m_ppuFetcherTile = {};
+
+    // Reset BG/Window properties.
+    m_ppuBgUseMap1 = false;
+    m_ppuBgUseBlock2 = false;
+    m_ppuBgPriority = false;
+
+    // Reset OBJ properties.
+    m_ppuObjectDrawList.clear();
+    m_ppuOamScanIndex = 0;
+
+    // Reset FIFOs.
+    m_ppuFifoBg.clear();
+    m_ppuFifoObj.clear();
+
 #ifndef NDEBUG
     m_DBG_ppuFrameDotClocks = 0;
 #endif // NDEBUG
@@ -280,18 +299,16 @@ void GameBoyInstance::PPU_TransitionMode(const uint8_t lcdStatus) {
             assert(m_ppuDotClock == PPU_OamScanTime);
             m_ppuMode = PPU_Mode::Output;
             m_ppuOamScanIndex = 0;
-
-            // DMG prioritizes objects with a lower X position.
-            if(!m_cgbMode) {
-                std::ranges::sort(m_ppuObjectDrawList, [](const PPU_Object lhs, const PPU_Object rhs) {
-                    return lhs.X < rhs.X;
-                });
-            }
-
             m_ppuInitOutput = true;
+            m_ppuPlot = false;
+
+            // Sort by X coordinate. CGB priorities will be resolved by the fetcher.
+            std::ranges::sort(m_ppuObjectDrawList, [](const PPU_Object lhs, const PPU_Object rhs) {
+                return lhs.X < rhs.X;
+            });
 
             // Set up the FIFOs.
-            m_ppuFifoBgStage = m_ppuFifoObjStage = PPU_FifoStage::GetTileT1;
+            m_ppuFetcherStage = PPU_FetcherStage::GetTileT1;
 
             break;
         case PPU_Mode::Output:  // Output->HBlank (mode 0)
@@ -364,30 +381,44 @@ void GameBoyInstance::PPU_Mode_OamScan(const uint8_t lcdControl, const uint8_t l
 void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lcdStatus) {
     if(m_ppuInitOutput) {
         m_ppuScrollX = m_ioRegisters->GetByte(IoRegister::ScrollX);
-        m_ppuBgScrollPenalty = m_ppuScrollX & 0b111;
+        m_ppuClockPenalty += m_ppuScrollX & 0b111;
         m_ppuFifoXCoordinate = -8;
         m_ppuLcdXCoordinate = 0;
         m_ppuInitOutput = false;
     }
 
-    PPU_Fetcher_Background(lcdControl);
+    if(m_ppuClockPenalty > 0) {
+        --m_ppuClockPenalty;
+        return;
+    }
 
-    if(!m_ppuFifoBgPixel.empty()) {
+    // Clock the fetcher.
+    PPU_Fetcher_Setup(lcdControl);
+    PPU_Fetcher_Clock();
+    if(m_ppuFetcherStage == PPU_FetcherStage::Push) {
+        PPU_Fetcher_Finish();
+    }
+
+    if(m_ppuPlot && !m_ppuFifoBg.empty()) {
         // Plot pixels (if they would appear on screen).
-        const auto pixel = m_ppuFifoBgPixel.front();
-        m_ppuFifoBgPixel.pop();
+        const auto pixel = m_ppuFifoBg.front();
+        m_ppuFifoBg.pop_front();
 
         if(m_ppuFifoXCoordinate > 0) {
-            if(m_ppuBgScrollPenalty <= 0) {
-                const auto pixelOffset = static_cast<int>((m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate);
-                const auto bgp = m_ioRegisters->GetByte(IoRegister::BgPalette);
-                const auto color = (bgp >> (pixel.Color * 2)) & 0b11;
-                PPU_Plot_DMG(color, pixelOffset);
+            int color;
+            const auto pixelOffset = static_cast<int>((m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate);
 
-                ++m_ppuLcdXCoordinate;
+            if(!m_cgbMode && !BIT_TEST(lcdControl, 0)) {
+                // In DMG mode, the BG can be disabled (even mid-scanline). If it's disabled, the BG
+                // should be white (ignore BGP). The BG tile fetch otherwise functions per normal.
+                color = 0;
             } else {
-                --m_ppuBgScrollPenalty;
+                const auto bgp = m_ioRegisters->GetByte(IoRegister::BgPalette);
+                color = (bgp >> (pixel.Color * 2)) & 0b11;
             }
+
+            PPU_Plot_DMG(color, pixelOffset);
+            ++m_ppuLcdXCoordinate;
         }
     }
 
@@ -396,85 +427,113 @@ void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lc
     }
 }
 
-uint16_t GameBoyInstance::PPU_GetBaseBgTileAddr(const uint8_t idx, const int lineOffset) const {
-    const auto blockBaseAddress = (idx >= 0x80)
-        ? PPU_Block1
-        : (m_ppuBgUseBlock2 ? PPU_Block2 : PPU_Block0);
-    return blockBaseAddress + ((idx % 128) * 16) + (lineOffset * 2);
-}
-
 uint16_t GameBoyInstance::PPU_GetFetchTileIndex() const {
     const auto adjustedX = std::max(m_ppuFifoXCoordinate + m_ppuScrollX, 0);
-    const auto adjustedY = std::max(m_ppuLcdYCoordinate + m_ppuScrollY, 0);
+    const auto adjustedY = m_ppuLcdYCoordinate + m_ppuScrollY;
 
     const auto tileX = (adjustedX / PPU_TileSizeX) % PPU_MapTileCountX;
     const auto tileY = (adjustedY / PPU_TileSizeY) % PPU_MapTileCountY;
     return (tileY * PPU_MapTileCountX) + tileX;
 }
 
-void GameBoyInstance::PPU_Fetcher_Background(const uint8_t lcdControl) {
-    switch(m_ppuFifoBgStage) {
-        case PPU_FifoStage::GetTileT1:
-            // Lock in SCX, SCY, and other attributes at the start of the tile fetch. Only the upper five
-            // bits of SCX can be changed after output begins.
-            m_ppuScrollX = (m_ioRegisters->GetByte(IoRegister::ScrollX) & 0b11111000) | (m_ppuScrollX & 0b111);
-            m_ppuScrollY = m_ioRegisters->GetByte(IoRegister::ScrollY);
-            m_ppuBgUseBlock2 = !BIT_TEST(lcdControl, 4);
-            m_ppuBgUseMap1 = BIT_TEST(lcdControl, 3);
-            m_ppuBgPriority = BIT_TEST(lcdControl, 0);
-            m_ppuTileLine = (m_ppuLcdYCoordinate + m_ppuScrollY) % PPU_TileSizeY;
+void GameBoyInstance::PPU_Fetcher_Clock() {
+    switch(m_ppuFetcherStage) {
+        case PPU_FetcherStage::Idle:
+            return;
 
-            // Now, fall through.
-        case PPU_FifoStage::GetTileDataLowT1:
-        case PPU_FifoStage::GetTileDataHighT1:
-            // Advance to the fetch stage (this is how enums were meant to be used, right? :D)
-            m_ppuFifoBgStage = static_cast<PPU_FifoStage>(static_cast<int>(m_ppuFifoBgStage) + 1);
+        case PPU_FetcherStage::GetTileT1:  // Delay
+            m_ppuFetcherStage = PPU_FetcherStage::GetTileT2;
             break;
-        case PPU_FifoStage::GetTileT2: {
-            const auto t = PPU_GetFetchTileIndex();
-            const auto baseMapAddr = PPU_TileMapBase + (m_ppuBgUseMap1 ? PPU_TileMapBlockOffset : 0);
-            const auto tileIdx = m_videoRam->GetByte(baseMapAddr + PPU_GetFetchTileIndex(), true);
-            m_ppuThisBgTile.TileAddress = PPU_GetBaseBgTileAddr(tileIdx, m_ppuTileLine);
-            m_ppuFifoBgStage = PPU_FifoStage::GetTileDataLowT1;
+
+        case PPU_FetcherStage::GetTileDataLowT1:  // Delay
+            m_ppuFetcherStage = PPU_FetcherStage::GetTileDataLowT2;
+            break;
+
+        case PPU_FetcherStage::GetTileDataHighT1:  // Delay
+            m_ppuFetcherStage = PPU_FetcherStage::GetTileDataHighT2;
+            break;
+
+        case PPU_FetcherStage::GetTileT2: {  // Fetch
+            if(!m_ppuFetchingObj) {
+                // BG/Window
+                const auto baseMapAddr = PPU_TileMapBase + (m_ppuBgUseMap1 ? PPU_TileMapBlockOffset : 0);
+                const auto tileIdx = m_videoRam->GetByte(baseMapAddr + PPU_GetFetchTileIndex(), true);
+                m_ppuFetcherTile.TileAddress = PPU_GetBaseBgTileAddr(tileIdx, m_ppuTileLine);
+            } else {
+                // TODO: OBJ
+            }
+
+            m_ppuFetcherStage = PPU_FetcherStage::GetTileDataLowT1;
             break;
         }
-        case PPU_FifoStage::GetTileDataLowT2: {
-            m_ppuThisBgTile.TileDataLow = m_videoRam->GetByte(m_ppuThisBgTile.TileAddress, true);
-            m_ppuFifoBgStage = PPU_FifoStage::GetTileDataHighT1;
+
+        case PPU_FetcherStage::GetTileDataLowT2: {  // Fetch
+            m_ppuFetcherTile.TileDataLow = m_videoRam->GetByte(m_ppuFetcherTile.TileAddress, true);
+            m_ppuFetcherStage = PPU_FetcherStage::GetTileDataHighT1;
             break;
         }
-        case PPU_FifoStage::GetTileDataHighT2: {
-            m_ppuThisBgTile.TileDataHigh = m_videoRam->GetByte(m_ppuThisBgTile.TileAddress + 1, true);
-            m_ppuFifoBgStage = PPU_FifoStage::Push;
+
+        case PPU_FetcherStage::GetTileDataHighT2: {  // Fetch
+            m_ppuFetcherTile.TileDataHigh = m_videoRam->GetByte(m_ppuFetcherTile.TileAddress + 1, true);
+            m_ppuFetcherStage = PPU_FetcherStage::Push;
             break;
         }
-        case PPU_FifoStage::Push:  // Handled below.
+
+        case PPU_FetcherStage::Push:  // Handled below.
         default:
             break;
     }
 
-    // Pixels can be pushed on the same cycle that the high tile data is retrieved.
-    if(m_ppuFifoBgStage == PPU_FifoStage::Push) {
-        if(m_ppuFifoBgPixel.empty()) {
-            // Push all eight pixels.
-            for(auto i = 0; i < PPU_TileSizeX; ++i) {
-                const auto shift = (7 - i);
+    // Pixels can be pushed on the same cycle of the high tile data retrieval.
+    if(m_ppuFetcherStage == PPU_FetcherStage::Push) {
+        for(auto i = 0; i < PPU_TileSizeX; ++i) {
+            const auto shift = 7 - i;
 
-                const auto lowField = (m_ppuThisBgTile.TileDataLow >> shift) & 0b1;
-                const auto highField = (m_ppuThisBgTile.TileDataHigh >> shift) & 0b1;
+            const auto lowField = (m_ppuFetcherTile.TileDataLow >> shift) & 0b1;
+            const auto highField = (m_ppuFetcherTile.TileDataHigh >> shift) & 0b1;
 
-                m_ppuFifoBgPixel.push({
-                    .Color = static_cast<uint8_t>(lowField | (highField << 1)),
-                    .Palette = 0,      // TODO: CGB
-                    .ObjPriority = 0,  // TODO: CGB
-                    .BgPriority = m_ppuBgPriority
-                });
-            }
-
-            m_ppuFifoBgStage = PPU_FifoStage::GetTileT1;
-            m_ppuFifoXCoordinate += 8;
+            m_ppuFetcherResult[i] = static_cast<uint8_t>(lowField | (highField << 1));
         }
     }
+}
 
-    assert(m_ppuFifoBgPixel.size() <= PPU_FifoLength);
+void GameBoyInstance::PPU_Fetcher_Finish() {
+    const auto fifo = m_ppuFetchingObj ? &m_ppuFifoObj : &m_ppuFifoBg;
+
+    for(auto i = 0; i < 8; ++i) {
+        fifo->push_back({
+            .Color = m_ppuFetcherResult[i],
+            .Palette = 0,      // TODO: CGB
+            .ObjPriority = 0,  // TODO: CGB
+            .BgPriority = m_ppuBgPriority
+        });
+    }
+
+    m_ppuPlot = true;
+    m_ppuFetcherStage = PPU_FetcherStage::Idle;
+    m_ppuFifoXCoordinate += 8;
+
+    assert(fifo->size() <= PPU_FifoLength);
+}
+
+void GameBoyInstance::PPU_Fetcher_Setup(const uint8_t lcdControl) {
+    if(m_ppuFetcherStage != PPU_FetcherStage::Idle) {
+        // Fetcher is busy. Return.
+        return;
+    }
+
+    if(m_ppuFifoBg.empty()) {
+        // BG FIFO is empty. Lock in SCX, SCY, and other attributes at the start of the tile fetch.
+        // Only the upper five bits of SCX can be changed after output begins.
+        m_ppuScrollX = (m_ioRegisters->GetByte(IoRegister::ScrollX) & 0b11111000) | (m_ppuScrollX & 0b111);
+        m_ppuScrollY = m_ioRegisters->GetByte(IoRegister::ScrollY);
+        m_ppuBgUseBlock2 = !BIT_TEST(lcdControl, 4);
+        m_ppuBgUseMap1 = BIT_TEST(lcdControl, 3);
+        m_ppuBgPriority = BIT_TEST(lcdControl, 0);  // CGB. DMG's BG/Window disable is handled separately.
+        m_ppuTileLine = (m_ppuLcdYCoordinate + m_ppuScrollY) % PPU_TileSizeY;
+
+        m_ppuFetcherStage = PPU_FetcherStage::GetTileT1;
+
+        return;
+    }
 }

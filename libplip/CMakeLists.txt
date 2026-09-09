@@ -67,8 +67,8 @@ add_library(${lib_name}
                                                     Core/GameBoy/GameBoyModel.h
     Core/GameBoy/Mbc2Ram.cpp                        Core/GameBoy/Mbc2Ram.h
                                                     Core/GameBoy/MBC_Type.h
+                                                    Core/GameBoy/PPU_FetcherStage.h
                                                     Core/GameBoy/PPU_FifoPixel.h
-                                                    Core/GameBoy/PPU_FifoStage.h
                                                     Core/GameBoy/PPU_Mode.h
                                                     Core/GameBoy/PPU_Object.h
 
