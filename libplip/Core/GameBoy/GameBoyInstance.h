@@ -102,6 +102,7 @@ namespace Plip::Core::GameBoy {
         void PPU_Fetcher_Clock();
         void PPU_Fetcher_Finish();
         void PPU_Fetcher_Setup(uint8_t lcdControl);
+        void PPU_Fetcher_OBJ_Scan();
         uint16_t PPU_GetFetchTileIndex() const;
         void PPU_Mode_OamScan(uint8_t lcdControl, uint8_t lcdStatus);
         void PPU_Mode_Output(uint8_t lcdControl, uint8_t lcdStatus);
@@ -114,6 +115,10 @@ namespace Plip::Core::GameBoy {
                 ? PPU_Block1
                 : (m_ppuBgUseBlock2 ? PPU_Block2 : PPU_Block0);
             return blockBaseAddress + ((idx % 128) * 16) + (lineOffset * 2);
+        }
+
+        uint16_t PPU_GetBaseObjTileAddr(const uint8_t idx, const int lineOffset) const {
+            return PPU_Block0 + (idx * 16) + (lineOffset * 2);
         }
 
         //
@@ -280,7 +285,9 @@ namespace Plip::Core::GameBoy {
 
         // Tile fetcher
         std::array<uint8_t, 8> m_ppuFetcherResult {};
-        bool m_ppuFetchingObj {};
+        bool m_ppuFetchObjMode {};
+        bool m_ppuFetchObjPending {};
+        PPU_Object m_ppuFetcherObj {};
         PPU_FetcherStage m_ppuFetcherStage = PPU_FetcherStage::Idle;
         PPU_FetchTile m_ppuFetcherTile {};
 
@@ -293,7 +300,7 @@ namespace Plip::Core::GameBoy {
 
         // OBJ
         int m_ppuOamScanIndex {};
-        std::vector<PPU_Object> m_ppuObjectDrawList = std::vector<PPU_Object>(PPU_ObjectsPerScanline);
+        std::deque<PPU_Object> m_ppuObjectDrawList = std::deque<PPU_Object>(PPU_ObjectsPerScanline);
         std::deque<PPU_FifoPixel> m_ppuFifoObj = std::deque<PPU_FifoPixel>(PPU_FifoLength);
 
         // PPU RAM access
