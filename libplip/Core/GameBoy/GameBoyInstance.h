@@ -117,7 +117,13 @@ namespace Plip::Core::GameBoy {
             return blockBaseAddress + ((idx % 128) * 16) + (lineOffset * 2);
         }
 
-        uint16_t PPU_GetBaseObjTileAddr(const uint8_t idx, const int lineOffset) const {
+        static uint16_t PPU_GetBaseObjTileAddr(uint8_t idx, const int lineOffset, const bool tallSprite) {
+            if(tallSprite) {
+                // Ensure that the base tile for 8x16 sprites always has its LSB set to 0.
+                // Lines >= 8 will naturally spill over to the next sprite in the return.
+                idx &= 0b11111110;
+            }
+
             return PPU_Block0 + (idx * 16) + (lineOffset * 2);
         }
 
@@ -287,6 +293,7 @@ namespace Plip::Core::GameBoy {
         std::array<uint8_t, 8> m_ppuFetcherResult {};
         bool m_ppuFetchObjMode {};
         bool m_ppuFetchObjPending {};
+        bool m_ppuFetcherObjTall {};
         PPU_Object m_ppuFetcherObj {};
         PPU_FetcherStage m_ppuFetcherStage = PPU_FetcherStage::Idle;
         PPU_FetchTile m_ppuFetcherTile {};

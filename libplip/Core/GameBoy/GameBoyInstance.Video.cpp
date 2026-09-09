@@ -478,8 +478,13 @@ void GameBoyInstance::PPU_Fetcher_Clock() {
                 m_ppuFetcherTile.TileAddress = PPU_GetBaseBgTileAddr(tileIdx, m_ppuTileLine);
             } else {
                 // OBJ
-                const auto lineOffset = (m_ppuLcdYCoordinate + 16) - static_cast<int>(m_ppuFetcherObj.Y);
-                m_ppuFetcherTile.TileAddress = PPU_GetBaseObjTileAddr(m_ppuFetcherObj.TileIndex, lineOffset);
+                auto lineOffset = (m_ppuLcdYCoordinate + 16) - static_cast<int>(m_ppuFetcherObj.Y);
+                if(BIT_TEST(m_ppuFetcherObj.Flags, 6)) {
+                    // Flip Y.
+                    lineOffset = (m_ppuFetcherObjTall ? 15 : 7) - lineOffset;
+                }
+
+                m_ppuFetcherTile.TileAddress = PPU_GetBaseObjTileAddr(m_ppuFetcherObj.TileIndex, lineOffset, m_ppuFetcherObjTall);
             }
 
             m_ppuFetcherStage = PPU_FetcherStage::GetTileDataLowT1;
@@ -506,7 +511,10 @@ void GameBoyInstance::PPU_Fetcher_Clock() {
     // Pixels can be pushed on the same cycle of the high tile data retrieval.
     if(m_ppuFetcherStage == PPU_FetcherStage::Push) {
         for(auto i = 0; i < PPU_TileSizeX; ++i) {
-            const auto shift = 7 - i;
+            // Used to support OBJ X flipping (and CGB BG tile flipping).
+            const auto shift = (
+                m_ppuFetchObjMode && BIT_TEST(m_ppuFetcherObj.Flags, 5)  // OBJ X flip
+            ) ? i : 7 - i;
 
             const auto lowField = (m_ppuFetcherTile.TileDataLow >> shift) & 0b1;
             const auto highField = (m_ppuFetcherTile.TileDataHigh >> shift) & 0b1;
@@ -611,6 +619,7 @@ void GameBoyInstance::PPU_Fetcher_Setup(const uint8_t lcdControl) {
 
     if(m_ppuFetchObjPending) {
         m_ppuFetchObjMode = true;
+        m_ppuFetcherObjTall = BIT_TEST(lcdControl, 2);
 
         // HACK: The fetcher can begin fetching an OBJ on the same cycle that the previous fetch concludes.
         // However, to keep the call in PPU_Mode_Output simple (and because GetTileT1 doesn't do anything
