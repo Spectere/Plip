@@ -83,7 +83,7 @@ void GameBoyInstance::PPU_Reset() {
     m_ppuLastLcdControl = 0;
     m_ppuLcdOff = false;
     m_ppuMode = PPU_Mode::OamScan;
-    m_ppuLcdXCoordinate = 0;
+    m_ppuScanXCoordinate = 0;
     m_ppuLcdYCoordinate = 0;
     m_ppuOamAccess = true;
     m_ppuVramAccess = true;
@@ -202,7 +202,7 @@ void GameBoyInstance::PPU_Cycle() {
     PPU_UpdateRegisters(currentLcdStatus);
 
     assert(m_ppuDotClock < PPU_ScanlineTime);
-    assert(m_ppuLcdXCoordinate <= static_cast<int>(ScreenWidth));
+    assert(m_ppuScanXCoordinate <= static_cast<int>(ScreenWidth + PPU_TileSizeX));
     assert(m_ppuLcdYCoordinate < PPU_Scanlines);
 #ifndef NDEBUG
     assert(m_DBG_ppuFrameDotClocks <= PPU_DBG_TotalDotClocksPerFrame);
@@ -243,7 +243,7 @@ void GameBoyInstance::PPU_DisableLcdCheck(const uint8_t lcdControl) {
         // Reset various PPU values.
         m_ppuMode = PPU_Mode::HBlank;  // This is intentional. Enabling the LCD does *not* put the PPU into OAM scan mode.
         m_ppuDotClock = 0;
-        m_ppuLcdXCoordinate = 0;
+        m_ppuScanXCoordinate = 0;
         m_ppuLcdYCoordinate = 0;
 
 #ifndef NDEBUG
@@ -267,7 +267,7 @@ void GameBoyInstance::PPU_TransitionMode(const uint8_t lcdStatus) {
 
             m_ppuMode = (++m_ppuLcdYCoordinate == ScreenHeight) ? PPU_Mode::VBlank : PPU_Mode::OamScan;
             m_ppuDotClock = 0;
-            m_ppuLcdXCoordinate = 0;
+            m_ppuScanXCoordinate = 0;
 
             m_ppuLcdOff = false;
 
@@ -287,7 +287,7 @@ void GameBoyInstance::PPU_TransitionMode(const uint8_t lcdStatus) {
 
             m_ppuMode = PPU_Mode::OamScan;
             m_ppuDotClock = 0;
-            m_ppuLcdXCoordinate = 0;
+            m_ppuScanXCoordinate = 0;
             m_ppuLcdYCoordinate = 0;
             m_ppuLcdOff = false;
 
@@ -309,9 +309,9 @@ void GameBoyInstance::PPU_TransitionMode(const uint8_t lcdStatus) {
 
             break;
         case PPU_Mode::Output:  // Output->HBlank (mode 0)
-            assert(m_ppuLcdXCoordinate == ScreenWidth);
+            assert(m_ppuScanXCoordinate == ScreenWidth + PPU_TileSizeX);
             m_ppuMode = PPU_Mode::HBlank;
-            m_ppuLcdXCoordinate = 0;
+            m_ppuScanXCoordinate = 0;
             m_ppuObjectDrawList.clear();
             break;
         default:
@@ -383,7 +383,7 @@ void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lc
         m_ppuScrollX = m_ioRegisters->GetByte(IoRegister::ScrollX);
         m_ppuDiscardBg = m_ppuScrollX & 0b111;
         m_ppuFifoXCoordinate = -8;
-        m_ppuLcdXCoordinate = -8;
+        m_ppuScanXCoordinate = 0;
         m_ppuInitOutput = false;
     }
 
@@ -409,9 +409,9 @@ void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lc
             objPixelAvailable = BIT_TEST(lcdControl, 1);
         }
 
-        if(m_ppuLcdXCoordinate >= 0) {
+        if(m_ppuScanXCoordinate >= PPU_TileSizeX) {
             int color;
-            const auto pixelOffset = static_cast<int>((m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate);
+            const auto pixelOffset = static_cast<int>((m_ppuLcdYCoordinate * ScreenWidth) + (m_ppuScanXCoordinate - PPU_TileSizeX));
 
             // Determine BG vs. OBJ priority.
             if(objPixelAvailable && (!objPixel.BgPriority || bgPixel.Color == 0) && objPixel.Color > 0) {
@@ -433,13 +433,10 @@ void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lc
             PPU_Plot_DMG(color, pixelOffset);
         }
 
-        if(m_ppuDiscardBg-- <= 0) {
-            ++m_ppuLcdXCoordinate;
-            assert(m_ppuLcdXCoordinate <= static_cast<int32_t>(ScreenWidth));
-        }
+        if(m_ppuDiscardBg-- <= 0) ++m_ppuScanXCoordinate;
     }
 
-    if(m_ppuLcdXCoordinate == ScreenWidth) {
+    if(m_ppuScanXCoordinate == ScreenWidth + PPU_TileSizeX) {
         PPU_TransitionMode(lcdStatus);
     }
 }
@@ -633,7 +630,7 @@ void GameBoyInstance::PPU_Fetcher_OBJ_Scan() {
     // Looks for OBJs at this LCD coordinate.
     for(int idx = 0; idx < m_ppuObjectDrawList.size(); ++idx) {
         const auto obj = m_ppuObjectDrawList.at(idx);
-        if(obj.X != m_ppuLcdXCoordinate + 8) continue;
+        if(obj.X != m_ppuScanXCoordinate) continue;
 
         // Found one. Copy it to the pending OBJ slot, stop plotting, queue it for fetching,
         // and remove it from the candidates list.

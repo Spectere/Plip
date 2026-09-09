@@ -279,7 +279,7 @@ namespace Plip::Core::GameBoy {
         bool m_ppuInitOutput {};
         uint8_t m_ppuLastLcdControl {};
         bool m_ppuLcdOff {};
-        int m_ppuLcdXCoordinate {};
+        int m_ppuScanXCoordinate {};
         int m_ppuFifoXCoordinate {};
         int m_ppuLcdYCoordinate {};
         uint8_t m_ppuScrollX {};
