@@ -275,7 +275,7 @@ namespace Plip::Core::GameBoy {
         uint8_t m_ppuScrollY {};
         PPU_Mode m_ppuMode = PPU_Mode::OamScan;
         bool m_ppuSkip {};
-        int m_ppuClockPenalty {};
+        int m_ppuDiscardBg {};
         bool m_ppuPlot {};
 
         // Tile fetcher

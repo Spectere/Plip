@@ -309,6 +309,8 @@ void GameBoyInstance::PPU_TransitionMode(const uint8_t lcdStatus) {
 
             // Set up the FIFOs.
             m_ppuFetcherStage = PPU_FetcherStage::GetTileT1;
+            m_ppuFifoBg.clear();
+            m_ppuFifoObj.clear();
 
             break;
         case PPU_Mode::Output:  // Output->HBlank (mode 0)
@@ -381,15 +383,10 @@ void GameBoyInstance::PPU_Mode_OamScan(const uint8_t lcdControl, const uint8_t l
 void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lcdStatus) {
     if(m_ppuInitOutput) {
         m_ppuScrollX = m_ioRegisters->GetByte(IoRegister::ScrollX);
-        m_ppuClockPenalty += m_ppuScrollX & 0b111;
+        m_ppuDiscardBg = m_ppuScrollX & 0b111;
         m_ppuFifoXCoordinate = -8;
-        m_ppuLcdXCoordinate = 0;
+        m_ppuLcdXCoordinate = -8;
         m_ppuInitOutput = false;
-    }
-
-    if(m_ppuClockPenalty > 0) {
-        --m_ppuClockPenalty;
-        return;
     }
 
     // Clock the fetcher.
@@ -404,7 +401,7 @@ void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lc
         const auto pixel = m_ppuFifoBg.front();
         m_ppuFifoBg.pop_front();
 
-        if(m_ppuFifoXCoordinate > 0) {
+        if(m_ppuLcdXCoordinate >= 0) {
             int color;
             const auto pixelOffset = static_cast<int>((m_ppuLcdYCoordinate * ScreenWidth) + m_ppuLcdXCoordinate);
 
@@ -418,7 +415,11 @@ void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lc
             }
 
             PPU_Plot_DMG(color, pixelOffset);
+        }
+
+        if(m_ppuDiscardBg-- <= 0) {
             ++m_ppuLcdXCoordinate;
+            assert(m_ppuLcdXCoordinate <= static_cast<int32_t>(ScreenWidth));
         }
     }
 
@@ -428,7 +429,7 @@ void GameBoyInstance::PPU_Mode_Output(const uint8_t lcdControl, const uint8_t lc
 }
 
 uint16_t GameBoyInstance::PPU_GetFetchTileIndex() const {
-    const auto adjustedX = std::max(m_ppuFifoXCoordinate + m_ppuScrollX, 0);
+    const auto adjustedX = std::max(m_ppuFifoXCoordinate + m_ppuScrollX, 0 + m_ppuScrollX);
     const auto adjustedY = m_ppuLcdYCoordinate + m_ppuScrollY;
 
     const auto tileX = (adjustedX / PPU_TileSizeX) % PPU_MapTileCountX;
